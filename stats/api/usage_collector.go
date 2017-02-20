@@ -1,19 +1,4 @@
-// Copyright 2017 Google Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-//
-
-package stats
+package api
 
 import (
 	"fmt"
@@ -21,13 +6,14 @@ import (
 )
 
 type usageCollector struct {
-	mDescriptors map[string]*MeasureDesc
+	mDescriptors map[string]MeasureDesc
 	vDescriptors map[string]AggregationViewDesc
 }
 
-func (uc *usageCollector) registerMeasureDesc(md *MeasureDesc) error {
-	if _, ok := uc.mDescriptors[md.Name]; ok {
-		return fmt.Errorf("a measure descriptor with the same name %s is already registered", md.Name)
+func (uc *usageCollector) registerMeasureDesc(md MeasureDesc) error {
+	meta := md.Meta()
+	if _, ok := uc.mDescriptors[meta.name]; ok {
+		return fmt.Errorf("a measure descriptor with the same name %s is already registered", meta.name)
 	}
 
 	for n, d := range uc.mDescriptors {
@@ -36,8 +22,7 @@ func (uc *usageCollector) registerMeasureDesc(md *MeasureDesc) error {
 		}
 	}
 
-	md.aggViewDescs = make(map[AggregationViewDesc]struct{})
-	uc.mDescriptors[md.Name] = md
+	uc.mDescriptors[meta.name] = md
 	return nil
 }
 
@@ -76,7 +61,7 @@ func (uc *usageCollector) registerViewDesc(avd AggregationViewDesc, now time.Tim
 	vd.signatures = make(map[string]aggregator)
 
 	uc.vDescriptors[vd.Name] = avd
-	md.aggViewDescs[avd] = struct{}{}
+	md.Meta().aggViewDescs[avd] = struct{}{}
 
 	return nil
 }
@@ -94,7 +79,7 @@ func (uc *usageCollector) unregisterViewDesc(vwName string) error {
 	}
 
 	delete(uc.vDescriptors, vwName)
-	delete(md.aggViewDescs, avd)
+	delete(md.Meta().aggViewDescs, avd)
 	return nil
 }
 
@@ -128,13 +113,15 @@ func (uc *usageCollector) unsubscribeFromViewDesc(vwName string, c chan *View) e
 	return nil
 }
 
-func (uc *usageCollector) recordMeasurement(now time.Time, ct contextTags, md *MeasureDesc, v float64) error {
-	tmp, ok := uc.mDescriptors[md.Name]
+func (uc *usageCollector) recordMeasurement(now time.Time, ct contextTags, m Measurement) error {
+	md := m.measureDesc()
+	meta := md.Meta()
+	tmp, ok := uc.mDescriptors[meta.name]
 	if !ok || tmp != md {
 		return fmt.Errorf("error recording measurement. %v was not registered or its name was modified after registration", md)
 	}
 
-	for avd := range md.aggViewDescs {
+	for avd := range meta.aggViewDescs {
 		var sig string
 		vd := avd.viewDesc()
 		if len(vd.TagKeys) == 0 {
@@ -144,29 +131,27 @@ func (uc *usageCollector) recordMeasurement(now time.Time, ct contextTags, md *M
 			sig = ct.encodeToValuesSignature(vd.TagKeys)
 		}
 
-		if err := uc.add(vd.start, now, vd.signatures, sig, avd, v); err != nil {
+		if err := uc.add(vd.start, now, vd.signatures, sig, avd, m); err != nil {
 			return fmt.Errorf("error recording measurement %v", err)
 		}
 	}
 	return nil
 }
 
-func (uc *usageCollector) recordManyMeasurement(now time.Time, ct contextTags, mds []*MeasureDesc, vs []float64) error {
-	for _, tmp := range mds {
-		md, ok := uc.mDescriptors[tmp.Name]
-		if !ok || md != tmp {
+func (uc *usageCollector) recordManyMeasurement(now time.Time, ct contextTags, ms []Measurement) error {
+	for _, m := range ms {
+		md := m.measureDesc()
+		meta := md.Meta()
+		tmp, ok := uc.mDescriptors[meta.name]
+		if !ok || tmp != md {
 			return fmt.Errorf("error recording measurement. %v was not registered or its name was modified after registration", md)
 		}
 	}
 
-	if len(mds) != len(vs) {
-		return fmt.Errorf("len([]*MeasureDesc)=%v different than len(vs)=%v", len(mds), len(vs))
-	}
-
 	// TODO(iamm2): optimize this to avoid calling recordMeasurement multiple
 	// times. Reuse fullSignature on as many "all tags views" as possible.
-	for i, md := range mds {
-		err := uc.recordMeasurement(now, ct, md, vs[i])
+	for _, md := range ms {
+		err := uc.recordMeasurement(now, ct, md)
 		if err != nil {
 			return err
 		}
@@ -174,7 +159,7 @@ func (uc *usageCollector) recordManyMeasurement(now time.Time, ct contextTags, m
 	return nil
 }
 
-func (uc *usageCollector) add(start, now time.Time, signatures map[string]aggregator, sig string, avd AggregationViewDesc, val float64) error {
+func (uc *usageCollector) add(start, now time.Time, signatures map[string]aggregator, sig string, avd AggregationViewDesc, m Measurement) error {
 	agg, found := signatures[sig]
 	if !found {
 		var err error
@@ -184,7 +169,7 @@ func (uc *usageCollector) add(start, now time.Time, signatures map[string]aggreg
 		signatures[sig] = agg
 	}
 
-	agg.addSample(val, now)
+	agg.addSample(m, now)
 	return nil
 }
 

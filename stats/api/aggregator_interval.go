@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-package stats
+package api
 
 import (
 	"bytes"
@@ -38,12 +38,12 @@ func newIntervalsAggregator(now time.Time, intervals []time.Duration, subInterva
 	}
 }
 
-func (ia *intervalsAggregator) addSample(v float64, now time.Time) {
+func (ia *intervalsAggregator) addSample(m Measurement, now time.Time) {
 	for _, b := range ia.buffers {
 		b.moveToCurrentEntry(now)
 		e := b.entries[b.idx]
 		e.count++
-		e.sum += v
+		e.sum += m.float64()
 	}
 }
 

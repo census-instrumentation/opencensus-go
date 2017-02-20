@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-package stats
+package api
 
 import (
 	"math"
@@ -39,7 +39,8 @@ type distributionAggregator struct {
 	ds     *DistributionStats
 }
 
-func (da *distributionAggregator) addSample(v float64, _ time.Time) {
+func (da *distributionAggregator) addSample(m Measurement, _ time.Time) {
+	v := m.float64()
 	if v < da.ds.Min {
 		da.ds.Min = v
 	}
