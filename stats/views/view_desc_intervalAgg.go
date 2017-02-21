@@ -1,9 +1,11 @@
-package api
+package views
 
 import (
 	"bytes"
 	"fmt"
 	"time"
+
+	"github.com/google/instrumentation-go/tagging"
 )
 
 // IntervalAggViewDesc holds the parameters describing an interval aggregation.
@@ -54,7 +56,7 @@ func (id *IntervalAggViewDesc) retrieveAggreationView(now time.Time) (*IntervalA
 	var aggs []*IntervalAgg
 
 	for sig, a := range id.signatures {
-		tags, err := tagsFromSignature([]byte(sig), id.TagKeys)
+		tags, err := tagging.TagsFromSignature([]byte(sig), id.TagKeys)
 		if err != nil {
 			return nil, fmt.Errorf("malformed signature %v", sig)
 		}
@@ -86,14 +88,7 @@ type IntervalAggView struct {
 // tag set for a specific time interval.
 type IntervalAgg struct {
 	IntervalStats []*IntervalStats
-	Tags          []Tag
-}
-
-// IntervalStats records stats result of an IntervalAgg aggregation for a
-// specific time window.
-type IntervalStats struct {
-	Duration   time.Duration
-	Count, Sum float64
+	Tags          []tagging.Tag
 }
 
 func (id *IntervalAggViewDesc) String() string {
@@ -134,20 +129,6 @@ func (ia *IntervalAgg) String() string {
 	buf.WriteString("  IntervalAgg{\n")
 	fmt.Fprintf(&buf, "    Aggregations: %v,\n", ia.IntervalStats)
 	fmt.Fprintf(&buf, "    Tags: %v,\n", ia.Tags)
-	buf.WriteString("  }")
-	return buf.String()
-}
-
-func (is *IntervalStats) String() string {
-	if is == nil {
-		return "nil"
-	}
-
-	var buf bytes.Buffer
-	buf.WriteString("  DistributionStats{\n")
-	fmt.Fprintf(&buf, "    Duration: %v,\n", is.Duration)
-	fmt.Fprintf(&buf, "    Count: %v,\n", is.Count)
-	fmt.Fprintf(&buf, "    Sum: %v,\n", is.Sum)
 	buf.WriteString("  }")
 	return buf.String()
 }

@@ -1,4 +1,4 @@
-package api
+package views
 
 type MeasureDesc interface {
 	Meta() *measureDesc
@@ -74,3 +74,24 @@ func (md *measureDesc) Description() string {
 func (md *measureDesc) Unit() *MeasurementUnit {
 	return md.unit
 }
+
+// MeasurementUnit is the unit of measurement for a resource.
+type MeasurementUnit struct {
+	Power10      int
+	Numerators   []BasicUnit
+	Denominators []BasicUnit
+}
+
+// BasicUnit is used for representing the basic units used to construct
+// MeasurementUnits.
+type BasicUnit byte
+
+// These constants are the type of basic units allowed.
+const (
+	UnknownUnit BasicUnit = iota
+	ScalarUnit
+	BitsUnit
+	BytesUnit
+	SecsUnit
+	CoresUnit
+)

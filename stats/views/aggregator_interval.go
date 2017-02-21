@@ -13,13 +13,34 @@
 // limitations under the License.
 //
 
-package api
+package views
 
 import (
 	"bytes"
 	"fmt"
 	"time"
 )
+
+// IntervalStats records stats result of an IntervalAgg aggregation for a
+// specific time window.
+type IntervalStats struct {
+	Duration   time.Duration
+	Count, Sum float64
+}
+
+func (is *IntervalStats) String() string {
+	if is == nil {
+		return "nil"
+	}
+
+	var buf bytes.Buffer
+	buf.WriteString("  IntervalStats{\n")
+	fmt.Fprintf(&buf, "    Duration: %v,\n", is.Duration)
+	fmt.Fprintf(&buf, "    Count: %v,\n", is.Count)
+	fmt.Fprintf(&buf, "    Sum: %v,\n", is.Sum)
+	buf.WriteString("  }")
+	return buf.String()
+}
 
 type intervalsAggregator struct {
 	buffers []*timeSeriesBuffer

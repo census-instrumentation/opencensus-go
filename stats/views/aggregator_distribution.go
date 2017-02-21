@@ -13,12 +13,42 @@
 // limitations under the License.
 //
 
-package api
+package views
 
 import (
+	"bytes"
+	"fmt"
 	"math"
 	"time"
 )
+
+// DistributionStats records a distribution of float64 sample values.
+// It is the result of a DistributionAgg aggregation.
+type DistributionStats struct {
+	Count               int64
+	Min, Mean, Max, Sum float64
+	// CountPerBucket is the set of occurrences count per bucket. The
+	// buckets bounds are the same as the ones setup in
+	// AggregationDesc.
+	CountPerBucket []int64
+}
+
+func (ds *DistributionStats) String() string {
+	if ds == nil {
+		return "nil"
+	}
+
+	var buf bytes.Buffer
+	buf.WriteString("  DistributionStats{\n")
+	fmt.Fprintf(&buf, "    Count: %v,\n", ds.Count)
+	fmt.Fprintf(&buf, "    Min: %v,\n", ds.Min)
+	fmt.Fprintf(&buf, "    Mean: %v,\n", ds.Mean)
+	fmt.Fprintf(&buf, "    Max: %v,\n", ds.Max)
+	fmt.Fprintf(&buf, "    Sum: %v,\n", ds.Sum)
+	fmt.Fprintf(&buf, "    CountPerBucket: %v,\n", ds.CountPerBucket)
+	buf.WriteString("  }")
+	return buf.String()
+}
 
 // newDistributionAggregator creates a distributionAggregator. For a single
 // DistributionAggregationDescriptor it is expected to be called multiple

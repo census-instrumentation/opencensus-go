@@ -1,9 +1,11 @@
-package api
+package views
 
 import (
 	"bytes"
 	"fmt"
 	"time"
+
+	"github.com/google/instrumentation-go/tagging"
 )
 
 // GaugeInt64ViewDesc defines an int64 gauge view.
@@ -38,7 +40,7 @@ func (gd *GaugeInt64ViewDesc) retrieveAggreationView(t time.Time) (*GaugeInt64Ag
 	var aggs []*GaugeInt64Agg
 
 	for sig, a := range gd.signatures {
-		tags, err := tagsFromSignature([]byte(sig), gd.TagKeys)
+		tags, err := tagging.TagsFromSignature([]byte(sig), gd.TagKeys)
 		if err != nil {
 			return nil, fmt.Errorf("malformed signature %v", sig)
 		}
@@ -70,14 +72,7 @@ type GaugeInt64AggView struct {
 // unique tag set.
 type GaugeInt64Agg struct {
 	*GaugeInt64Stats
-	Tags []Tag
-}
-
-// DistributionStats records a distribution of float64 sample values.
-// It is the result of a DistributionAgg aggregation.
-type GaugeInt64Stats struct {
-	Value     int64
-	TimeStamp time.Time
+	Tags []tagging.Tag
 }
 
 func (gd *GaugeInt64ViewDesc) String() string {
@@ -117,19 +112,6 @@ func (ga *GaugeInt64Agg) String() string {
 	buf.WriteString("  DistributionAgg{\n")
 	fmt.Fprintf(&buf, "    Aggregations: %v,\n", ga.GaugeInt64Stats)
 	fmt.Fprintf(&buf, "    Tags: %v,\n", ga.Tags)
-	buf.WriteString("  }")
-	return buf.String()
-}
-
-func (gs *GaugeInt64Stats) String() string {
-	if gs == nil {
-		return "nil"
-	}
-
-	var buf bytes.Buffer
-	buf.WriteString("  DistributionStats{\n")
-	fmt.Fprintf(&buf, "    Value: %v,\n", gs.Value)
-	fmt.Fprintf(&buf, "    TimeStamp: %v,\n", gs.TimeStamp)
 	buf.WriteString("  }")
 	return buf.String()
 }

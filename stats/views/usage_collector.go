@@ -1,8 +1,10 @@
-package api
+package views
 
 import (
 	"fmt"
 	"time"
+
+	"github.com/google/instrumentation-go/tagging"
 )
 
 type usageCollector struct {
@@ -113,7 +115,7 @@ func (uc *usageCollector) unsubscribeFromViewDesc(vwName string, c chan *View) e
 	return nil
 }
 
-func (uc *usageCollector) recordMeasurement(now time.Time, ct contextTags, m Measurement) error {
+func (uc *usageCollector) recordMeasurement(now time.Time, ts tagging.TagsSet, m Measurement) error {
 	md := m.measureDesc()
 	meta := md.Meta()
 	tmp, ok := uc.mDescriptors[meta.name]
@@ -126,9 +128,9 @@ func (uc *usageCollector) recordMeasurement(now time.Time, ct contextTags, m Mea
 		vd := avd.viewDesc()
 		if len(vd.TagKeys) == 0 {
 			// This is the all keys view.
-			sig = ct.encodeToFullSignature()
+			sig = ts.EncodeToFullSignature()
 		} else {
-			sig = ct.encodeToValuesSignature(vd.TagKeys)
+			sig = ts.EncodeToValuesSignature(vd.TagKeys)
 		}
 
 		if err := uc.add(vd.start, now, vd.signatures, sig, avd, m); err != nil {
@@ -138,7 +140,7 @@ func (uc *usageCollector) recordMeasurement(now time.Time, ct contextTags, m Mea
 	return nil
 }
 
-func (uc *usageCollector) recordManyMeasurement(now time.Time, ct contextTags, ms []Measurement) error {
+func (uc *usageCollector) recordManyMeasurement(now time.Time, ts tagging.TagsSet, ms []Measurement) error {
 	for _, m := range ms {
 		md := m.measureDesc()
 		meta := md.Meta()
@@ -151,7 +153,7 @@ func (uc *usageCollector) recordManyMeasurement(now time.Time, ct contextTags, m
 	// TODO(iamm2): optimize this to avoid calling recordMeasurement multiple
 	// times. Reuse fullSignature on as many "all tags views" as possible.
 	for _, md := range ms {
-		err := uc.recordMeasurement(now, ct, md)
+		err := uc.recordMeasurement(now, ts, md)
 		if err != nil {
 			return err
 		}

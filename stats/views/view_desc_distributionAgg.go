@@ -1,9 +1,11 @@
-package api
+package views
 
 import (
 	"bytes"
 	"fmt"
 	"time"
+
+	"github.com/google/instrumentation-go/tagging"
 )
 
 // DistributionAggViewDesc holds the parameters describing an aggregation
@@ -61,7 +63,7 @@ func (dd *DistributionAggViewDesc) retrieveAggreationView(t time.Time) (*Distrib
 	var aggs []*DistributionAgg
 
 	for sig, a := range dd.signatures {
-		tags, err := tagsFromSignature([]byte(sig), dd.TagKeys)
+		tags, err := tagging.TagsFromSignature([]byte(sig), dd.TagKeys)
 		if err != nil {
 			return nil, fmt.Errorf("malformed signature %v", sig)
 		}
@@ -96,18 +98,7 @@ type DistributionAggView struct {
 // unique tag set.
 type DistributionAgg struct {
 	*DistributionStats
-	Tags []Tag
-}
-
-// DistributionStats records a distribution of float64 sample values.
-// It is the result of a DistributionAgg aggregation.
-type DistributionStats struct {
-	Count               int64
-	Min, Mean, Max, Sum float64
-	// CountPerBucket is the set of occurrences count per bucket. The
-	// buckets bounds are the same as the ones setup in
-	// AggregationDesc.
-	CountPerBucket []int64
+	Tags []tagging.Tag
 }
 
 func (dd *DistributionAggViewDesc) String() string {
@@ -150,23 +141,6 @@ func (da *DistributionAgg) String() string {
 	buf.WriteString("  DistributionAgg{\n")
 	fmt.Fprintf(&buf, "    Aggregations: %v,\n", da.DistributionStats)
 	fmt.Fprintf(&buf, "    Tags: %v,\n", da.Tags)
-	buf.WriteString("  }")
-	return buf.String()
-}
-
-func (ds *DistributionStats) String() string {
-	if ds == nil {
-		return "nil"
-	}
-
-	var buf bytes.Buffer
-	buf.WriteString("  DistributionStats{\n")
-	fmt.Fprintf(&buf, "    Count: %v,\n", ds.Count)
-	fmt.Fprintf(&buf, "    Min: %v,\n", ds.Min)
-	fmt.Fprintf(&buf, "    Mean: %v,\n", ds.Mean)
-	fmt.Fprintf(&buf, "    Max: %v,\n", ds.Max)
-	fmt.Fprintf(&buf, "    Sum: %v,\n", ds.Sum)
-	fmt.Fprintf(&buf, "    CountPerBucket: %v,\n", ds.CountPerBucket)
 	buf.WriteString("  }")
 	return buf.String()
 }
