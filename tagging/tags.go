@@ -8,6 +8,32 @@ import (
 	"sort"
 )
 
+type Tags map[Key]Mutation
+
+func (t Tags) ApplyMutation(m Mutation) {
+	k := m.Key()
+	switch m.Behavior() {
+	case BehaviorReplace:
+		if v, ok := t[k]; ok {
+			t[k] = v
+		}
+	case BehaviorAdd:
+		if v, ok := t[k]; !ok {
+			t[k] = v
+		}
+	case BehaviorAddOrReplace:
+		t[k] = m
+	default:
+		panic(fmt.Sprintf("mutation type is %v. This is a bug and should never happen.", m.Behavior()))
+	}
+}
+
+func (t Tags) ApplyMutations(ms ...Mutation) {
+	for _, m := range ms {
+		t.ApplyMutation(m)
+	}
+}
+
 // A Tag is the (key,value) pair that the client code uses to tag a
 // measurement.
 type Tag struct {

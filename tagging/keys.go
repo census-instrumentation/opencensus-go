@@ -12,14 +12,15 @@ func (ks *keyString) Name() string {
 	return ks.name
 }
 
-func (ks *keyString) CreateKeyValue(v string) *keyValueString {
-	return &keyValueString{
+func (ks *keyString) CreateMutation(v string, mb TagBehavior) *mutationString {
+	return &mutationString{
 		keyString: ks,
 		v:         v,
+		behavior:  mb,
 	}
 }
 
-func (ks *keyString) RetrieveKeyValue(sig []byte) *keyValueString {
+func (ks *keyString) RetrieveMutation(sig []byte) *mutationString {
 	// TODO(acetechnologist): implement
 	return nil
 }
@@ -32,14 +33,15 @@ func (ki *keyInt64) Name() string {
 	return ki.name
 }
 
-func (ki *keyInt64) CreateKeyValue(v int64) *keyValueInt64 {
-	return &keyValueInt64{
+func (ki *keyInt64) CreateMutation(v int64, mb TagBehavior) *mutationInt64 {
+	return &mutationInt64{
 		keyInt64: ki,
 		v:        v,
+		behavior: mb,
 	}
 }
 
-func (ki *keyInt64) RetrieveKeyValue(sig []byte) *keyValueInt64 {
+func (ki *keyInt64) RetrieveMutation(sig []byte) *mutationInt64 {
 	// TODO(acetechnologist): implement
 	return nil
 }
@@ -52,14 +54,15 @@ func (kf *keyFloat64) Name() string {
 	return kf.name
 }
 
-func (kf *keyFloat64) CreateKeyValue(v float64) *keyValueFloat64 {
-	return &keyValueFloat64{
+func (kf *keyFloat64) CreateMutation(v float64, mb TagBehavior) *mutationFloat64 {
+	return &mutationFloat64{
 		keyFloat64: kf,
 		v:          v,
+		behavior:   mb,
 	}
 }
 
-func (kf *keyFloat64) RetrieveKeyValue(sig []byte) *keyValueFloat64 {
+func (kf *keyFloat64) RetrieveMutation(sig []byte) *mutationFloat64 {
 	// TODO(acetechnologist): implement
 	return nil
 }
@@ -72,14 +75,15 @@ func (kb *keyBool) Name() string {
 	return kb.name
 }
 
-func (kb *keyBool) CreateKeyValue(v bool) *keyValueBool {
-	return &keyValueBool{
-		keyBool: kb,
-		v:       v,
+func (kb *keyBool) CreateMutation(v bool, mb TagBehavior) *mutationBool {
+	return &mutationBool{
+		keyBool:  kb,
+		v:        v,
+		behavior: mb,
 	}
 }
 
-func (kb *keyBool) RetrieveKeyValue(sig []byte) *keyValueBool {
+func (kb *keyBool) RetrieveMutation(sig []byte) *mutationBool {
 	// TODO(acetechnologist): implement
 	return nil
 }

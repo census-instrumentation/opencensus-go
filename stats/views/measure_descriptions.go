@@ -49,6 +49,13 @@ func (md *measureDescInt64) Meta() *measureDesc {
 	return md.measureDesc
 }
 
+func (md *measureDescInt64) CreateMeasurement(v int64) Measurement {
+	return &measurementInt64{
+		md: md,
+		v:  v,
+	}
+}
+
 // measureDesc describes a data point (measurement) type accounted
 // for by the stats library, such as RAM or CPU time.
 type measureDesc struct {

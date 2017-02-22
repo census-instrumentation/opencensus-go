@@ -78,12 +78,12 @@ var UnsubscribeFromView func(vwName string, c chan *View) error
 // take a lock. Extracting the tags from the context and assigning them to
 // views is expensive and performing this for each record is not ideal. This is
 // intentional to keep the API simple for the first version.
-var RecordMeasurement func(ctx context.Context, md *measureDesc, value float64)
+var RecordMeasurement func(ctx context.Context, m Measurement)
 
-// RecordManyMeasurement records multiple measurements with the same tags at
-// once. It is expected that mds and values are the same length. If not, none
-// of the measurements are recorded.
-var RecordManyMeasurement func(ctx context.Context, mds []*measureDesc, values []float64)
+// RecordMeasurements records multiple measurements with the same tags at once.
+// It is expected that mds and values are the same length. If not, none of the
+// measurements are recorded.
+var RecordMeasurements func(ctx context.Context, m ...Measurement)
 
 // SetCallbackPeriod sets the minimum and maximum periods for aggregation
 // reporting for all registered views in the program. The maximum period is
