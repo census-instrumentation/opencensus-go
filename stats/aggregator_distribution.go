@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-package views
+package stats
 
 import (
 	"bytes"

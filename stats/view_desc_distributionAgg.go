@@ -1,11 +1,11 @@
-package views
+package stats
 
 import (
 	"bytes"
 	"fmt"
 	"time"
 
-	"github.com/google/instrumentation-go/tagging"
+	"github.com/google/instrumentation-go/stats/tagging"
 )
 
 // DistributionAggViewDesc holds the parameters describing an aggregation
@@ -63,7 +63,7 @@ func (dd *DistributionAggViewDesc) retrieveAggreationView(t time.Time) (*Distrib
 	var aggs []*DistributionAgg
 
 	for sig, a := range dd.signatures {
-		tags, err := tagging.TagsFromSignature([]byte(sig), dd.TagKeys)
+		tags, err := tagging.TagsFromValuesSignature([]byte(sig), dd.TagKeys)
 		if err != nil {
 			return nil, fmt.Errorf("malformed signature %v", sig)
 		}

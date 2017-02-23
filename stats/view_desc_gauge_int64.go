@@ -1,11 +1,11 @@
-package views
+package stats
 
 import (
 	"bytes"
 	"fmt"
 	"time"
 
-	"github.com/google/instrumentation-go/tagging"
+	"github.com/google/instrumentation-go/stats/tagging"
 )
 
 // GaugeInt64ViewDesc defines an int64 gauge view.
@@ -40,7 +40,7 @@ func (gd *GaugeInt64ViewDesc) retrieveAggreationView(t time.Time) (*GaugeInt64Ag
 	var aggs []*GaugeInt64Agg
 
 	for sig, a := range gd.signatures {
-		tags, err := tagging.TagsFromSignature([]byte(sig), gd.TagKeys)
+		tags, err := tagging.TagsFromValuesSignature([]byte(sig), gd.TagKeys)
 		if err != nil {
 			return nil, fmt.Errorf("malformed signature %v", sig)
 		}

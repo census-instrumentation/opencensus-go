@@ -1,11 +1,11 @@
-package views
+package stats
 
 import (
 	"bytes"
 	"fmt"
 	"time"
 
-	"github.com/google/instrumentation-go/tagging"
+	"github.com/google/instrumentation-go/stats/tagging"
 )
 
 // IntervalAggViewDesc holds the parameters describing an interval aggregation.
@@ -56,7 +56,7 @@ func (id *IntervalAggViewDesc) retrieveAggreationView(now time.Time) (*IntervalA
 	var aggs []*IntervalAgg
 
 	for sig, a := range id.signatures {
-		tags, err := tagging.TagsFromSignature([]byte(sig), id.TagKeys)
+		tags, err := tagging.TagsFromValuesSignature([]byte(sig), id.TagKeys)
 		if err != nil {
 			return nil, fmt.Errorf("malformed signature %v", sig)
 		}

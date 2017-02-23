@@ -1,10 +1,11 @@
-package views
+package stats
 
+/*
 import (
 	"fmt"
 	"time"
 
-	"github.com/google/instrumentation-go/tagging"
+	"github.com/google/instrumentation-go/stats/tagging"
 )
 
 type usageCollector struct {
@@ -207,3 +208,4 @@ func (uc *usageCollector) retrieveView(now time.Time, avd AggregationViewDesc) (
 
 	return vw, nil
 }
+*/

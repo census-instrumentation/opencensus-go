@@ -1,4 +1,4 @@
-package views
+package stats
 
 type MeasureDesc interface {
 	Meta() *measureDesc
