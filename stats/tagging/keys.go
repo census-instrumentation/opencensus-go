@@ -1,3 +1,18 @@
+// Copyright 2017 Google Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+
 package tagging
 
 // Key is the interface for all key types.
@@ -31,9 +46,30 @@ func (ks *keyString) createTag(s string) *tagString {
 	}
 }
 
-func (ks *keyString) RetrieveMutation(sig []byte) *mutationString {
-	// TODO(acetechnologist): implement
-	return nil
+// keyBool is implementation for keys which values are of type bool.
+type keyBool struct {
+	name string
+}
+
+func (kb *keyBool) Name() string {
+	return kb.name
+}
+
+func (kb *keyBool) CreateMutation(v bool, mb MutationBehavior) *mutationBool {
+	return &mutationBool{
+		tagBool: &tagBool{
+			keyBool: kb,
+			v:       v,
+		},
+		behavior: mb,
+	}
+}
+
+func (kb *keyBool) createTag(b bool) *tagBool {
+	return &tagBool{
+		keyBool: kb,
+		v:       b,
+	}
 }
 
 // keyInt64 is implementation for keys which values are of type int64.
@@ -62,69 +98,14 @@ func (ki *keyInt64) createTag(i int64) *tagInt64 {
 	}
 }
 
-func (ki *keyInt64) RetrieveMutation(sig []byte) *mutationInt64 {
-	// TODO(acetechnologist): implement
-	return nil
-}
+// KeyType defines the types of keys allowed.
+type keyType byte
 
-// keyFloat64 is implementation for keys which values are of type float64.
-type keyFloat64 struct {
-	name string
-}
-
-func (kf *keyFloat64) Name() string {
-	return kf.name
-}
-
-func (kf *keyFloat64) CreateMutation(v float64, mb MutationBehavior) *mutationFloat64 {
-	return &mutationFloat64{
-		tagFloat64: &tagFloat64{
-			keyFloat64: kf,
-			v:          v,
-		},
-		behavior: mb,
-	}
-}
-
-func (kf *keyFloat64) createTag(f float64) *tagFloat64 {
-	return &tagFloat64{
-		keyFloat64: kf,
-		v:          f,
-	}
-}
-
-func (kf *keyFloat64) RetrieveMutation(sig []byte) *mutationFloat64 {
-	// TODO(acetechnologist): implement
-	return nil
-}
-
-// keyBool is implementation for keys which values are of type bool.
-type keyBool struct {
-	name string
-}
-
-func (kb *keyBool) Name() string {
-	return kb.name
-}
-
-func (kb *keyBool) CreateMutation(v bool, mb MutationBehavior) *mutationBool {
-	return &mutationBool{
-		tagBool: &tagBool{
-			keyBool: kb,
-			v:       v,
-		},
-		behavior: mb,
-	}
-}
-
-func (kb *keyBool) createTag(b bool) *tagBool {
-	return &tagBool{
-		keyBool: kb,
-		v:       b,
-	}
-}
-
-func (kb *keyBool) RetrieveMutation(sig []byte) *mutationBool {
-	// TODO(acetechnologist): implement
-	return nil
-}
+const (
+	// keyTypeUnknown is not a valid KeyType. It is here just to detect that a
+	// keyType isn't set.
+	keyTypeUnknown keyType = iota
+	keyTypeString
+	keyTypeBool
+	keyTypeInt64
+)

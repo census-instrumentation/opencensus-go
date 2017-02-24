@@ -1,3 +1,18 @@
+// Copyright 2017 Google Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+
 package tagging
 
 import (
@@ -5,10 +20,23 @@ import (
 	"sync"
 )
 
+const (
+	// maxKeyLength is the maximum value able to be encoded in a 2-byte varint.
+	maxKeyLength = 1<<14 - 1
+
+	// validKeys are restricted to US-ASCII subset (range 0x20 (' ') to 0x7e ('~')).
+	validKeysMin = 0x20
+	validKeysMax = 0x7e
+)
+
 // KeysManager is the interface that a keys manager implementation needs to
 // satisfy. The keys manager is invoked to create/retrieve a key given its
 // name/ID. It ensures that keys have unique names/IDs.
-type KeysManager interface{}
+type KeysManager interface {
+	CreateKeyString(name string) (*keyString, error)
+	CreateKeyInt64(name string) (*keyInt64, error)
+	CreateKeyBool(name string) (*keyBool, error)
+}
 
 type keysManager struct {
 	*sync.Mutex
@@ -16,7 +44,8 @@ type keysManager struct {
 }
 
 var defaultKeysManager = &keysManager{
-	keys: make(map[string]Key),
+	keys:  make(map[string]Key),
+	Mutex: &sync.Mutex{},
 }
 
 // DefaultKeyManager returns the singleton defaultKeysManager. Because it is a
@@ -51,56 +80,6 @@ func (km *keysManager) CreateKeyString(name string) (*keyString, error) {
 	return ks, nil
 }
 
-// CreateKeyInt64 creates or retrieves a key of type keyInt64 with name/ID set
-// to the input argument name. Returns an error if a key with the same name
-// exists and is of a different type.
-func (km *keysManager) CreateKeyInt64(name string) (*keyInt64, error) {
-	if !validateKeyName(name) {
-		return nil, fmt.Errorf("key name %v is invalid", name)
-	}
-	km.Lock()
-	defer km.Unlock()
-	k, ok := km.keys[name]
-	if ok {
-		ki, ok := k.(*keyInt64)
-		if !ok {
-			return nil, fmt.Errorf("key with name %v cannot be created/retrieved as type *keyInt64. It was already regitered as type %T", name, k)
-		}
-		return ki, nil
-	}
-
-	ki := &keyInt64{
-		name: name,
-	}
-	km.keys[name] = k
-	return ki, nil
-}
-
-// CreateKeyFloat64 creates or retrieves a key of type keyFloat64 with name/ID
-// set to the input argument name. Returns an error if a key with the same name
-// exists and is of a different type.
-func (km *keysManager) CreateKeyFloat64(name string) (*keyFloat64, error) {
-	if !validateKeyName(name) {
-		return nil, fmt.Errorf("key name %v is invalid", name)
-	}
-	km.Lock()
-	defer km.Unlock()
-	k, ok := km.keys[name]
-	if ok {
-		kf, ok := k.(*keyFloat64)
-		if ok {
-			return nil, fmt.Errorf("key with name %v cannot be created/retrieved as type *keyFloat64. It was already regitered as type %T", name, k)
-		}
-		return kf, nil
-	}
-
-	kf := &keyFloat64{
-		name: name,
-	}
-	km.keys[name] = k
-	return kf, nil
-}
-
 // CreateKeyBool creates or retrieves a key of type keyBool with name/ID set to
 // the input argument name. Returns an error if a key with the same name exists
 // and is of a different type.
@@ -126,6 +105,39 @@ func (km *keysManager) CreateKeyBool(name string) (*keyBool, error) {
 	return kb, nil
 }
 
+// CreateKeyInt64 creates or retrieves a key of type keyInt64 with name/ID set
+// to the input argument name. Returns an error if a key with the same name
+// exists and is of a different type.
+func (km *keysManager) CreateKeyInt64(name string) (*keyInt64, error) {
+	if !validateKeyName(name) {
+		return nil, fmt.Errorf("key name %v is invalid", name)
+	}
+	km.Lock()
+	defer km.Unlock()
+	k, ok := km.keys[name]
+	if ok {
+		ki, ok := k.(*keyInt64)
+		if !ok {
+			return nil, fmt.Errorf("key with name %v cannot be created/retrieved as type *keyInt64. It was already regitered as type %T", name, k)
+		}
+		return ki, nil
+	}
+
+	ki := &keyInt64{
+		name: name,
+	}
+	km.keys[name] = k
+	return ki, nil
+}
+
 func validateKeyName(name string) bool {
+	if len(name) >= maxKeyLength {
+		return false
+	}
+	for _, c := range name {
+		if (c < validKeysMin) || (c > validKeysMax) {
+			return false
+		}
+	}
 	return true
 }

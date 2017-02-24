@@ -118,8 +118,8 @@ func (w *channelWorker) recordMeasurement(ctx context.Context, md *MeasureDesc, 
 }
 
 func (w *channelWorker) recordManyMeasurement(ctx context.Context, mds []*MeasureDesc, values []float64) {
-	ct := ctx.Value(censusKey{})
-	if ct == nil {
+	ct, ok = ctx.Value(censusKey{}).(contextTags)
+	if !ok {
 		ct = make(contextTags)
 	}
 

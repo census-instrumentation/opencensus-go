@@ -1,11 +1,24 @@
+// Copyright 2017 Google Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+
 package tagging
 
 // Mutation is the interface that all mutations types need to implements. A
 // mutation is a data structure holding a key, a value and a behavior. The
 // mutations value types supported are string, int64 and bool.
 type Mutation interface {
-	WriteValueToBuffer(dst []byte) []byte
-	WriteKeyValueToBuffer(dst []byte) []byte
 	Tag() Tag
 	Behavior() MutationBehavior
 }
@@ -38,20 +51,6 @@ func (mi *mutationInt64) Behavior() MutationBehavior {
 	return mi.behavior
 }
 
-// mutationFloat64 represents a mutation for a tag of type float64.
-type mutationFloat64 struct {
-	*tagFloat64
-	behavior MutationBehavior
-}
-
-func (mf *mutationFloat64) Tag() Tag {
-	return mf.tagFloat64
-}
-
-func (mf *mutationFloat64) Behavior() MutationBehavior {
-	return mf.behavior
-}
-
 // mutationBool represents a mutation for a tag of type bool.
 type mutationBool struct {
 	*tagBool
@@ -70,8 +69,8 @@ func (mb *mutationBool) Behavior() MutationBehavior {
 type MutationBehavior byte
 
 const (
-	// BehaviorUnknown is not a valid behavior. It it is here just to detect
-	// that a MutationBehavior isn't set.
+	// BehaviorUnknown is not a valid behavior. It is here just to detect that
+	// a MutationBehavior isn't set.
 	BehaviorUnknown MutationBehavior = iota
 
 	// BehaviorReplace replaces the (key, value) in a set if the set already

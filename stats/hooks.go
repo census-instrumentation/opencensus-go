@@ -20,6 +20,8 @@ package stats
 import (
 	"time"
 
+	"github.com/google/instrumentation-go/stats/tagging"
+
 	"golang.org/x/net/context"
 )
 
@@ -92,3 +94,17 @@ var RecordMeasurements func(ctx context.Context, m ...Measurement)
 // SetCallbackPeriod with either argument equal to zero re-enables the default
 // behavior.
 var SetCallbackPeriod func(min, max time.Duration)
+
+func init() {
+	uc := newUsageCollector()
+	RecordMeasurements = func(ctx context.Context, m ...Measurement) {
+		ts := tagging.FromContext(ctx)
+		uc.recordManyMeasurement(time.Now(), ts, m)
+	}
+
+	RetrieveView = func(name string) []*View {
+		return uc.retrieveViews(time.Now())
+	}
+}
+
+var RetrieveView func(name string) []*View

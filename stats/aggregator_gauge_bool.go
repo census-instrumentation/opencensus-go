@@ -21,43 +21,43 @@ import (
 	"time"
 )
 
-// GaugeFloat64Stats records a gauge of float64 sample values.
-type GaugeFloat64Stats struct {
-	Value     float64
+// GaugeBoolStats records a gauge of bool sample values.
+type GaugeBoolStats struct {
+	Value     bool
 	TimeStamp time.Time
 }
 
-func (gs *GaugeFloat64Stats) String() string {
+func (gs *GaugeBoolStats) String() string {
 	if gs == nil {
 		return "nil"
 	}
 
 	var buf bytes.Buffer
-	buf.WriteString("  GaugeFloat64Stats{\n")
+	buf.WriteString("  GaugeBoolStats{\n")
 	fmt.Fprintf(&buf, "    Value: %v,\n", gs.Value)
 	fmt.Fprintf(&buf, "    TimeStamp: %v,\n", gs.TimeStamp)
 	buf.WriteString("  }")
 	return buf.String()
 }
 
-// newGaugeAggregatorFloat64 creates a gaugeAggregator of type float64. For a
-// single GaugeAggregationDescriptor it is expected to be called multiple
-// times. Once for each unique set of tags.
-func newGaugeAggregatorFloat64() *gaugeAggregatorFloat64 {
-	return &gaugeAggregatorFloat64{
-		gs: &GaugeFloat64Stats{},
+// newGaugeAggregatorBool creates a gaugeAggregator of type bool. For a single
+// GaugeAggregationDescriptor it is expected to be called multiple times. Once
+// for each unique set of tags.
+func newGaugeAggregatorBool() *gaugeAggregatorBool {
+	return &gaugeAggregatorBool{
+		gs: &GaugeBoolStats{},
 	}
 }
 
-type gaugeAggregatorFloat64 struct {
-	gs *GaugeFloat64Stats
+type gaugeAggregatorBool struct {
+	gs *GaugeBoolStats
 }
 
-func (ga *gaugeAggregatorFloat64) addSample(m Measurement, now time.Time) {
-	ga.gs.Value = m.float64()
+func (ga *gaugeAggregatorBool) addSample(m Measurement, now time.Time) {
+	ga.gs.Value = m.bool()
 	ga.gs.TimeStamp = now
 }
 
-func (ga *gaugeAggregatorFloat64) retrieveCollected() *GaugeFloat64Stats {
+func (ga *gaugeAggregatorBool) retrieveCollected() *GaugeBoolStats {
 	return ga.gs
 }

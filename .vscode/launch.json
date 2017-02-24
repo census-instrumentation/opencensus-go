@@ -1,0 +1,18 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Launch",
+            "type": "go",
+            "request": "launch",
+            "mode": "exec",
+            "remotePath": "",
+            "port": 2345,
+            "host": "127.0.0.1",
+            "program": "${workspaceRoot}/github.com/google/instrumentation-go/stats/_zmain/driver.go",
+            "env": {},
+            "args": [],
+            "showLog": true
+        }
+    ]
+}

@@ -1,6 +1,20 @@
+// Copyright 2017 Google Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+
 package stats
 
-/*
 import (
 	"fmt"
 	"time"
@@ -11,6 +25,13 @@ import (
 type usageCollector struct {
 	mDescriptors map[string]MeasureDesc
 	vDescriptors map[string]AggregationViewDesc
+}
+
+func newUsageCollector() *usageCollector {
+	return &usageCollector{
+		mDescriptors: make(map[string]MeasureDesc),
+		vDescriptors: make(map[string]AggregationViewDesc),
+	}
 }
 
 func (uc *usageCollector) registerMeasureDesc(md MeasureDesc) error {
@@ -125,16 +146,16 @@ func (uc *usageCollector) recordMeasurement(now time.Time, ts tagging.TagsSet, m
 	}
 
 	for avd := range meta.aggViewDescs {
-		var sig string
+		var sig []byte
 		vd := avd.viewDesc()
 		if len(vd.TagKeys) == 0 {
-			// This is the all keys view.
-			sig = ts.EncodeToFullSignature()
+			// This is a "don't care about keys" view. sig is empty for all
+			// records. Aggregates all records in the same view aggregation.
 		} else {
-			sig = ts.EncodeToValuesSignature(vd.TagKeys)
+			sig = ts.TagsToValuesSignature(vd.TagKeys)
 		}
 
-		if err := uc.add(vd.start, now, vd.signatures, sig, avd, m); err != nil {
+		if err := uc.add(vd.start, now, vd.signatures, string(sig), avd, m); err != nil {
 			return fmt.Errorf("error recording measurement %v", err)
 		}
 	}
@@ -208,4 +229,3 @@ func (uc *usageCollector) retrieveView(now time.Time, avd AggregationViewDesc) (
 
 	return vw, nil
 }
-*/
