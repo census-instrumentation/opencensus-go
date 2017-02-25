@@ -28,18 +28,22 @@ type IntervalStats struct {
 	Count, Sum float64
 }
 
-func (is *IntervalStats) String() string {
+func (is *IntervalStats) stringWithIndent(tabs string) string {
 	if is == nil {
 		return "nil"
 	}
 
 	var buf bytes.Buffer
-	buf.WriteString("  IntervalStats{\n")
-	fmt.Fprintf(&buf, "    Duration: %v,\n", is.Duration)
-	fmt.Fprintf(&buf, "    Count: %v,\n", is.Count)
-	fmt.Fprintf(&buf, "    Sum: %v,\n", is.Sum)
-	buf.WriteString("  }")
+	fmt.Fprintf(&buf, "%T {\n", is)
+	fmt.Fprintf(&buf, "%v  Duration: %v,\n", tabs, is.Duration)
+	fmt.Fprintf(&buf, "%v  Count: %v,\n", tabs, is.Count)
+	fmt.Fprintf(&buf, "%v  Sum: %v,\n", tabs, is.Sum)
+	fmt.Fprintf(&buf, "%v}", tabs)
 	return buf.String()
+}
+
+func (is *IntervalStats) String() string {
+	return is.stringWithIndent("")
 }
 
 type intervalsAggregator struct {

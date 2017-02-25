@@ -23,16 +23,16 @@ import (
 	"github.com/google/instrumentation-go/stats/tagging"
 )
 
-// GaugeInt64ViewDesc defines an int64 gauge view.
-type GaugeInt64ViewDesc struct {
+// GaugeStringViewDesc defines an string gauge view.
+type GaugeStringViewDesc struct {
 	*ViewDescCommon
 }
 
-func (gd *GaugeInt64ViewDesc) createAggregator(t time.Time) (aggregator, error) {
-	return newGaugeAggregatorInt64(), nil
+func (gd *GaugeStringViewDesc) createAggregator(t time.Time) (aggregator, error) {
+	return newGaugeAggregatorString(), nil
 }
 
-func (gd *GaugeInt64ViewDesc) retrieveView(now time.Time) (*View, error) {
+func (gd *GaugeStringViewDesc) retrieveView(now time.Time) (*View, error) {
 	gav, err := gd.retrieveAggreationView(now)
 	if err != nil {
 		return nil, err
@@ -43,40 +43,40 @@ func (gd *GaugeInt64ViewDesc) retrieveView(now time.Time) (*View, error) {
 	}, nil
 }
 
-func (gd *GaugeInt64ViewDesc) viewDesc() *ViewDescCommon {
+func (gd *GaugeStringViewDesc) viewDesc() *ViewDescCommon {
 	return gd.ViewDescCommon
 }
 
-func (gd *GaugeInt64ViewDesc) isValid() error {
+func (gd *GaugeStringViewDesc) isValid() error {
 	return nil
 }
 
-func (gd *GaugeInt64ViewDesc) retrieveAggreationView(t time.Time) (*GaugeInt64AggView, error) {
-	var aggs []*GaugeInt64Agg
+func (gd *GaugeStringViewDesc) retrieveAggreationView(t time.Time) (*GaugeStringAggView, error) {
+	var aggs []*GaugeStringAgg
 
 	for sig, a := range gd.signatures {
 		tags, err := tagging.TagsFromValuesSignature([]byte(sig), gd.TagKeys)
 		if err != nil {
 			return nil, fmt.Errorf("malformed signature '%v'. %v", sig, err)
 		}
-		aggregator, ok := a.(*gaugeAggregatorInt64)
+		aggregator, ok := a.(*gaugeAggregatorString)
 		if !ok {
-			return nil, fmt.Errorf("unexpected aggregator type. got %T, want stats.gaugeAggregatorInt64", a)
+			return nil, fmt.Errorf("unexpected aggregator type. got %T, want stats.gaugeAggregatorString", a)
 		}
-		ga := &GaugeInt64Agg{
-			GaugeInt64Stats: aggregator.retrieveCollected(),
-			Tags:            tags,
+		ga := &GaugeStringAgg{
+			GaugeStringStats: aggregator.retrieveCollected(),
+			Tags:             tags,
 		}
 		aggs = append(aggs, ga)
 	}
 
-	return &GaugeInt64AggView{
+	return &GaugeStringAggView{
 		Descriptor:   gd,
 		Aggregations: aggs,
 	}, nil
 }
 
-func (gd *GaugeInt64ViewDesc) stringWithIndent(tabs string) string {
+func (gd *GaugeStringViewDesc) stringWithIndent(tabs string) string {
 	if gd == nil {
 		return "nil"
 	}
@@ -91,46 +91,45 @@ func (gd *GaugeInt64ViewDesc) stringWithIndent(tabs string) string {
 	return buf.String()
 }
 
-func (gd *GaugeInt64ViewDesc) String() string {
+func (gd *GaugeStringViewDesc) String() string {
 	return gd.stringWithIndent("")
 }
 
-// GaugeInt64AggView is the set of collected GaugeInt64Agg associated with
+// GaugeStringAggView is the set of collected GaugeStringAgg associated with
 // ViewDesc.
-type GaugeInt64AggView struct {
-	Descriptor   *GaugeInt64ViewDesc
-	Aggregations []*GaugeInt64Agg
+type GaugeStringAggView struct {
+	Descriptor   *GaugeStringViewDesc
+	Aggregations []*GaugeStringAgg
 }
 
-func (gv *GaugeInt64AggView) stringWithIndent(tabs string) string {
+func (gv *GaugeStringAggView) stringWithIndent(tabs string) string {
 	if gv == nil {
 		return "nil"
 	}
 
 	tabs2 := tabs + "    "
-	tabs3 := tabs2 + "  "
 	var buf bytes.Buffer
 	fmt.Fprintf(&buf, "%T {\n", gv)
 	fmt.Fprintf(&buf, "%v  Aggregations:\n", tabs)
 	for _, agg := range gv.Aggregations {
-		fmt.Fprintf(&buf, "%v%v,\n", tabs2, agg.stringWithIndent(tabs3))
+		fmt.Fprintf(&buf, "%v%v,\n", tabs2, agg.stringWithIndent(tabs2))
 	}
 	fmt.Fprintf(&buf, "%v}", tabs)
 	return buf.String()
 }
 
-func (gv *GaugeInt64AggView) String() string {
+func (gv *GaugeStringAggView) String() string {
 	return gv.stringWithIndent("")
 }
 
-// A GaugeInt64Agg is a statistical summary of measures associated with a
+// A GaugeStringAgg is a statistical summary of measures associated with a
 // unique tag set.
-type GaugeInt64Agg struct {
-	*GaugeInt64Stats
+type GaugeStringAgg struct {
+	*GaugeStringStats
 	Tags []tagging.Tag
 }
 
-func (ga *GaugeInt64Agg) stringWithIndent(tabs string) string {
+func (ga *GaugeStringAgg) stringWithIndent(tabs string) string {
 	if ga == nil {
 		return "nil"
 	}
@@ -138,12 +137,12 @@ func (ga *GaugeInt64Agg) stringWithIndent(tabs string) string {
 	tabs2 := tabs + "  "
 	var buf bytes.Buffer
 	fmt.Fprintf(&buf, "%T {\n", ga)
-	fmt.Fprintf(&buf, "%v  Stats: %v,\n", tabs, ga.GaugeInt64Stats.stringWithIndent(tabs2))
+	fmt.Fprintf(&buf, "%v  Stats: %v,\n", tabs, ga.GaugeStringStats.stringWithIndent(tabs2))
 	fmt.Fprintf(&buf, "%v  Tags: %v,\n", tabs, ga.Tags)
 	fmt.Fprintf(&buf, "%v}", tabs)
 	return buf.String()
 }
 
-func (ga *GaugeInt64Agg) String() string {
+func (ga *GaugeStringAgg) String() string {
 	return ga.stringWithIndent("")
 }

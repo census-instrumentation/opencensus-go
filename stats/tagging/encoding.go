@@ -73,10 +73,6 @@ func float64FromBytes(bytes []byte) (float64, error) {
 	return math.Float64frombits(binary.LittleEndian.Uint64(bytes)), nil
 }
 
-func lengthToBytes(len int) []byte {
-	return int32ToBytes(len)
-}
-
 func stringToBytes(s string) []byte {
 	return []byte(s)
 }
@@ -93,7 +89,7 @@ func typeToByte(kt keyType) byte {
 }
 
 func int32ToBytes(i int) []byte {
-	bytes := make([]byte, 8)
+	bytes := make([]byte, 4)
 	binary.LittleEndian.PutUint32(bytes, uint32(i))
 	return bytes
 }

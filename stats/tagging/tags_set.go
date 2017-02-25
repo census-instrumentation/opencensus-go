@@ -109,9 +109,9 @@ func (ts TagsSet) TagsToValuesSignature(keys []Key) TagValuesSignature {
 	for _, k := range keys {
 		t, ok := ts[k]
 		if !ok {
-			b.Write(lengthToBytes(0))
+			b.Write(int32ToBytes(0))
 		}
-		t.WriteValueToBuffer(b)
+		t.WriteValueToBuffer(&b)
 	}
 	return b.Bytes()
 }

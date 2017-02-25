@@ -27,17 +27,21 @@ type GaugeStringStats struct {
 	TimeStamp time.Time
 }
 
-func (gs *GaugeStringStats) String() string {
+func (gs *GaugeStringStats) stringWithIndent(tabs string) string {
 	if gs == nil {
 		return "nil"
 	}
 
 	var buf bytes.Buffer
-	buf.WriteString("  GaugeStringStats{\n")
-	fmt.Fprintf(&buf, "    Value: %v,\n", gs.Value)
-	fmt.Fprintf(&buf, "    TimeStamp: %v,\n", gs.TimeStamp)
-	buf.WriteString("  }")
+	fmt.Fprintf(&buf, "%T {\n", gs)
+	fmt.Fprintf(&buf, "%v  Value: %v,\n", tabs, gs.Value)
+	fmt.Fprintf(&buf, "%v  TimeStamp: %v,\n", tabs, gs.TimeStamp)
+	fmt.Fprintf(&buf, "%v}", tabs)
 	return buf.String()
+}
+
+func (gs *GaugeStringStats) String() string {
+	return gs.stringWithIndent("")
 }
 
 // newGaugeAggregatorString creates a gaugeAggregator of type string. For a

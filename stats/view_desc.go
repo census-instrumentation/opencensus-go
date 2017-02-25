@@ -25,7 +25,7 @@ import (
 
 // AggregationViewDesc is the interface that all aggregations are expected to
 // implement.
-type AggregationViewDesc interface {
+type ViewDesc interface {
 	// creates an aggregator instance for a unique tags signature.
 	createAggregator(t time.Time) (aggregator, error)
 	// retrieves the collected *View holding collected data by all the
@@ -35,12 +35,19 @@ type AggregationViewDesc interface {
 	viewDesc() *ViewDescCommon
 	// validates the input recieved as requested by the client code.
 	isValid() error
+	// stringWithIndent returns String() with 'tabs' prefix
+	stringWithIndent(tabs string) string
 }
 
 // aggregator is the interface that the aggregators created by an aggregation
 // are expected to implement.
 type aggregator interface {
 	addSample(v Measurement, t time.Time)
+}
+
+type viewAggregation interface {
+	// stringWithIndent print to string with 'tabs' prefix
+	stringWithIndent(tabs string) string
 }
 
 // ViewDescCommon is a helper data structure that holds common fields to all
@@ -78,20 +85,25 @@ type ViewDescCommon struct {
 // reports a stream of View events to the application for further processing
 // such as further aggregations, logging and export to other services.
 type View struct {
-	AggregationViewDesc AggregationViewDesc
+	ViewDesc ViewDesc
 	// ViewAgg is expected to be a *DistributionAggView or a
 	// *IntervalAggView
-	ViewAgg interface{}
+	ViewAgg viewAggregation
 }
 
-func (vw *View) String() string {
+func (vw *View) stringWithIndent(tabs string) string {
 	if vw == nil {
 		return "nil"
 	}
+	tabs2 := tabs + "  "
 	var buf bytes.Buffer
-	buf.WriteString("View{\n")
-	fmt.Fprintf(&buf, "%v,\n", vw.AggregationViewDesc)
-	fmt.Fprintf(&buf, "%v,\n", vw.ViewAgg)
-	buf.WriteString("}")
+	fmt.Fprintf(&buf, "%T {\n", vw)
+	fmt.Fprintf(&buf, "%v  ViewDesc: %v,\n", tabs, vw.ViewDesc.stringWithIndent(tabs2))
+	fmt.Fprintf(&buf, "%v  ViewAgg: %v,\n", tabs, vw.ViewAgg.stringWithIndent(tabs2))
+	fmt.Fprintf(&buf, "%v}", tabs)
 	return buf.String()
+}
+
+func (vw *View) String() string {
+	return vw.stringWithIndent("")
 }

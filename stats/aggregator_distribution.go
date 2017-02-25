@@ -33,21 +33,24 @@ type DistributionStats struct {
 	CountPerBucket []int64
 }
 
-func (ds *DistributionStats) String() string {
+func (ds *DistributionStats) stringWithIndent(tabs string) string {
 	if ds == nil {
 		return "nil"
 	}
-
 	var buf bytes.Buffer
-	buf.WriteString("  DistributionStats{\n")
-	fmt.Fprintf(&buf, "    Count: %v,\n", ds.Count)
-	fmt.Fprintf(&buf, "    Min: %v,\n", ds.Min)
-	fmt.Fprintf(&buf, "    Mean: %v,\n", ds.Mean)
-	fmt.Fprintf(&buf, "    Max: %v,\n", ds.Max)
-	fmt.Fprintf(&buf, "    Sum: %v,\n", ds.Sum)
-	fmt.Fprintf(&buf, "    CountPerBucket: %v,\n", ds.CountPerBucket)
-	buf.WriteString("  }")
+	fmt.Fprintf(&buf, "%T {\n", ds)
+	fmt.Fprintf(&buf, "%v  Count: %v,\n", tabs, ds.Count)
+	fmt.Fprintf(&buf, "%v  Min: %v,\n", tabs, ds.Min)
+	fmt.Fprintf(&buf, "%v  Mean: %v,\n", tabs, ds.Mean)
+	fmt.Fprintf(&buf, "%v  Max: %v,\n", tabs, ds.Max)
+	fmt.Fprintf(&buf, "%v  Sum: %v,\n", tabs, ds.Sum)
+	fmt.Fprintf(&buf, "%v  CountPerBucket: %v,\n", tabs, ds.CountPerBucket)
+	fmt.Fprintf(&buf, "%v}", tabs)
 	return buf.String()
+}
+
+func (ds *DistributionStats) String() string {
+	return ds.stringWithIndent("")
 }
 
 // newDistributionAggregator creates a distributionAggregator. For a single

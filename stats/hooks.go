@@ -31,7 +31,7 @@ import (
 // a descriptor with the same name was already registered. Statistics for this
 // descriptor will be reported only for views that were registered using the
 // descriptor name.
-var RegisterMeasureDesc func(md *measureDesc) error
+var RegisterMeasureDesc func(md MeasureDesc) error
 
 // UnregisterMeasureDesc deletes a previously registered measureDesc with the
 // same mName. It returns an error if no registered mName can be found with the
@@ -51,7 +51,7 @@ var UnregisterMeasureDesc func(mName string) error
 // responsible for using a buffered channel for anything else than blocking on
 // the channel waiting for the collected view. Limits on the aggregation period
 // can be set by SetCallbackPeriod.
-var RegisterViewDesc func(vd AggregationViewDesc, c chan *View) error
+var RegisterViewDesc func(vd ViewDesc, c chan *View) error
 
 // UnregisterViewDesc deletes a previously registered AggregationViewDesc with
 // the same vwName. It returns an error if no registered AggregationViewDesc
@@ -102,9 +102,18 @@ func init() {
 		uc.recordManyMeasurement(time.Now(), ts, m)
 	}
 
-	RetrieveView = func(name string) []*View {
+	RegisterMeasureDesc = func(md MeasureDesc) error {
+		return uc.registerMeasureDesc(md)
+	}
+
+	RegisterViewDesc = func(vd ViewDesc, c chan *View) error {
+		now := time.Now()
+		return uc.registerViewDesc(vd, now)
+	}
+
+	RetrieveView = func(name string) ([]*View, error) {
 		return uc.retrieveViews(time.Now())
 	}
 }
 
-var RetrieveView func(name string) []*View
+var RetrieveView func(name string) ([]*View, error)

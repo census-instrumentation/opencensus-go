@@ -27,17 +27,21 @@ type GaugeFloat64Stats struct {
 	TimeStamp time.Time
 }
 
-func (gs *GaugeFloat64Stats) String() string {
+func (gs *GaugeFloat64Stats) stringWithIndent(tabs string) string {
 	if gs == nil {
 		return "nil"
 	}
 
 	var buf bytes.Buffer
-	buf.WriteString("  GaugeFloat64Stats{\n")
-	fmt.Fprintf(&buf, "    Value: %v,\n", gs.Value)
-	fmt.Fprintf(&buf, "    TimeStamp: %v,\n", gs.TimeStamp)
-	buf.WriteString("  }")
+	fmt.Fprintf(&buf, "%T {\n", gs)
+	fmt.Fprintf(&buf, "%v  Value: %v,\n", tabs, gs.Value)
+	fmt.Fprintf(&buf, "%v  TimeStamp: %v,\n", tabs, gs.TimeStamp)
+	fmt.Fprintf(&buf, "%v}", tabs)
 	return buf.String()
+}
+
+func (gs *GaugeFloat64Stats) String() string {
+	return gs.stringWithIndent("")
 }
 
 // newGaugeAggregatorFloat64 creates a gaugeAggregator of type float64. For a

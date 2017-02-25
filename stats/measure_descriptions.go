@@ -19,6 +19,7 @@ type MeasureDesc interface {
 	Meta() *measureDesc
 }
 
+// measureDescFloat64 represents a measure description of type float64.
 type measureDescFloat64 struct {
 	*measureDesc
 }
@@ -29,7 +30,7 @@ func NewMeasureDescFloat64(name string, description string, unit *MeasurementUni
 			name:         name,
 			description:  description,
 			unit:         unit,
-			aggViewDescs: make(map[AggregationViewDesc]struct{}),
+			aggViewDescs: make(map[ViewDesc]struct{}),
 		},
 	}
 }
@@ -45,6 +46,7 @@ func (md *measureDescFloat64) CreateMeasurement(v float64) Measurement {
 	}
 }
 
+// measureDescInt64 represents a measure description of type int64.
 type measureDescInt64 struct {
 	*measureDesc
 }
@@ -55,7 +57,7 @@ func NewMeasureDescInt64(name string, description string, unit *MeasurementUnit)
 			name:         name,
 			description:  description,
 			unit:         unit,
-			aggViewDescs: make(map[AggregationViewDesc]struct{}),
+			aggViewDescs: make(map[ViewDesc]struct{}),
 		},
 	}
 }
@@ -66,6 +68,60 @@ func (md *measureDescInt64) Meta() *measureDesc {
 
 func (md *measureDescInt64) CreateMeasurement(v int64) Measurement {
 	return &measurementInt64{
+		md: md,
+		v:  v,
+	}
+}
+
+// measureDescBool represents a measure description of type bool.
+type measureDescBool struct {
+	*measureDesc
+}
+
+func NewMeasureDescBool(name string, description string, unit *MeasurementUnit) *measureDescBool {
+	return &measureDescBool{
+		&measureDesc{
+			name:         name,
+			description:  description,
+			unit:         unit,
+			aggViewDescs: make(map[ViewDesc]struct{}),
+		},
+	}
+}
+
+func (md *measureDescBool) Meta() *measureDesc {
+	return md.measureDesc
+}
+
+func (md *measureDescBool) CreateMeasurement(v bool) Measurement {
+	return &measurementBool{
+		md: md,
+		v:  v,
+	}
+}
+
+// measureDescString represents a measure description of type string.
+type measureDescString struct {
+	*measureDesc
+}
+
+func NewMeasureDescString(name string, description string, unit *MeasurementUnit) *measureDescString {
+	return &measureDescString{
+		&measureDesc{
+			name:         name,
+			description:  description,
+			unit:         unit,
+			aggViewDescs: make(map[ViewDesc]struct{}),
+		},
+	}
+}
+
+func (md *measureDescString) Meta() *measureDesc {
+	return md.measureDesc
+}
+
+func (md *measureDescString) CreateMeasurement(v string) Measurement {
+	return &measurementString{
 		md: md,
 		v:  v,
 	}
@@ -82,7 +138,7 @@ type measureDesc struct {
 	// Example are CPU profile ticks, Disk I/O, Disk usage in usecs...
 	description  string
 	unit         *MeasurementUnit
-	aggViewDescs map[AggregationViewDesc]struct{}
+	aggViewDescs map[ViewDesc]struct{}
 }
 
 func (md *measureDesc) Name() string {

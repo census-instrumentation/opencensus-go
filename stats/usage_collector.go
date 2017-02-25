@@ -24,13 +24,13 @@ import (
 
 type usageCollector struct {
 	mDescriptors map[string]MeasureDesc
-	vDescriptors map[string]AggregationViewDesc
+	vDescriptors map[string]ViewDesc
 }
 
 func newUsageCollector() *usageCollector {
 	return &usageCollector{
 		mDescriptors: make(map[string]MeasureDesc),
-		vDescriptors: make(map[string]AggregationViewDesc),
+		vDescriptors: make(map[string]ViewDesc),
 	}
 }
 
@@ -60,7 +60,7 @@ func (uc *usageCollector) unregisterMeasureDesc(mName string) error {
 	return nil
 }
 
-func (uc *usageCollector) registerViewDesc(avd AggregationViewDesc, now time.Time) error {
+func (uc *usageCollector) registerViewDesc(avd ViewDesc, now time.Time) error {
 	vd := avd.viewDesc()
 	md, ok := uc.mDescriptors[vd.MeasureDescName]
 	if !ok {
@@ -183,7 +183,7 @@ func (uc *usageCollector) recordManyMeasurement(now time.Time, ts tagging.TagsSe
 	return nil
 }
 
-func (uc *usageCollector) add(start, now time.Time, signatures map[string]aggregator, sig string, avd AggregationViewDesc, m Measurement) error {
+func (uc *usageCollector) add(start, now time.Time, signatures map[string]aggregator, sig string, avd ViewDesc, m Measurement) error {
 	agg, found := signatures[sig]
 	if !found {
 		var err error
@@ -197,20 +197,21 @@ func (uc *usageCollector) add(start, now time.Time, signatures map[string]aggreg
 	return nil
 }
 
-func (uc *usageCollector) retrieveViews(now time.Time) []*View {
+func (uc *usageCollector) retrieveViews(now time.Time) ([]*View, error) {
 	var views []*View
 	for _, avd := range uc.vDescriptors {
 		vw, err := avd.retrieveView(now)
 		if err != nil {
 			//// TODO(iamm2) log error fmt.Errorf("error retrieving view for view description %v. %v", *vd, err)
+			return nil, err
 		}
 
 		views = append(views, vw)
 	}
-	return views
+	return views, nil
 }
 
-func (uc *usageCollector) retrieveView(now time.Time, avd AggregationViewDesc) (*View, error) {
+func (uc *usageCollector) retrieveView(now time.Time, avd ViewDesc) (*View, error) {
 	vd := avd.viewDesc()
 
 	tmp, ok := uc.vDescriptors[vd.Name]

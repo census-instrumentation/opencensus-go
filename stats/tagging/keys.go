@@ -15,6 +15,8 @@
 
 package tagging
 
+import "fmt"
+
 // Key is the interface for all key types.
 type Key interface {
 	Name() string
@@ -46,6 +48,10 @@ func (ks *keyString) createTag(s string) *tagString {
 	}
 }
 
+func (ks *keyString) String() string {
+	return fmt.Sprintf("%T:'%s'", ks, ks.name)
+}
+
 // keyBool is implementation for keys which values are of type bool.
 type keyBool struct {
 	name string
@@ -72,6 +78,10 @@ func (kb *keyBool) createTag(b bool) *tagBool {
 	}
 }
 
+func (kb *keyBool) String() string {
+	return fmt.Sprintf("%T:'%s'", kb, kb.name)
+}
+
 // keyInt64 is implementation for keys which values are of type int64.
 type keyInt64 struct {
 	name string
@@ -82,13 +92,14 @@ func (ki *keyInt64) Name() string {
 }
 
 func (ki *keyInt64) CreateMutation(v int64, mb MutationBehavior) *mutationInt64 {
-	return &mutationInt64{
+	mu := &mutationInt64{
 		tagInt64: &tagInt64{
 			keyInt64: ki,
 			v:        v,
 		},
 		behavior: mb,
 	}
+	return mu
 }
 
 func (ki *keyInt64) createTag(i int64) *tagInt64 {
@@ -96,6 +107,10 @@ func (ki *keyInt64) createTag(i int64) *tagInt64 {
 		keyInt64: ki,
 		v:        i,
 	}
+}
+
+func (ki *keyInt64) String() string {
+	return fmt.Sprintf("%T:'%s'", ki, ki.name)
 }
 
 // KeyType defines the types of keys allowed.

@@ -27,17 +27,21 @@ type GaugeBoolStats struct {
 	TimeStamp time.Time
 }
 
-func (gs *GaugeBoolStats) String() string {
+func (gs *GaugeBoolStats) stringWithIndent(tabs string) string {
 	if gs == nil {
 		return "nil"
 	}
 
 	var buf bytes.Buffer
-	buf.WriteString("  GaugeBoolStats{\n")
-	fmt.Fprintf(&buf, "    Value: %v,\n", gs.Value)
-	fmt.Fprintf(&buf, "    TimeStamp: %v,\n", gs.TimeStamp)
-	buf.WriteString("  }")
+	fmt.Fprintf(&buf, "%T {\n", gs)
+	fmt.Fprintf(&buf, "%v  Value: %v,\n", tabs, gs.Value)
+	fmt.Fprintf(&buf, "%v  TimeStamp: %v,\n", tabs, gs.TimeStamp)
+	fmt.Fprintf(&buf, "%v}", tabs)
 	return buf.String()
+}
+
+func (gs *GaugeBoolStats) String() string {
+	return gs.stringWithIndent("")
 }
 
 // newGaugeAggregatorBool creates a gaugeAggregator of type bool. For a single

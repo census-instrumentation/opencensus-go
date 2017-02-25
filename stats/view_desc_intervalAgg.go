@@ -24,7 +24,7 @@ import (
 )
 
 // IntervalAggViewDesc holds the parameters describing an interval aggregation.
-type IntervalAggViewDesc struct {
+type IntervalViewDesc struct {
 	*ViewDescCommon
 
 	// Number of internal sub-intervals to use when collecting stats for each
@@ -41,39 +41,39 @@ type IntervalAggViewDesc struct {
 	Intervals []time.Duration
 }
 
-func (id *IntervalAggViewDesc) createAggregator(t time.Time) (aggregator, error) {
+func (id *IntervalViewDesc) createAggregator(t time.Time) (aggregator, error) {
 	return newIntervalsAggregator(t, id.Intervals, id.SubIntervals), nil
 }
 
-func (id *IntervalAggViewDesc) retrieveView(now time.Time) (*View, error) {
+func (id *IntervalViewDesc) retrieveView(now time.Time) (*View, error) {
 	iav, err := id.retrieveAggreationView(now)
 	if err != nil {
 		return nil, err
 	}
 	return &View{
-		AggregationViewDesc: id,
-		ViewAgg:             iav,
+		ViewDesc: id,
+		ViewAgg:  iav,
 	}, nil
 }
 
-func (id *IntervalAggViewDesc) viewDesc() *ViewDescCommon {
+func (id *IntervalViewDesc) viewDesc() *ViewDescCommon {
 	return id.ViewDescCommon
 }
 
-func (id *IntervalAggViewDesc) isValid() error {
+func (id *IntervalViewDesc) isValid() error {
 	if id.SubIntervals < 2 || id.SubIntervals < 20 {
 		return fmt.Errorf("%v error. subIntervals is not in [2,20]", id)
 	}
 	return nil
 }
 
-func (id *IntervalAggViewDesc) retrieveAggreationView(now time.Time) (*IntervalAggView, error) {
+func (id *IntervalViewDesc) retrieveAggreationView(now time.Time) (*IntervalAggView, error) {
 	var aggs []*IntervalAgg
 
 	for sig, a := range id.signatures {
 		tags, err := tagging.TagsFromValuesSignature([]byte(sig), id.TagKeys)
 		if err != nil {
-			return nil, fmt.Errorf("malformed signature %v", sig)
+			return nil, fmt.Errorf("malformed signature '%v'. %v", sig, err)
 		}
 		aggregator, ok := a.(*intervalsAggregator)
 		if !ok {
@@ -92,11 +92,51 @@ func (id *IntervalAggViewDesc) retrieveAggreationView(now time.Time) (*IntervalA
 	}, nil
 }
 
+func (id *IntervalViewDesc) stringWithIndent(tabs string) string {
+	if id == nil {
+		return "nil"
+	}
+	vd := id.ViewDescCommon
+	var buf bytes.Buffer
+	fmt.Fprintf(&buf, "%T {\n", id)
+	fmt.Fprintf(&buf, "%v  Name: %v,\n", tabs, vd.Name)
+	fmt.Fprintf(&buf, "%v  Description: %v,\n", tabs, vd.Description)
+	fmt.Fprintf(&buf, "%v  MeasureDescName: %v,\n", tabs, vd.MeasureDescName)
+	fmt.Fprintf(&buf, "%v  TagKeys: %v,\n", tabs, vd.TagKeys)
+	fmt.Fprintf(&buf, "%v  Intervals: %v,\n", tabs, id.Intervals)
+	fmt.Fprintf(&buf, "%v}", tabs)
+	return buf.String()
+}
+
+func (id *IntervalViewDesc) String() string {
+	return id.stringWithIndent("")
+}
+
 // IntervalAggView is the set of collected IntervalAgg associated with
 // ViewDesc.
 type IntervalAggView struct {
-	Descriptor   *IntervalAggViewDesc
+	Descriptor   *IntervalViewDesc
 	Aggregations []*IntervalAgg
+}
+
+func (iv *IntervalAggView) stringWithIndent(tabs string) string {
+	if iv == nil {
+		return "nil"
+	}
+
+	tabs2 := tabs + "    "
+	var buf bytes.Buffer
+	fmt.Fprintf(&buf, "%T {\n", iv)
+	fmt.Fprintf(&buf, "%v  Aggregations:\n", tabs)
+	for _, agg := range iv.Aggregations {
+		fmt.Fprintf(&buf, "%v%v,\n", tabs2, agg.stringWithIndent(tabs2))
+	}
+	fmt.Fprintf(&buf, "%v}", tabs)
+	return buf.String()
+}
+
+func (iv *IntervalAggView) String() string {
+	return iv.stringWithIndent("")
 }
 
 // IntervalAgg is a statistical summary of measures associated with a unique
@@ -106,44 +146,24 @@ type IntervalAgg struct {
 	Tags          []tagging.Tag
 }
 
-func (id *IntervalAggViewDesc) String() string {
-	if id == nil {
-		return "nil"
-	}
-	vd := id.ViewDescCommon
-	var buf bytes.Buffer
-	buf.WriteString("  viewDesc{\n")
-	fmt.Fprintf(&buf, "    Name: %v,\n", vd.Name)
-	fmt.Fprintf(&buf, "    Description: %v,\n", vd.Description)
-	fmt.Fprintf(&buf, "    MeasureDescName: %v,\n", vd.MeasureDescName)
-	fmt.Fprintf(&buf, "    TagKeys: %v,\n", vd.TagKeys)
-	fmt.Fprintf(&buf, "    Intervals: %v,\n", id.Intervals)
-	buf.WriteString("    },\n")
-	buf.WriteString("  }")
-	return buf.String()
-}
-
-func (iv *IntervalAggView) String() string {
-	if iv == nil {
-		return "nil"
-	}
-
-	var buf bytes.Buffer
-	buf.WriteString("  viewAgg{\n")
-	fmt.Fprintf(&buf, "    Aggregations: %v,\n", iv.Aggregations)
-	buf.WriteString("  }")
-	return buf.String()
-}
-
-func (ia *IntervalAgg) String() string {
+func (ia *IntervalAgg) stringWithIndent(tabs string) string {
 	if ia == nil {
 		return "nil"
 	}
 
+	tabs2 := tabs + "  "
 	var buf bytes.Buffer
-	buf.WriteString("  IntervalAgg{\n")
-	fmt.Fprintf(&buf, "    Aggregations: %v,\n", ia.IntervalStats)
-	fmt.Fprintf(&buf, "    Tags: %v,\n", ia.Tags)
-	buf.WriteString("  }")
+	fmt.Fprintf(&buf, "%T {\n", ia)
+
+	fmt.Fprintf(&buf, "%v  IntervalStats:\n", tabs)
+	for _, is := range ia.IntervalStats {
+		fmt.Fprintf(&buf, "%v%v,\n", tabs2, is.stringWithIndent(tabs2))
+	}
+	fmt.Fprintf(&buf, "%v  Tags: %v,\n", tabs, ia.Tags)
+	fmt.Fprintf(&buf, "%v}", tabs)
 	return buf.String()
+}
+
+func (ia *IntervalAgg) String() string {
+	return ia.stringWithIndent("")
 }

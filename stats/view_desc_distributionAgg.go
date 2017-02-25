@@ -25,7 +25,7 @@ import (
 
 // DistributionAggViewDesc holds the parameters describing an aggregation
 // distribution..
-type DistributionAggViewDesc struct {
+type DistributionViewDesc struct {
 	*ViewDescCommon
 
 	// An aggregation distribution may contain a histogram of the values in the
@@ -46,26 +46,26 @@ type DistributionAggViewDesc struct {
 	Bounds []float64
 }
 
-func (dd *DistributionAggViewDesc) createAggregator(t time.Time) (aggregator, error) {
+func (dd *DistributionViewDesc) createAggregator(t time.Time) (aggregator, error) {
 	return newDistributionAggregator(dd.Bounds), nil
 }
 
-func (dd *DistributionAggViewDesc) retrieveView(now time.Time) (*View, error) {
+func (dd *DistributionViewDesc) retrieveView(now time.Time) (*View, error) {
 	dav, err := dd.retrieveAggreationView(now)
 	if err != nil {
 		return nil, err
 	}
 	return &View{
-		AggregationViewDesc: dd,
-		ViewAgg:             dav,
+		ViewDesc: dd,
+		ViewAgg:  dav,
 	}, nil
 }
 
-func (dd *DistributionAggViewDesc) viewDesc() *ViewDescCommon {
+func (dd *DistributionViewDesc) viewDesc() *ViewDescCommon {
 	return dd.ViewDescCommon
 }
 
-func (dd *DistributionAggViewDesc) isValid() error {
+func (dd *DistributionViewDesc) isValid() error {
 	for i := 1; i < len(dd.Bounds); i++ {
 		if dd.Bounds[i-1] >= dd.Bounds[i] {
 			return fmt.Errorf("%v error. bounds are not increasing", dd)
@@ -74,13 +74,13 @@ func (dd *DistributionAggViewDesc) isValid() error {
 	return nil
 }
 
-func (dd *DistributionAggViewDesc) retrieveAggreationView(t time.Time) (*DistributionAggView, error) {
+func (dd *DistributionViewDesc) retrieveAggreationView(t time.Time) (*DistributionAggView, error) {
 	var aggs []*DistributionAgg
 
 	for sig, a := range dd.signatures {
 		tags, err := tagging.TagsFromValuesSignature([]byte(sig), dd.TagKeys)
 		if err != nil {
-			return nil, fmt.Errorf("malformed signature %v", sig)
+			return nil, fmt.Errorf("malformed signature '%v'. %v", sig, err)
 		}
 		aggregator, ok := a.(*distributionAggregator)
 		if !ok {
@@ -101,12 +101,54 @@ func (dd *DistributionAggViewDesc) retrieveAggreationView(t time.Time) (*Distrib
 	}, nil
 }
 
+func (dd *DistributionViewDesc) stringWithIndent(tabs string) string {
+	if dd == nil {
+		return "nil"
+	}
+
+	var buf bytes.Buffer
+	fmt.Fprintf(&buf, "%T {\n", dd)
+	fmt.Fprintf(&buf, "%v  Name: %v,\n", tabs, dd.Name)
+	fmt.Fprintf(&buf, "%v  Description: %v,\n", tabs, dd.Description)
+	fmt.Fprintf(&buf, "%v  MeasureDescName: %v,\n", tabs, dd.MeasureDescName)
+	fmt.Fprintf(&buf, "%v  TagKeys: %v,\n", tabs, dd.TagKeys)
+	fmt.Fprintf(&buf, "%v  Bound: %v,\n", tabs, dd.Bounds)
+	fmt.Fprintf(&buf, "%v}", tabs)
+	return buf.String()
+}
+
+func (dd *DistributionViewDesc) String() string {
+	return dd.stringWithIndent("")
+}
+
 // DistributionAggView is the set of collected DistributionAgg associated with
 // ViewDesc.
 type DistributionAggView struct {
-	Descriptor   *DistributionAggViewDesc
+	Descriptor   *DistributionViewDesc
 	Aggregations []*DistributionAgg
 	Start, End   time.Time // start is time when ViewDesc was registered.
+}
+
+func (dv *DistributionAggView) stringWithIndent(tabs string) string {
+	if dv == nil {
+		return "nil"
+	}
+
+	tabs2 := tabs + "    "
+	var buf bytes.Buffer
+	fmt.Fprintf(&buf, "%T {\n", dv)
+	fmt.Fprintf(&buf, "%v  Start: %v,\n", tabs, dv.Start)
+	fmt.Fprintf(&buf, "%v  End: %v,\n", tabs, dv.End)
+	fmt.Fprintf(&buf, "%v  Aggregations:\n", tabs)
+	for _, agg := range dv.Aggregations {
+		fmt.Fprintf(&buf, "%v%v,\n", tabs2, agg.stringWithIndent(tabs2))
+	}
+	fmt.Fprintf(&buf, "%v}", tabs)
+	return buf.String()
+}
+
+func (dv *DistributionAggView) String() string {
+	return dv.stringWithIndent("")
 }
 
 // An DistributionAgg is a statistical summary of measures associated with a
@@ -116,46 +158,20 @@ type DistributionAgg struct {
 	Tags []tagging.Tag
 }
 
-func (dd *DistributionAggViewDesc) String() string {
-	if dd == nil {
-		return "nil"
-	}
-	vd := dd.ViewDescCommon
-	var buf bytes.Buffer
-	buf.WriteString("  viewDesc{\n")
-	fmt.Fprintf(&buf, "    Name: %v,\n", vd.Name)
-	fmt.Fprintf(&buf, "    Description: %v,\n", vd.Description)
-	fmt.Fprintf(&buf, "    MeasureDescName: %v,\n", vd.MeasureDescName)
-	fmt.Fprintf(&buf, "    TagKeys: %v,\n", vd.TagKeys)
-	fmt.Fprintf(&buf, "    Bound: %v,\n", dd.Bounds)
-	buf.WriteString("    },\n")
-	buf.WriteString("  }")
-	return buf.String()
-}
-
-func (dv *DistributionAggView) String() string {
-	if dv == nil {
-		return "nil"
-	}
-
-	var buf bytes.Buffer
-	buf.WriteString("  viewAgg{\n")
-	fmt.Fprintf(&buf, "    Start: %v,\n", dv.Start)
-	fmt.Fprintf(&buf, "    End: %v,\n", dv.End)
-	fmt.Fprintf(&buf, "    Aggregations: %v,\n", dv.Aggregations)
-	buf.WriteString("  }")
-	return buf.String()
-}
-
-func (da *DistributionAgg) String() string {
+func (da *DistributionAgg) stringWithIndent(tabs string) string {
 	if da == nil {
 		return "nil"
 	}
 
+	tabs2 := tabs + "  "
 	var buf bytes.Buffer
-	buf.WriteString("  DistributionAgg{\n")
-	fmt.Fprintf(&buf, "    Aggregations: %v,\n", da.DistributionStats)
-	fmt.Fprintf(&buf, "    Tags: %v,\n", da.Tags)
-	buf.WriteString("  }")
+	fmt.Fprintf(&buf, "%T {\n", da)
+	fmt.Fprintf(&buf, "%v  Aggregations: %v,\n", tabs, da.DistributionStats.stringWithIndent(tabs2))
+	fmt.Fprintf(&buf, "%v  Tags: %v,\n", tabs, da.Tags)
+	fmt.Fprintf(&buf, "%v}", tabs)
 	return buf.String()
+}
+
+func (da *DistributionAgg) String() string {
+	return da.stringWithIndent("")
 }
