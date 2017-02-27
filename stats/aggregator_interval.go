@@ -68,7 +68,7 @@ func (ia *intervalsAggregator) addSample(m Measurement, now time.Time) {
 		b.moveToCurrentEntry(now)
 		e := b.entries[b.idx]
 		e.count++
-		e.sum += m.float64()
+		e.sum += m.(*measurementFloat64).v
 	}
 }
 

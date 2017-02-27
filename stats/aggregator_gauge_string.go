@@ -58,7 +58,8 @@ type gaugeAggregatorString struct {
 }
 
 func (ga *gaugeAggregatorString) addSample(m Measurement, now time.Time) {
-	ga.gs.Value = m.string()
+
+	ga.gs.Value = m.(*measurementString).v
 	ga.gs.TimeStamp = now
 }
 

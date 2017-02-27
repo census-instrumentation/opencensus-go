@@ -51,7 +51,7 @@ func (gd *GaugeBoolViewDesc) isValid() error {
 	return nil
 }
 
-func (gd *GaugeBoolViewDesc) retrieveAggreationView(t time.Time) (*GaugeBoolAggView, error) {
+func (gd *GaugeBoolViewDesc) retrieveAggreationView(t time.Time) (*GaugeBoolView, error) {
 	var aggs []*GaugeBoolAgg
 
 	for sig, a := range gd.signatures {
@@ -70,7 +70,7 @@ func (gd *GaugeBoolViewDesc) retrieveAggreationView(t time.Time) (*GaugeBoolAggV
 		aggs = append(aggs, ga)
 	}
 
-	return &GaugeBoolAggView{
+	return &GaugeBoolView{
 		Descriptor:   gd,
 		Aggregations: aggs,
 	}, nil
@@ -95,14 +95,14 @@ func (gd *GaugeBoolViewDesc) String() string {
 	return gd.stringWithIndent("")
 }
 
-// GaugeBoolAggView is the set of collected GaugeBoolAgg associated with
+// GaugeBoolView is the set of collected GaugeBoolAgg associated with
 // ViewDesc.
-type GaugeBoolAggView struct {
+type GaugeBoolView struct {
 	Descriptor   *GaugeBoolViewDesc
 	Aggregations []*GaugeBoolAgg
 }
 
-func (gv *GaugeBoolAggView) stringWithIndent(tabs string) string {
+func (gv *GaugeBoolView) stringWithIndent(tabs string) string {
 	if gv == nil {
 		return "nil"
 	}
@@ -118,7 +118,7 @@ func (gv *GaugeBoolAggView) stringWithIndent(tabs string) string {
 	return buf.String()
 }
 
-func (gv *GaugeBoolAggView) String() string {
+func (gv *GaugeBoolView) String() string {
 	return gv.stringWithIndent("")
 }
 

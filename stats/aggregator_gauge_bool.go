@@ -58,7 +58,7 @@ type gaugeAggregatorBool struct {
 }
 
 func (ga *gaugeAggregatorBool) addSample(m Measurement, now time.Time) {
-	ga.gs.Value = m.bool()
+	ga.gs.Value = m.(*measurementBool).v
 	ga.gs.TimeStamp = now
 }
 

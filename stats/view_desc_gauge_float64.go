@@ -51,7 +51,7 @@ func (gd *GaugeFloat64ViewDesc) isValid() error {
 	return nil
 }
 
-func (gd *GaugeFloat64ViewDesc) retrieveAggreationView(t time.Time) (*GaugeFloat64AggView, error) {
+func (gd *GaugeFloat64ViewDesc) retrieveAggreationView(t time.Time) (*GaugeFloat64View, error) {
 	var aggs []*GaugeFloat64Agg
 
 	for sig, a := range gd.signatures {
@@ -70,7 +70,7 @@ func (gd *GaugeFloat64ViewDesc) retrieveAggreationView(t time.Time) (*GaugeFloat
 		aggs = append(aggs, ga)
 	}
 
-	return &GaugeFloat64AggView{
+	return &GaugeFloat64View{
 		Descriptor:   gd,
 		Aggregations: aggs,
 	}, nil
@@ -95,14 +95,14 @@ func (gd *GaugeFloat64ViewDesc) String() string {
 	return gd.stringWithIndent("")
 }
 
-// GaugeFloat64AggView is the set of collected GaugeFloat64Agg associated with
+// GaugeFloat64View is the set of collected GaugeFloat64Agg associated with
 // ViewDesc.
-type GaugeFloat64AggView struct {
+type GaugeFloat64View struct {
 	Descriptor   *GaugeFloat64ViewDesc
 	Aggregations []*GaugeFloat64Agg
 }
 
-func (gv *GaugeFloat64AggView) stringWithIndent(tabs string) string {
+func (gv *GaugeFloat64View) stringWithIndent(tabs string) string {
 	if gv == nil {
 		return "nil"
 	}
@@ -118,7 +118,7 @@ func (gv *GaugeFloat64AggView) stringWithIndent(tabs string) string {
 	return buf.String()
 }
 
-func (gv *GaugeFloat64AggView) String() string {
+func (gv *GaugeFloat64View) String() string {
 	return gv.stringWithIndent("")
 }
 

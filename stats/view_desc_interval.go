@@ -23,7 +23,7 @@ import (
 	"github.com/google/instrumentation-go/stats/tagging"
 )
 
-// IntervalAggViewDesc holds the parameters describing an interval aggregation.
+// IntervalViewDesc holds the parameters describing an interval aggregation.
 type IntervalViewDesc struct {
 	*ViewDescCommon
 
@@ -67,7 +67,7 @@ func (id *IntervalViewDesc) isValid() error {
 	return nil
 }
 
-func (id *IntervalViewDesc) retrieveAggreationView(now time.Time) (*IntervalAggView, error) {
+func (id *IntervalViewDesc) retrieveAggreationView(now time.Time) (*IntervalView, error) {
 	var aggs []*IntervalAgg
 
 	for sig, a := range id.signatures {
@@ -86,7 +86,7 @@ func (id *IntervalViewDesc) retrieveAggreationView(now time.Time) (*IntervalAggV
 		aggs = append(aggs, ia)
 	}
 
-	return &IntervalAggView{
+	return &IntervalView{
 		Descriptor:   id,
 		Aggregations: aggs,
 	}, nil
@@ -112,14 +112,14 @@ func (id *IntervalViewDesc) String() string {
 	return id.stringWithIndent("")
 }
 
-// IntervalAggView is the set of collected IntervalAgg associated with
+// IntervalView is the set of collected IntervalAgg associated with
 // ViewDesc.
-type IntervalAggView struct {
+type IntervalView struct {
 	Descriptor   *IntervalViewDesc
 	Aggregations []*IntervalAgg
 }
 
-func (iv *IntervalAggView) stringWithIndent(tabs string) string {
+func (iv *IntervalView) stringWithIndent(tabs string) string {
 	if iv == nil {
 		return "nil"
 	}
@@ -135,7 +135,7 @@ func (iv *IntervalAggView) stringWithIndent(tabs string) string {
 	return buf.String()
 }
 
-func (iv *IntervalAggView) String() string {
+func (iv *IntervalView) String() string {
 	return iv.stringWithIndent("")
 }
 

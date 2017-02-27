@@ -191,7 +191,7 @@ func main() {
 
 	// Retrieve Views
 	for i, v := range views {
-		fmt.Printf("%v -->\n%v\n", i, v)
+		fmt.Printf("%v -->\n%v\n", i+1, v)
 	}
 	// Retrieve Views
 	/*go func(c chan *stats.View) {

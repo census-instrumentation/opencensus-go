@@ -23,7 +23,7 @@ import (
 	"github.com/google/instrumentation-go/stats/tagging"
 )
 
-// DistributionAggViewDesc holds the parameters describing an aggregation
+// DistributionViewDesc holds the parameters describing an aggregation
 // distribution..
 type DistributionViewDesc struct {
 	*ViewDescCommon
@@ -74,7 +74,7 @@ func (dd *DistributionViewDesc) isValid() error {
 	return nil
 }
 
-func (dd *DistributionViewDesc) retrieveAggreationView(t time.Time) (*DistributionAggView, error) {
+func (dd *DistributionViewDesc) retrieveAggreationView(t time.Time) (*DistributionView, error) {
 	var aggs []*DistributionAgg
 
 	for sig, a := range dd.signatures {
@@ -93,7 +93,7 @@ func (dd *DistributionViewDesc) retrieveAggreationView(t time.Time) (*Distributi
 		aggs = append(aggs, da)
 	}
 
-	return &DistributionAggView{
+	return &DistributionView{
 		Descriptor:   dd,
 		Aggregations: aggs,
 		Start:        dd.start,
@@ -121,15 +121,15 @@ func (dd *DistributionViewDesc) String() string {
 	return dd.stringWithIndent("")
 }
 
-// DistributionAggView is the set of collected DistributionAgg associated with
+// DistributionView is the set of collected DistributionAgg associated with
 // ViewDesc.
-type DistributionAggView struct {
+type DistributionView struct {
 	Descriptor   *DistributionViewDesc
 	Aggregations []*DistributionAgg
 	Start, End   time.Time // start is time when ViewDesc was registered.
 }
 
-func (dv *DistributionAggView) stringWithIndent(tabs string) string {
+func (dv *DistributionView) stringWithIndent(tabs string) string {
 	if dv == nil {
 		return "nil"
 	}
@@ -147,7 +147,7 @@ func (dv *DistributionAggView) stringWithIndent(tabs string) string {
 	return buf.String()
 }
 
-func (dv *DistributionAggView) String() string {
+func (dv *DistributionView) String() string {
 	return dv.stringWithIndent("")
 }
 

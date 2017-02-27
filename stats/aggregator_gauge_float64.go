@@ -58,7 +58,7 @@ type gaugeAggregatorFloat64 struct {
 }
 
 func (ga *gaugeAggregatorFloat64) addSample(m Measurement, now time.Time) {
-	ga.gs.Value = m.float64()
+	ga.gs.Value = m.(*measurementFloat64).v
 	ga.gs.TimeStamp = now
 }
 

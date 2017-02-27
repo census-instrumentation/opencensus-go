@@ -73,7 +73,7 @@ type distributionAggregator struct {
 }
 
 func (da *distributionAggregator) addSample(m Measurement, _ time.Time) {
-	v := m.float64()
+	v := m.(*measurementFloat64).v
 	if v < da.ds.Min {
 		da.ds.Min = v
 	}
