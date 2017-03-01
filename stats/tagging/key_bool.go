@@ -15,7 +15,10 @@
 
 package tagging
 
-import "fmt"
+import (
+	"bytes"
+	"fmt"
+)
 
 // keyBool is implementation for keys which values are of type bool.
 type keyBool struct {
@@ -36,11 +39,21 @@ func (kb *keyBool) CreateMutation(v bool, mb MutationBehavior) *mutationBool {
 	}
 }
 
-func (kb *keyBool) createTag(b bool) *tagBool {
+func (kb *keyBool) CreateTag(b bool) *tagBool {
 	return &tagBool{
 		keyBool: kb,
 		v:       b,
 	}
+}
+
+func (kb *keyBool) writeKeyToBuffer(dst *bytes.Buffer) {
+	name := kb.Name()
+	dst.WriteByte(byte(keyTypeBool))
+	if len(name) == 0 {
+		dst.Write(int32ToBytes(0))
+	}
+	dst.Write(int32ToBytes(len(name)))
+	dst.Write([]byte(name))
 }
 
 func (kb *keyBool) String() string {

@@ -50,16 +50,14 @@ func (ts TagsSet) ApplyMutations(ms ...Mutation) {
 	}
 }
 
-// TagValuesSignature is of the form (len_value value)*
-type TagValuesSignature []byte
-
-// TagsFullSignature  is of the form (type_value len_key key type_value len_value value)*
-type TagsFullSignature []byte
 
 // TagsFromValuesSignature decodes a []byte signature to a []Tag when the keys
 // are not part of the encoding.
 func TagsFromValuesSignature(bytes TagValuesSignature, keys []Key) ([]Tag, error) {
 	var tags []Tag
+	if len(bytes) == 0 {
+		return tags, nil
+	}
 	idx := int32(0)
 	for _, k := range keys {
 		len, err := lengthFromBytes(bytes[idx:])
@@ -78,26 +76,74 @@ func TagsFromValuesSignature(bytes TagValuesSignature, keys []Key) ([]Tag, error
 				return nil, err
 			}
 			idx += len
-			tags = append(tags, typ.createTag(v))
+			tags = append(tags, typ.CreateTag(v))
 		case *keyInt64:
 			v, err := int64FromBytes(bytes[idx:])
 			if err != nil {
 				return nil, err
 			}
 			idx += 8
-			tags = append(tags, typ.createTag(v))
+			tags = append(tags, typ.CreateTag(v))
 		case *keyBool:
 			v, err := boolFromBytes(bytes[idx:])
 			if err != nil {
 				return nil, err
 			}
 			idx++
-			tags = append(tags, typ.createTag(v))
+			tags = append(tags, typ.CreateTag(v))
 		default:
 			return nil, fmt.Errorf("TagsFromValuesSignature failed. Key type invalid %v", k)
 		}
 	}
 	return tags, nil
+}
+
+// TagsSetFromValuesSignature decodes a []byte signature to a []Tag when the keys
+// are not part of the encoding.
+func TagsSetFromValuesSignature(bytes TagValuesSignature, keys []Key) (TagsSet, error) {
+	var ts TagsSet
+	if len(bytes) == 0 {
+		return ts, nil
+	}
+	ts = make(TagsSet)
+	idx := int32(0)
+	for _, k := range keys {
+		len, err := lengthFromBytes(bytes[idx:])
+		if err != nil {
+			return nil, err
+		}
+		idx += 4
+		if len == 0 {
+			continue
+		}
+
+		switch typ := k.(type) {
+		case *keyString:
+			v, err := stringFromBytes(bytes[idx:], len)
+			if err != nil {
+				return nil, err
+			}
+			idx += len
+			ts[typ] = typ.CreateTag(v)
+		case *keyInt64:
+			v, err := int64FromBytes(bytes[idx:])
+			if err != nil {
+				return nil, err
+			}
+			idx += 8
+			ts[typ] = typ.CreateTag(v)
+		case *keyBool:
+			v, err := boolFromBytes(bytes[idx:])
+			if err != nil {
+				return nil, err
+			}
+			idx++
+			ts[typ] = typ.CreateTag(v)
+		default:
+			return nil, fmt.Errorf("TagsFromValuesSignature failed. Key type invalid %v", k)
+		}
+	}
+	return ts, nil
 }
 
 // TagsToValuesSignature encodes the subset of values corresponding to the
@@ -110,6 +156,7 @@ func (ts TagsSet) TagsToValuesSignature(keys []Key) TagValuesSignature {
 		t, ok := ts[k]
 		if !ok {
 			b.Write(int32ToBytes(0))
+			continue
 		}
 		t.WriteValueToBuffer(&b)
 	}
@@ -122,10 +169,19 @@ func TagsFromFullSignature(fullsig TagsFullSignature) ([]Tag, error) {
 }
 */
 
-/*
-func TagsToFullSignature(tags []Tag) (TagsFullSignature, error) {
+func (ts TagsSet) TagsToFullSignature() TagsFullSignature {
+	var b bytes.Buffer
+	for _, k := range keys {
+		t, ok := ts[k]
+		if !ok {
+			WriteKeyToBuffer(k, &b)
+			b.Write(int32ToBytes(0))
+			continue
+		}
+		t.WriteKeyValueToBuffer(&b)
+	}
+	return b.Bytes()
 }
-*/
 
 /*
 func validateTag(t Tag) error {

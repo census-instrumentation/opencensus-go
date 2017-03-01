@@ -45,6 +45,10 @@ func (md *measureDesc) Unit() *MeasurementUnit {
 	return md.unit
 }
 
+func (md *measureDesc) String() string {
+	return md.name
+}
+
 // MeasurementUnit is the unit of measurement for a resource.
 type MeasurementUnit struct {
 	Power10      int

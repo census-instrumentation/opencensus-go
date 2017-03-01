@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-package stats
+package tagging
 
 import (
 	"fmt"
@@ -26,30 +26,33 @@ import (
 const longKey = "long tag key name that is more than fifty characters for testing puposes"
 const longValue = "long tag value name that is more than fifty characters for testing puposes"
 
-func createTagInstances(keysCount, valuesPerKey int) (tags []Tag) {
+func createMutations(keysCount, valuesPerKey int) (tags []Tag, muts []Mutation) {
 	for i := 0; i < keysCount; i++ {
-		k := fmt.Sprintf("%s%d", "long key name that is more than fifty characters for testing puposes", i)
+		k, _ := DefaultKeyManager().CreateKeyString(fmt.Sprintf("%s%d", "long key name that is more than fifty characters for testing puposes", i))
 		for j := 0; j < valuesPerKey; j++ {
 			v := fmt.Sprintf("%s%d", longValue, j)
-			tags = append(tags, Tag{k, v})
+			tags = append(tags, &tagString{k, v})
+			muts = append(muts, &mutationString{
+				tagString: &tagString{
+					keyString: k,
+					v:         v,
+				},
+				behavior: BehaviorAddOrReplace,
+			})
 		}
 	}
 	return
 }
 
-func createNewContextWithTags(tags []Tag) (context.Context, error) {
+func createNewContextWithMutations(muts []Mutation) (context.Context, error) {
 	ctx := context.Background()
-	for _, tag := range tags {
-		c, err := NewContextWithTags(ctx, tag)
-		if err != nil {
-			return nil, err
-		}
-		ctx = c
+	for _, m := range muts {
+		ctx = NewContextWithMutations(ctx, m)
 	}
 	return ctx, nil
 }
 
-func TestNewContextWithTag(t *testing.T) {
+func TestNewContextWithMutations(t *testing.T) {
 	type newContextTestData struct {
 		keysCount, valuesPerKey int
 	}
@@ -58,175 +61,28 @@ func TestNewContextWithTag(t *testing.T) {
 	testData = append(testData, newContextTestData{100, 1})
 
 	for _, td := range testData {
-		tags := createTagInstances(td.keysCount, td.valuesPerKey)
-		tagmap := make(contextTags)
+		tags, muts := createMutations(td.keysCount, td.valuesPerKey)
+		ts := make(TagsSet)
 		for _, t := range tags {
-			tagmap[t.Key] = t.Value
+			ts[t.Key()] = t
 		}
-
-		ctx, err := createNewContextWithTags(tags)
+		ctx, err := createNewContextWithMutations(muts)
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		v := ctx.Value(censusKey{})
+		v := ctx.Value(ctxKey{})
 		if v == nil {
 			t.Error("context has no census value")
 		}
 
-		if !reflect.DeepEqual(tagmap, v.(contextTags)) {
-			t.Errorf("got: %v. Want: %v", tagmap, v.(contextTags))
+		if !reflect.DeepEqual(ts, v.(TagsSet)) {
+			t.Errorf("\ngot: %v\nwant: %v\n", ts, v.(TagsSet))
 		}
 	}
 }
 
-func TestEncodeDecodeValuesSignature(t *testing.T) {
-	type testData struct {
-		ctxTagSet []Tag
-		keys      []string
-		wantSlice []Tag
-	}
-
-	testSet := []testData{
-		{
-			[]Tag{},
-			[]string{},
-			nil,
-		},
-		{
-			[]Tag{},
-			[]string{"k1"},
-			nil,
-		},
-		{
-			[]Tag{{"k2", "v2"}},
-			[]string{"k1"},
-			nil,
-		},
-		{
-			[]Tag{{"k2", "v2"}},
-			[]string{"k2"},
-			[]Tag{{"k2", "v2"}},
-		},
-		{
-			[]Tag{{"k1", "v1"}, {"k2", "v2"}},
-			[]string{"k1"},
-			[]Tag{{"k1", "v1"}},
-		},
-		{
-			[]Tag{{"k2", "v2"}, {"k1", "v1"}},
-			[]string{"k1"},
-			[]Tag{{"k1", "v1"}},
-		},
-		{
-			[]Tag{{"k1", "v1"}, {"k2", "v2"}, {"k3", "v3"}},
-			[]string{"k3", "k1"},
-			[]Tag{{"k3", "v3"}, {"k1", "v1"}},
-		},
-	}
-
-	for _, td := range testSet {
-
-		ct, err := newContextTags(nil, td.ctxTagSet...)
-		if err != nil {
-
-		}
-
-		encoded := ct.encodeToValuesSignature(td.keys)
-
-		decodedSlice, err := decodeFromValuesSignatureToSlice([]byte(encoded), td.keys)
-		if err != nil {
-			t.Errorf("got error %v, want no error when decoding to slice encoded %v", err, td)
-		}
-
-		if !reflect.DeepEqual(decodedSlice, td.wantSlice) {
-			t.Errorf("got %v, want %v when decoding to slice encoded %v", decodedSlice, td.wantSlice, td)
-		}
-
-		decodedMap, err := decodeFromValuesSignatureToMap([]byte(encoded), td.keys)
-		if err != nil {
-			t.Errorf("got error %v while decoding to map encoded %v, want no error", err, td)
-		}
-
-		if len(decodedSlice) != len(decodedMap) {
-			t.Errorf("got len(decodedSlice) %v different than len(decodedMap) %v, want them equal when decoding %v", decodedSlice, decodedMap, td)
-		}
-
-		for _, tag := range decodedSlice {
-			v, ok := decodedMap[tag.Key]
-			if !ok {
-				t.Errorf("got key %v in decodedSlice not found in decodedMap %v , want them equivalent when decoding %v", tag.Key, decodedMap, td)
-			}
-			if v != tag.Value {
-				t.Errorf("got %v in decodedSlice different than in decodedMap %v for key %v, want the same when decoding %v", tag.Value, v, tag.Key, td)
-			}
-		}
-	}
-}
-
-func TestEncodeDecodeFullSignature(t *testing.T) {
-	type testData struct {
-		ctxTagSet []Tag
-		wantSlice []Tag
-	}
-
-	testSet := []testData{
-		{
-			[]Tag{},
-			nil,
-		},
-		{
-			[]Tag{{"k1", "v1"}},
-			[]Tag{{"k1", "v1"}},
-		},
-		{
-			[]Tag{{"k1", "v1"}, {"k2", "v2"}},
-			[]Tag{{"k1", "v1"}, {"k2", "v2"}},
-		},
-		{
-			[]Tag{{"k3", "v3"}, {"k2", "v2"}, {"k1", "v1"}},
-			[]Tag{{"k1", "v1"}, {"k2", "v2"}, {"k3", "v3"}},
-		},
-	}
-
-	for _, td := range testSet {
-
-		ct, err := newContextTags(nil, td.ctxTagSet...)
-		if err != nil {
-
-		}
-
-		encoded := ct.encodeToFullSignature()
-
-		decodedSlice, err := decodeFromFullSignatureToSlice([]byte(encoded))
-		if err != nil {
-			t.Errorf("got error %v, want no error when decoding to slice encoded %v", err, td)
-		}
-
-		if !reflect.DeepEqual(decodedSlice, td.wantSlice) {
-			t.Errorf("got %v, want %v when decoding to slice encoded %v", decodedSlice, td.wantSlice, td)
-		}
-
-		decodedMap, err := decodeFromFullSignatureToMap([]byte(encoded))
-		if err != nil {
-			t.Errorf("got error %v while decoding to map encoded %v, want no error", err, td)
-		}
-
-		if len(decodedSlice) != len(decodedMap) {
-			t.Errorf("got len(decodedSlice) %v different than len(decodedMap) %v, want them equal when decoding %v", decodedSlice, decodedMap, td)
-		}
-
-		for _, tag := range decodedSlice {
-			v, ok := decodedMap[tag.Key]
-			if !ok {
-				t.Errorf("got key %v in decodedSlice not found in decodedMap %v , want them equivalent when decoding %v", tag.Key, decodedMap, td)
-			}
-			if v != tag.Value {
-				t.Errorf("got %v in decodedSlice different than in decodedMap %v for key %v, want the same when decoding %v", tag.Value, v, tag.Key, td)
-			}
-		}
-	}
-}
+/*
 
 // BenchmarkNewContextWithTag_When1TagPresent measures the performance of
 // calling NewContextWithTag with a (key,value) tuple where key and value are
@@ -415,3 +271,4 @@ func BenchmarkDecodeFromValuesSignatureToSlice_When100TagsPresent(b *testing.B) 
 		}
 	}
 }
+*/

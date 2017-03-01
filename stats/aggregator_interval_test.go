@@ -156,7 +156,7 @@ func TestIntervalAggregator(t *testing.T) {
 	for _, td := range tds {
 		ia := newIntervalsAggregator(now, []time.Duration{td.intervalDuration}, td.subIntervalsCount)
 		for _, r := range td.records {
-			ia.addSample(r.v, r.t)
+			ia.addSample(&measurementFloat64{v: r.v}, r.t)
 		}
 
 		is := ia.retrieveCollected(td.retrieveTime)[0]

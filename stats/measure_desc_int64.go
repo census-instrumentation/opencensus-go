@@ -41,4 +41,3 @@ func (md *measureDescInt64) CreateMeasurement(v int64) Measurement {
 		v:  v,
 	}
 }
-

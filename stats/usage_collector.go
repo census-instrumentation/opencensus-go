@@ -61,14 +61,14 @@ func (uc *usageCollector) unregisterMeasureDesc(mName string) error {
 }
 
 func (uc *usageCollector) registerViewDesc(avd ViewDesc, now time.Time) error {
-	vd := avd.viewDesc()
+	vd := avd.ViewDescCommon()
 	md, ok := uc.mDescriptors[vd.MeasureDescName]
 	if !ok {
 		return fmt.Errorf("view contains a resource %s that is not registered", vd.MeasureDescName)
 	}
 
 	if v, ok := uc.vDescriptors[vd.Name]; ok {
-		return fmt.Errorf("a view %v with the same name %s is already registered", v, v.viewDesc().Name)
+		return fmt.Errorf("a view %v with the same name %s is already registered", v, v.ViewDescCommon().Name)
 	}
 
 	for vwName, vwDesc := range uc.vDescriptors {
@@ -96,7 +96,7 @@ func (uc *usageCollector) unregisterViewDesc(vwName string) error {
 		return fmt.Errorf("no view descriptor with the name %s is registered", vwName)
 	}
 
-	vd := avd.viewDesc()
+	vd := avd.ViewDescCommon()
 	md, ok := uc.mDescriptors[vd.MeasureDescName]
 	if !ok {
 		return fmt.Errorf("no measure descriptor with the name %s is registered", vd.MeasureDescName)
@@ -113,7 +113,7 @@ func (uc *usageCollector) subscribeToViewDesc(vwName string, c chan *View) error
 		return fmt.Errorf("no view descriptor with the name %s is registered", vwName)
 	}
 
-	vd := avd.viewDesc()
+	vd := avd.ViewDescCommon()
 	if _, ok := vd.vChans[c]; ok {
 		return fmt.Errorf("channel is already used to subscribe to this viewDesc %s", vwName)
 	}
@@ -128,7 +128,7 @@ func (uc *usageCollector) unsubscribeFromViewDesc(vwName string, c chan *View) e
 		return fmt.Errorf("no view descriptor with the name %s is registered", vwName)
 	}
 
-	vd := avd.viewDesc()
+	vd := avd.ViewDescCommon()
 	if _, ok := vd.vChans[c]; !ok {
 		return fmt.Errorf("channel is not used to subscribe to this viewDesc %s", vwName)
 	}
@@ -147,15 +147,15 @@ func (uc *usageCollector) recordMeasurement(now time.Time, ts tagging.TagsSet, m
 
 	for avd := range meta.aggViewDescs {
 		var sig []byte
-		vd := avd.viewDesc()
-		if len(vd.TagKeys) == 0 {
+		vdc := avd.ViewDescCommon()
+		if len(vdc.TagKeys) == 0 {
 			// This is a "don't care about keys" view. sig is empty for all
 			// records. Aggregates all records in the same view aggregation.
 		} else {
-			sig = ts.TagsToValuesSignature(vd.TagKeys)
+			sig = ts.TagsToValuesSignature(vdc.TagKeys)
 		}
 
-		if err := uc.add(vd.start, now, vd.signatures, string(sig), avd, m); err != nil {
+		if err := uc.add(vdc.start, now, vdc.signatures, string(sig), avd, m); err != nil {
 			return fmt.Errorf("error recording measurement %v", err)
 		}
 	}
@@ -198,6 +198,7 @@ func (uc *usageCollector) add(start, now time.Time, signatures map[string]aggreg
 }
 
 func (uc *usageCollector) retrieveViews(now time.Time) ([]*View, error) {
+
 	var views []*View
 	for _, avd := range uc.vDescriptors {
 		vw, err := avd.retrieveView(now)
@@ -211,8 +212,8 @@ func (uc *usageCollector) retrieveViews(now time.Time) ([]*View, error) {
 	return views, nil
 }
 
-func (uc *usageCollector) retrieveView(now time.Time, avd ViewDesc) (*View, error) {
-	vd := avd.viewDesc()
+func (uc *usageCollector) retrieveView(name string, now time.Time, avd ViewDesc) (*View, error) {
+	vd := avd.ViewDescCommon()
 
 	tmp, ok := uc.vDescriptors[vd.Name]
 	if !ok {
@@ -221,6 +222,20 @@ func (uc *usageCollector) retrieveView(now time.Time, avd ViewDesc) (*View, erro
 
 	if tmp != avd {
 		return nil, fmt.Errorf("a different view %v was registered with this name %v", tmp, vd.Name)
+	}
+
+	vw, err := avd.retrieveView(now)
+	if err != nil {
+		return nil, fmt.Errorf("error retrieving view for view description %v. %v", avd, err)
+	}
+
+	return vw, nil
+}
+
+func (uc *usageCollector) retrieveViewByName(name string, now time.Time) (*View, error) {
+	avd, ok := uc.vDescriptors[name]
+	if !ok {
+		return nil, fmt.Errorf("no view descriptor with the name %s is registered", name)
 	}
 
 	vw, err := avd.retrieveView(now)

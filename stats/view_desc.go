@@ -32,7 +32,7 @@ type ViewDesc interface {
 	// aggregator instances..
 	retrieveView(now time.Time) (*View, error)
 	// returns the *ViewDesc associated with this AggregationViewDesc
-	viewDesc() *ViewDescCommon
+	ViewDescCommon() *ViewDescCommon
 	// validates the input recieved as requested by the client code.
 	isValid() error
 	// stringWithIndent returns String() with 'tabs' prefix

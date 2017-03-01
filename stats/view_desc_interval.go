@@ -25,7 +25,7 @@ import (
 
 // IntervalViewDesc holds the parameters describing an interval aggregation.
 type IntervalViewDesc struct {
-	*ViewDescCommon
+	vdc *ViewDescCommon
 
 	// Number of internal sub-intervals to use when collecting stats for each
 	// interval. The max error in interval measurements will be approximately
@@ -56,8 +56,8 @@ func (id *IntervalViewDesc) retrieveView(now time.Time) (*View, error) {
 	}, nil
 }
 
-func (id *IntervalViewDesc) viewDesc() *ViewDescCommon {
-	return id.ViewDescCommon
+func (id *IntervalViewDesc) ViewDescCommon() *ViewDescCommon {
+	return id.vdc
 }
 
 func (id *IntervalViewDesc) isValid() error {
@@ -70,8 +70,8 @@ func (id *IntervalViewDesc) isValid() error {
 func (id *IntervalViewDesc) retrieveAggreationView(now time.Time) (*IntervalView, error) {
 	var aggs []*IntervalAgg
 
-	for sig, a := range id.signatures {
-		tags, err := tagging.TagsFromValuesSignature([]byte(sig), id.TagKeys)
+	for sig, a := range id.vdc.signatures {
+		tags, err := tagging.TagsFromValuesSignature([]byte(sig), id.vdc.TagKeys)
 		if err != nil {
 			return nil, fmt.Errorf("malformed signature '%v'. %v", sig, err)
 		}
@@ -96,13 +96,13 @@ func (id *IntervalViewDesc) stringWithIndent(tabs string) string {
 	if id == nil {
 		return "nil"
 	}
-	vd := id.ViewDescCommon
+
 	var buf bytes.Buffer
 	fmt.Fprintf(&buf, "%T {\n", id)
-	fmt.Fprintf(&buf, "%v  Name: %v,\n", tabs, vd.Name)
-	fmt.Fprintf(&buf, "%v  Description: %v,\n", tabs, vd.Description)
-	fmt.Fprintf(&buf, "%v  MeasureDescName: %v,\n", tabs, vd.MeasureDescName)
-	fmt.Fprintf(&buf, "%v  TagKeys: %v,\n", tabs, vd.TagKeys)
+	fmt.Fprintf(&buf, "%v  Name: %v,\n", tabs, id.vdc.Name)
+	fmt.Fprintf(&buf, "%v  Description: %v,\n", tabs, id.vdc.Description)
+	fmt.Fprintf(&buf, "%v  MeasureDescName: %v,\n", tabs, id.vdc.MeasureDescName)
+	fmt.Fprintf(&buf, "%v  TagKeys: %v,\n", tabs, id.vdc.TagKeys)
 	fmt.Fprintf(&buf, "%v  Intervals: %v,\n", tabs, id.Intervals)
 	fmt.Fprintf(&buf, "%v}", tabs)
 	return buf.String()

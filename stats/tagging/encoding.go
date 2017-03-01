@@ -42,13 +42,13 @@ func boolFromBytes(bytes []byte) (bool, error) {
 
 func typeFromBytes(bytes []byte) (keyType, error) {
 	if len(bytes) < 1 {
-		return keyTypeUnknown, errors.New("[]bytes not large enough to decode typeFromBytes")
+		return keyTypeStringUTF8, errors.New("[]bytes not large enough to decode typeFromBytes")
 	}
 	switch keyType(bytes[0]) {
-	case keyTypeString, keyTypeBool, keyTypeInt64:
+	case keyTypeStringUTF8, keyTypeBool, keyTypeInt64:
 		return keyType(bytes[0]), nil
 	default:
-		return keyTypeUnknown, fmt.Errorf("unknow keyType: %v", bytes[0])
+		return keyType(bytes[0]), fmt.Errorf("unknow keyType: %v", bytes[0])
 	}
 }
 

@@ -15,19 +15,23 @@
 
 package tagging
 
+import "bytes"
+
 // Key is the interface for all key types.
 type Key interface {
 	Name() string
+	Type() keyType
+	setFromBytes([]byte, int32) (int32, error)
+
+	writeKeyToBuffer(dst *bytes.Buffer)
 }
 
 // KeyType defines the types of keys allowed.
 type keyType byte
 
 const (
-	// keyTypeUnknown is not a valid KeyType. It is here just to detect that a
-	// keyType isn't set.
-	keyTypeUnknown keyType = iota
-	keyTypeString
-	keyTypeBool
+	keyTypeStringUTF8 keyType = iota
 	keyTypeInt64
+	keyTypeBool
+	keyTypeBytes
 )

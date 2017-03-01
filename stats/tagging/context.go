@@ -17,22 +17,28 @@ package tagging
 
 import "golang.org/x/net/context"
 
-type censusKey struct{}
+type ctxKey struct{}
 
 func FromContext(ctx context.Context) TagsSet {
-	ts, ok := ctx.Value(censusKey{}).(TagsSet)
+	ts, ok := ctx.Value(ctxKey{}).(TagsSet)
 	if !ok {
 		ts = make(TagsSet)
 	}
 	return ts
 }
 
-// NewContextWithMutations creates a new census.Context from context and adds
-// the tags to it.
-func NewContextWithMutations(ctx context.Context, mut ...Mutation) context.Context {
-	parentTagsSet, _ := ctx.Value(censusKey{}).(TagsSet)
+// NewContextWithTagsSet creates a new context containing the new TagsSet.
+func NewContextWithTagsSet(ctx context.Context, ts TagsSet) context.Context {
+	return context.WithValue(ctx, ctxKey{}, ts)
+}
 
-	return context.WithValue(ctx, censusKey{}, newTagsSet(parentTagsSet, mut...))
+// NewContextWithMutations creates a new context containing a new TagsSet. The
+// new TagsSet is constructed from the existing TagsSet to which the mutations
+// are applied.
+func NewContextWithMutations(ctx context.Context, mut ...Mutation) context.Context {
+	parentTagsSet, _ := ctx.Value(ctxKey{}).(TagsSet)
+
+	return context.WithValue(ctx, ctxKey{}, newTagsSet(parentTagsSet, mut...))
 }
 
 func newTagsSet(oldTs TagsSet, ms ...Mutation) TagsSet {

@@ -95,6 +95,11 @@ var RecordMeasurements func(ctx context.Context, m ...Measurement)
 // behavior.
 var SetCallbackPeriod func(min, max time.Duration)
 
+// RetrieveViewByName retrieves a view in an adhoc fashion. This retrieval
+// doesn't reset the view's collected data, and just returns a snapshot of the
+// view as it is currently collected by the library.
+var RetrieveViewByName func(name string) (*View, error)
+
 func init() {
 	uc := newUsageCollector()
 	RecordMeasurements = func(ctx context.Context, m ...Measurement) {
@@ -111,9 +116,7 @@ func init() {
 		return uc.registerViewDesc(vd, now)
 	}
 
-	RetrieveView = func(name string) ([]*View, error) {
-		return uc.retrieveViews(time.Now())
+	RetrieveViewByName = func(name string) (*View, error) {
+		return uc.retrieveViewByName(name, time.Now())
 	}
 }
-
-var RetrieveView func(name string) ([]*View, error)

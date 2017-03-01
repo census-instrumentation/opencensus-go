@@ -23,8 +23,50 @@ import (
 // Tag is the tuple (key, value) interface for all tag types.
 type Tag interface {
 	WriteValueToBuffer(dst *bytes.Buffer)
-	WriteKeyValueToBuffer(dst *bytes.Buffer)
+	EncodeFullTagToBuffer(dst *bytes.Buffer)
 	Key() Key
+}
+
+func decodeFullTag(fullSig []byte, idx int) (Tag, int32, error) {
+
+	idx := int32(0)
+	for _, k := range keys {
+		len, err := lengthFromBytes(bytes[idx:])
+		if err != nil {
+			return nil, err
+		}
+		idx += 4
+		if len == 0 {
+			continue
+		}
+
+		switch typ := k.(type) {
+		case *keyString:
+			v, err := stringFromBytes(bytes[idx:], len)
+			if err != nil {
+				return nil, err
+			}
+			idx += len
+			ts[typ] = typ.CreateTag(v)
+		case *keyInt64:
+			v, err := int64FromBytes(bytes[idx:])
+			if err != nil {
+				return nil, err
+			}
+			idx += 8
+			ts[typ] = typ.CreateTag(v)
+		case *keyBool:
+			v, err := boolFromBytes(bytes[idx:])
+			if err != nil {
+				return nil, err
+			}
+			idx++
+			ts[typ] = typ.CreateTag(v)
+		default:
+			return nil, fmt.Errorf("TagsFromValuesSignature failed. Key type invalid %v", k)
+		}
+	}
+	return ts, nil
 }
 
 // tagString is the tuple (key, value) implementation for tags of value type
@@ -37,13 +79,14 @@ type tagString struct {
 func (ts *tagString) WriteValueToBuffer(dst *bytes.Buffer) {
 	if len(ts.v) == 0 {
 		// string length is zero. Will not be encoded.
+		panic("WHY IS HTIS CALLED. SUPPOSED TO BE CALLED IN ts.TagsToValuesSignature()")
 		dst.Write(int32ToBytes(0))
 	}
 	dst.Write(int32ToBytes(len(ts.v)))
 	dst.Write([]byte(ts.v))
 }
 
-func (ts *tagString) WriteKeyValueToBuffer(dst *bytes.Buffer) {
+func (ts *tagString) WriteFullTagToBuffer(dst *bytes.Buffer) {
 	// TODO(acetechnologist): implement
 }
 
@@ -71,7 +114,7 @@ func (tb *tagBool) WriteValueToBuffer(dst *bytes.Buffer) {
 	dst.WriteByte(boolToByte(tb.v))
 }
 
-func (tb *tagBool) WriteKeyValueToBuffer(dst *bytes.Buffer) {
+func (tb *tagBool) WriteFullTagToBuffer(dst *bytes.Buffer) {
 	// TODO(acetechnologist): implement
 }
 
@@ -99,7 +142,7 @@ func (ti *tagInt64) WriteValueToBuffer(dst *bytes.Buffer) {
 	dst.Write(int64ToBytes(ti.v))
 }
 
-func (ti *tagInt64) WriteKeyValueToBuffer(dst *bytes.Buffer) {
+func (ti *tagInt64) WriteFullTagToBuffer(dst *bytes.Buffer) {
 	// TODO(acetechnologist): implement
 }
 

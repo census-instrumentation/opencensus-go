@@ -20,23 +20,25 @@ import (
 	"reflect"
 	"testing"
 	"time"
+
+	"github.com/google/instrumentation-go/stats/tagging"
 )
 
 type record struct {
 	t  time.Time
-	ct contextTags
+	ts tagging.TagsSet
 	v  float64
 }
 
 type view struct {
-	viewDesc     AggregationViewDesc
-	wantViewAgg  *DistributionAggView
+	viewDesc     ViewDesc
+	wantViewAgg  *DistributionView
 	registerTime time.Time
 	retrieveTime time.Time
 }
 
 type ucTestData struct {
-	measureDesc *MeasureDesc
+	measureDesc MeasureDesc
 	views       []*view
 	records     []record
 }
@@ -45,32 +47,42 @@ func (td *ucTestData) String() string {
 	if td == nil {
 		return "nil"
 	}
-	return fmt.Sprintf("%v", *td.measureDesc)
+	return fmt.Sprintf("%v", td.measureDesc)
 }
 
 func TestUsageCollection(t *testing.T) {
 	registerTime := time.Now()
 	retrieveTime := registerTime.Add(10 * time.Second)
 
+	k1, err := tagging.DefaultKeyManager().CreateKeyString("k1")
+	if err != nil {
+		t.Fatalf("creating keyString failed. %v ", err)
+	}
+	k2, err := tagging.DefaultKeyManager().CreateKeyString("k2")
+	if err != nil {
+		t.Fatalf("creating keyString failed. %v ", err)
+	}
 	uctds := []*ucTestData{
 		{
-			&MeasureDesc{
-				Name: "measure1",
-				Unit: MeasurementUnit{1, []BasicUnit{BytesUnit}, []BasicUnit{}},
+			&measureDescFloat64{
+				&measureDesc{
+					name: "measure1",
+					unit: &MeasurementUnit{1, []BasicUnit{BytesUnit}, []BasicUnit{}},
+				},
 			},
 			[]*view{
 				{
-					viewDesc: &DistributionAggViewDesc{
-						ViewDesc: &ViewDesc{
+					viewDesc: &DistributionViewDesc{
+						vdc: &ViewDescCommon{
 							Name:            "view1",
 							MeasureDescName: "measure1",
-							TagKeys:         []string{"k1", "k2"},
+							TagKeys:         []tagging.Key{k1, k2},
 						},
 						Bounds: []float64{15},
 					},
 					registerTime: registerTime,
 					retrieveTime: retrieveTime,
-					wantViewAgg: &DistributionAggView{
+					wantViewAgg: &DistributionView{
 						Aggregations: []*DistributionAgg{
 							{
 								&DistributionStats{
@@ -81,7 +93,7 @@ func TestUsageCollection(t *testing.T) {
 									60,
 									[]int64{1, 2},
 								},
-								[]Tag{{"k1", "v1"}, {"k2", "v2"}},
+								[]tagging.Tag{k1.CreateTag("v1"), k2.CreateTag("v2")},
 							},
 							{
 								&DistributionStats{
@@ -92,7 +104,7 @@ func TestUsageCollection(t *testing.T) {
 									60,
 									[]int64{1, 2},
 								},
-								[]Tag{{"k1", "v1"}},
+								[]tagging.Tag{k1.CreateTag("v1")},
 							},
 						},
 						Start: registerTime,
@@ -103,189 +115,71 @@ func TestUsageCollection(t *testing.T) {
 			[]record{
 				{
 					registerTime.Add(1 * time.Second),
-					contextTags{
-						"k1": "v1",
+					tagging.TagsSet{
+						k1: k1.CreateTag("v1"),
 					},
 					10,
 				},
 				{
 					registerTime.Add(2 * time.Second),
-					contextTags{
-						"k1": "v1",
+					tagging.TagsSet{
+						k1: k1.CreateTag("v1"),
 					},
 					20,
 				},
 				{
 					registerTime.Add(3 * time.Second),
-					contextTags{
-						"k1": "v1",
+					tagging.TagsSet{
+						k1: k1.CreateTag("v1"),
 					},
 					30,
 				},
 				{
 					registerTime.Add(4 * time.Second),
-					contextTags{
-						"k1": "v1",
-						"k2": "v2",
+					tagging.TagsSet{
+						k1: k1.CreateTag("v1"),
+						k2: k2.CreateTag("v2"),
 					},
 					10,
 				},
 				{
 					registerTime.Add(5 * time.Second),
-					contextTags{
-						"k1": "v1",
-						"k2": "v2",
+					tagging.TagsSet{
+						k1: k1.CreateTag("v1"),
+						k2: k2.CreateTag("v2"),
 					},
 					20,
 				},
 				{
 					registerTime.Add(6 * time.Second),
-					contextTags{
-						"k1": "v1",
-						"k2": "v2",
+					tagging.TagsSet{
+						k1: k1.CreateTag("v1"),
+						k2: k2.CreateTag("v2"),
 					},
 					30,
 				},
 			},
 		},
 		{
-			&MeasureDesc{
-				Name: "measure2",
-				Unit: MeasurementUnit{2, []BasicUnit{BytesUnit}, []BasicUnit{}},
+			&measureDescFloat64{
+				&measureDesc{
+					name: "measure2",
+					unit: &MeasurementUnit{2, []BasicUnit{BytesUnit}, []BasicUnit{}},
+				},
 			},
 			[]*view{
 				{
-					viewDesc: &DistributionAggViewDesc{
-						ViewDesc: &ViewDesc{
+					viewDesc: &DistributionViewDesc{
+						vdc: &ViewDescCommon{
 							Name:            "allTagsView",
 							MeasureDescName: "measure2",
-							TagKeys:         []string{},
+							TagKeys:         []tagging.Key{},
 						},
 						Bounds: []float64{25},
 					},
 					registerTime: registerTime,
 					retrieveTime: retrieveTime,
-					wantViewAgg: &DistributionAggView{
-						Aggregations: []*DistributionAgg{
-							{
-								&DistributionStats{
-									3,
-									10,
-									20,
-									30,
-									60,
-									[]int64{2, 1},
-								},
-								[]Tag{{"k1", "v1"}, {"k2", "v2"}},
-							},
-							{
-								&DistributionStats{
-									3,
-									10,
-									20,
-									30,
-									60,
-									[]int64{2, 1},
-								},
-								[]Tag{{"k1", "v1"}},
-							},
-						},
-						Start: registerTime,
-						End:   retrieveTime,
-					},
-				},
-				{
-					viewDesc: &DistributionAggViewDesc{
-						ViewDesc: &ViewDesc{
-							Name:            "view1",
-							MeasureDescName: "measure2",
-							TagKeys:         []string{"k1", "k2"},
-						},
-						Bounds: []float64{15},
-					},
-					registerTime: registerTime,
-					retrieveTime: retrieveTime,
-					wantViewAgg: &DistributionAggView{
-						Aggregations: []*DistributionAgg{
-							{
-								&DistributionStats{
-									3,
-									10,
-									20,
-									30,
-									60,
-									[]int64{1, 2},
-								},
-								[]Tag{{"k1", "v1"}, {"k2", "v2"}},
-							},
-							{
-								&DistributionStats{
-									3,
-									10,
-									20,
-									30,
-									60,
-									[]int64{1, 2},
-								},
-								[]Tag{{"k1", "v1"}},
-							},
-						},
-						Start: registerTime,
-						End:   retrieveTime,
-					},
-				},
-				{
-					viewDesc: &DistributionAggViewDesc{
-						ViewDesc: &ViewDesc{
-							Name:            "view2",
-							MeasureDescName: "measure2",
-							TagKeys:         []string{"k1", "k2"},
-						},
-						Bounds: []float64{25},
-					},
-					registerTime: registerTime,
-					retrieveTime: retrieveTime,
-					wantViewAgg: &DistributionAggView{
-						Aggregations: []*DistributionAgg{
-							{
-								&DistributionStats{
-									3,
-									10,
-									20,
-									30,
-									60,
-									[]int64{2, 1},
-								},
-								[]Tag{{"k1", "v1"}, {"k2", "v2"}},
-							},
-							{
-								&DistributionStats{
-									3,
-									10,
-									20,
-									30,
-									60,
-									[]int64{2, 1},
-								},
-								[]Tag{{"k1", "v1"}},
-							},
-						},
-						Start: registerTime,
-						End:   retrieveTime,
-					},
-				},
-				{
-					viewDesc: &DistributionAggViewDesc{
-						ViewDesc: &ViewDesc{
-							Name:            "view3",
-							MeasureDescName: "measure2",
-							TagKeys:         []string{"k1"},
-						},
-						Bounds: []float64{25},
-					},
-					registerTime: registerTime,
-					retrieveTime: retrieveTime,
-					wantViewAgg: &DistributionAggView{
+					wantViewAgg: &DistributionView{
 						Aggregations: []*DistributionAgg{
 							{
 								&DistributionStats{
@@ -296,7 +190,116 @@ func TestUsageCollection(t *testing.T) {
 									120,
 									[]int64{4, 2},
 								},
-								[]Tag{{"k1", "v1"}},
+								[]tagging.Tag(nil),
+							},
+						},
+						Start: registerTime,
+						End:   retrieveTime,
+					},
+				},
+				{
+					viewDesc: &DistributionViewDesc{
+						vdc: &ViewDescCommon{
+							Name:            "view1",
+							MeasureDescName: "measure2",
+							TagKeys:         []tagging.Key{k1, k2},
+						},
+						Bounds: []float64{15},
+					},
+					registerTime: registerTime,
+					retrieveTime: retrieveTime,
+					wantViewAgg: &DistributionView{
+						Aggregations: []*DistributionAgg{
+							{
+								&DistributionStats{
+									3,
+									10,
+									20,
+									30,
+									60,
+									[]int64{1, 2},
+								},
+								[]tagging.Tag{k1.CreateTag("v1"), k2.CreateTag("v2")},
+							},
+							{
+								&DistributionStats{
+									3,
+									10,
+									20,
+									30,
+									60,
+									[]int64{1, 2},
+								},
+								[]tagging.Tag{k1.CreateTag("v1")},
+							},
+						},
+						Start: registerTime,
+						End:   retrieveTime,
+					},
+				},
+				{
+					viewDesc: &DistributionViewDesc{
+						vdc: &ViewDescCommon{
+							Name:            "view2",
+							MeasureDescName: "measure2",
+							TagKeys:         []tagging.Key{k1, k2},
+						},
+						Bounds: []float64{25},
+					},
+					registerTime: registerTime,
+					retrieveTime: retrieveTime,
+					wantViewAgg: &DistributionView{
+						Aggregations: []*DistributionAgg{
+							{
+								&DistributionStats{
+									3,
+									10,
+									20,
+									30,
+									60,
+									[]int64{2, 1},
+								},
+								[]tagging.Tag{k1.CreateTag("v1"), k2.CreateTag("v2")},
+							},
+							{
+								&DistributionStats{
+									3,
+									10,
+									20,
+									30,
+									60,
+									[]int64{2, 1},
+								},
+								[]tagging.Tag{k1.CreateTag("v1")},
+							},
+						},
+						Start: registerTime,
+						End:   retrieveTime,
+					},
+				},
+				{
+					viewDesc: &DistributionViewDesc{
+						vdc: &ViewDescCommon{
+							Name:            "view3",
+							MeasureDescName: "measure2",
+							TagKeys:         []tagging.Key{k1},
+						},
+						Bounds: []float64{25},
+					},
+					registerTime: registerTime,
+					retrieveTime: retrieveTime,
+					wantViewAgg: &DistributionView{
+						Aggregations: []*DistributionAgg{
+							{
+								&DistributionStats{
+									6,
+									10,
+									20,
+									30,
+									120,
+									[]int64{4, 2},
+								},
+								[]tagging.Tag{k1.CreateTag("v1")},
 							},
 						},
 						Start: registerTime,
@@ -307,46 +310,46 @@ func TestUsageCollection(t *testing.T) {
 			[]record{
 				{
 					registerTime.Add(1 * time.Second),
-					contextTags{
-						"k1": "v1",
+					tagging.TagsSet{
+						k1: k1.CreateTag("v1"),
 					},
 					10,
 				},
 				{
 					registerTime.Add(2 * time.Second),
-					contextTags{
-						"k1": "v1",
+					tagging.TagsSet{
+						k1: k1.CreateTag("v1"),
 					},
 					20,
 				},
 				{
 					registerTime.Add(3 * time.Second),
-					contextTags{
-						"k1": "v1",
+					tagging.TagsSet{
+						k1: k1.CreateTag("v1"),
 					},
 					30,
 				},
 				{
 					registerTime.Add(4 * time.Second),
-					contextTags{
-						"k1": "v1",
-						"k2": "v2",
+					tagging.TagsSet{
+						k1: k1.CreateTag("v1"),
+						k2: k2.CreateTag("v2"),
 					},
 					10,
 				},
 				{
 					registerTime.Add(5 * time.Second),
-					contextTags{
-						"k1": "v1",
-						"k2": "v2",
+					tagging.TagsSet{
+						k1: k1.CreateTag("v1"),
+						k2: k2.CreateTag("v2"),
 					},
 					20,
 				},
 				{
 					registerTime.Add(6 * time.Second),
-					contextTags{
-						"k1": "v1",
-						"k2": "v2",
+					tagging.TagsSet{
+						k1: k1.CreateTag("v1"),
+						k2: k2.CreateTag("v2"),
 					},
 					30,
 				},
@@ -356,28 +359,34 @@ func TestUsageCollection(t *testing.T) {
 
 	for _, td := range uctds {
 		uc := &usageCollector{
-			mDescriptors: make(map[string]*MeasureDesc),
-			vDescriptors: make(map[string]AggregationViewDesc),
+			mDescriptors: make(map[string]MeasureDesc),
+			vDescriptors: make(map[string]ViewDesc),
 		}
+		td.measureDesc.Meta().aggViewDescs = make(map[ViewDesc]struct{})
 		uc.registerMeasureDesc(td.measureDesc)
 		for _, vw := range td.views {
 			uc.registerViewDesc(vw.viewDesc, vw.registerTime)
 		}
 
 		for _, r := range td.records {
-			uc.recordMeasurement(r.t, r.ct, td.measureDesc, r.v)
+			m := &measurementFloat64{
+				md: td.measureDesc,
+				v:  r.v,
+			}
+			uc.recordMeasurement(r.t, r.ts, m)
 		}
 
 		for _, vw := range td.views {
-			gotVw, err := uc.retrieveView(vw.retrieveTime, vw.viewDesc)
+			gotVw, err := uc.retrieveViewByName(vw.viewDesc.ViewDescCommon().Name, vw.retrieveTime)
 			if err != nil {
 				t.Errorf("got error %v (test case: %v), want no error", err, td)
 			}
 
 			switch gotVwAgg := gotVw.ViewAgg.(type) {
-			case *DistributionAggView:
+			case *DistributionView:
 				if len(gotVwAgg.Aggregations) != len(vw.wantViewAgg.Aggregations) {
-					t.Errorf("got %v aggregations (test case: %v), want %v aggregations", len(gotVwAgg.Aggregations), td, len(vw.wantViewAgg.Aggregations))
+					t.Errorf("got %v aggregations (test case: %v, view:%v), want %v aggregations", len(gotVwAgg.Aggregations), td, vw.viewDesc.ViewDescCommon().Name, len(vw.wantViewAgg.Aggregations))
+					continue
 				}
 
 				for _, gotAgg := range gotVwAgg.Aggregations {
