@@ -25,7 +25,7 @@ import (
 
 // IntervalViewDesc holds the parameters describing an interval aggregation.
 type IntervalViewDesc struct {
-	vdc *ViewDescCommon
+	Vdc *ViewDescCommon
 
 	// Number of internal sub-intervals to use when collecting stats for each
 	// interval. The max error in interval measurements will be approximately
@@ -57,11 +57,11 @@ func (id *IntervalViewDesc) retrieveView(now time.Time) (*View, error) {
 }
 
 func (id *IntervalViewDesc) ViewDescCommon() *ViewDescCommon {
-	return id.vdc
+	return id.Vdc
 }
 
 func (id *IntervalViewDesc) isValid() error {
-	if id.SubIntervals < 2 || id.SubIntervals < 20 {
+	if id.SubIntervals < 2 || id.SubIntervals > 20 {
 		return fmt.Errorf("%v error. subIntervals is not in [2,20]", id)
 	}
 	return nil
@@ -70,8 +70,8 @@ func (id *IntervalViewDesc) isValid() error {
 func (id *IntervalViewDesc) retrieveAggreationView(now time.Time) (*IntervalView, error) {
 	var aggs []*IntervalAgg
 
-	for sig, a := range id.vdc.signatures {
-		tags, err := tagging.TagsFromValuesSignature([]byte(sig), id.vdc.TagKeys)
+	for sig, a := range id.Vdc.signatures {
+		tags, err := tagging.DecodeFromValuesSignatureToSlice([]byte(sig), id.Vdc.TagKeys)
 		if err != nil {
 			return nil, fmt.Errorf("malformed signature '%v'. %v", sig, err)
 		}
@@ -99,10 +99,10 @@ func (id *IntervalViewDesc) stringWithIndent(tabs string) string {
 
 	var buf bytes.Buffer
 	fmt.Fprintf(&buf, "%T {\n", id)
-	fmt.Fprintf(&buf, "%v  Name: %v,\n", tabs, id.vdc.Name)
-	fmt.Fprintf(&buf, "%v  Description: %v,\n", tabs, id.vdc.Description)
-	fmt.Fprintf(&buf, "%v  MeasureDescName: %v,\n", tabs, id.vdc.MeasureDescName)
-	fmt.Fprintf(&buf, "%v  TagKeys: %v,\n", tabs, id.vdc.TagKeys)
+	fmt.Fprintf(&buf, "%v  Name: %v,\n", tabs, id.Vdc.Name)
+	fmt.Fprintf(&buf, "%v  Description: %v,\n", tabs, id.Vdc.Description)
+	fmt.Fprintf(&buf, "%v  MeasureDescName: %v,\n", tabs, id.Vdc.MeasureDescName)
+	fmt.Fprintf(&buf, "%v  TagKeys: %v,\n", tabs, id.Vdc.TagKeys)
 	fmt.Fprintf(&buf, "%v  Intervals: %v,\n", tabs, id.Intervals)
 	fmt.Fprintf(&buf, "%v}", tabs)
 	return buf.String()

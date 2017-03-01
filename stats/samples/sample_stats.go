@@ -60,7 +60,7 @@ func main() {
 	if err != nil {
 		panic(fmt.Sprintf("Key k2 not created %v", err))
 	}
-	k3, err := mgr.CreateKeyString("key3")
+	k3, err := mgr.CreateKeyStringUTF8("key3")
 	if err != nil {
 		panic(fmt.Sprintf("Key k3 not created %v", err))
 	}
@@ -69,7 +69,7 @@ func main() {
 	c := make(chan *stats.View)
 
 	vwGaugeS := &stats.GaugeStringViewDesc{
-		ViewDescCommon: &stats.ViewDescCommon{
+		Vdc: &stats.ViewDescCommon{
 			Name:            "View1",
 			Description:     "",
 			MeasureDescName: "SystemLoad",
@@ -81,7 +81,7 @@ func main() {
 	}
 
 	vwGaugeB := &stats.GaugeBoolViewDesc{
-		ViewDescCommon: &stats.ViewDescCommon{
+		Vdc: &stats.ViewDescCommon{
 			Name:            "View2",
 			Description:     "",
 			MeasureDescName: "SystemHot",
@@ -93,7 +93,7 @@ func main() {
 	}
 
 	vwGaugeF := &stats.GaugeFloat64ViewDesc{
-		ViewDescCommon: &stats.ViewDescCommon{
+		Vdc: &stats.ViewDescCommon{
 			Name:            "View3",
 			Description:     "",
 			MeasureDescName: "DiskRead",
@@ -105,7 +105,7 @@ func main() {
 	}
 
 	vwGaugeI := &stats.GaugeInt64ViewDesc{
-		ViewDescCommon: &stats.ViewDescCommon{
+		Vdc: &stats.ViewDescCommon{
 			Name:            "View4",
 			Description:     "",
 			MeasureDescName: "ConnectedUsers",
@@ -117,7 +117,7 @@ func main() {
 	}
 
 	vwDist := &stats.DistributionViewDesc{
-		ViewDescCommon: &stats.ViewDescCommon{
+		Vdc: &stats.ViewDescCommon{
 			Name:            "View5",
 			Description:     "",
 			MeasureDescName: "DiskRead",
@@ -130,7 +130,7 @@ func main() {
 	}
 
 	vwInterval := &stats.IntervalViewDesc{
-		ViewDescCommon: &stats.ViewDescCommon{
+		Vdc: &stats.ViewDescCommon{
 			Name:            "View6",
 			Description:     "",
 			MeasureDescName: "DiskRead",
@@ -184,15 +184,15 @@ func main() {
 	stats.RecordMeasurements(ctx, m1, m2, m3, m4, m5, m6)
 
 	// ---------------------------------------RETRIEVE USAGE---------------------------
-	views, err := stats.RetrieveView("View1")
-	if err != nil {
-		fmt.Printf("Error view retrieve: %v\n", err)
+	for i, name := range []string{"View1", "View2"} {
+		view, err := stats.RetrieveViewByName(name)
+		if err != nil {
+			fmt.Printf("%v -->\nError view retrieve: %v\n", i+1, err)
+			continue
+		}
+		fmt.Printf("%v -->\n%v\n", i+1, view)
 	}
 
-	// Retrieve Views
-	for i, v := range views {
-		fmt.Printf("%v -->\n%v\n", i+1, v)
-	}
 	// Retrieve Views
 	/*go func(c chan *stats.View) {
 		for {

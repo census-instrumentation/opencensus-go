@@ -152,7 +152,7 @@ func (uc *usageCollector) recordMeasurement(now time.Time, ts tagging.TagsSet, m
 			// This is a "don't care about keys" view. sig is empty for all
 			// records. Aggregates all records in the same view aggregation.
 		} else {
-			sig = ts.TagsToValuesSignature(vdc.TagKeys)
+			sig = tagging.EncodeToValuesSignature(ts, vdc.TagKeys)
 		}
 
 		if err := uc.add(vdc.start, now, vdc.signatures, string(sig), avd, m); err != nil {

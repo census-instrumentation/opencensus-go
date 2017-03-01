@@ -33,9 +33,12 @@ const (
 // satisfy. The keys manager is invoked to create/retrieve a key given its
 // name/ID. It ensures that keys have unique names/IDs.
 type KeysManager interface {
-	CreateKeyString(name string) (*keyString, error)
+	CreateKeyStringUTF8(name string) (*keyStringUTF8, error)
 	CreateKeyInt64(name string) (*keyInt64, error)
 	CreateKeyBool(name string) (*keyBool, error)
+	CreateKeyBytes(name string) (*keyBytes, error)
+	Count() int
+	Clear()
 }
 
 type keysManager struct {
@@ -58,25 +61,52 @@ func DefaultKeyManager() KeysManager {
 // CreateKeyString creates or retrieves a key of type keyString with name/ID
 // set to the input argument name. Returns an error if a key with the same name
 // exists and is of a different type.
-func (km *keysManager) CreateKeyString(name string) (*keyString, error) {
+func (km *keysManager) CreateKeyStringUTF8(name string) (*keyStringUTF8, error) {
 	if !validateKeyName(name) {
 		return nil, fmt.Errorf("key name %v is invalid", name)
 	}
 	km.Lock()
 	defer km.Unlock()
+
 	k, ok := km.keys[name]
 	if ok {
-		ks, ok := k.(*keyString)
+		ks, ok := k.(*keyStringUTF8)
 		if !ok {
-			return nil, fmt.Errorf("key with name %v cannot be created/retrieved as type *keyString. It was already regitered as type %T", name, k)
+			return nil, fmt.Errorf("key with name %v cannot be created/retrieved as type *keyString. It was already registered as type %T", name, k)
 		}
 		return ks, nil
 	}
 
-	ks := &keyString{
+	ks := &keyStringUTF8{
 		name: name,
 	}
-	km.keys[name] = k
+	km.keys[name] = ks
+	return ks, nil
+}
+
+// CreateKeyBytes creates or retrieves a key of type keyBytes with name/ID set
+// to the input argument name. Returns an error if a key with the same name
+// exists and is of a different type.
+func (km *keysManager) CreateKeyBytes(name string) (*keyBytes, error) {
+	if !validateKeyName(name) {
+		return nil, fmt.Errorf("key name %v is invalid", name)
+	}
+	km.Lock()
+	defer km.Unlock()
+
+	k, ok := km.keys[name]
+	if ok {
+		ks, ok := k.(*keyBytes)
+		if !ok {
+			return nil, fmt.Errorf("key with name %v cannot be created/retrieved as type *keyBytes. It was already registered as type %T", name, k)
+		}
+		return ks, nil
+	}
+
+	ks := &keyBytes{
+		name: name,
+	}
+	km.keys[name] = ks
 	return ks, nil
 }
 
@@ -92,8 +122,8 @@ func (km *keysManager) CreateKeyBool(name string) (*keyBool, error) {
 	k, ok := km.keys[name]
 	if ok {
 		kb, ok := k.(*keyBool)
-		if ok {
-			return nil, fmt.Errorf("key with name %v cannot be created/retrieved as type *keyBool. It was already regitered as type %T", name, k)
+		if !ok {
+			return nil, fmt.Errorf("key with name %v cannot be created/retrieved as type *keyBool. It was already registered as type %T", name, k)
 		}
 		return kb, nil
 	}
@@ -118,7 +148,7 @@ func (km *keysManager) CreateKeyInt64(name string) (*keyInt64, error) {
 	if ok {
 		ki, ok := k.(*keyInt64)
 		if !ok {
-			return nil, fmt.Errorf("key with name %v cannot be created/retrieved as type *keyInt64. It was already regitered as type %T", name, k)
+			return nil, fmt.Errorf("key with name %v cannot be created/retrieved as type *keyInt64. It was already registered as type %T", name, k)
 		}
 		return ki, nil
 	}
@@ -126,8 +156,18 @@ func (km *keysManager) CreateKeyInt64(name string) (*keyInt64, error) {
 	ki := &keyInt64{
 		name: name,
 	}
-	km.keys[name] = k
+	km.keys[name] = ki
 	return ki, nil
+}
+
+func (km *keysManager) Count() int {
+	return len(km.keys)
+}
+
+func (km *keysManager) Clear() {
+	for k := range km.keys {
+		delete(km.keys, k)
+	}
 }
 
 func validateKeyName(name string) bool {

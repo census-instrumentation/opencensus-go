@@ -1,3 +1,18 @@
+// Copyright 2017 Google Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+
 package tagging
 
 import (
@@ -27,45 +42,34 @@ type TagsFullSignature struct {
 	sig []byte
 }
 
-// DecodeFromFullSignature creates a TagsSet from TagsFullSignature
-func DecodeFromFullSignature(fullSig []byte) (TagsSet, error) {
-	ts := make(TagsSet)
+// DecodeFromFullSignatureToSlice creates a []Tag] from an encodded []byte.
+func DecodeFromFullSignatureToSlice(fullSig []byte) ([]Tag, error) {
+	var ts []Tag
 	if len(fullSig) == 0 {
 		return ts, nil
 	}
 
-	var k Key
 	var t Tag
-	idx := int32(0)
+	var err error
+	idx := 0
 	for idx < len(fullSig) {
 		typ := keyType(fullSig[idx])
+		idx++
 
 		switch typ {
 		case keyTypeStringUTF8:
-			k = keyStringUTF8{}
-			t = tagStringUTF8{
-				keyStringUTF8: &k,
-			}
+			t = &tagStringUTF8{}
 		case keyTypeInt64:
-			k = keyInt64{}
-			t = tagInt64{
-				keyInt64: &k,
-			}
+			t = &tagInt64{}
 		case keyTypeBool:
-			k = keyBool{}
-			t = tagBool{
-				keyBool: &k,
-			}
+			t = &tagBool{}
 		case keyTypeBytes:
-			k = keyBytes{}
-			t = tagBytes{
-				keyInt64: &k,
-			}
+			t = &tagBytes{}
 		default:
-			return nil, fmt.Errorf("TagsFromValuesSignature failed. Key type invalid %v", k)
+			return nil, fmt.Errorf("TagsFromValuesSignature failed. Key type invalid %v", typ)
 		}
 
-		idx, err = k.setFromBytes(fullSig, idx)
+		idx, err = t.setKeyFromBytes(fullSig, idx)
 		if err != nil {
 			return nil, err
 		}
@@ -74,7 +78,48 @@ func DecodeFromFullSignature(fullSig []byte) (TagsSet, error) {
 			return nil, err
 		}
 
-		ts[k] = t
+		ts = append(ts, t)
+	}
+	return ts, nil
+}
+
+// DecodeFromFullSignatureToTagsSet creates a TagsSet from an encodded []byte.
+func DecodeFromFullSignatureToTagsSet(fullSig []byte) (TagsSet, error) {
+	ts := make(TagsSet)
+	if len(fullSig) == 0 {
+		return ts, nil
+	}
+
+	var t Tag
+	var err error
+	idx := 0
+	for idx < len(fullSig) {
+		typ := keyType(fullSig[idx])
+		idx++
+
+		switch typ {
+		case keyTypeStringUTF8:
+			t = &tagStringUTF8{}
+		case keyTypeInt64:
+			t = &tagInt64{}
+		case keyTypeBool:
+			t = &tagBool{}
+		case keyTypeBytes:
+			t = &tagBytes{}
+		default:
+			return nil, fmt.Errorf("TagsFromValuesSignature failed. Key type invalid %v", typ)
+		}
+
+		idx, err = t.setKeyFromBytes(fullSig, idx)
+		if err != nil {
+			return nil, err
+		}
+		idx, err = t.setValueFromBytes(fullSig, idx)
+		if err != nil {
+			return nil, err
+		}
+
+		ts[t.Key()] = t
 	}
 	return ts, nil
 }
@@ -83,7 +128,9 @@ func DecodeFromFullSignature(fullSig []byte) (TagsSet, error) {
 func EncodeToFullSignature(ts TagsSet) []byte {
 	var b bytes.Buffer
 	for _, t := range ts {
-		t.EncodeFullTagToBuffer(&b)
+		b.WriteByte(byte(t.Key().Type()))
+		t.encodeKeyToBuffer(&b)
+		t.encodeValueToBuffer(&b)
 	}
 
 	return b.Bytes()

@@ -54,11 +54,11 @@ func TestUsageCollection(t *testing.T) {
 	registerTime := time.Now()
 	retrieveTime := registerTime.Add(10 * time.Second)
 
-	k1, err := tagging.DefaultKeyManager().CreateKeyString("k1")
+	k1, err := tagging.DefaultKeyManager().CreateKeyStringUTF8("k1")
 	if err != nil {
 		t.Fatalf("creating keyString failed. %v ", err)
 	}
-	k2, err := tagging.DefaultKeyManager().CreateKeyString("k2")
+	k2, err := tagging.DefaultKeyManager().CreateKeyStringUTF8("k2")
 	if err != nil {
 		t.Fatalf("creating keyString failed. %v ", err)
 	}
@@ -73,7 +73,7 @@ func TestUsageCollection(t *testing.T) {
 			[]*view{
 				{
 					viewDesc: &DistributionViewDesc{
-						vdc: &ViewDescCommon{
+						Vdc: &ViewDescCommon{
 							Name:            "view1",
 							MeasureDescName: "measure1",
 							TagKeys:         []tagging.Key{k1, k2},
@@ -170,7 +170,7 @@ func TestUsageCollection(t *testing.T) {
 			[]*view{
 				{
 					viewDesc: &DistributionViewDesc{
-						vdc: &ViewDescCommon{
+						Vdc: &ViewDescCommon{
 							Name:            "allTagsView",
 							MeasureDescName: "measure2",
 							TagKeys:         []tagging.Key{},
@@ -199,7 +199,7 @@ func TestUsageCollection(t *testing.T) {
 				},
 				{
 					viewDesc: &DistributionViewDesc{
-						vdc: &ViewDescCommon{
+						Vdc: &ViewDescCommon{
 							Name:            "view1",
 							MeasureDescName: "measure2",
 							TagKeys:         []tagging.Key{k1, k2},
@@ -239,7 +239,7 @@ func TestUsageCollection(t *testing.T) {
 				},
 				{
 					viewDesc: &DistributionViewDesc{
-						vdc: &ViewDescCommon{
+						Vdc: &ViewDescCommon{
 							Name:            "view2",
 							MeasureDescName: "measure2",
 							TagKeys:         []tagging.Key{k1, k2},
@@ -279,7 +279,7 @@ func TestUsageCollection(t *testing.T) {
 				},
 				{
 					viewDesc: &DistributionViewDesc{
-						vdc: &ViewDescCommon{
+						Vdc: &ViewDescCommon{
 							Name:            "view3",
 							MeasureDescName: "measure2",
 							TagKeys:         []tagging.Key{k1},

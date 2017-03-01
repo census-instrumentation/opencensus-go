@@ -26,7 +26,7 @@ import (
 // DistributionViewDesc holds the parameters describing an aggregation
 // distribution..
 type DistributionViewDesc struct {
-	vdc *ViewDescCommon
+	Vdc *ViewDescCommon
 
 	// An aggregation distribution may contain a histogram of the values in the
 	// population. The bucket boundaries for that histogram are described
@@ -62,7 +62,7 @@ func (dd *DistributionViewDesc) retrieveView(now time.Time) (*View, error) {
 }
 
 func (dd *DistributionViewDesc) ViewDescCommon() *ViewDescCommon {
-	return dd.vdc
+	return dd.Vdc
 }
 
 func (dd *DistributionViewDesc) isValid() error {
@@ -77,8 +77,8 @@ func (dd *DistributionViewDesc) isValid() error {
 func (dd *DistributionViewDesc) retrieveAggreationView(t time.Time) (*DistributionView, error) {
 	var aggs []*DistributionAgg
 
-	for sig, a := range dd.vdc.signatures {
-		tags, err := tagging.TagsFromValuesSignature([]byte(sig), dd.vdc.TagKeys)
+	for sig, a := range dd.Vdc.signatures {
+		tags, err := tagging.DecodeFromValuesSignatureToSlice([]byte(sig), dd.Vdc.TagKeys)
 		if err != nil {
 			return nil, fmt.Errorf("malformed signature '%v'. %v", sig, err)
 		}
@@ -96,7 +96,7 @@ func (dd *DistributionViewDesc) retrieveAggreationView(t time.Time) (*Distributi
 	return &DistributionView{
 		Descriptor:   dd,
 		Aggregations: aggs,
-		Start:        dd.vdc.start,
+		Start:        dd.Vdc.start,
 		End:          t,
 	}, nil
 }
@@ -108,10 +108,10 @@ func (dd *DistributionViewDesc) stringWithIndent(tabs string) string {
 
 	var buf bytes.Buffer
 	fmt.Fprintf(&buf, "%T {\n", dd)
-	fmt.Fprintf(&buf, "%v  Name: %v,\n", tabs, dd.vdc.Name)
-	fmt.Fprintf(&buf, "%v  Description: %v,\n", tabs, dd.vdc.Description)
-	fmt.Fprintf(&buf, "%v  MeasureDescName: %v,\n", tabs, dd.vdc.MeasureDescName)
-	fmt.Fprintf(&buf, "%v  TagKeys: %v,\n", tabs, dd.vdc.TagKeys)
+	fmt.Fprintf(&buf, "%v  Name: %v,\n", tabs, dd.Vdc.Name)
+	fmt.Fprintf(&buf, "%v  Description: %v,\n", tabs, dd.Vdc.Description)
+	fmt.Fprintf(&buf, "%v  MeasureDescName: %v,\n", tabs, dd.Vdc.MeasureDescName)
+	fmt.Fprintf(&buf, "%v  TagKeys: %v,\n", tabs, dd.Vdc.TagKeys)
 	fmt.Fprintf(&buf, "%v  Bound: %v,\n", tabs, dd.Bounds)
 	fmt.Fprintf(&buf, "%v}", tabs)
 	return buf.String()

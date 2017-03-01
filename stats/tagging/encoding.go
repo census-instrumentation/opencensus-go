@@ -16,11 +16,81 @@
 package tagging
 
 import (
+	"bytes"
 	"encoding/binary"
-	"errors"
 	"fmt"
-	"math"
 )
+
+// decodeVarintString read the length of a string encoded as varint in btags,
+// then reads the string itself from btags. It ensures that all reads are
+// within the boundaries of the slice to avoid a panic. Returns
+func decodeVarintString(fullSig []byte, idx int) (string, int, error) {
+	b, valueEnd, err := decodeVarintBytes(fullSig, idx)
+	if err != nil {
+		return "", 0, err
+	}
+	return string(b), valueEnd, nil
+}
+
+func decodeVarintBytes(fullSig []byte, idx int) ([]byte, int, error) {
+	if idx > len(fullSig) {
+		return nil, 0, fmt.Errorf("unexpected end while decodeVarintString '%x' starting at idx '%v'", fullSig, idx)
+	}
+	length, valueStart := binary.Varint(fullSig[idx:])
+	if valueStart <= 0 {
+		return nil, 0, fmt.Errorf("unexpected end while decodeVarintString '%x' starting at idx '%v'", fullSig, idx)
+	}
+
+	valueStart += idx
+	valueEnd := valueStart + int(length)
+	if valueEnd > len(fullSig) || length < 0 {
+		return nil, 0, fmt.Errorf("malformed encoding: length:%v, upper%v, maxLength:%v", length, valueEnd, len(fullSig))
+	}
+	return fullSig[valueStart:valueEnd], valueEnd, nil
+}
+
+func decodeVarint(sig []byte, idx int) (l int, newIdx int, err error) {
+	if idx >= len(sig) {
+		return 0, 0, fmt.Errorf("unexpected end while decodeVarint '%x' starting at idx '%v'", sig, idx)
+	}
+	length, valueStart := binary.Varint(sig[idx:])
+	if valueStart <= 0 {
+		return 0, 0, fmt.Errorf("unexpected end while decodeVarint '%x' starting at idx '%v'", sig, idx)
+	}
+	return int(length), valueStart + idx, nil
+}
+
+func encodeVarintString(dst *bytes.Buffer, s string) {
+	encodeVarint(dst, int16(len(s)))
+	dst.Write([]byte(s))
+}
+
+func encodeVarintBytes(dst *bytes.Buffer, b []byte) {
+	encodeVarint(dst, int16(len(b)))
+	dst.Write(b)
+}
+
+func encodeVarint(dst *bytes.Buffer, i int16) {
+	tmp := make([]byte, binary.MaxVarintLen16)
+	varIntSize := binary.PutVarint(tmp, int64(i))
+	dst.Write(tmp[:varIntSize])
+}
+
+/*
+func decodeInt64(fullSig []byte, idx int) (int64, error) {
+	if len(bytes) < 8 {
+		return 0, fmt.Errorf("[]bytes not large enough to decode int64FromBytes: %v", bytes)
+	}
+	return int64(binary.LittleEndian.Uint64(bytes)), nil
+}
+
+func stringFromBytes(bytes []byte, length int32) (string, error) {
+	if int32(len(bytes)) < length {
+		return "", fmt.Errorf("[]bytes not large enough to decode stringFromBytes: %v", bytes)
+	}
+	return string(bytes[:length]), nil
+}
+
 
 func lengthFromBytes(bytes []byte) (int32, error) {
 	return int32FromBytes(bytes)
@@ -105,21 +175,4 @@ func float64ToBytes(f float64) []byte {
 	binary.LittleEndian.PutUint64(bytes, math.Float64bits(f))
 	return bytes
 }
-
-// readVarintString read the length of a string encoded as varint in btags,
-// then reads the string itself from btags. It ensures that all reads are
-// within the boundaries of the slice to avoid a panic. Returns
-func readVarintString(btags []byte) (string, int, error) {
-	if len(btags) == 0 {
-		return "", 0, errors.New("btags is empty")
-	}
-
-	length, valueStart := binary.Varint(btags)
-	valueEnd := valueStart + int(length)
-	if valueEnd > len(btags) || length < 0 {
-		return "", 0, fmt.Errorf("malformed encoding: length:%v, upper%v, maxLength:%v", length, valueEnd, len(btags))
-	}
-
-	value := btags[valueStart:valueEnd]
-	return string(value), valueEnd, nil
-}
+*/

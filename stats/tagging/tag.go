@@ -15,6 +15,14 @@
 
 package tagging
 
+import "bytes"
+
+// Key is the interface for all key types.
+type Key interface {
+	Name() string
+	Type() keyType
+}
+
 // Mutation is the interface that all mutations types need to implements. A
 // mutation is a data structure holding a key, a value and a behavior. The
 // mutations value types supported are string, int64 and bool.
@@ -23,47 +31,33 @@ type Mutation interface {
 	Behavior() MutationBehavior
 }
 
-// mutationString represents a mutation for a tag of type string.
-type mutationString struct {
-	*tagString
-	behavior MutationBehavior
+// Tag is the tuple (key, value) interface for all tag types.
+type Tag interface {
+	Key() Key
+	setKeyFromBytes(fullSig []byte, idx int) (newIdx int, err error)
+	setValueFromBytes(fullSig []byte, idx int) (newIdx int, err error)
+	setValueFromBytesKnownLength(valuesSig []byte, idx int, len int) (newIdx int, err error)
+	encodeValueToBuffer(dst *bytes.Buffer)
+	encodeKeyToBuffer(dst *bytes.Buffer)
 }
 
-func (ms *mutationString) Tag() Tag {
-	return ms.tagString
-}
+type tagSliceByName []Tag
 
-func (ms *mutationString) Behavior() MutationBehavior {
-	return ms.behavior
-}
+func (ts tagSliceByName) Len() int { return len(ts) }
 
-// mutationInt64 represents a mutation for a tag of type int64.
-type mutationInt64 struct {
-	*tagInt64
-	behavior MutationBehavior
-}
+func (ts tagSliceByName) Swap(i, j int) { ts[i], ts[j] = ts[j], ts[i] }
 
-func (mi *mutationInt64) Tag() Tag {
-	return mi.tagInt64
-}
+func (ts tagSliceByName) Less(i, j int) bool { return ts[i].Key().Name() < ts[j].Key().Name() }
 
-func (mi *mutationInt64) Behavior() MutationBehavior {
-	return mi.behavior
-}
+// KeyType defines the types of keys allowed.
+type keyType byte
 
-// mutationBool represents a mutation for a tag of type bool.
-type mutationBool struct {
-	*tagBool
-	behavior MutationBehavior
-}
-
-func (mb *mutationBool) Tag() Tag {
-	return mb.tagBool
-}
-
-func (mb *mutationBool) Behavior() MutationBehavior {
-	return mb.behavior
-}
+const (
+	keyTypeStringUTF8 keyType = iota
+	keyTypeInt64
+	keyTypeBool
+	keyTypeBytes
+)
 
 // MutationBehavior defines the types of mutations allowed.
 type MutationBehavior byte

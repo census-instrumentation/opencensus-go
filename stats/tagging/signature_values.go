@@ -1,3 +1,18 @@
+// Copyright 2017 Google Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+
 package tagging
 
 import (
@@ -12,51 +27,114 @@ type TagValuesSignature struct {
 	sig []byte
 }
 
-// DecodeFromValuesSignature creates a TagsSet from an TagValuesSignature and a
-// slice of keys. The slice of keys is expected to be the same one as the one
+// DecodeFromValuesSignatureToSlice creates a []Tag from an encodded []byte and
+// a slice of keys. The slice of keys is expected to be the same one as the one
 // used for encoding.
-func DecodeFromValuesSignature(valuesSig []byte, keys []Key) (TagsSet, error) {
+func DecodeFromValuesSignatureToSlice(valuesSig []byte, keys []Key) ([]Tag, error) {
+	var ts []Tag
+	if len(valuesSig) == 0 {
+		return ts, nil
+	}
+
+	var (
+		t      Tag
+		err    error
+		idx    int
+		length int
+	)
+	for _, k := range keys {
+		if idx > len(valuesSig) {
+			return nil, fmt.Errorf("DecodeFromValuesSignature failed. Unexpected signature end '%v' for keys '%v'", valuesSig, keys)
+		}
+		if length, idx, err = decodeVarint(valuesSig, idx); err != nil {
+			return nil, err
+		}
+		if length == 0 {
+			// No value was encoded for this key
+			continue
+		}
+
+		switch typ := k.(type) {
+		case *keyStringUTF8:
+			t = &tagStringUTF8{
+				k: typ,
+			}
+		case *keyInt64:
+			t = &tagInt64{
+				k: typ,
+			}
+		case *keyBool:
+			t = &tagBool{
+				k: typ,
+			}
+		case *keyBytes:
+			t = &tagBytes{
+				k: typ,
+			}
+		default:
+			return nil, fmt.Errorf("TagsFromValuesSignature failed. Key type invalid %v", k)
+		}
+		idx, err = t.setValueFromBytesKnownLength(valuesSig, idx, length)
+		if err != nil {
+			return nil, err
+		}
+
+		ts = append(ts, t)
+	}
+	return ts, nil
+}
+
+// DecodeFromValuesSignatureToTagsSet creates a TagsSet from an encodded []byte
+// and a slice of keys. The slice of keys is expected to be the same one as the
+// one used for encoding.
+func DecodeFromValuesSignatureToTagsSet(valuesSig []byte, keys []Key) (TagsSet, error) {
 	ts := make(TagsSet)
 	if len(valuesSig) == 0 {
 		return ts, nil
 	}
 
-	var t Tag
-	idx := 0
-	len := 0
+	var (
+		t      Tag
+		err    error
+		idx    int
+		length int
+	)
 	for _, k := range keys {
 		if idx > len(valuesSig) {
 			return nil, fmt.Errorf("DecodeFromValuesSignature failed. Unexpected signature end '%v' for keys '%v'", valuesSig, keys)
 		}
-		len, idx = readVarint(valuesSig, idx)
-		if len == 0 {
+		if length, idx, err = decodeVarint(valuesSig, idx); err != nil {
+			return nil, err
+		}
+
+		if length == 0 {
 			// No value was encoded for this key
 			continue
 		}
 
-		switch k.Type() {
-		case keyTypeStringUTF8:
-			t = tagStringUTF8{
-				keyStringUTF8: k,
+		switch typ := k.(type) {
+		case *keyStringUTF8:
+			t = &tagStringUTF8{
+				k: typ,
 			}
-		case keyTypeInt64:
-			t = tagInt64{
-				keyInt64: k,
+		case *keyInt64:
+			t = &tagInt64{
+				k: typ,
 			}
-		case keyTypeBool:
-			t = tagBool{
-				keyBool: k,
+		case *keyBool:
+			t = &tagBool{
+				k: typ,
 			}
-		case keyTypeBytes:
-			t = tagBytes{
-				keyInt64: k,
+		case *keyBytes:
+			t = &tagBytes{
+				k: typ,
 			}
 		default:
 			return nil, fmt.Errorf("TagsFromValuesSignature failed. Key type invalid %v", k)
 		}
-		idx, err = t.setValueFromBytesKnownLength(valuesSig, len, idx)
+		idx, err = t.setValueFromBytesKnownLength(valuesSig, idx, length)
 		if err != nil {
-			return nil, error
+			return nil, err
 		}
 
 		ts[k] = t
@@ -67,12 +145,14 @@ func DecodeFromValuesSignature(valuesSig []byte, keys []Key) (TagsSet, error) {
 // EncodeToValuesSignature creates a TagValuesSignature from TagsSet
 func EncodeToValuesSignature(ts TagsSet, keys []Key) []byte {
 	var b bytes.Buffer
-	for k := range keys {
-		if t, ok := ts[k]; !ok {
+	for _, k := range keys {
+		t, ok := ts[k]
+		if !ok {
 			// write 0 (len(value) = 0) meaning no value is encoded for this key.
+			encodeVarint(&b, 0)
 			continue
 		}
-		t.EncodeValueToBuffer(&b)
+		t.encodeValueToBuffer(&b)
 	}
 	return b.Bytes()
 }

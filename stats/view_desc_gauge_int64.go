@@ -25,7 +25,7 @@ import (
 
 // GaugeInt64ViewDesc defines an int64 gauge view.
 type GaugeInt64ViewDesc struct {
-	vdc *ViewDescCommon
+	Vdc *ViewDescCommon
 }
 
 func (gd *GaugeInt64ViewDesc) createAggregator(t time.Time) (aggregator, error) {
@@ -44,7 +44,7 @@ func (gd *GaugeInt64ViewDesc) retrieveView(now time.Time) (*View, error) {
 }
 
 func (gd *GaugeInt64ViewDesc) ViewDescCommon() *ViewDescCommon {
-	return gd.vdc
+	return gd.Vdc
 }
 
 func (gd *GaugeInt64ViewDesc) isValid() error {
@@ -54,8 +54,8 @@ func (gd *GaugeInt64ViewDesc) isValid() error {
 func (gd *GaugeInt64ViewDesc) retrieveAggreationView(t time.Time) (*GaugeInt64View, error) {
 	var aggs []*GaugeInt64Agg
 
-	for sig, a := range gd.vdc.signatures {
-		tags, err := tagging.TagsFromValuesSignature([]byte(sig), gd.vdc.TagKeys)
+	for sig, a := range gd.Vdc.signatures {
+		tags, err := tagging.DecodeFromValuesSignatureToSlice([]byte(sig), gd.Vdc.TagKeys)
 		if err != nil {
 			return nil, fmt.Errorf("malformed signature '%v'. %v", sig, err)
 		}
@@ -83,10 +83,10 @@ func (gd *GaugeInt64ViewDesc) stringWithIndent(tabs string) string {
 
 	var buf bytes.Buffer
 	fmt.Fprintf(&buf, "%T {\n", gd)
-	fmt.Fprintf(&buf, "%v  Name: %v,\n", tabs, gd.vdc.Name)
-	fmt.Fprintf(&buf, "%v  Description: %v,\n", tabs, gd.vdc.Description)
-	fmt.Fprintf(&buf, "%v  MeasureDescName: %v,\n", tabs, gd.vdc.MeasureDescName)
-	fmt.Fprintf(&buf, "%v  TagKeys: %v,\n", tabs, gd.vdc.TagKeys)
+	fmt.Fprintf(&buf, "%v  Name: %v,\n", tabs, gd.Vdc.Name)
+	fmt.Fprintf(&buf, "%v  Description: %v,\n", tabs, gd.Vdc.Description)
+	fmt.Fprintf(&buf, "%v  MeasureDescName: %v,\n", tabs, gd.Vdc.MeasureDescName)
+	fmt.Fprintf(&buf, "%v  TagKeys: %v,\n", tabs, gd.Vdc.TagKeys)
 	fmt.Fprintf(&buf, "%v}", tabs)
 	return buf.String()
 }
