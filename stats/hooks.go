@@ -20,8 +20,6 @@ package stats
 import (
 	"time"
 
-	"github.com/google/instrumentation-go/stats/tagging"
-
 	"golang.org/x/net/context"
 )
 
@@ -100,6 +98,7 @@ var SetCallbackPeriod func(min, max time.Duration)
 // view as it is currently collected by the library.
 var RetrieveViewByName func(name string) (*View, error)
 
+/*
 func init() {
 	uc := newUsageCollector()
 	RecordMeasurements = func(ctx context.Context, m ...Measurement) {
@@ -120,3 +119,4 @@ func init() {
 		return uc.retrieveViewByName(name, time.Now())
 	}
 }
+*/

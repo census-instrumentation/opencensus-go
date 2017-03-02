@@ -15,12 +15,16 @@
 
 package stats
 
-import "time"
+import (
+	"time"
+
+	"github.com/google/instrumentation-go/stats/tagging"
+)
 
 // measureDescRegistration is a message requesting that the channelWorker
 // goroutine registers MeasureDesc md.
 type measureDescRegistration struct {
-	md  *MeasureDesc
+	md  MeasureDesc
 	err chan error
 }
 
@@ -34,7 +38,7 @@ type measureDescUnregistration struct {
 // viewDescRegistration is a message requesting that the channelWorker
 // goroutine registers ViewDesc vd.
 type viewDescRegistration struct {
-	avd AggregationViewDesc
+	vd  ViewDesc
 	err chan error
 }
 
@@ -64,17 +68,15 @@ type viewDescUnsubscription struct {
 // singleRecord is a message requesting that the channelWorker goroutine
 // records the value v for the MeasureDesc md and tags in ct.
 type singleRecord struct {
-	ct contextTags
-	v  float64
-	md *MeasureDesc
+	ts tagging.TagsSet
+	m  Measurement
 }
 
 // multiRecords is a message requesting that the channelWorker goroutine
 // records the values vs for the MeasureDesc mds and tags in ct.
 type multiRecords struct {
-	ct  contextTags
-	vs  []float64
-	mds []*MeasureDesc
+	ts tagging.TagsSet
+	ms []Measurement
 }
 
 // reportingPeriod is a message requesting that the channelWorker goroutine

@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/google/instrumentation-go/stats/tagging"
 	"golang.org/x/net/context"
 )
 
@@ -45,7 +46,7 @@ type channelWorker struct {
 	maxWaitTimer *time.Ticker
 }
 
-func (w *channelWorker) registerMeasureDesc(md *MeasureDesc) error {
+func (w *channelWorker) registerMeasureDesc(md MeasureDesc) error {
 	mr := &measureDescRegistration{
 		md:  md,
 		err: make(chan error),
@@ -63,12 +64,12 @@ func (w *channelWorker) unregisterMeasureDesc(mName string) error {
 	return <-mu.err
 }
 
-func (w *channelWorker) registerViewDesc(avd AggregationViewDesc, c chan *View) error {
-	vd := avd.viewDesc()
-	vd.vChans = make(map[chan *View]struct{})
-	vd.vChans[c] = struct{}{}
+func (w *channelWorker) registerViewDesc(vd ViewDesc, c chan *View) error {
+	vdc := vd.ViewDescCommon()
+	vdc.vChans = make(map[chan *View]struct{})
+	vdc.vChans[c] = struct{}{}
 	vr := &viewDescRegistration{
-		avd: avd,
+		vd:  vd,
 		err: make(chan error),
 	}
 	w.inputs <- vr
@@ -104,29 +105,21 @@ func (w *channelWorker) unsubscribeFromViewDesc(vn string, c chan *View) error {
 	return <-vu.err
 }
 
-func (w *channelWorker) recordMeasurement(ctx context.Context, md *MeasureDesc, value float64) {
-	ct := ctx.Value(censusKey{})
-	if ct == nil {
-		ct = make(contextTags)
-	}
+func (w *channelWorker) recordMeasurement(ctx context.Context, m Measurement) {
+	ts := tagging.FromContext(ctx)
 
 	w.inputs <- &singleRecord{
-		ct: ct.(contextTags),
-		v:  value,
-		md: md,
+		ts: ts,
+		m:  m,
 	}
 }
 
-func (w *channelWorker) recordManyMeasurement(ctx context.Context, mds []*MeasureDesc, values []float64) {
-	ct, ok = ctx.Value(censusKey{}).(contextTags)
-	if !ok {
-		ct = make(contextTags)
-	}
+func (w *channelWorker) recordManyMeasurement(ctx context.Context, ms ...Measurement) {
+	ts := tagging.FromContext(ctx)
 
 	w.inputs <- &multiRecords{
-		ct:  ct.(contextTags),
-		vs:  values,
-		mds: mds,
+		ts: ts,
+		ms: ms,
 	}
 }
 
@@ -135,7 +128,7 @@ func (w *channelWorker) changeCallbackPeriod(min time.Duration, max time.Duratio
 	w.inputs <- rf
 }
 
-func (w *channelWorker) registerMeasureDescHandler(md *MeasureDesc) error {
+func (w *channelWorker) registerMeasureDescHandler(md MeasureDesc) error {
 	return w.collector.registerMeasureDesc(md)
 }
 
@@ -143,8 +136,8 @@ func (w *channelWorker) unregisterMeasureDescHandler(mName string) error {
 	return w.collector.unregisterMeasureDesc(mName)
 }
 
-func (w *channelWorker) registerViewDescHandler(avd AggregationViewDesc) error {
-	return w.collector.registerViewDesc(avd, time.Now())
+func (w *channelWorker) registerViewDescHandler(vd ViewDesc) error {
+	return w.collector.registerViewDesc(vd, time.Now())
 }
 
 func (w *channelWorker) unregisterViewDescHandler(vwName string) error {
@@ -160,7 +153,7 @@ func (w *channelWorker) unsubscribeFromViewDescHandler(vwName string, c chan *Vi
 }
 
 func (w *channelWorker) recordMeasurementHandler(sr *singleRecord) {
-	if err := w.collector.recordMeasurement(time.Now(), sr.ct, sr.md, sr.v); err != nil {
+	if err := w.collector.recordMeasurement(time.Now(), sr.ts, sr.m); err != nil {
 		// TODO(iamm2): log that measureDesc is not registered.
 		return
 	}
@@ -168,7 +161,7 @@ func (w *channelWorker) recordMeasurementHandler(sr *singleRecord) {
 }
 
 func (w *channelWorker) recordMultiMeasurementHandler(mr *multiRecords) {
-	if err := w.collector.recordManyMeasurement(time.Now(), mr.ct, mr.mds, mr.vs); err != nil {
+	if err := w.collector.recordManyMeasurement(time.Now(), mr.ts, mr.ms); err != nil {
 		// TODO(iamm2): log that measureDesc is not registered.
 		return
 	}
@@ -223,7 +216,7 @@ func (w *channelWorker) reportUsage() {
 	views := w.collector.retrieveViews(now)
 
 	for _, vw := range views {
-		for c := range vw.ViewDesc.vChans {
+		for c := range vw.ViewDesc.ViewDescCommon().vChans {
 			select {
 			case c <- vw:
 			default:
@@ -241,12 +234,14 @@ func (w *channelWorker) resetTimer(d time.Duration) {
 
 func newChannelWorker() *channelWorker {
 	cw := &channelWorker{
-		collector: &usageCollector{
-			mDescriptors: make(map[string]*MeasureDesc),
-			vDescriptors: make(map[string]AggregationViewDesc),
+		collector:         newUsageCollector(),
+		lastReportingTime: time.Now(),
+		reportingPeriod: &reportingPeriod{
+			max: 6 * time.Second,
+			min: 5 * time.Second,
 		},
 		inputs:       make(chan interface{}, 8192),
-		maxWaitTimer: time.NewTicker(24 * time.Hour),
+		maxWaitTimer: time.NewTicker(10 * time.Second),
 	}
 
 	go func() {
@@ -259,7 +254,7 @@ func newChannelWorker() *channelWorker {
 				case *measureDescUnregistration:
 					cmd.err <- cw.unregisterMeasureDescHandler(cmd.mn)
 				case *viewDescRegistration:
-					cmd.err <- cw.registerViewDescHandler(cmd.avd)
+					cmd.err <- cw.registerViewDescHandler(cmd.vd)
 				case *viewDescUnregistration:
 					cmd.err <- cw.unregisterViewDescHandler(cmd.vn)
 				case *viewDescSubscription:
@@ -296,6 +291,7 @@ func init() {
 	SubscribeToView = cw.subscribeToViewDescHandler
 	UnsubscribeFromView = cw.unsubscribeFromViewDescHandler
 	RecordMeasurement = cw.recordMeasurement
-	RecordManyMeasurement = cw.recordManyMeasurement
+	RecordMeasurements = cw.recordManyMeasurement
 	SetCallbackPeriod = cw.changeCallbackPeriod
+	// TODO(acetechnologist): RetrieveViewByName =cw.retrieveViewByName
 }

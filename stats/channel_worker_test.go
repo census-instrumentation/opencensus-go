@@ -22,86 +22,66 @@ import (
 
 func TestRegisterMeasureDesc(t *testing.T) {
 	type testData struct {
-		mds  []*MeasureDesc
-		want string
+		mds            []MeasureDesc
+		wantErrorCount int
 	}
+	measurementUnitString := &MeasurementUnit{}
+	md1 := NewMeasureDescFloat64("name1", "desc", measurementUnitString)
+	md2 := NewMeasureDescFloat64("name2", "desc", measurementUnitString)
+	md3 := NewMeasureDescFloat64("name1", "desc", measurementUnitString)
 
-	md1 := &MeasureDesc{
-		Name:        "name1",
-		Description: "desc",
-		Unit:        MeasurementUnit{},
-	}
-	md2 := &MeasureDesc{
-		Name:        "name2",
-		Description: "desc",
-		Unit:        MeasurementUnit{},
-	}
-	md3 := &MeasureDesc{
-		Name:        "name1",
-		Description: "desc",
-		Unit:        MeasurementUnit{},
-	}
 	testCases := []testData{
 		{
-			[]*MeasureDesc{md1, md2},
-			"",
+			[]MeasureDesc{md1, md2},
+			0,
 		},
 		{
-			[]*MeasureDesc{md2, md1},
-			"",
+			[]MeasureDesc{md2, md1},
+			0,
 		},
 		{
-			[]*MeasureDesc{md1, md2, md3},
-			fmt.Sprintf("a measure descriptor with the same name %s is already registered", "name1"),
+			[]MeasureDesc{md1, md2, md3},
+			1,
 		},
 	}
 
 	for i, td := range testCases {
 		cw := newChannelWorker()
-		var got string
+		var got int
 		for _, md := range td.mds {
 			if err := cw.registerMeasureDesc(md); err != nil {
-				got = err.Error()
-				break
+				got++
 			}
 		}
-		if got != td.want {
-			t.Errorf("got '%v', want '%v' when registering test case %v", got, td.want, i)
+		if got != td.wantErrorCount {
+			t.Errorf("got '%v', want '%v' when registering test case %v", got, td.wantErrorCount, i)
 		}
 	}
 }
 
 func TestUnregisterMeasureDesc(t *testing.T) {
 	type testData struct {
-		mds        []*MeasureDesc
+		mds        []MeasureDesc
 		unregister string
 		want       string
 	}
 
-	md1 := &MeasureDesc{
-		Name:        "name1",
-		Description: "desc",
-		Unit:        MeasurementUnit{},
-	}
-	md2 := &MeasureDesc{
-		Name:        "name2",
-		Description: "desc",
-		Unit:        MeasurementUnit{},
-	}
+	md1 := NewMeasureDescFloat64("name1", "desc", &MeasurementUnit{})
+	md2 := NewMeasureDescFloat64("name2", "desc", &MeasurementUnit{})
 
 	testCases := []testData{
 		{
-			[]*MeasureDesc{md1, md2},
+			[]MeasureDesc{md1, md2},
 			"name1",
 			"",
 		},
 		{
-			[]*MeasureDesc{md1, md2},
+			[]MeasureDesc{md1, md2},
 			"name2",
 			"",
 		},
 		{
-			[]*MeasureDesc{md1, md2},
+			[]MeasureDesc{md1, md2},
 			"name3",
 			fmt.Sprintf("no measure descriptor with the name %s is registered", "name3"),
 		},
@@ -125,11 +105,7 @@ func TestUnregisterMeasureDesc(t *testing.T) {
 		}
 
 		// re-register a measureDesc with the same name as the one unregistered
-		tmp := &MeasureDesc{
-			Name:        td.unregister,
-			Description: "desc",
-			Unit:        MeasurementUnit{},
-		}
+		tmp := NewMeasureDescFloat64(td.unregister, "desc", &MeasurementUnit{})
 
 		if err := cw.registerMeasureDesc(tmp); err != nil {
 			t.Errorf("got '%v' during registration '%v' after registering test case %v, want no error", err, tmp, i)

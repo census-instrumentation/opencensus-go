@@ -123,17 +123,17 @@ func (uc *usageCollector) subscribeToViewDesc(vwName string, c chan *View) error
 }
 
 func (uc *usageCollector) unsubscribeFromViewDesc(vwName string, c chan *View) error {
-	avd, ok := uc.vDescriptors[vwName]
+	vd, ok := uc.vDescriptors[vwName]
 	if !ok {
 		return fmt.Errorf("no view descriptor with the name %s is registered", vwName)
 	}
 
-	vd := avd.ViewDescCommon()
-	if _, ok := vd.vChans[c]; !ok {
+	vdc := vd.ViewDescCommon()
+	if _, ok := vdc.vChans[c]; !ok {
 		return fmt.Errorf("channel is not used to subscribe to this viewDesc %s", vwName)
 	}
 
-	delete(vd.vChans, c)
+	delete(vdc.vChans, c)
 	return nil
 }
 
@@ -183,11 +183,11 @@ func (uc *usageCollector) recordManyMeasurement(now time.Time, ts tagging.TagsSe
 	return nil
 }
 
-func (uc *usageCollector) add(start, now time.Time, signatures map[string]aggregator, sig string, avd ViewDesc, m Measurement) error {
+func (uc *usageCollector) add(start, now time.Time, signatures map[string]aggregator, sig string, vd ViewDesc, m Measurement) error {
 	agg, found := signatures[sig]
 	if !found {
 		var err error
-		if agg, err = avd.createAggregator(start); err != nil {
+		if agg, err = vd.createAggregator(start); err != nil {
 			return err
 		}
 		signatures[sig] = agg
@@ -197,50 +197,49 @@ func (uc *usageCollector) add(start, now time.Time, signatures map[string]aggreg
 	return nil
 }
 
-func (uc *usageCollector) retrieveViews(now time.Time) ([]*View, error) {
-
+func (uc *usageCollector) retrieveViews(now time.Time) []*View {
 	var views []*View
-	for _, avd := range uc.vDescriptors {
-		vw, err := avd.retrieveView(now)
+	for _, vd := range uc.vDescriptors {
+		vw, err := vd.retrieveView(now)
 		if err != nil {
 			//// TODO(iamm2) log error fmt.Errorf("error retrieving view for view description %v. %v", *vd, err)
-			return nil, err
+			continue
 		}
 
 		views = append(views, vw)
 	}
-	return views, nil
+	return views
 }
 
-func (uc *usageCollector) retrieveView(name string, now time.Time, avd ViewDesc) (*View, error) {
-	vd := avd.ViewDescCommon()
+func (uc *usageCollector) retrieveView(name string, now time.Time, vd ViewDesc) (*View, error) {
+	vdc := vd.ViewDescCommon()
 
-	tmp, ok := uc.vDescriptors[vd.Name]
+	tmp, ok := uc.vDescriptors[vdc.Name]
 	if !ok {
-		return nil, fmt.Errorf("no view descriptor with the name %s is registered", vd.MeasureDescName)
+		return nil, fmt.Errorf("no view descriptor with the name %s is registered", vdc.MeasureDescName)
 	}
 
-	if tmp != avd {
-		return nil, fmt.Errorf("a different view %v was registered with this name %v", tmp, vd.Name)
+	if tmp != vd {
+		return nil, fmt.Errorf("a different view %v was registered with this name %v", tmp, vdc.Name)
 	}
 
-	vw, err := avd.retrieveView(now)
+	vw, err := vd.retrieveView(now)
 	if err != nil {
-		return nil, fmt.Errorf("error retrieving view for view description %v. %v", avd, err)
+		return nil, fmt.Errorf("error retrieving view for view description %v. %v", vd, err)
 	}
 
 	return vw, nil
 }
 
 func (uc *usageCollector) retrieveViewByName(name string, now time.Time) (*View, error) {
-	avd, ok := uc.vDescriptors[name]
+	vd, ok := uc.vDescriptors[name]
 	if !ok {
 		return nil, fmt.Errorf("no view descriptor with the name %s is registered", name)
 	}
 
-	vw, err := avd.retrieveView(now)
+	vw, err := vd.retrieveView(now)
 	if err != nil {
-		return nil, fmt.Errorf("error retrieving view for view description %v. %v", avd, err)
+		return nil, fmt.Errorf("error retrieving view for view description %v. %v", vd, err)
 	}
 
 	return vw, nil

@@ -66,7 +66,7 @@ func main() {
 	}
 
 	// Create/register view description of type gauge float
-	c := make(chan *stats.View)
+	c := make(chan *stats.View, 256)
 
 	vwGaugeS := &stats.GaugeStringViewDesc{
 		Vdc: &stats.ViewDescCommon{
@@ -184,23 +184,27 @@ func main() {
 	stats.RecordMeasurements(ctx, m1, m2, m3, m4, m5, m6)
 
 	// ---------------------------------------RETRIEVE USAGE---------------------------
-	for i, name := range []string{"View1", "View2"} {
+	/*for i, name := range []string{"View1", "View2"} {
 		view, err := stats.RetrieveViewByName(name)
 		if err != nil {
 			fmt.Printf("%v -->\nError view retrieve: %v\n", i+1, err)
 			continue
 		}
 		fmt.Printf("%v -->\n%v\n", i+1, view)
-	}
+	}*/
 
 	// Retrieve Views
-	/*go func(c chan *stats.View) {
+	done := make(chan bool)
+	go func(c chan *stats.View) {
+		i := 0
 		for {
+			i++
 			v := <-c
-			fmt.Printf("View: %v", v)
+			fmt.Printf("%v -->\n%v\n", i, v)
 		}
+		done <- true
 	}(c)
-	*/
+	<-done
 
 	/*y := mDesc1.Meta()
 	fmt.Printf("Hello, world:\n%v\n%v\n", m1_1, y)
