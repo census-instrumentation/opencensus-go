@@ -22,7 +22,7 @@ type ctxKey struct{}
 func FromContext(ctx context.Context) TagsSet {
 	ts, ok := ctx.Value(ctxKey{}).(TagsSet)
 	if !ok {
-		ts = make(TagsSet)
+		ts = nil
 	}
 	return ts
 }
