@@ -11,9 +11,6 @@ const (
 	// gRPC metadata context.
 	traceKey = "grpc-tracing-bin"
 
-	// lbTokenKey is the metadata key used for lb token.
-	lbTokenKey = "lb-token"
-
 	// statsKey is the metadata key used to identify both the census tags in
 	// the gRPC metadata context as well as RpcServerStats info sent back from
 	// the server to the client in the gRPC metadata context.

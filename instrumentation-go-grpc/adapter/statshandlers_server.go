@@ -3,7 +3,6 @@ package adapter
 import (
 	"errors"
 	"fmt"
-	"go-grpc-census/census"
 	"log"
 	"strings"
 	"sync/atomic"
@@ -20,20 +19,20 @@ import (
 // This funciton extracts auth info out of LOASAuthInfo type object which is wrapped inside of
 // an util.AuthInfo type object. If the object is not the expected type it extracts only the AuthType.
 func extractAuthInfo(d *Data, authInfo credentials.AuthInfo) {
-	d.authProtocol = authInfo.AuthType()
-	uauth, ok := authInfo.(*util.AuthInfo)
-	if !ok {
-		return
-	}
-	if auth, ok := uauth.AuthInfo.(*l2handshaker.LOASAuthInfo); ok {
-		d.caller = auth.MDBUser()
-		d.encrypted = auth.SecurityLevel() == commonpb.SecurityLevel_INTEGRITY_AND_PRIVACY
-		d.privacyBoosted = false // is not supported in gRPC as of 2016-11-17, so it should always be false.
-		d.signed = d.encrypted || auth.SecurityLevel() == commonpb.SecurityLevel_INTEGRITY
-		if ui := auth.UnauthInfo(); ui != nil {
-			d.borgCell = ui.UnauthBorgCell
-		}
-	}
+	// d.authProtocol = authInfo.AuthType()
+	// uauth, ok := authInfo.(*util.AuthInfo)
+	// if !ok {
+	// 	return
+	// }
+	// if auth, ok := uauth.AuthInfo.(*l2handshaker.LOASAuthInfo); ok {
+	// 	d.caller = auth.MDBUser()
+	// 	d.encrypted = auth.SecurityLevel() == commonpb.SecurityLevel_INTEGRITY_AND_PRIVACY
+	// 	d.privacyBoosted = false // is not supported in gRPC as of 2016-11-17, so it should always be false.
+	// 	d.signed = d.encrypted || auth.SecurityLevel() == commonpb.SecurityLevel_INTEGRITY
+	// 	if ui := auth.UnauthInfo(); ui != nil {
+	// 		d.borgCell = ui.UnauthBorgCell
+	// 	}
+	// }
 }
 
 func handleServerConnContext(ctx context.Context, info *stats.ConnTagInfo) (context.Context, error) {
@@ -46,7 +45,7 @@ func handleServerConnContext(ctx context.Context, info *stats.ConnTagInfo) (cont
 	}
 
 	c := &counter{}
-	scs := rpcstats.DefaultManager().NewServerConnStatus(c, info.LocalAddr.String(), info.RemoteAddr.String())
+	scs := DefaultManager().NewServerConnStatus(c, info.LocalAddr, info.RemoteAddr)
 	ctx = context.WithValue(ctx, grpcInstConnKey, &connData{
 		localAddr:        info.LocalAddr,
 		remoteAddr:       info.RemoteAddr,
@@ -64,7 +63,7 @@ func handleConnEndServer(ctx context.Context, s *stats.ConnEnd) error {
 	if !ok {
 		return errors.New("*connData cannot be retrieved from context")
 	}
-	rpcstats.DefaultManager().RemoveServerConnStatus(cd.serverConnStatus)
+	DefaultManager().RemoveServerConnStatus(cd.serverConnStatus)
 	return nil
 }
 
@@ -101,13 +100,13 @@ func handleServerRPCContext(ctx context.Context, info *stats.RPCTagInfo) (contex
 	serviceName := names[1]
 	methodName := names[2]
 
-	// Creating copy of context with local tracing span
-	span := &trace.Span{}
-	span.Start(parentSpan, trace.ServerType, methodName)
-	ctx = trace.NewContext(ctx, span)
+	// //TODO(acetechnologist): Creating copy of context with local tracing span
+	// span := &trace.Span{}
+	// span.Start(parentSpan, trace.ServerType, methodName)
+	// ctx = trace.NewContext(ctx, span)
 
 	// Creating copy of context with census tags
-	ctx, h, err := createCensusContext(ctx, md, d.caller, methodName)
+	ctx, err = createCensusContext(ctx, md, d.caller, methodName)
 	if err != nil {
 		return nil, err
 	}
@@ -115,18 +114,11 @@ func handleServerRPCContext(ctx context.Context, info *stats.RPCTagInfo) (contex
 	if deadline, ok := ctx.Deadline(); ok {
 		d.deadline = deadline
 	}
-	d.span = span
-	d.census = h
-	d.family = "Recv." + serviceName // for client, family = "Sent." + call.Service
+	// d.family = "Recv." + serviceName // for client, family = "Sent." + call.Service
 	d.methodName = methodName
 	d.serviceName = serviceName
 
 	ctx = context.WithValue(ctx, grpcInstKey, d)
-
-	// For lb load reporting.
-	if lbToken := md[lbTokenKey]; len(lbToken) > 0 {
-		ctx = loadRecordStart(ctx, d, lbToken[0])
-	}
 
 	return ctx, nil
 }
@@ -342,7 +334,7 @@ func createParentSpan(md metadata.MD) (*trace.Span, error) {
 
 // createCensusContext creates a census context from the gRPC context and tags
 // received in metadata.
-func createCensusContext(ctx context.Context, md metadata.MD, caller, methodName string) (context.Context, *census.Handle, error) {
+func createCensusContext(ctx context.Context, md metadata.MD, caller, methodName string) (context.Context, error) {
 	var tags []byte
 
 	if censusBin, ok := md[statsKey]; ok {
@@ -358,12 +350,12 @@ func createCensusContext(ctx context.Context, md metadata.MD, caller, methodName
 	}
 
 	// creates a handle. If censusc package was not imported h.native will be 0.
-	h, err := census.FromGRPCBytesRequest(caller, methodName, tags)
+	tagsSet, err := census.FromGRPCBytesRequest(caller, methodName, tags)
 	if err != nil {
 		return nil, nil, fmt.Errorf("constructing census handler from %v failed. %v", tags, err)
 	}
 
 	// adds census handle to local context with census.ContextKey():
-	ctx = context.WithValue(ctx, census.ContextKey(), h)
-	return ctx, h, nil
+	ctx = context.WithValue(ctx, census.ContextKey(), tagsSet)
+	return ctx, nil
 }

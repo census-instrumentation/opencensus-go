@@ -27,7 +27,7 @@ func handleClientConnContext(ctx context.Context, info *stats.ConnTagInfo) (cont
 	}
 
 	c := &counter{}
-	ccs := rpcstats.DefaultManager().NewClientConnStatus(info.RemoteAddr.String())
+	ccs := DefaultManager().NewClientConnStatus(info.RemoteAddr)
 	ctx = context.WithValue(ctx, grpcInstConnKey, &connData{
 		localAddr:        info.LocalAddr,
 		remoteAddr:       info.RemoteAddr,
@@ -44,7 +44,7 @@ func handleConnEndClient(ctx context.Context, s *stats.ConnEnd) error {
 	if !ok {
 		return errors.New("*connData cannot be retrieved from context")
 	}
-	rpcstats.DefaultManager().RemoveClientConnStatus(cd.clientConnStatus)
+	DefaultManager().RemoveClientConnStatus(cd.clientConnStatus)
 	return nil
 }
 
@@ -117,10 +117,9 @@ func handleBeginClient(ctx context.Context, s *stats.Begin) error {
 	}
 
 	d.isClient = true
-	d.failFastOption = s.FailFast
 
-	RequestzStart(ctx, d)
-	reportStreamzClientDataStart(d)
+	// TODO(acetechnologist): requestz for started
+	// TODO(acetechnologist):streamz.
 	return nil
 }
 
@@ -131,7 +130,7 @@ func handleOutHeaderClient(ctx context.Context, s *stats.OutHeader) error {
 	}
 	d.localAddr = s.LocalAddr
 	d.remoteAddr = s.RemoteAddr
-	RequestInfoUpdate(d)
+	// TODO(acetechnologist): RequestInfoUpdate(d)
 	return nil
 }
 
@@ -151,14 +150,15 @@ func handleOutPayloadClient(ctx context.Context, s *stats.OutPayload) error {
 		return fmt.Errorf("s.Payload is of type %T want type proto.Message", s.Payload)
 	}
 
-	payload := &rpctrace.Payload{
-		Pay:        s.Data,
-		PayLen:     s.Length,
-		WirePayLen: s.WireLength,
-	}
-	d.payloadReq = payload
+	//TODO(acetechnologist): Payload for requestz.
+	// payload := &rpctrace.Payload{
+	// 	Pay:        s.Data,
+	// 	PayLen:     s.Length,
+	// 	WirePayLen: s.WireLength,
+	// }
+	// d.payloadReq = payload
 
-	RequestzPayload(d, payload, argumentType)
+	// RequestzPayload(d, payload, argumentType)
 	return nil
 }
 
@@ -173,12 +173,13 @@ func handleInPayloadClient(ctx context.Context, s *stats.InPayload) error {
 	atomic.AddUint32(&d.respLen, uint32(s.Length))
 	atomic.AddUint32(&d.wireRespLen, uint32(s.WireLength))
 
-	payload := &rpctrace.Payload{
-		Pay:        s.Data,
-		PayLen:     s.Length,
-		WirePayLen: s.WireLength,
-	}
-	d.payloadResp = payload
+	//TODO(acetechnologist): Payload for requestz.
+	// payload := &rpctrace.Payload{
+	// 	Pay:        s.Data,
+	// 	PayLen:     s.Length,
+	// 	WirePayLen: s.WireLength,
+	// }
+	// d.payloadResp = payload
 	return nil
 }
 
@@ -188,17 +189,16 @@ func handleEndClient(ctx context.Context, s *stats.End) error {
 		return errors.New("*Data cannot be retrieved from context")
 	}
 
-	status := util.ErrorToStatus(s.Error)
-
 	// stubby in Go doesn't record any stats on the client side. To have
 	// parity we only need to record census info in the server.
 	d.totalElapsedTime = time.Since(d.startTime)
 
-	d.span.Finish()
-	reportStreamzClientDataEnd(d)
-	DapperRequestPayload(ctx, d)
-	DapperResponsePayload(ctx, d, status)
-	RpczClientFinish(d, status)
-	RequestzFinish(d, status)
+	//d.span.Finish()
+	// reportStreamzClientDataEnd(d)
+	// DapperRequestPayload(ctx, d)
+	// status := util.ErrorToStatus(s.Error)
+	// DapperResponsePayload(ctx, d, status)
+	// RpczClientFinish(d, status)
+	// RequestzFinish(d, status)
 	return nil
 }
