@@ -3,7 +3,6 @@ package adapter
 import (
 	"net"
 	"sync"
-	"sync/atomic"
 	"time"
 )
 
@@ -17,7 +16,7 @@ type rpcData struct {
 	methodName, serviceName string
 	localAddr, remoteAddr   net.Addr
 
-	reqLen, respLen, wireReqLen, wireRespLen counter32
+	reqLen, respLen, wireReqLen, wireRespLen int32
 
 	// sequence number if streaming RPC.
 	sequenceNumber int32
@@ -46,7 +45,7 @@ type connData struct {
 	mu                    sync.Mutex
 	creationTime          time.Time
 	localAddr, remoteAddr net.Addr
-	activeRequests        counter32 // activeRequests returns the number of active requests on this conn.
+	activeRequests        int32 // activeRequests returns the number of active requests on this conn.
 }
 
 // clientConnStatus contains the status of a client connection.
@@ -68,26 +67,26 @@ type serverConnStatus struct {
 }
 
 type requestStats struct {
-	count    counter64
-	numBytes counter64
+	count    int64
+	numBytes int64
 }
 
-type counter32 int32
+// type counter32 int32
 
-func (c *counter32) incr(i int32) {
-	atomic.AddInt32(c, i)
-}
+// func (c *counter32) incr(i int32) {
+// 	atomic.AddInt32(c, i)
+// }
 
-func (c *counter32) ActiveCount() int32 {
-	return int(atomic.LoadInt32(c))
-}
+// func (c *counter32) ActiveCount() int32 {
+// 	return int32(atomic.LoadInt32(c))
+// }
 
-type counter64 int64
+// type counter64 int64
 
-func (c *counter64) incr(i int64) {
-	atomic.AddInt64(c, i)
-}
+// func (c *counter64) incr(i int64) {
+// 	atomic.AddInt64(c, i)
+// }
 
-func (c *counter64) ActiveCount() int64 {
-	return int(atomic.LoadInt64(c))
-}
+// func (c *counter64) ActiveCount() int64 {
+// 	return int64(atomic.LoadInt64(c))
+// }

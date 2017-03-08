@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"github.com/golang/protobuf/proto"
@@ -76,7 +77,7 @@ func handleRPCInHeaderServer(ctx context.Context, s *stats.InHeader) error {
 	if !ok {
 		return errors.New("handleRPCInHeaderServer failed to extract *serverConnStatus")
 	}
-	scs.activeRequests.incr(1)
+	atomic.AddInt32(&scs.activeRequests, 1)
 
 	// Set d.localAddr and d.remoteAddr
 	d, ok := ctx.Value(grpcInstRPCKey).(*rpcData)
@@ -106,16 +107,16 @@ func handleRPCInPayloadServer(ctx context.Context, s *stats.InPayload) error {
 	if !ok {
 		return errors.New("handleRPCInPayloadServer failed to extract *serverConnStatus")
 	}
-	scs.requests.count.incr(1)
-	scs.requests.numBytes.incr(int64(s.Length))
+	atomic.AddInt64(&scs.requests.count, 1)
+	atomic.AddInt64(&scs.requests.numBytes, int64(s.Length))
 
 	// Record payload length received on this rpc.
 	d, ok := ctx.Value(grpcInstRPCKey).(*rpcData)
 	if !ok {
 		return errors.New("handleRPCInPayloadServer failed to extract *rpcData")
 	}
-	d.reqLen.incr(int32(s.Length))
-	d.wireReqLen.incr(int32(s.WireLength))
+	atomic.AddInt32(&d.reqLen, int32(s.Length))
+	atomic.AddInt32(&d.wireReqLen, int32(s.WireLength))
 
 	// TODO(acetechnologist):
 	// argumentType, ok := s.Payload.(proto.Message)
@@ -139,8 +140,8 @@ func handleRPCOutPayloadServer(ctx context.Context, s *stats.OutPayload) error {
 	if !ok {
 		return errors.New("handleRPCOutPayloadServer failed to extract *rpcData")
 	}
-	d.respLen.incr(int32(s.Length))
-	d.wireRespLen.incr(int32(s.WireLength))
+	atomic.AddInt32(&d.respLen, int32(s.Length))
+	atomic.AddInt32(&d.wireRespLen, int32(s.WireLength))
 
 	// TODO(acetechnologist):
 	// argumentType, ok := s.Payload.(proto.Message)
@@ -182,7 +183,7 @@ func handleRPCEndServer(ctx context.Context, s *stats.End) error {
 	if !ok {
 		return errors.New("handleRPCEndServer failed to extract *serverConnStatus")
 	}
-	scs.activeRequests.incr(-1)
+	atomic.AddInt32(&scs.activeRequests, -1)
 
 	d, ok := ctx.Value(grpcInstRPCKey).(*rpcData)
 	if !ok {

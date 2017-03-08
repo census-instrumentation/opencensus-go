@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"github.com/golang/protobuf/proto"
@@ -106,20 +107,15 @@ func handleRPCOutPayloadClient(ctx context.Context, s *stats.OutPayload) error {
 	if !ok {
 		return errors.New("handleOutPayloadClient failed to extract *rpcData")
 	}
-	d.reqLen.incr(int32(s.Length))
-	d.wireReqLen.incr(int32(s.WireLength))
-
-	argumentType, ok := s.Payload.(proto.Message)
-	if !ok {
-		return fmt.Errorf("s.Payload is of type %T want type proto.Message", s.Payload)
-	}
+	atomic.AddInt32(&d.reqLen, int32(s.Length))
+	atomic.AddInt32(&d.wireReqLen, int32(s.WireLength))
 
 	// TODO(menghanl): uncomment the following line if it's needed for client side lb load reporting.
 	// atomic.AddUint32(&d.reqCount, 1)
 
 	// argumentType, ok := s.Payload.(proto.Message)
 	// if !ok {
-	// 	return fmt.Errorf("handleRPCInPayloadServer failed to extract argumentType. s.Payload is of type %T want type proto.Message", s.Payload)
+	// 	return fmt.Errorf("handleRPCOutPayloadClient failed to extract argumentType. s.Payload is of type %T want type proto.Message", s.Payload)
 	// }
 	// payload := &rpctrace.Payload{
 	// 	Pay:        s.Data,
@@ -137,8 +133,8 @@ func handleRPCInPayloadClient(ctx context.Context, s *stats.InPayload) error {
 	if !ok {
 		return errors.New("handleInPayloadClient failed to extract *rpcData")
 	}
-	d.respLen.incr(int32(s.Length))
-	d.wireRespLen.incr(int32(s.WireLength))
+	atomic.AddInt32(&d.respLen, int32(s.Length))
+	atomic.AddInt32(&d.wireRespLen, int32(s.WireLength))
 
 	// TODO(menghanl): uncomment the following line if it's needed for client side lb load reporting.
 	// atomic.AddUint32(&d.respCount, 1)
