@@ -31,10 +31,7 @@ func handleRPCContextClient(ctx context.Context, info *stats.RPCTagInfo) (contex
 	}
 
 	ts := tagging.FromContext(ctx)
-	encoded, err := encodeToGrpcFormat(ts)
-	if err != nil {
-		return nil, fmt.Errorf("handleRPCClientContext failed\n. %v", err)
-	}
+	encoded := tagging.EncodeToFullSignature(ts)
 
 	statsCtx := &pb.StatsContext{
 		Tags: encoded,

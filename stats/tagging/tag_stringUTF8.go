@@ -68,7 +68,7 @@ func (ms *mutationStringUTF8) Behavior() MutationBehavior {
 // tagStringUTF8 is the tuple (key, value) implementation for tags of value
 // type string.
 type tagStringUTF8 struct {
-	k *keyStringUTF8
+	k KeyStringUTF8
 	v string
 }
 
@@ -111,9 +111,9 @@ func (ts *tagStringUTF8) encodeValueToBuffer(dst *bytes.Buffer) {
 }
 
 func (ts *tagStringUTF8) encodeKeyToBuffer(dst *bytes.Buffer) {
-	encodeVarintString(dst, ts.k.name)
+	encodeVarintString(dst, ts.k.Name())
 }
 
 func (ts *tagStringUTF8) String() string {
-	return fmt.Sprintf("{%s, %s}", ts.k.name, ts.v)
+	return fmt.Sprintf("{%s, %s}", ts.k.Name(), ts.v)
 }

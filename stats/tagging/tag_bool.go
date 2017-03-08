@@ -68,7 +68,7 @@ func (mb *mutationBool) Behavior() MutationBehavior {
 // tagBool is the tuple (key, value) implementation for tags of value type
 // bool.
 type tagBool struct {
-	k *keyBool
+	k KeyBool
 	v bool
 }
 
@@ -137,9 +137,9 @@ func (tb *tagBool) encodeValueToBuffer(dst *bytes.Buffer) {
 }
 
 func (tb *tagBool) encodeKeyToBuffer(dst *bytes.Buffer) {
-	encodeVarintString(dst, tb.k.name)
+	encodeVarintString(dst, tb.k.Name())
 }
 
 func (tb *tagBool) String() string {
-	return fmt.Sprintf("{%s, %v}", tb.k.name, tb.v)
+	return fmt.Sprintf("{%s, %v}", tb.k.Name(), tb.v)
 }

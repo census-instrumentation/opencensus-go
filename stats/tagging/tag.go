@@ -23,6 +23,34 @@ type Key interface {
 	Type() keyType
 }
 
+// KeyStringUTF8 is the interface for keys which values are of type stringUTF8.
+type KeyStringUTF8 interface {
+	Key
+	CreateMutation(v string, mb MutationBehavior) *mutationStringUTF8
+	CreateTag(v string) *tagStringUTF8
+}
+
+// KeyBytes is the interface for keys which values are of type []byte.
+type KeyBytes interface {
+	Key
+	CreateMutation(v []byte, mb MutationBehavior) *mutationBytes
+	CreateTag(v []byte) *tagBytes
+}
+
+// KeyBool is the interface for keys which values are of type bool.
+type KeyBool interface {
+	Key
+	CreateMutation(v bool, mb MutationBehavior) *mutationBool
+	CreateTag(v bool) *tagBool
+}
+
+// KeyInt64 is the interface for keys which values are of type int64.
+type KeyInt64 interface {
+	Key
+	CreateMutation(v int64, mb MutationBehavior) *mutationInt64
+	CreateTag(v int64) *tagInt64
+}
+
 // Mutation is the interface that all mutations types need to implements. A
 // mutation is a data structure holding a key, a value and a behavior. The
 // mutations value types supported are string, int64 and bool.

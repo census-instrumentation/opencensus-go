@@ -97,26 +97,3 @@ var SetCallbackPeriod func(min, max time.Duration)
 // doesn't reset the view's collected data, and just returns a snapshot of the
 // view as it is currently collected by the library.
 var RetrieveViewByName func(name string) (*View, error)
-
-/*
-func init() {
-	uc := newUsageCollector()
-	RecordMeasurements = func(ctx context.Context, m ...Measurement) {
-		ts := tagging.FromContext(ctx)
-		uc.recordManyMeasurement(time.Now(), ts, m)
-	}
-
-	RegisterMeasureDesc = func(md MeasureDesc) error {
-		return uc.registerMeasureDesc(md)
-	}
-
-	RegisterViewDesc = func(vd ViewDesc, c chan *View) error {
-		now := time.Now()
-		return uc.registerViewDesc(vd, now)
-	}
-
-	RetrieveViewByName = func(name string) (*View, error) {
-		return uc.retrieveViewByName(name, time.Now())
-	}
-}
-*/

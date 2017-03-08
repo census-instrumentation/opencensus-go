@@ -229,17 +229,12 @@ func createStatsContext(ctx context.Context, md metadata.MD, methodName string) 
 		}
 	}
 
-	tagsSet, err := decodeFromGrpcFormat(cc.Tags)
+	tagsSet, err := tagging.DecodeFromFullSignatureToTagsSet(cc.Tags)
 	if err != nil {
 		return nil, fmt.Errorf("createStatsContext failed to decode. %v", err)
 	}
 
-	keyStringUTF8, err := tagging.DefaultKeyManager().CreateKeyStringUTF8("methodName")
-	if err != nil {
-		return nil, fmt.Errorf("createStatsContext failed to create/retrieve keyStringUTF8('methodName'). %v", err)
-	}
-
-	tagsSet[keyStringUTF8] = keyStringUTF8.CreateTag(methodName)
+	tagsSet[keyMethodName] = keyMethodName.CreateTag(methodName)
 
 	return tagging.NewContextWithTagsSet(ctx, tagsSet), nil
 }

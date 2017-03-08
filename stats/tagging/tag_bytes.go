@@ -68,7 +68,7 @@ func (mb *mutationBytes) Behavior() MutationBehavior {
 // tagBytes is the tuple (key, value) implementation for tags of value type
 // string.
 type tagBytes struct {
-	k *keyBytes
+	k KeyBytes
 	v []byte
 }
 
@@ -111,9 +111,9 @@ func (tb *tagBytes) encodeValueToBuffer(dst *bytes.Buffer) {
 }
 
 func (tb *tagBytes) encodeKeyToBuffer(dst *bytes.Buffer) {
-	encodeVarintString(dst, tb.k.name)
+	encodeVarintString(dst, tb.k.Name())
 }
 
 func (tb *tagBytes) String() string {
-	return fmt.Sprintf("{%s, %x}", tb.k.name, tb.v)
+	return fmt.Sprintf("{%s, %x}", tb.k.Name(), tb.v)
 }

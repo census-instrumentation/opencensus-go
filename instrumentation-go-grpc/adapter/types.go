@@ -70,23 +70,3 @@ type requestStats struct {
 	count    int64
 	numBytes int64
 }
-
-// type counter32 int32
-
-// func (c *counter32) incr(i int32) {
-// 	atomic.AddInt32(c, i)
-// }
-
-// func (c *counter32) ActiveCount() int32 {
-// 	return int32(atomic.LoadInt32(c))
-// }
-
-// type counter64 int64
-
-// func (c *counter64) incr(i int64) {
-// 	atomic.AddInt64(c, i)
-// }
-
-// func (c *counter64) ActiveCount() int64 {
-// 	return int64(atomic.LoadInt64(c))
-// }

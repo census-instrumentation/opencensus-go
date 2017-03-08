@@ -4,9 +4,6 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/stats"
-
-	istats "github.com/google/instrumentation-go/stats"
-	"github.com/google/instrumentation-go/stats/tagging"
 )
 
 const (
@@ -137,22 +134,3 @@ func HandleEnd(ctx context.Context, s *stats.End) error {
 	}
 	return handleRPCEndServer(ctx, s)
 }
-
-var megaBs = &istats.MeasurementUnit{
-	Power10:    6,
-	Numerators: []istats.BasicUnit{istats.BytesUnit},
-}
-var seconds = &istats.MeasurementUnit{
-	Power10:    1,
-	Numerators: []istats.BasicUnit{istats.SecsUnit},
-}
-var count = &istats.MeasurementUnit{
-	Power10:    1,
-	Numerators: []istats.BasicUnit{istats.ScalarUnit},
-}
-
-var measureRPCReqLen = istats.NewMeasureDescFloat64("", "", megaBs)
-var measureRPCRespLen = istats.NewMeasureDescFloat64("", "", megaBs)
-var measureRPCElapsed = istats.NewMeasureDescFloat64("", "", seconds)
-var measureRPCError = istats.NewMeasureDescInt64("", "", count)
-var keyStringUTF8, _ = tagging.DefaultKeyManager().CreateKeyStringUTF8("methodName")

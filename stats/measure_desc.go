@@ -15,8 +15,33 @@
 
 package stats
 
+// MeasureDesc is the interface for all measures descriptions.
 type MeasureDesc interface {
 	Meta() *measureDesc
+}
+
+// MeasureDescString is the interface for measures of type string.
+type MeasureDescString interface {
+	MeasureDesc
+	CreateMeasurement(v string) Measurement
+}
+
+// MeasureDescBool is the interface for measures of type bool.
+type MeasureDescBool interface {
+	MeasureDesc
+	CreateMeasurement(v bool) Measurement
+}
+
+// MeasureDescFloat64 is the interface for measures of type float64.
+type MeasureDescFloat64 interface {
+	MeasureDesc
+	CreateMeasurement(v float64) Measurement
+}
+
+// MeasureDescInt64 is the interface for measures of type int64.
+type MeasureDescInt64 interface {
+	MeasureDesc
+	CreateMeasurement(v int64) Measurement
 }
 
 // measureDesc describes a data point (measurement) type accounted

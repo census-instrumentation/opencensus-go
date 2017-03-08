@@ -33,10 +33,10 @@ const (
 // satisfy. The keys manager is invoked to create/retrieve a key given its
 // name/ID. It ensures that keys have unique names/IDs.
 type KeysManager interface {
-	CreateKeyStringUTF8(name string) (*keyStringUTF8, error)
-	CreateKeyInt64(name string) (*keyInt64, error)
-	CreateKeyBool(name string) (*keyBool, error)
-	CreateKeyBytes(name string) (*keyBytes, error)
+	CreateKeyStringUTF8(name string) (KeyStringUTF8, error)
+	CreateKeyInt64(name string) (KeyInt64, error)
+	CreateKeyBool(name string) (KeyBool, error)
+	CreateKeyBytes(name string) (KeyBytes, error)
 	Count() int
 	Clear()
 }
@@ -61,7 +61,7 @@ func DefaultKeyManager() KeysManager {
 // CreateKeyString creates or retrieves a key of type keyString with name/ID
 // set to the input argument name. Returns an error if a key with the same name
 // exists and is of a different type.
-func (km *keysManager) CreateKeyStringUTF8(name string) (*keyStringUTF8, error) {
+func (km *keysManager) CreateKeyStringUTF8(name string) (KeyStringUTF8, error) {
 	if !validateKeyName(name) {
 		return nil, fmt.Errorf("key name %v is invalid", name)
 	}
@@ -87,7 +87,7 @@ func (km *keysManager) CreateKeyStringUTF8(name string) (*keyStringUTF8, error) 
 // CreateKeyBytes creates or retrieves a key of type keyBytes with name/ID set
 // to the input argument name. Returns an error if a key with the same name
 // exists and is of a different type.
-func (km *keysManager) CreateKeyBytes(name string) (*keyBytes, error) {
+func (km *keysManager) CreateKeyBytes(name string) (KeyBytes, error) {
 	if !validateKeyName(name) {
 		return nil, fmt.Errorf("key name %v is invalid", name)
 	}
@@ -113,7 +113,7 @@ func (km *keysManager) CreateKeyBytes(name string) (*keyBytes, error) {
 // CreateKeyBool creates or retrieves a key of type keyBool with name/ID set to
 // the input argument name. Returns an error if a key with the same name exists
 // and is of a different type.
-func (km *keysManager) CreateKeyBool(name string) (*keyBool, error) {
+func (km *keysManager) CreateKeyBool(name string) (KeyBool, error) {
 	if !validateKeyName(name) {
 		return nil, fmt.Errorf("key name %v is invalid", name)
 	}
@@ -138,7 +138,7 @@ func (km *keysManager) CreateKeyBool(name string) (*keyBool, error) {
 // CreateKeyInt64 creates or retrieves a key of type keyInt64 with name/ID set
 // to the input argument name. Returns an error if a key with the same name
 // exists and is of a different type.
-func (km *keysManager) CreateKeyInt64(name string) (*keyInt64, error) {
+func (km *keysManager) CreateKeyInt64(name string) (KeyInt64, error) {
 	if !validateKeyName(name) {
 		return nil, fmt.Errorf("key name %v is invalid", name)
 	}

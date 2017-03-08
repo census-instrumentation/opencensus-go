@@ -69,7 +69,7 @@ func (mi *mutationInt64) Behavior() MutationBehavior {
 // tagInt64 is the tuple (key, value) implementation for tags of value type
 // int64.
 type tagInt64 struct {
-	k *keyInt64
+	k KeyInt64
 	v int64
 }
 
@@ -90,47 +90,32 @@ func (ti *tagInt64) setKeyFromBytes(fullSig []byte, idx int) (int, error) {
 }
 
 func (ti *tagInt64) setValueFromBytes(fullSig []byte, idx int) (int, error) {
-	var (
-		length int
-		err    error
-	)
-
-	length, idx, err = decodeVarint(fullSig, idx)
+	i, endIdx, err := decodeVarintInt64(fullSig, idx)
 	if err != nil {
 		return idx, err
 	}
-
-	endIdx := idx + length
-	if endIdx > len(fullSig) {
-		return idx, fmt.Errorf("unexpected end while tagInt64.setValueFromBytes '%x' starting at idx '%v'", fullSig, idx)
-	}
-
-	ti.v = int64(binary.LittleEndian.Uint64(fullSig[idx:endIdx]))
+	ti.v = i
 	return endIdx, nil
 }
 
 func (ti *tagInt64) setValueFromBytesKnownLength(valuesSig []byte, idx int, length int) (int, error) {
 	endIdx := idx + length
-	if endIdx > len(valuesSig) {
-		return idx, fmt.Errorf("unexpected end while tagInt64.setValueFromBytesKnownLength '%x' starting at idx '%v'", valuesSig, idx)
+	i, readBytes := binary.Varint(valuesSig[idx:])
+	if readBytes != length {
+		return 0, fmt.Errorf("unexpected end while decodeVarintInt64 '%x' starting at idx '%v'", valuesSig, idx)
 	}
-
-	ti.v = int64(binary.LittleEndian.Uint64(valuesSig[idx:endIdx]))
+	ti.v = i
 	return endIdx, nil
 }
 
 func (ti *tagInt64) encodeValueToBuffer(dst *bytes.Buffer) {
-	encodeVarint(dst, 8)
-
-	bytes := make([]byte, 8)
-	binary.LittleEndian.PutUint64(bytes, uint64(ti.v))
-	dst.Write(bytes)
+	encodeVarintInt64(dst, ti.v)
 }
 
 func (ti *tagInt64) encodeKeyToBuffer(dst *bytes.Buffer) {
-	encodeVarintString(dst, ti.k.name)
+	encodeVarintString(dst, ti.k.Name())
 }
 
 func (ti *tagInt64) String() string {
-	return fmt.Sprintf("{%s, %v}", ti.k.name, ti.v)
+	return fmt.Sprintf("{%s, %v}", ti.k.Name(), ti.v)
 }

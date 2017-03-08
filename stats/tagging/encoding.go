@@ -34,11 +34,11 @@ func decodeVarintString(fullSig []byte, idx int) (string, int, error) {
 
 func decodeVarintBytes(fullSig []byte, idx int) ([]byte, int, error) {
 	if idx > len(fullSig) {
-		return nil, 0, fmt.Errorf("unexpected end while decodeVarintString '%x' starting at idx '%v'", fullSig, idx)
+		return nil, 0, fmt.Errorf("unexpected end while decodeVarintBytes '%x' starting at idx '%v'", fullSig, idx)
 	}
 	length, valueStart := binary.Varint(fullSig[idx:])
 	if valueStart <= 0 {
-		return nil, 0, fmt.Errorf("unexpected end while decodeVarintString '%x' starting at idx '%v'", fullSig, idx)
+		return nil, 0, fmt.Errorf("unexpected end while decodeVarintBytes '%x' starting at idx '%v'", fullSig, idx)
 	}
 
 	valueStart += idx
@@ -47,6 +47,29 @@ func decodeVarintBytes(fullSig []byte, idx int) ([]byte, int, error) {
 		return nil, 0, fmt.Errorf("malformed encoding: length:%v, upper%v, maxLength:%v", length, valueEnd, len(fullSig))
 	}
 	return fullSig[valueStart:valueEnd], valueEnd, nil
+}
+
+func decodeVarintInt64(fullSig []byte, idx int) (int64, int, error) {
+	if idx > len(fullSig) {
+		return 0, -1, fmt.Errorf("unexpected end while decodeVarintInt64 '%x' starting at idx '%v'", fullSig, idx)
+	}
+	length, readBytes := binary.Varint(fullSig[idx:])
+	if readBytes <= 0 {
+		return 0, -1, fmt.Errorf("unexpected end while decodeVarintInt64 '%x' starting at idx '%v'", fullSig, idx)
+	}
+
+	valueStart := readBytes + idx
+	valueEnd := valueStart + int(length)
+	if valueEnd > len(fullSig) || length < 0 {
+		return 0, -1, fmt.Errorf("malformed encoding: length:%v, upper%v, maxLength:%v", length, valueEnd, len(fullSig))
+	}
+
+	i, readBytes := binary.Varint(fullSig[valueStart:])
+	if valueStart+readBytes != valueEnd {
+		return 0, 1, fmt.Errorf("unexpected end while decodeVarintInt64 '%x' starting at idx '%v'", fullSig, idx)
+	}
+
+	return i, valueEnd, nil
 }
 
 func decodeVarint(sig []byte, idx int) (l int, newIdx int, err error) {
@@ -70,109 +93,15 @@ func encodeVarintBytes(dst *bytes.Buffer, b []byte) {
 	dst.Write(b)
 }
 
+func encodeVarintInt64(dst *bytes.Buffer, i int64) {
+	tmp := make([]byte, binary.MaxVarintLen64)
+	varIntSize := binary.PutVarint(tmp, i)
+	encodeVarint(dst, int16(varIntSize))
+	dst.Write(tmp[:varIntSize])
+}
+
 func encodeVarint(dst *bytes.Buffer, i int16) {
 	tmp := make([]byte, binary.MaxVarintLen16)
 	varIntSize := binary.PutVarint(tmp, int64(i))
 	dst.Write(tmp[:varIntSize])
 }
-
-/*
-func decodeInt64(fullSig []byte, idx int) (int64, error) {
-	if len(bytes) < 8 {
-		return 0, fmt.Errorf("[]bytes not large enough to decode int64FromBytes: %v", bytes)
-	}
-	return int64(binary.LittleEndian.Uint64(bytes)), nil
-}
-
-func stringFromBytes(bytes []byte, length int32) (string, error) {
-	if int32(len(bytes)) < length {
-		return "", fmt.Errorf("[]bytes not large enough to decode stringFromBytes: %v", bytes)
-	}
-	return string(bytes[:length]), nil
-}
-
-
-func lengthFromBytes(bytes []byte) (int32, error) {
-	return int32FromBytes(bytes)
-}
-
-func stringFromBytes(bytes []byte, length int32) (string, error) {
-	if int32(len(bytes)) < length {
-		return "", fmt.Errorf("[]bytes not large enough to decode stringFromBytes: %v", bytes)
-	}
-	return string(bytes[:length]), nil
-}
-
-func boolFromBytes(bytes []byte) (bool, error) {
-	if len(bytes) < 1 {
-		return false, errors.New("[]bytes not large enough to decode boolFromBytes")
-	}
-	return bytes[0] == 1, nil
-}
-
-func typeFromBytes(bytes []byte) (keyType, error) {
-	if len(bytes) < 1 {
-		return keyTypeStringUTF8, errors.New("[]bytes not large enough to decode typeFromBytes")
-	}
-	switch keyType(bytes[0]) {
-	case keyTypeStringUTF8, keyTypeBool, keyTypeInt64:
-		return keyType(bytes[0]), nil
-	default:
-		return keyType(bytes[0]), fmt.Errorf("unknow keyType: %v", bytes[0])
-	}
-}
-
-func int32FromBytes(bytes []byte) (int32, error) {
-	if len(bytes) < 4 {
-		return 0, fmt.Errorf("[]bytes not large enough to decode int32FromBytes: %v", bytes)
-	}
-	return int32(binary.LittleEndian.Uint32(bytes)), nil
-}
-
-func int64FromBytes(bytes []byte) (int64, error) {
-	if len(bytes) < 8 {
-		return 0, fmt.Errorf("[]bytes not large enough to decode int64FromBytes: %v", bytes)
-	}
-	return int64(binary.LittleEndian.Uint64(bytes)), nil
-}
-
-func float64FromBytes(bytes []byte) (float64, error) {
-	if len(bytes) < 8 {
-		return 0, fmt.Errorf("[]bytes not large enough to decode float64FromBytes: %v", bytes)
-	}
-	return math.Float64frombits(binary.LittleEndian.Uint64(bytes)), nil
-}
-
-func stringToBytes(s string) []byte {
-	return []byte(s)
-}
-
-func boolToByte(b bool) byte {
-	if b {
-		return byte(1)
-	}
-	return byte(0)
-}
-
-func typeToByte(kt keyType) byte {
-	return byte(kt)
-}
-
-func int32ToBytes(i int) []byte {
-	bytes := make([]byte, 4)
-	binary.LittleEndian.PutUint32(bytes, uint32(i))
-	return bytes
-}
-
-func int64ToBytes(i int64) []byte {
-	bytes := make([]byte, 8)
-	binary.LittleEndian.PutUint64(bytes, uint64(i))
-	return bytes
-}
-
-func float64ToBytes(f float64) []byte {
-	bytes := make([]byte, 8)
-	binary.LittleEndian.PutUint64(bytes, math.Float64bits(f))
-	return bytes
-}
-*/
