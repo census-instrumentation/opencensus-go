@@ -17,7 +17,7 @@ import (
 	"github.com/google/instrumentation-go/stats/tagging"
 )
 
-func handleRPCContextClient(ctx context.Context, info *stats.RPCTagInfo) (context.Context, error) {
+func handleRPCClientContext(ctx context.Context, info *stats.RPCTagInfo) (context.Context, error) {
 	startTime := time.Now()
 	names := strings.Split(info.FullMethodName, "/")
 	if len(names) != 3 {
@@ -74,10 +74,10 @@ func handleRPCContextClient(ctx context.Context, info *stats.RPCTagInfo) (contex
 	return context.WithValue(ctx, grpcInstRPCKey, d), nil
 }
 
-func handleRPCBeginClient(ctx context.Context, s *stats.Begin) error {
+func handleRPCClientBegin(ctx context.Context, s *stats.Begin) error {
 	d, ok := ctx.Value(grpcInstRPCKey).(*rpcData)
 	if !ok {
-		return errors.New("handleRPCBeginClient failed to extract *rpcData")
+		return errors.New("handleRPCClientBegin failed to extract *rpcData")
 	}
 
 	d.isClient = true
@@ -87,10 +87,10 @@ func handleRPCBeginClient(ctx context.Context, s *stats.Begin) error {
 	return nil
 }
 
-func handleRPCOutHeaderClient(ctx context.Context, s *stats.OutHeader) error {
+func handleRPCClientOutHeader(ctx context.Context, s *stats.OutHeader) error {
 	d, ok := ctx.Value(grpcInstRPCKey).(*rpcData)
 	if !ok {
-		return errors.New("handleOutHeaderClient failed to extract *rpcData")
+		return errors.New("handleRPCClientOutHeader failed to extract *rpcData")
 	}
 
 	d.localAddr = s.LocalAddr
@@ -99,10 +99,10 @@ func handleRPCOutHeaderClient(ctx context.Context, s *stats.OutHeader) error {
 	return nil
 }
 
-func handleRPCOutPayloadClient(ctx context.Context, s *stats.OutPayload) error {
+func handleRPCClientOutPayload(ctx context.Context, s *stats.OutPayload) error {
 	d, ok := ctx.Value(grpcInstRPCKey).(*rpcData)
 	if !ok {
-		return errors.New("handleOutPayloadClient failed to extract *rpcData")
+		return errors.New("handleRPCClientOutPayload failed to extract *rpcData")
 	}
 	atomic.AddInt32(&d.reqLen, int32(s.Length))
 	atomic.AddInt32(&d.wireReqLen, int32(s.WireLength))
@@ -125,10 +125,10 @@ func handleRPCOutPayloadClient(ctx context.Context, s *stats.OutPayload) error {
 	return nil
 }
 
-func handleRPCInPayloadClient(ctx context.Context, s *stats.InPayload) error {
+func handleRPCClientInPayload(ctx context.Context, s *stats.InPayload) error {
 	d, ok := ctx.Value(grpcInstRPCKey).(*rpcData)
 	if !ok {
-		return errors.New("handleInPayloadClient failed to extract *rpcData")
+		return errors.New("handleRPCClientInPayload failed to extract *rpcData")
 	}
 	atomic.AddInt32(&d.respLen, int32(s.Length))
 	atomic.AddInt32(&d.wireRespLen, int32(s.WireLength))
@@ -150,10 +150,10 @@ func handleRPCInPayloadClient(ctx context.Context, s *stats.InPayload) error {
 	return nil
 }
 
-func handleRPCEndClient(ctx context.Context, s *stats.End) error {
+func handleRPCClientEnd(ctx context.Context, s *stats.End) error {
 	d, ok := ctx.Value(grpcInstRPCKey).(*rpcData)
 	if !ok {
-		return errors.New("handleEndClient failed to extract *rpcData")
+		return errors.New("handleRPCClientEnd failed to extract *rpcData")
 	}
 	d.err = s.Error
 

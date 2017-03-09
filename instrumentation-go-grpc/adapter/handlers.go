@@ -27,46 +27,46 @@ var (
 	grpcInstRPCKey grpcRPCKey
 )
 
-// ServerConnContextHandler adds connection related data to the context and returns
+// HandleConnServerContext adds connection related data to the context and returns
 // the new context.
-func ServerConnContextHandler(ctx context.Context, info *stats.ConnTagInfo) (context.Context, error) {
+func HandleConnServerContext(ctx context.Context, info *stats.ConnTagInfo) (context.Context, error) {
 	return handleConnServerContext(ctx, info)
 }
 
-// ClientConnContextHandler adds connection related data to the context and returns
+// HandleConnClientContext adds connection related data to the context and returns
 // the new context.
-func ClientConnContextHandler(ctx context.Context, info *stats.ConnTagInfo) (context.Context, error) {
+func HandleConnClientContext(ctx context.Context, info *stats.ConnTagInfo) (context.Context, error) {
 	return handleConnClientContext(ctx, info)
 }
 
 // HandleConnEnd records measurements for a completed connection.
 func HandleConnEnd(ctx context.Context, s *stats.ConnEnd) error {
 	if s.IsClient() {
-		return handleConnEndClient(ctx, s)
+		return handleConnClientEnd(ctx, s)
 	}
-	return handleConnEndServer(ctx, s)
+	return handleConnServerEnd(ctx, s)
 }
 
-// ServerRPCContextHandler gets the metadata from context and extracts census tags
+// HandleRPCServerContext gets the metadata from context and extracts census tags
 // and tracing span from it. Then it creates the local trace span and the
 // census handle context.Handle, it adds them to the local context using the
 // keys census.Key and tracekey.Key, starts the span and finally returns the
 // new ctx.
-func ServerRPCContextHandler(ctx context.Context, info *stats.RPCTagInfo) (context.Context, error) {
-	return handleRPCContextServer(ctx, info)
+func HandleRPCServerContext(ctx context.Context, info *stats.RPCTagInfo) (context.Context, error) {
+	return handleRPCServerContext(ctx, info)
 }
 
-// ClientRPCContextHandler gets the application code census tags and tracing info
+// HandleRPCClientContext gets the application code census tags and tracing info
 // and serializes them into the gRPC metadata in order to be sent to the
 // server. This is intended to be used as stats.RPCTagger.
-func ClientRPCContextHandler(ctx context.Context, info *stats.RPCTagInfo) (context.Context, error) {
-	return handleRPCContextClient(ctx, info)
+func HandleRPCClientContext(ctx context.Context, info *stats.RPCTagInfo) (context.Context, error) {
+	return handleRPCClientContext(ctx, info)
 }
 
 // HandleBegin processes the beginning of an RPC.
 func HandleBegin(ctx context.Context, s *stats.Begin) error {
 	if s.IsClient() {
-		return handleRPCBeginClient(ctx, s)
+		return handleRPCClientBegin(ctx, s)
 	}
 	return nil
 
@@ -79,16 +79,16 @@ func HandleInHeader(ctx context.Context, s *stats.InHeader) error {
 		return nil
 	}
 
-	return handleRPCInHeaderServer(ctx, s)
+	return handleRPCServerInHeader(ctx, s)
 }
 
 // HandleInPayload processes the inbound payload of an RPC. For stream it can
 // be called multiple times.
 func HandleInPayload(ctx context.Context, s *stats.InPayload) error {
 	if s.IsClient() {
-		return handleRPCInPayloadClient(ctx, s)
+		return handleRPCClientInPayload(ctx, s)
 	}
-	return handleRPCInPayloadServer(ctx, s)
+	return handleRPCServerInPayload(ctx, s)
 }
 
 // HandleInTrailer processes the trailer of an RPC after it is received.
@@ -99,7 +99,7 @@ func HandleInTrailer(ctx context.Context, s *stats.InTrailer) error {
 // HandleOutHeader processes the outbound header of an RPC.
 func HandleOutHeader(ctx context.Context, s *stats.OutHeader) error {
 	if s.IsClient() {
-		return handleRPCOutHeaderClient(ctx, s)
+		return handleRPCClientOutHeader(ctx, s)
 	}
 	return nil
 }
@@ -108,9 +108,9 @@ func HandleOutHeader(ctx context.Context, s *stats.OutHeader) error {
 // be called multiple times.
 func HandleOutPayload(ctx context.Context, s *stats.OutPayload) error {
 	if s.IsClient() {
-		return handleRPCOutPayloadClient(ctx, s)
+		return handleRPCClientOutPayload(ctx, s)
 	}
-	return handleRPCOutPayloadServer(ctx, s)
+	return handleRPCServerOutPayload(ctx, s)
 }
 
 // GenerateServerTrailer records the elapsed time of the RPC in Data,
@@ -118,7 +118,7 @@ func HandleOutPayload(ctx context.Context, s *stats.OutPayload) error {
 // to the client.
 // It's intended to be called in server interceptor.
 func GenerateServerTrailer(ctx context.Context) (metadata.MD, error) {
-	return generateRPCTrailerServer(ctx)
+	return generateRPCServerTrailer(ctx)
 }
 
 // HandleOutTrailer processes the trailer of an RPC after it is sent.
@@ -130,7 +130,7 @@ func HandleOutTrailer(ctx context.Context, s *stats.OutTrailer) error {
 // ResourceId_RPC_SERVER resource. It is called whenever an RPC is finished.
 func HandleEnd(ctx context.Context, s *stats.End) error {
 	if s.IsClient() {
-		return handleRPCEndClient(ctx, s)
+		return handleRPCClientEnd(ctx, s)
 	}
-	return handleRPCEndServer(ctx, s)
+	return handleRPCServerEnd(ctx, s)
 }

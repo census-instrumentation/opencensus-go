@@ -29,19 +29,19 @@ func handleConnClientContext(ctx context.Context, info *stats.ConnTagInfo) (cont
 	return ctx, nil
 }
 
-func handleConnBeginClient(ctx context.Context, s *stats.ConnBegin) error {
+func handleConnClientBegin(ctx context.Context, s *stats.ConnBegin) error {
 	_, ok := ctx.Value(grpcInstConnKey).(*clientConnStatus)
 	if !ok {
-		return errors.New("handleConnBeginClient cannot retrieve *clientConnStatus from context")
+		return errors.New("handleConnClientBegin cannot retrieve *clientConnStatus from context")
 	}
 	// TODO(acetechnologist): use clientConnStatus
 	return nil
 }
 
-func handleConnEndClient(ctx context.Context, s *stats.ConnEnd) error {
+func handleConnClientEnd(ctx context.Context, s *stats.ConnEnd) error {
 	_, ok := ctx.Value(grpcInstConnKey).(*clientConnStatus)
 	if !ok {
-		return errors.New("handleConnBeginClient cannot retrieve *clientConnStatus from context")
+		return errors.New("handleConnClientEnd cannot retrieve *clientConnStatus from context")
 	}
 	// TODO(acetechnologist): use clientConnStatus
 	return nil

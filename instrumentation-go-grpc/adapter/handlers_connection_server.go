@@ -29,19 +29,19 @@ func handleConnServerContext(ctx context.Context, info *stats.ConnTagInfo) (cont
 	return ctx, nil
 }
 
-func handleConnBeginServer(ctx context.Context, s *stats.ConnBegin) error {
+func handleConnServerBegin(ctx context.Context, s *stats.ConnBegin) error {
 	_, ok := ctx.Value(grpcInstConnKey).(*serverConnStatus)
 	if !ok {
-		return errors.New("handleConnBeginServer cannot retrieve *serverConnStatus from context")
+		return errors.New("handleConnServerBegin cannot retrieve *serverConnStatus from context")
 	}
 	// TODO(acetechnologist): use serverConnStatus
 	return nil
 }
 
-func handleConnEndServer(ctx context.Context, s *stats.ConnEnd) error {
+func handleConnServerEnd(ctx context.Context, s *stats.ConnEnd) error {
 	_, ok := ctx.Value(grpcInstConnKey).(*serverConnStatus)
 	if !ok {
-		return errors.New("handleConnEndServer cannot retrieve *serverConnStatus from context")
+		return errors.New("handleConnServerEnd cannot retrieve *serverConnStatus from context")
 	}
 	// TODO(acetechnologist): use serverConnStatus
 	return nil

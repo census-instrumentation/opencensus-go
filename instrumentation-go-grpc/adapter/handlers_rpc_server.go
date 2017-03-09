@@ -18,7 +18,7 @@ import (
 	"github.com/google/instrumentation-go/stats/tagging"
 )
 
-func handleRPCContextServer(ctx context.Context, info *stats.RPCTagInfo) (context.Context, error) {
+func handleRPCServerContext(ctx context.Context, info *stats.RPCTagInfo) (context.Context, error) {
 	startTime := time.Now()
 	if ctx == nil {
 		return nil, errors.New("handleRPCServerContext called with nil context")
@@ -71,18 +71,18 @@ func handleRPCContextServer(ctx context.Context, info *stats.RPCTagInfo) (contex
 	return context.WithValue(ctx, grpcInstRPCKey, d), nil
 }
 
-func handleRPCInHeaderServer(ctx context.Context, s *stats.InHeader) error {
+func handleRPCServerInHeader(ctx context.Context, s *stats.InHeader) error {
 	// Increment count of active RPCs on the connection.
 	scs, ok := ctx.Value(grpcInstConnKey).(*serverConnStatus)
 	if !ok {
-		return errors.New("handleRPCInHeaderServer failed to extract *serverConnStatus")
+		return errors.New("handleRPCServerInHeader failed to extract *serverConnStatus")
 	}
 	atomic.AddInt32(&scs.activeRequests, 1)
 
 	// Set d.localAddr and d.remoteAddr
 	d, ok := ctx.Value(grpcInstRPCKey).(*rpcData)
 	if !ok {
-		return errors.New("handleRPCInHeaderServer failed to extract *rpcData")
+		return errors.New("handleRPCServerInHeader failed to extract *rpcData")
 	}
 	d.localAddr = s.LocalAddr
 	d.remoteAddr = s.RemoteAddr
@@ -101,11 +101,11 @@ func handleRPCInHeaderServer(ctx context.Context, s *stats.InHeader) error {
 	return nil
 }
 
-func handleRPCInPayloadServer(ctx context.Context, s *stats.InPayload) error {
+func handleRPCServerInPayload(ctx context.Context, s *stats.InPayload) error {
 	// Record payload length received on this connection.
 	scs, ok := ctx.Value(grpcInstConnKey).(*serverConnStatus)
 	if !ok {
-		return errors.New("handleRPCInPayloadServer failed to extract *serverConnStatus")
+		return errors.New("handleRPCServerInPayload failed to extract *serverConnStatus")
 	}
 	atomic.AddInt64(&scs.requests.count, 1)
 	atomic.AddInt64(&scs.requests.numBytes, int64(s.Length))
@@ -113,7 +113,7 @@ func handleRPCInPayloadServer(ctx context.Context, s *stats.InPayload) error {
 	// Record payload length received on this rpc.
 	d, ok := ctx.Value(grpcInstRPCKey).(*rpcData)
 	if !ok {
-		return errors.New("handleRPCInPayloadServer failed to extract *rpcData")
+		return errors.New("handleRPCServerInPayload failed to extract *rpcData")
 	}
 	atomic.AddInt32(&d.reqLen, int32(s.Length))
 	atomic.AddInt32(&d.wireReqLen, int32(s.WireLength))
@@ -121,7 +121,7 @@ func handleRPCInPayloadServer(ctx context.Context, s *stats.InPayload) error {
 	// TODO(acetechnologist):
 	// argumentType, ok := s.Payload.(proto.Message)
 	// if !ok {
-	// 	return fmt.Errorf("handleRPCInPayloadServer failed to extract argumentType. s.Payload is of type %T want type proto.Message", s.Payload)
+	// 	return fmt.Errorf("handleRPCServerInPayload failed to extract argumentType. s.Payload is of type %T want type proto.Message", s.Payload)
 	// }
 	// payload := &rpctrace.Payload{
 	// 	Pay:        s.Data,
@@ -134,11 +134,11 @@ func handleRPCInPayloadServer(ctx context.Context, s *stats.InPayload) error {
 	return nil
 }
 
-func handleRPCOutPayloadServer(ctx context.Context, s *stats.OutPayload) error {
+func handleRPCServerOutPayload(ctx context.Context, s *stats.OutPayload) error {
 	// Record payload length sent on this rpc.
 	d, ok := ctx.Value(grpcInstRPCKey).(*rpcData)
 	if !ok {
-		return errors.New("handleRPCOutPayloadServer failed to extract *rpcData")
+		return errors.New("handleRPCServerOutPayload failed to extract *rpcData")
 	}
 	atomic.AddInt32(&d.respLen, int32(s.Length))
 	atomic.AddInt32(&d.wireRespLen, int32(s.WireLength))
@@ -157,7 +157,7 @@ func handleRPCOutPayloadServer(ctx context.Context, s *stats.OutPayload) error {
 	return nil
 }
 
-func generateRPCTrailerServer(ctx context.Context) (metadata.MD, error) {
+func generateRPCServerTrailer(ctx context.Context) (metadata.MD, error) {
 	// Record payload length sent on this rpc.
 	d, ok := ctx.Value(grpcInstRPCKey).(*rpcData)
 	if !ok {
@@ -177,17 +177,17 @@ func generateRPCTrailerServer(ctx context.Context) (metadata.MD, error) {
 	return nil, nil
 }
 
-func handleRPCEndServer(ctx context.Context, s *stats.End) error {
+func handleRPCServerEnd(ctx context.Context, s *stats.End) error {
 	// Decrement count of active RPCs on the connection.
 	scs, ok := ctx.Value(grpcInstConnKey).(*serverConnStatus)
 	if !ok {
-		return errors.New("handleRPCEndServer failed to extract *serverConnStatus")
+		return errors.New("handleRPCServerEnd failed to extract *serverConnStatus")
 	}
 	atomic.AddInt32(&scs.activeRequests, -1)
 
 	d, ok := ctx.Value(grpcInstRPCKey).(*rpcData)
 	if !ok {
-		return errors.New("handleRPCEndServer failed to extract *rpcData")
+		return errors.New("handleRPCServerEnd failed to extract *rpcData")
 	}
 	d.err = s.Error
 
