@@ -13,17 +13,6 @@ input_directory=$go_source"github.com/google/instrumentation-proto"
 ~/Documents/protoc-3.2.0-linux-x86_64/bin/protoc --go_out=plugins=grpc:$output_directory --proto_path="${input_directory}" $input_directory/stats/*.proto
 ~/Documents/protoc-3.2.0-linux-x86_64/bin/protoc --go_out=plugins=grpc:$output_directory --proto_path="${input_directory}" $input_directory/service/monitoring.proto
 
-
-
-
-
-// go build ./grpc-plugin/collection-plugin/
-// go test -v -bench=. ./instrumentation-go-grpc/adapter/
-// go test -v -bench=. ./stats/
-
-
-
-
 // http://www.grpc.io/docs/quickstart/go.html
 // go get google.golang.org/grpc
 // download released protoc from https://github.com/google/protobuf/releases --> https://github.com/google/protobuf/releases/download/v3.2.0/protoc-3.2.0-osx-x86_64.zip
@@ -37,3 +26,12 @@ input_directory=$go_source"github.com/google/instrumentation-proto"
 // output_directory=$go_source"github.com/google/instrumentation-go/grpc-plugin-app-sample"
 // input_directory=$go_source"github.com/google/instrumentation-go/grpc-plugin-app-sample"
 // protoc --go_out=plugins=grpc:$output_directory --proto_path="${input_directory}" $input_directory/*.proto
+
+
+// go build ./grpc-plugin/collection-plugin/
+// go test -v -bench=. ./instrumentation-go-grpc/adapter/
+// go test -v -bench=. ./stats/
+
+
+
+
