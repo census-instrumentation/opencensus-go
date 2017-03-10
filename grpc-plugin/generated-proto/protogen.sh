@@ -7,7 +7,7 @@ cd $GOPATH/src
 git clone https://github.com/google/instrumentation-proto.git
 git clone https://github.com/grpc/grpc-proto.git
 
-go_source="GOPATH/src/"
+go_source=$GOPATH/src/
 output_directory=$go_source"github.com/google/instrumentation-go/grpc-plugin/generated-proto"
 input_directory=$go_source"github.com/google/instrumentation-proto"
 ~/Documents/protoc-3.2.0-linux-x86_64/bin/protoc --go_out=plugins=grpc:$output_directory --proto_path="${input_directory}" $input_directory/stats/*.proto
@@ -33,10 +33,7 @@ input_directory=$go_source"github.com/google/instrumentation-proto"
 // protoc --go_out=plugins=grpc:. *.proto
 // go get github.com/google/instrumentation-proto
 // go get github.com/grpc/grpc-proto
-
-
-go_source="GOPATH/src/"
-output_directory=$go_source"github.com/google/instrumentation-go/grpc-plugin/generated-proto"
-input_directory=$go_source"github.com/google/instrumentation-proto"
-~/Documents/protoc-3.2.0-linux-x86_64/bin/protoc --go_out=$output_directory --proto_path="${input_directory}" $input_directory/stats/*.proto
-~/Documents/protoc-3.2.0-linux-x86_64/bin/protoc --go_out=$output_directory --proto_path="${input_directory}" $input_directory/service/monitoring.proto
+// go_source=$GOPATH/src/
+// output_directory=$go_source"github.com/google/instrumentation-go/grpc-plugin-app-sample"
+// input_directory=$go_source"github.com/google/instrumentation-go/grpc-plugin-app-sample"
+// protoc --go_out=plugins=grpc:$output_directory --proto_path="${input_directory}" $input_directory/*.proto

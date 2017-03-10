@@ -13,24 +13,20 @@ func GetStats(ctx context.Context, in *pb.StatsRequest, out *pb.StatsResponse) e
 }
 
 // Request the server to stream back snapshots of the requested stats
-func WatchStats(ctx context.Context, in *pb.StatsRequest) returns (stream StatsResponse) {
-  }
+func WatchStats(ctx context.Context, in *pb.StatsRequest, s pb.Monitoring_WatchStats) error {
+  // s.Send(*pb.StatsResponse)
+  // s.Send(*pb.StatsResponse)
+}
 
 
 // Return request traces.
-func GetRequestTraces(TraceRequest) returns(TraceResponse) {
+func GetRequestTraces(ctx context.Context, in *pb.TraceRequest, out *pb.TraceResponse) error{
   // TODO(aveitch): Please define the messages here
 }
 
-  // Return application-defined groups of monitoring data.
-  // This is a low level facility to allow extension of the monitoring API to
-  // application-specific monitoring data. Frameworks may use this to define
-  // additional groups of monitoring data made available by servers.
-  rpc GetCustomMonitoringData(MonitoringDataGroup)
-    returns (CustomMonitoringData) {
-  }
-
-/*
-func (s *Service) AcceptForSiriusBrownfieldMigration(ctx context.Context, in *spb.AcceptForSiriusBrownfieldMigrationRequest, out *spb.AcceptForSiriusBrownfieldMigrationResponse) error {
+// Return application-defined groups of monitoring data.
+// This is a low level facility to allow extension of the monitoring API to
+// application-specific monitoring data. Frameworks may use this to define
+// additional groups of monitoring data made available by servers.
+func GetCustomMonitoringData(ctx context.Context, in *pb.MonitoringDataGroup, , out *pb.CustomMonitoringData) error {
 }
-*/
