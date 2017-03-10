@@ -1,4 +1,4 @@
-package adapter
+package collection
 
 import (
 	"context"
@@ -12,7 +12,7 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/stats"
 
-	pb "github.com/google/instrumentation-go/instrumentation-go-grpc/generated_proto"
+	pb "github.com/google/instrumentation-go/grpc-plugin/generated-proto/stats"
 	istats "github.com/google/instrumentation-go/stats"
 	"github.com/google/instrumentation-go/stats/tagging"
 )
