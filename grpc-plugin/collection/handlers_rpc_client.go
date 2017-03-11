@@ -160,12 +160,12 @@ func handleRPCClientEnd(ctx context.Context, s *stats.End) error {
 	d.totalElapsedTime = time.Since(d.startTime)
 
 	var measurements []istats.Measurement
-	measurements = append(measurements, measureRPCReqLen.CreateMeasurement(float64(d.reqLen)))
-	measurements = append(measurements, measureRPCRespLen.CreateMeasurement(float64(d.respLen)))
-	measurements = append(measurements, measureRPCElapsed.CreateMeasurement(float64(d.serverElapsedTime)/float64(time.Millisecond)))
+	measurements = append(measurements, RPCclientRequestBytes.CreateMeasurement(float64(d.reqLen)))
+	measurements = append(measurements, RPCclientResponseBytes.CreateMeasurement(float64(d.respLen)))
+	measurements = append(measurements, RPCclientServerElapsedTime.CreateMeasurement(float64(d.serverElapsedTime)/float64(time.Millisecond)))
 
 	if d.err != nil {
-		measurements = append(measurements, measureRPCError.CreateMeasurement(1))
+		measurements = append(measurements, RPCclientErrorCount.CreateMeasurement(1))
 	}
 
 	istats.RecordMeasurements(ctx, measurements...)

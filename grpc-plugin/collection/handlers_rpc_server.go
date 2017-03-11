@@ -192,12 +192,12 @@ func handleRPCServerEnd(ctx context.Context, s *stats.End) error {
 	d.err = s.Error
 
 	var measurements []istats.Measurement
-	measurements = append(measurements, measureRPCReqLen.CreateMeasurement(float64(d.reqLen)))
-	measurements = append(measurements, measureRPCRespLen.CreateMeasurement(float64(d.respLen)))
-	measurements = append(measurements, measureRPCElapsed.CreateMeasurement(float64(d.serverElapsedTime)/float64(time.Millisecond)))
+	measurements = append(measurements, RPCserverRequestBytes.CreateMeasurement(float64(d.reqLen)))
+	measurements = append(measurements, RPCserverResponseBytes.CreateMeasurement(float64(d.respLen)))
+	measurements = append(measurements, RPCserverServerElapsedTime.CreateMeasurement(float64(d.serverElapsedTime)/float64(time.Millisecond)))
 
 	if d.err != nil {
-		measurements = append(measurements, measureRPCError.CreateMeasurement(1))
+		measurements = append(measurements, RPCserverErrorCount.CreateMeasurement(1))
 	}
 
 	istats.RecordMeasurements(ctx, measurements...)
@@ -234,7 +234,7 @@ func createStatsContext(ctx context.Context, md metadata.MD, methodName string) 
 		return nil, fmt.Errorf("createStatsContext failed to decode. %v", err)
 	}
 
-	tagsSet[keyMethodName] = keyMethodName.CreateTag(methodName)
+	tagsSet[keyMethod] = keyMethod.CreateTag(methodName)
 
 	return tagging.NewContextWithTagsSet(ctx, tagsSet), nil
 }

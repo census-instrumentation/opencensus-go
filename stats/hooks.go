@@ -64,6 +64,10 @@ var UnregisterViewDesc func(vwName string) error
 // AggregationViewDesc can be found with the same name.
 var SubscribeToView func(vwName string, c chan *View) error
 
+// SubscribeToManyViews allows subscribing to multiple views at once.
+// TODO(mmoakil): implement this.
+var SubscribeToManyViews func(vwNames, measureNames []string, c chan []*View) error
+
 // UnsubscribeFromView unsubscribes a previously subscribed channel from the
 // AggregationViewDesc subscriptions.
 // It returns an error if no AggregationViewDesc with name vwName is found or
