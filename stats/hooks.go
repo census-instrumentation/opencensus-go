@@ -97,7 +97,8 @@ var RecordMeasurements func(ctx context.Context, m ...Measurement)
 // behavior.
 var SetCallbackPeriod func(min, max time.Duration)
 
-// RetrieveViewByName retrieves a view in an adhoc fashion. This retrieval
+// RetrieveViews allows retrieving views in an adhoc fashion. This retrieval
 // doesn't reset the view's collected data, and just returns a snapshot of the
 // view as it is currently collected by the library.
-var RetrieveViewByName func(name string) (*View, error)
+// TODO(mmoakil): implement this.
+var RetrieveViews func(viewNames, measureNames []string) ([]*View, error)

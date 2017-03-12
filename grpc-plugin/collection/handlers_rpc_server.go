@@ -13,9 +13,9 @@ import (
 	"google.golang.org/grpc/peer"
 	"google.golang.org/grpc/stats"
 
-	pb "github.com/google/instrumentation-go/grpc-plugin/generated-proto/stats"
 	istats "github.com/google/instrumentation-go/stats"
 	"github.com/google/instrumentation-go/stats/tagging"
+	pb "github.com/google/instrumentation-proto/stats"
 )
 
 func handleRPCServerContext(ctx context.Context, info *stats.RPCTagInfo) (context.Context, error) {

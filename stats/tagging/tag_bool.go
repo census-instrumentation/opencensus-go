@@ -76,6 +76,10 @@ func (tb *tagBool) Key() Key {
 	return tb.k
 }
 
+func (tb *tagBool) Value() interface{} {
+	return tb.v
+}
+
 func (tb *tagBool) setKeyFromBytes(fullSig []byte, idx int) (int, error) {
 	s, endIdx, err := decodeVarintString(fullSig, idx)
 	if err != nil {

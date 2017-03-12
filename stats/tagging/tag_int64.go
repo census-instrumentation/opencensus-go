@@ -77,6 +77,10 @@ func (ti *tagInt64) Key() Key {
 	return ti.k
 }
 
+func (ti *tagInt64) Value() interface{} {
+	return ti.v
+}
+
 func (ti *tagInt64) setKeyFromBytes(fullSig []byte, idx int) (int, error) {
 	s, endIdx, err := decodeVarintString(fullSig, idx)
 	if err != nil {

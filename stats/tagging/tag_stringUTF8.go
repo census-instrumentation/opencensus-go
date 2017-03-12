@@ -76,6 +76,10 @@ func (ts *tagStringUTF8) Key() Key {
 	return ts.k
 }
 
+func (ts *tagStringUTF8) Value() interface{} {
+	return ts.v
+}
+
 func (ts *tagStringUTF8) setKeyFromBytes(fullSig []byte, idx int) (int, error) {
 	s, endIdx, err := decodeVarintString(fullSig, idx)
 	if err != nil {

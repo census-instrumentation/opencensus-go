@@ -3,10 +3,13 @@ package export
 import (
 	context "golang.org/x/net/context"
 
+	"fmt"
+
 	pb "github.com/golang/protobuf/ptypes/empty"
-	spb "github.com/google/instrumentation-go/grpc-plugin/generated-proto/service"
-	statsPb "github.com/google/instrumentation-go/grpc-plugin/generated-proto/stats"
+	"github.com/google/instrumentation-go/grpc-plugin/topb"
 	istats "github.com/google/instrumentation-go/stats"
+	statsPb "github.com/google/instrumentation-proto/stats"
+	spb "github.com/grpc/grpc-proto/grpc/instrumentation/v1alpha"
 )
 
 type server struct {
@@ -21,13 +24,51 @@ func NewServer() spb.MonitoringServer {
 }
 
 // Return canonical RPC stats
-func (s *server) GetCanonicalRpcStats(ctx context.Context, empty *pb.Empty) (resp *spb.CanonicalRpcStats, err error) {
+func (s *server) GetCanonicalRpcStats(ctx context.Context, empty *pb.Empty) (*spb.CanonicalRpcStats, error) {
+
+	/*
+		RpcClientErrors
+		RpcClientCompletedRpcs
+		RpcClientStartedRpcs
+		RpcClientElapsedTime
+		RpcClientServerElapsedTime
+		RpcClientRequestBytes
+		RpcClientResponseBytes
+		RpcClientRequestCount
+		RpcClientResponseCount
+		RpcServerErrors
+		RpcServerCompletedRpcs
+		RpcServerServerElapsedTime
+		RpcServerRequestBytes
+		RpcServerResponseBytes
+		RpcServerRequestCount
+		RpcServerResponseCount
+		RpcServerElapsedTime
+	*/
 	return nil, nil
 }
 
 // Query the server for specific stats
-func (s *server) GetStats(ctx context.Context, req *spb.StatsRequest) (resp *spb.StatsResponse, err error) {
-	return nil, nil
+func (s *server) GetStats(ctx context.Context, req *spb.StatsRequest) (*spb.StatsResponse, error) {
+	views, err := istats.RetrieveViews(req.ViewNames, req.MeasurementNames)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := buildStatsResponse(views)
+	if err != nil {
+		return nil, err
+	}
+
+	if req.DontIncludeDescriptorsInFirstResponse {
+		return resp, nil
+	}
+
+	// TODO(mmoakil): where does req.DontIncludeDescriptorsInFirstResponse need
+	// to be included? Only CanonicalRpcStats have these. And interestingly
+	// GetCanonicalRpcStats(...) doesn't have a
+	// DontIncludeDescriptorsInFirstResponse.
+	return resp, nil
 }
 
 // Request the server to stream back snapshots of the requested stats
@@ -35,27 +76,25 @@ func (s *server) WatchStats(req *spb.StatsRequest, stream spb.Monitoring_WatchSt
 	c2 := make(chan []*istats.View, 1024)
 
 	err := istats.SubscribeToManyViews(req.GetViewNames(), req.GetMeasurementNames(), c2)
+	if err != nil {
+		return fmt.Errorf("WatchStats failed to subscribe view names %v and measurement names %v", req.GetViewNames(), req.GetMeasurementNames())
+	}
+
 	for {
-		vws := <-c2
+		views := <-c2
 
-		var vwResps []*spb.ViewResponse
-		for _, vw := range vws {
-			vwResps = append(vwResps, &spb.ViewResponse{
-				View: &statsPb.View{},
-			})
-		}
-
-		resp := &spb.StatsResponse{
-			ViewResponses: vwResps,
+		resp, err := buildStatsResponse(views)
+		if err != nil {
+			return err
 		}
 		if err := stream.Send(resp); err != nil {
-			// handle
+			return err
 		}
 	}
 }
 
 // Return request traces.
-func (s *server) GetRequestTraces(ctx context.Context, req *spb.TraceRequest) (resp *spb.TraceResponse, err error) {
+func (s *server) GetRequestTraces(ctx context.Context, req *spb.TraceRequest) (*spb.TraceResponse, error) {
 	return nil, nil
 }
 
@@ -63,6 +102,25 @@ func (s *server) GetRequestTraces(ctx context.Context, req *spb.TraceRequest) (r
 // This is a low level facility to allow extension of the monitoring API to
 // application-specific monitoring data. Frameworks may use this to define
 // additional groups of monitoring data made available by servers.
-func (s *server) GetCustomMonitoringData(ctx context.Context, req *spb.MonitoringDataGroup) (resp *spb.CustomMonitoringData, err error) {
+func (s *server) GetCustomMonitoringData(ctx context.Context, req *spb.MonitoringDataGroup) (*spb.CustomMonitoringData, error) {
 	return nil, nil
+}
+
+func buildStatsResponse(vws []*istats.View) (*spb.StatsResponse, error) {
+	resp := &spb.StatsResponse{}
+
+	for _, vw := range vws {
+		vwpb, err := topb.View(vw)
+		if err != nil {
+			return nil, err
+		}
+
+		resp.ViewResponses = append(resp.ViewResponses, &spb.ViewResponse{
+			MeasurementDescriptor: &statsPb.MeasurementDescriptor{},
+			ViewDescriptor:        &statsPb.ViewDescriptor{},
+			View:                  vwpb,
+		})
+	}
+
+	return resp, nil
 }

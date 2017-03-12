@@ -293,5 +293,6 @@ func init() {
 	RecordMeasurement = cw.recordMeasurement
 	RecordMeasurements = cw.recordManyMeasurement
 	SetCallbackPeriod = cw.changeCallbackPeriod
-	// TODO(acetechnologist): RetrieveViewByName =cw.retrieveViewByName
+	// TODO(acetechnologist): RetrieveViews =cw.retrieveViews
+	// TODO(acetechnologist): SubscribeToManyViews = cw.subscribeToManyViews
 }

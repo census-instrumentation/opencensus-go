@@ -62,6 +62,7 @@ type Mutation interface {
 // Tag is the tuple (key, value) interface for all tag types.
 type Tag interface {
 	Key() Key
+	Value() interface{}
 	setKeyFromBytes(fullSig []byte, idx int) (newIdx int, err error)
 	setValueFromBytes(fullSig []byte, idx int) (newIdx int, err error)
 	setValueFromBytesKnownLength(valuesSig []byte, idx int, len int) (newIdx int, err error)

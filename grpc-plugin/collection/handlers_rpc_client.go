@@ -12,9 +12,9 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/stats"
 
-	pb "github.com/google/instrumentation-go/grpc-plugin/generated-proto/stats"
 	istats "github.com/google/instrumentation-go/stats"
 	"github.com/google/instrumentation-go/stats/tagging"
+	pb "github.com/google/instrumentation-proto/stats"
 )
 
 func handleRPCClientContext(ctx context.Context, info *stats.RPCTagInfo) (context.Context, error) {
