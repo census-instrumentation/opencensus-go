@@ -34,11 +34,14 @@ var (
 	RPCserverStartedCount              istats.MeasureDescInt64
 	RPCserverFinishedCount             istats.MeasureDescInt64
 
-	RPCclientErrorCountDist       *istats.DistributionViewDesc
-	RPCclientRequestBytesDist     *istats.DistributionViewDesc
-	RPCclientResponseBytesDist    *istats.DistributionViewDesc
-	RPCclientRoundTripLatencyDist *istats.DistributionViewDesc
-	RPCclientErrorCountInterval   *istats.IntervalViewDesc
+	RPCclientErrorCountDist            *istats.DistributionViewDesc
+	RPCclientRequestBytesDist          *istats.DistributionViewDesc
+	RPCclientResponseBytesDist         *istats.DistributionViewDesc
+	RPCclientRoundTripLatencyDist      *istats.DistributionViewDesc
+	RPCclientServerElapsedTimeDist     *istats.DistributionViewDesc
+	RPCclientErrorCountInterval        *istats.IntervalViewDesc
+	RPCclientRoundTripLatencyInterval  *istats.IntervalViewDesc
+	RPCclientServerElapsedTimeInterval *istats.IntervalViewDesc
 )
 
 func initDefaultKeys() {
@@ -95,15 +98,16 @@ func initDefaultMeasures() {
 	measures = append(measures, RPCclientResponseBytes)
 	measures = append(measures, RPCclientRoundTripLatency)
 	measures = append(measures, RPCclientServerElapsedTime)
-	measures = append(measures, RPCclientUncompressedRequestBytes)
-	measures = append(measures, RPCclientUncompressedResponseBytes)
+	measures = append(measures, RPCclientUncompressedRequestBytes)  //Not needed?
+	measures = append(measures, RPCclientUncompressedResponseBytes) //Not needed?
+
 	measures = append(measures, RPCserverErrorCount)
 	measures = append(measures, RPCserverRequestBytes)
 	measures = append(measures, RPCserverResponseBytes)
-	measures = append(measures, RPCserverServerLatency)
-	measures = append(measures, RPCserverServerElapsedTime)
-	measures = append(measures, RPCserverUncompressedRequestBytes)
-	measures = append(measures, RPCserverUncompressedResponseBytes)
+	measures = append(measures, RPCserverServerLatency)             // difference between serverLatency and ServerElapsedTime?
+	measures = append(measures, RPCserverServerElapsedTime)         // difference between serverLatency and ServerElapsedTime?
+	measures = append(measures, RPCserverUncompressedRequestBytes)  //Not needed?
+	measures = append(measures, RPCserverUncompressedResponseBytes) //Not needed?
 	measures = append(measures, RPCserverStartedCount)
 	measures = append(measures, RPCserverFinishedCount)
 
@@ -159,12 +163,43 @@ func initDefaultViews() {
 		Bounds: rpcMillisBucketBoundaries,
 	}
 
+	RPCclientServerElapsedTimeDist = &istats.DistributionViewDesc{
+		Vdc: &istats.ViewDescCommon{
+			Name:            "rpc client server_elapsed_time",
+			Description:     "Server elapsed time in msecs",
+			MeasureDescName: "/rpc/client/server_elapsed_time",
+			TagKeys:         []tagging.Key{keyMethod},
+		},
+		Bounds: rpcMillisBucketBoundaries,
+	}
 	// Creating client intervals views
 	RPCclientErrorCountInterval = &istats.IntervalViewDesc{
 		Vdc: &istats.ViewDescCommon{
 			Name:            "rpc client error_count",
 			Description:     "Minute and Hour stats for rpc errors",
 			MeasureDescName: "/rpc/client/error_count",
+			TagKeys:         []tagging.Key{keyMethod},
+		},
+		SubIntervals: 5,
+		Intervals:    []time.Duration{time.Minute * 1, time.Hour * 1},
+	}
+
+	RPCclientRoundTripLatencyInterval = &istats.IntervalViewDesc{
+		Vdc: &istats.ViewDescCommon{
+			Name:            "rpc client roundtrip_latency",
+			Description:     "Minute and Hour stats for latency in msecs",
+			MeasureDescName: "/rpc/client/roundtrip_latency",
+			TagKeys:         []tagging.Key{keyMethod},
+		},
+		SubIntervals: 5,
+		Intervals:    []time.Duration{time.Minute * 1, time.Hour * 1},
+	}
+
+	RPCclientServerElapsedTimeInterval = &istats.IntervalViewDesc{
+		Vdc: &istats.ViewDescCommon{
+			Name:            "rpc client server_elapsed_time",
+			Description:     "Minute and Hour stats for server elapsed time in msecs",
+			MeasureDescName: "/rpc/client/server_elapsed_time",
 			TagKeys:         []tagging.Key{keyMethod},
 		},
 		SubIntervals: 5,
@@ -178,6 +213,7 @@ func initDefaultViews() {
 	views = append(views, RPCclientRequestBytesDist)
 	views = append(views, RPCclientResponseBytesDist)
 	views = append(views, RPCclientRoundTripLatencyDist)
+	views = append(views, RPCclientServerElapsedTimeDist)
 	views = append(views, RPCclientErrorCountInterval)
 	for _, v := range views {
 		if err := istats.RegisterViewDesc(v, C); err != nil {

@@ -3,13 +3,7 @@
 
 
 
-public static final DistributionViewDescriptor RPC_CLIENT_SERVER_ELAPSED_TIME_VIEW =
-DistributionViewDescriptor.create(
-"rpc client server_elapsed_time",
-"Server elapsed time in msecs",
-RPC_CLIENT_SERVER_ELAPSED_TIME,
-DistributionAggregationDescriptor.create(RPC_MILLIS_BUCKET_BOUNDARIES),
-Arrays.asList(RPC_CLIENT_METHOD));
+
 
 public static final DistributionViewDescriptor RPC_CLIENT_UNCOMPRESSED_REQUEST_BYTES_VIEW =
 DistributionViewDescriptor.create(
@@ -107,21 +101,6 @@ RPC_CLIENT_RESPONSE_BYTES,
 IntervalAggregationDescriptor.create(Arrays.asList(MINUTE, HOUR)),
 Arrays.asList(RPC_CLIENT_METHOD));
 
-public static final IntervalViewDescriptor RPC_CLIENT_ROUNDTRIP_LATENCY_INTERVAL_VIEW =
-IntervalViewDescriptor.create(
-"rpc client roundtrip_latency",
-"Minute and Hour stats for latency in msecs",
-RPC_CLIENT_ROUNDTRIP_LATENCY,
-IntervalAggregationDescriptor.create(Arrays.asList(MINUTE, HOUR)),
-Arrays.asList(RPC_CLIENT_METHOD));
-
-public static final IntervalViewDescriptor RPC_CLIENT_SERVER_ELAPSED_TIME_INTERVAL_VIEW =
-IntervalViewDescriptor.create(
-"rpc client server_elapsed_time",
-"Minute and Hour stats for server elapsed time in msecs",
-RPC_CLIENT_SERVER_ELAPSED_TIME,
-IntervalAggregationDescriptor.create(Arrays.asList(MINUTE, HOUR)),
-Arrays.asList(RPC_CLIENT_METHOD));
 
 public static final IntervalViewDescriptor RPC_CLIENT_UNCOMPRESSED_REQUEST_BYTES_INTERVAL_VIEW =
 IntervalViewDescriptor.create(

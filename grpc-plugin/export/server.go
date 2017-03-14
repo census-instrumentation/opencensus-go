@@ -27,23 +27,29 @@ func NewServer() spb.MonitoringServer {
 func (s *server) GetCanonicalRpcStats(ctx context.Context, empty *pb.Empty) (*spb.CanonicalRpcStats, error) {
 
 	/*
-		RpcClientErrors
-		RpcClientCompletedRpcs
-		RpcClientStartedRpcs
-		RpcClientElapsedTime
-		RpcClientServerElapsedTime
-		RpcClientRequestBytes
-		RpcClientResponseBytes
-		RpcClientRequestCount
-		RpcClientResponseCount
-		RpcServerErrors
-		RpcServerCompletedRpcs
-		RpcServerServerElapsedTime
-		RpcServerRequestBytes
-		RpcServerResponseBytes
-		RpcServerRequestCount
-		RpcServerResponseCount
-		RpcServerElapsedTime
+			RpcClientErrors
+			RpcClientRequestBytes
+			RpcClientResponseBytes
+			RpcClientElapsedTime (RoundTripLatency)
+			RpcClientServerElapsedTime
+
+		// UncompressedRequestBytes defined in java but not in proto
+		// UncompressedResponseBytes defined in java but not in proto
+			RpcClientCompletedRpcs
+			RpcClientStartedRpcs
+			RpcClientRequestCount
+			RpcClientResponseCount
+
+			RpcServerErrors
+			RpcServerRequestBytes
+			RpcServerResponseBytes
+			RpcServerElapsedTime	   // What is the difference between serverElapsedTime and ServerServerElapsedTime ?
+			RpcServerServerElapsedTime // What is the difference between serverElapsedTime and ServerServerElapsedTime ?
+			RpcServerCompletedRpcs
+			RpcServerRequestCount	   // This is the started count.
+		// UncompressedRequestBytes defined in java but not in proto
+		// UncompressedResponseBytes defined in java but not in proto
+			RpcServerResponseCount     // Why is this needed.
 	*/
 	return nil, nil
 }

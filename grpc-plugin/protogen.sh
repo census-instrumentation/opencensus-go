@@ -9,7 +9,7 @@ git clone https://github.com/grpc/grpc-proto.git
 
 go_source=$GOPATH/src/
 ~/Documents/protoc-3.2.0-linux-x86_64/bin/protoc --go_out=plugins=grpc:$go_source --proto_path="${go_source}" $go_source/github.com/google/instrumentation-proto/stats/*.proto
-~/Documents/protoc-3.2.0-linux-x86_64/bin/protoc --go_out=plugins=grpc:$go_source --proto_path="${go_source}" $go_source/github.com/google/instrumentation-proto/service/*.proto
+~/Documents/protoc-3.2.0-linux-x86_64/bin/protoc --go_out=plugins=grpc:$go_source --proto_path="${go_source}" $go_source/github.com/grpc/grpc-proto/grpc/instrumentation/v1alpha/*.proto
 
 // http://www.grpc.io/docs/quickstart/go.html
 // go get google.golang.org/grpc
@@ -22,7 +22,7 @@ go_source=$GOPATH/src/
 // go get github.com/grpc/grpc-proto
 // go_source=$GOPATH/src/
 // ~/Documents/protoc-3.2.0-linux-x86_64/bin/protoc --go_out=plugins=grpc:$go_source --proto_path="${go_source}" $go_source/github.com/google/instrumentation-proto/stats/*.proto
-// ~/Documents/protoc-3.2.0-linux-x86_64/bin/protoc --go_out=plugins=grpc:$go_source --proto_path="${go_source}" $go_source/github.com/google/instrumentation-proto/service/*.proto
+// ~/Documents/protoc-3.2.0-linux-x86_64/bin/protoc --go_out=plugins=grpc:$go_source --proto_path="${go_source}" $go_source/github.com/grpc/grpc-proto/grpc/instrumentation/v1alpha/*.proto
 
 
 // go build ./grpc-plugin/collection-plugin/
