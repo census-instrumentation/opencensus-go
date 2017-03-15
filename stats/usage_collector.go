@@ -23,14 +23,16 @@ import (
 )
 
 type usageCollector struct {
-	mDescriptors map[string]MeasureDesc
-	vDescriptors map[string]ViewDesc
+	mDescriptors  map[string]MeasureDesc
+	vDescriptors  map[string]ViewDesc
+	subscriptions map[Subscription]bool
 }
 
 func newUsageCollector() *usageCollector {
 	return &usageCollector{
-		mDescriptors: make(map[string]MeasureDesc),
-		vDescriptors: make(map[string]ViewDesc),
+		mDescriptors:  make(map[string]MeasureDesc),
+		vDescriptors:  make(map[string]ViewDesc),
+		subscriptions: make(map[Subscription]bool),
 	}
 }
 
@@ -60,32 +62,33 @@ func (uc *usageCollector) unregisterMeasureDesc(mName string) error {
 	return nil
 }
 
-func (uc *usageCollector) registerViewDesc(avd ViewDesc, now time.Time) error {
-	vd := avd.ViewDescCommon()
-	md, ok := uc.mDescriptors[vd.MeasureDescName]
+func (uc *usageCollector) registerViewDesc(vd ViewDesc, now time.Time) error {
+	vdc := vd.ViewDescCommon()
+	md, ok := uc.mDescriptors[vdc.MeasureDescName]
 	if !ok {
-		return fmt.Errorf("view contains a resource %s that is not registered", vd.MeasureDescName)
+		return fmt.Errorf("registerViewDesc(_) failed. ViewDesc %v cannot be regsitered. It has MeasureDescName=%v which is not registered", *vdc, vdc.MeasureDescName)
 	}
 
-	if v, ok := uc.vDescriptors[vd.Name]; ok {
-		return fmt.Errorf("a view %v with the same name %s is already registered", v, v.ViewDescCommon().Name)
+	if tmp, ok := uc.vDescriptors[vdc.Name]; ok {
+		return fmt.Errorf("registerViewDesc(_) failed. ViewDesc %v cannot be regsitered. A different ViewDesc has already been registered with a Name=%v", *vdc, tmp.ViewDescCommon().Name)
 	}
 
 	for vwName, vwDesc := range uc.vDescriptors {
-		if vwDesc == avd {
-			return fmt.Errorf("view %v is already registered under a different name %s", vd, vwName)
+		if vwDesc == vd {
+			return fmt.Errorf("registerViewDesc(_) failed. ViewDesc %v is already registered under a different name %v", vdc, vwName)
 		}
 	}
 
-	if err := avd.isValid(); err != nil {
-		return err
+	if err := vd.isValid(); err != nil {
+		return fmt.Errorf("registerViewDesc(_) failed. %v", err)
 	}
 
-	vd.start = now
-	vd.signatures = make(map[string]aggregator)
+	vdc.start = now
+	vdc.signatures = make(map[string]aggregator)
 
-	uc.vDescriptors[vd.Name] = avd
-	md.Meta().aggViewDescs[avd] = struct{}{}
+	uc.vDescriptors[vdc.Name] = vd
+	vdc.subscriptions = make(map[Subscription]bool)
+	md.Meta().aggViewDescs[vd] = struct{}{}
 
 	return nil
 }
@@ -107,33 +110,30 @@ func (uc *usageCollector) unregisterViewDesc(vwName string) error {
 	return nil
 }
 
-func (uc *usageCollector) subscribeToViewDesc(vwName string, c chan *View) error {
-	avd, ok := uc.vDescriptors[vwName]
-	if !ok {
-		return fmt.Errorf("no view descriptor with the name %s is registered", vwName)
+func (uc *usageCollector) addSubscription(s Subscription) error {
+	if uc.subscriptions[s] {
+		return fmt.Errorf("addSubscription(_) failed. Subscription %v already used to subscribe", s)
 	}
 
-	vd := avd.ViewDescCommon()
-	if _, ok := vd.vChans[c]; ok {
-		return fmt.Errorf("channel is already used to subscribe to this viewDesc %s", vwName)
+	uc.subscriptions[s] = true
+	for _, desc := range uc.vDescriptors {
+		if s.contains(desc) {
+			s.addViewDesc(desc)
+			desc.ViewDescCommon().subscriptions[s] = true
+		}
 	}
-
-	vd.vChans[c] = struct{}{}
 	return nil
 }
 
-func (uc *usageCollector) unsubscribeFromViewDesc(vwName string, c chan *View) error {
-	vd, ok := uc.vDescriptors[vwName]
-	if !ok {
-		return fmt.Errorf("no view descriptor with the name %s is registered", vwName)
+func (uc *usageCollector) unsubscribe(s Subscription) error {
+	if !uc.subscriptions[s] {
+		return fmt.Errorf("removeSubscription(_) failed. Subscription %v not used to subscribe", s)
 	}
 
-	vdc := vd.ViewDescCommon()
-	if _, ok := vdc.vChans[c]; !ok {
-		return fmt.Errorf("channel is not used to subscribe to this viewDesc %s", vwName)
+	for _, desc := range uc.vDescriptors {
+		delete(desc.ViewDescCommon().subscriptions, s)
 	}
-
-	delete(vdc.vChans, c)
+	delete(uc.subscriptions, s)
 	return nil
 }
 

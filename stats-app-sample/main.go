@@ -76,8 +76,15 @@ func main() {
 			TagKeys:         []tagging.Key{k1, k2, k3},
 		},
 	}
-	if err := stats.RegisterViewDesc(vwGaugeS, c); err != nil {
+	if err := stats.RegisterViewDesc(vwGaugeS); err != nil {
 		fmt.Printf("Error view registration: %v\n", err)
+	}
+	err = stats.Subscribe(&stats.SingleSubscription{
+		C:        c,
+		ViewName: vwGaugeS.ViewDescCommon().Name,
+	})
+	if err != nil {
+		fmt.Printf("Error view subscription: %v\n", err)
 	}
 
 	vwGaugeB := &stats.GaugeBoolViewDesc{
@@ -88,8 +95,15 @@ func main() {
 			TagKeys:         []tagging.Key{k1, k2, k3},
 		},
 	}
-	if err := stats.RegisterViewDesc(vwGaugeB, c); err != nil {
+	if err := stats.RegisterViewDesc(vwGaugeB); err != nil {
 		fmt.Printf("Error view registration: %v\n", err)
+	}
+	err = stats.Subscribe(&stats.SingleSubscription{
+		C:        c,
+		ViewName: vwGaugeB.ViewDescCommon().Name,
+	})
+	if err != nil {
+		fmt.Printf("Error view subscription: %v\n", err)
 	}
 
 	vwGaugeF := &stats.GaugeFloat64ViewDesc{
@@ -100,8 +114,15 @@ func main() {
 			TagKeys:         []tagging.Key{k1, k2, k3},
 		},
 	}
-	if err := stats.RegisterViewDesc(vwGaugeF, c); err != nil {
+	if err := stats.RegisterViewDesc(vwGaugeF); err != nil {
 		fmt.Printf("Error view registration: %v\n", err)
+	}
+	err = stats.Subscribe(&stats.SingleSubscription{
+		C:        c,
+		ViewName: vwGaugeF.ViewDescCommon().Name,
+	})
+	if err != nil {
+		fmt.Printf("Error view subscription: %v\n", err)
 	}
 
 	vwGaugeI := &stats.GaugeInt64ViewDesc{
@@ -112,8 +133,15 @@ func main() {
 			TagKeys:         []tagging.Key{k1, k2, k3},
 		},
 	}
-	if err := stats.RegisterViewDesc(vwGaugeI, c); err != nil {
+	if err := stats.RegisterViewDesc(vwGaugeI); err != nil {
 		fmt.Printf("Error view registration: %v\n", err)
+	}
+	err = stats.Subscribe(&stats.SingleSubscription{
+		C:        c,
+		ViewName: vwGaugeI.ViewDescCommon().Name,
+	})
+	if err != nil {
+		fmt.Printf("Error view subscription: %v\n", err)
 	}
 
 	vwDist := &stats.DistributionViewDesc{
@@ -125,8 +153,15 @@ func main() {
 		},
 		Bounds: []float64{0, 10, 100},
 	}
-	if err := stats.RegisterViewDesc(vwDist, c); err != nil {
+	if err := stats.RegisterViewDesc(vwDist); err != nil {
 		fmt.Printf("Error view registration: %v\n", err)
+	}
+	err = stats.Subscribe(&stats.SingleSubscription{
+		C:        c,
+		ViewName: vwDist.ViewDescCommon().Name,
+	})
+	if err != nil {
+		fmt.Printf("Error view subscription: %v\n", err)
 	}
 
 	vwInterval := &stats.IntervalViewDesc{
@@ -139,8 +174,15 @@ func main() {
 		SubIntervals: 5,
 		Intervals:    []time.Duration{time.Second * 5, time.Second * 30, time.Second * 60},
 	}
-	if err := stats.RegisterViewDesc(vwInterval, c); err != nil {
+	if err := stats.RegisterViewDesc(vwInterval); err != nil {
 		fmt.Printf("Error view registration: %v\n", err)
+	}
+	err = stats.Subscribe(&stats.SingleSubscription{
+		C:        c,
+		ViewName: vwInterval.ViewDescCommon().Name,
+	})
+	if err != nil {
+		fmt.Printf("Error view subscription: %v\n", err)
 	}
 	// ---------------------------------------CREATES TAGS---------------------------
 	// Set tags values in mutations

@@ -39,17 +39,8 @@ var UnregisterMeasureDesc func(mName string) error
 // RegisterViewDesc registers an AggregationViewDesc. It returns an error if
 // the AggregationViewDesc cannot be registered.
 // Subsequent calls to RecordUsage with a measureDesc and tags that match a
-// AggregationViewDesc will cause the usage to be recorded. If the registration
-// is successful, the channel is used to subscribe to the view -i.e. the
-// collected measurements for the registered AggregationViewDesc will be
-// reported to the client through channel c. Data in the channel is
-// differential, meaning the returned value is the aggregation of collected
-// data for that view since the last report. To avoid data loss, clients must
-// ensure that channel sends proceed in a timely manner. The calling code is
-// responsible for using a buffered channel for anything else than blocking on
-// the channel waiting for the collected view. Limits on the aggregation period
-// can be set by SetCallbackPeriod.
-var RegisterViewDesc func(vd ViewDesc, c chan *View) error
+// AggregationViewDesc will cause the usage to be recorded.
+var RegisterViewDesc func(vd ViewDesc) error
 
 // UnregisterViewDesc deletes a previously registered AggregationViewDesc with
 // the same vwName. It returns an error if no registered AggregationViewDesc
@@ -58,21 +49,21 @@ var RegisterViewDesc func(vd ViewDesc, c chan *View) error
 // unsubscribed automatically and their subscriptions channels closed.
 var UnregisterViewDesc func(vwName string) error
 
-// SubscribeToView subscribes a client to an already registered
-// AggregationViewDesc. It allows for many clients to consume the same View
-// with a single registration. It returns an error if no registered
-// AggregationViewDesc can be found with the same name.
-var SubscribeToView func(vwName string, c chan *View) error
+// Subscribe subscribes a client to an already registered ViewDesc or a set of
+// ViewDesc. It allows for many clients to consume the same collected View(s).
+// It returns an error if the subscription was already used to subscribe. If
+// the subscription is successful, the channel within hte subscription is used
+// to subscribe to the collected view(s) -i.e. the collected  measurements for
+// the registered AggregationViewDesc will be reported to the client through
+// channel c. To avoid data loss, clients must ensure that channel sends
+// proceed in a timely manner. The calling code is responsible for using a
+// buffered channel or blocking on the channel waiting for the collected view.
+// Limits on the aggregation period can be set by SetCallbackPeriod.
+var Subscribe func(s Subscription) error
 
-// SubscribeToManyViews allows subscribing to multiple views at once.
-// TODO(mmoakil): implement this.
-var SubscribeToManyViews func(vwNames, measureNames []string, c chan []*View) error
-
-// UnsubscribeFromView unsubscribes a previously subscribed channel from the
-// AggregationViewDesc subscriptions.
-// It returns an error if no AggregationViewDesc with name vwName is found or
-// if c is not subscribed to it.
-var UnsubscribeFromView func(vwName string, c chan *View) error
+// Unsubscribe removes a previously subscribed subscription. It returns an
+// error if the subscription wasn't used previously to subscribe.
+var Unsubscribe func(s Subscription) error
 
 // RecordMeasurement records a quantity of usage of the specified measureDesc.
 // Tags are passed as part of the context.

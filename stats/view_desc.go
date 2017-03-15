@@ -70,9 +70,9 @@ type ViewDescCommon struct {
 	// start is time when ViewDesc was registered.
 	start time.Time
 
-	// vChans are the channels through which the collected views for this ViewDesc
-	// are sent to the consumers of this view.
-	vChans map[chan *View]struct{}
+	// subscriptions are the subscriptions for the consumers of this ViewDesc's
+	// collected views.
+	subscriptions map[Subscription]bool
 
 	// signatures holds the aggregations for each unique tag signature (values
 	// for all keys) to its *stats.Aggregator.

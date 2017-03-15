@@ -52,16 +52,14 @@ type viewDescUnregistration struct {
 // viewDescSubscription is a message requesting that the channelWorker
 // goroutine subscribes the caller to the view named vn.
 type viewDescSubscription struct {
-	vn  string
-	c   chan *View
+	s   Subscription
 	err chan error
 }
 
 // viewDescUnsubscription is a message requesting that the channelWorker
 // goroutine unsubscribes the caller from the view named vn.
 type viewDescUnsubscription struct {
-	vn  string
-	c   chan *View
+	s   Subscription
 	err chan error
 }
 

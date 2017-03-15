@@ -1,3 +1,18 @@
+// Copyright 2017 Google Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+
 package export
 
 import (
@@ -77,17 +92,20 @@ func (s *server) GetStats(ctx context.Context, req *spb.StatsRequest) (*spb.Stat
 	return resp, nil
 }
 
-// Request the server to stream back snapshots of the requested stats
+// WatchStats requests the server to stream back snapshots of the requested stats.
 func (s *server) WatchStats(req *spb.StatsRequest, stream spb.Monitoring_WatchStatsServer) error {
-	c2 := make(chan []*istats.View, 1024)
-
-	err := istats.SubscribeToManyViews(req.GetViewNames(), req.GetMeasurementNames(), c2)
+	subscription := &istats.MultiSubscription{
+		ViewNames:    req.GetViewNames(),
+		MeasureNames: req.GetMeasurementNames(),
+		C:            make(chan []*istats.View, 1024),
+	}
+	err := istats.Subscribe(subscription)
 	if err != nil {
-		return fmt.Errorf("WatchStats failed to subscribe view names %v and measurement names %v", req.GetViewNames(), req.GetMeasurementNames())
+		return fmt.Errorf("WatchStats(_) failed to subscribe. %v", err)
 	}
 
 	for {
-		views := <-c2
+		views := <-subscription.C
 
 		resp, err := buildStatsResponse(views)
 		if err != nil {

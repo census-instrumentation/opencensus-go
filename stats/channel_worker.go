@@ -64,10 +64,7 @@ func (w *channelWorker) unregisterMeasureDesc(mName string) error {
 	return <-mu.err
 }
 
-func (w *channelWorker) registerViewDesc(vd ViewDesc, c chan *View) error {
-	vdc := vd.ViewDescCommon()
-	vdc.vChans = make(map[chan *View]struct{})
-	vdc.vChans[c] = struct{}{}
+func (w *channelWorker) registerViewDesc(vd ViewDesc) error {
 	vr := &viewDescRegistration{
 		vd:  vd,
 		err: make(chan error),
@@ -85,20 +82,18 @@ func (w *channelWorker) unregisterViewDesc(vwName string) error {
 	return <-vu.err
 }
 
-func (w *channelWorker) subscribeToViewDesc(vn string, c chan *View) error {
+func (w *channelWorker) subscribeToViewDesc(s Subscription) error {
 	vs := &viewDescSubscription{
-		vn:  vn,
-		c:   c,
+		s:   s,
 		err: make(chan error),
 	}
 	w.inputs <- vs
 	return <-vs.err
 }
 
-func (w *channelWorker) unsubscribeFromViewDesc(vn string, c chan *View) error {
+func (w *channelWorker) unsubscribeFromViewDesc(s Subscription) error {
 	vu := &viewDescUnsubscription{
-		vn:  vn,
-		c:   c,
+		s:   s,
 		err: make(chan error),
 	}
 	w.inputs <- vu
@@ -144,12 +139,12 @@ func (w *channelWorker) unregisterViewDescHandler(vwName string) error {
 	return w.collector.unregisterViewDesc(vwName)
 }
 
-func (w *channelWorker) subscribeToViewDescHandler(vwName string, c chan *View) error {
-	return w.collector.subscribeToViewDesc(vwName, c)
+func (w *channelWorker) subscribe(s Subscription) error {
+	return w.collector.addSubscription(s)
 }
 
-func (w *channelWorker) unsubscribeFromViewDescHandler(vwName string, c chan *View) error {
-	return w.collector.unsubscribeFromViewDesc(vwName, c)
+func (w *channelWorker) unsubscribe(s Subscription) error {
+	return w.collector.unsubscribe(s)
 }
 
 func (w *channelWorker) recordMeasurementHandler(sr *singleRecord) {
@@ -216,12 +211,8 @@ func (w *channelWorker) reportUsage() {
 	views := w.collector.retrieveViews(now)
 
 	for _, vw := range views {
-		for c := range vw.ViewDesc.ViewDescCommon().vChans {
-			select {
-			case c <- vw:
-			default:
-				// TODO(iamm2) log data was dropped
-			}
+		for s := range vw.ViewDesc.ViewDescCommon().subscriptions {
+			s.reportUsage()
 		}
 	}
 	w.lastReportingTime = now
@@ -258,9 +249,9 @@ func newChannelWorker() *channelWorker {
 				case *viewDescUnregistration:
 					cmd.err <- cw.unregisterViewDescHandler(cmd.vn)
 				case *viewDescSubscription:
-					cmd.err <- cw.subscribeToViewDescHandler(cmd.vn, cmd.c)
+					cmd.err <- cw.subscribe(cmd.s)
 				case *viewDescUnsubscription:
-					cmd.err <- cw.unsubscribeFromViewDescHandler(cmd.vn, cmd.c)
+					cmd.err <- cw.unsubscribe(cmd.s)
 				case *reportingPeriod:
 					cw.changeCallbackPeriodHandler(cmd)
 				case *multiRecords:
@@ -288,11 +279,10 @@ func init() {
 	UnregisterMeasureDesc = cw.unregisterMeasureDesc
 	RegisterViewDesc = cw.registerViewDesc
 	UnregisterViewDesc = cw.unregisterViewDesc
-	SubscribeToView = cw.subscribeToViewDescHandler
-	UnsubscribeFromView = cw.unsubscribeFromViewDescHandler
+	Subscribe = cw.subscribe
+	Unsubscribe = cw.unsubscribe
 	RecordMeasurement = cw.recordMeasurement
 	RecordMeasurements = cw.recordManyMeasurement
 	SetCallbackPeriod = cw.changeCallbackPeriod
 	// TODO(acetechnologist): RetrieveViews =cw.retrieveViews
-	// TODO(acetechnologist): SubscribeToManyViews = cw.subscribeToManyViews
 }

@@ -1,3 +1,18 @@
+// Copyright 2017 Google Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+
 package main
 
 import (
@@ -7,12 +22,15 @@ import (
 	"net"
 
 	pb "github.com/google/instrumentation-go/grpc-plugin-app-sample"
+	"github.com/google/instrumentation-go/grpc-plugin/export"
+	instPb "github.com/grpc/grpc-proto/grpc/instrumentation/v1alpha"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
 
 var (
-	port = flag.Int("port", 10000, "The server port")
+	port                = flag.Int("port", 10000, "The server port")
+	instrumentationPort = flag.Int("instrumentation_port", 10001, "The instrumentation server port")
 )
 
 type server struct{}
@@ -45,5 +63,18 @@ func main() {
 	grpcServer := grpc.NewServer(opts...)
 
 	pb.RegisterGreeterServer(grpcServer, new(server))
+	go startInstrumentationServer()
+	grpcServer.Serve(lis)
+}
+
+func startInstrumentationServer() {
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *instrumentationPort))
+	if err != nil {
+		log.Fatalf("failed to listen insturmentation: %v", err)
+	}
+	var opts []grpc.ServerOption
+	grpcServer := grpc.NewServer(opts...)
+
+	instPb.RegisterMonitoringServer(grpcServer, export.NewServer())
 	grpcServer.Serve(lis)
 }
