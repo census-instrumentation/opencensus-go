@@ -99,7 +99,7 @@ func (s *server) WatchStats(req *spb.StatsRequest, stream spb.Monitoring_WatchSt
 		MeasureNames: req.GetMeasurementNames(),
 		C:            make(chan []*istats.View, 1024),
 	}
-	defer close(subscription.C)
+	defer istats.Unsubscribe(subscription)
 
 	err := istats.Subscribe(subscription)
 	if err != nil {
