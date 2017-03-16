@@ -18,9 +18,9 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
 	"net"
 
+	"github.com/golang/glog"
 	pb "github.com/google/instrumentation-go/grpc-plugin-app-sample"
 	"github.com/google/instrumentation-go/grpc-plugin/export"
 	instPb "github.com/grpc/grpc-proto/grpc/instrumentation/v1alpha"
@@ -29,8 +29,7 @@ import (
 )
 
 var (
-	port                = flag.Int("port", 10000, "The server port")
-	instrumentationPort = flag.Int("instrumentation_port", 10001, "The instrumentation server port")
+	port = flag.Int("port", 10000, "The server port")
 )
 
 type server struct{}
@@ -55,26 +54,16 @@ func (s *server) SayHelloStream(req *pb.HelloRequest, stream pb.Greeter_SayHello
 
 func main() {
 	flag.Parse()
+	registerCanonical()
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *port))
 	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
+		glog.Fatalf("failed to listen: %v", err)
 	}
 	var opts []grpc.ServerOption
 	grpcServer := grpc.NewServer(opts...)
 
 	pb.RegisterGreeterServer(grpcServer, new(server))
-	go startInstrumentationServer()
-	grpcServer.Serve(lis)
-}
-
-func startInstrumentationServer() {
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *instrumentationPort))
-	if err != nil {
-		log.Fatalf("failed to listen insturmentation: %v", err)
-	}
-	var opts []grpc.ServerOption
-	grpcServer := grpc.NewServer(opts...)
-
 	instPb.RegisterMonitoringServer(grpcServer, export.NewServer())
+
 	grpcServer.Serve(lis)
 }

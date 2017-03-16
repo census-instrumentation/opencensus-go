@@ -23,8 +23,7 @@ import (
 	"github.com/google/instrumentation-go/stats/tagging"
 )
 
-// AggregationViewDesc is the interface that all aggregations are expected to
-// implement.
+// ViewDesc is the interface that all aggregations are expected to implement.
 type ViewDesc interface {
 	// creates an aggregator instance for a unique tags signature.
 	createAggregator(t time.Time) (aggregator, error)
@@ -37,6 +36,7 @@ type ViewDesc interface {
 	isValid() error
 	// stringWithIndent returns String() with 'tabs' prefix
 	stringWithIndent(tabs string) string
+	String() string
 }
 
 // aggregator is the interface that the aggregators created by an aggregation

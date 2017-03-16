@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/golang/glog"
 	"github.com/google/instrumentation-go/stats/tagging"
 )
 
@@ -202,10 +203,9 @@ func (uc *usageCollector) retrieveViews(now time.Time) []*View {
 	for _, vd := range uc.vDescriptors {
 		vw, err := vd.retrieveView(now)
 		if err != nil {
-			//// TODO(iamm2) log error fmt.Errorf("error retrieving view for view description %v. %v", *vd, err)
+			glog.Errorf("usageCollector.retrieveViews(_) failed retrieving view for ViewDesc: %v. %v", vd, err)
 			continue
 		}
-
 		views = append(views, vw)
 	}
 	return views

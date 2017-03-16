@@ -16,15 +16,15 @@
 package export
 
 import (
-	context "golang.org/x/net/context"
-
 	"fmt"
 
+	"github.com/golang/glog"
 	pb "github.com/golang/protobuf/ptypes/empty"
 	"github.com/google/instrumentation-go/grpc-plugin/topb"
 	istats "github.com/google/instrumentation-go/stats"
 	statsPb "github.com/google/instrumentation-proto/stats"
 	spb "github.com/grpc/grpc-proto/grpc/instrumentation/v1alpha"
+	"golang.org/x/net/context"
 )
 
 type server struct {
@@ -99,13 +99,17 @@ func (s *server) WatchStats(req *spb.StatsRequest, stream spb.Monitoring_WatchSt
 		MeasureNames: req.GetMeasurementNames(),
 		C:            make(chan []*istats.View, 1024),
 	}
+	defer close(subscription.C)
+
 	err := istats.Subscribe(subscription)
 	if err != nil {
 		return fmt.Errorf("WatchStats(_) failed to subscribe. %v", err)
 	}
+	glog.Infof("export.server.WatchStats(_) subscribed to (views, measures) = (%v,%v)", subscription.ViewNames, subscription.MeasureNames)
 
 	for {
 		views := <-subscription.C
+		glog.Infof("export.server.WatchStats(_) %v views retrieved", len(views))
 
 		resp, err := buildStatsResponse(views)
 		if err != nil {

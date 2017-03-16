@@ -16,13 +16,17 @@
 package stats
 
 import (
-	"log"
+	"fmt"
+
+	"github.com/golang/glog"
 )
 
 type Subscription interface {
 	contains(vw ViewDesc) bool
 	addViewDesc(desc ViewDesc)
+	addView(vw *View)
 	reportUsage()
+	String() string
 }
 
 type SingleSubscription struct {
@@ -43,6 +47,10 @@ func (ss *SingleSubscription) addViewDesc(desc ViewDesc) {
 	ss.vwDesc = desc
 }
 
+func (ss *SingleSubscription) addView(vw *View) {
+	ss.vw = vw
+}
+
 func (ss *SingleSubscription) reportUsage() {
 	if ss.vw == nil {
 		return
@@ -50,9 +58,13 @@ func (ss *SingleSubscription) reportUsage() {
 	select {
 	case ss.C <- ss.vw:
 	default:
-		log.Printf("*SingleSubscription.reportUsage(_) dropped view %v. Receiver channel not ready.", ss.vw)
+		glog.Infof("*SingleSubscription.reportUsage(_) dropped view %v. Receiver channel not ready.", ss.vw)
 	}
 	ss.vw = nil
+}
+
+func (ss *SingleSubscription) String() string {
+	return fmt.Sprintf("SingleSubscription{ViewName: %v}", ss.ViewName)
 }
 
 type MultiSubscription struct {
@@ -100,14 +112,23 @@ func (ms *MultiSubscription) addViewDesc(desc ViewDesc) {
 	ms.vwDescs = append(ms.vwDescs, desc)
 }
 
+func (ms *MultiSubscription) addView(vw *View) {
+	ms.vws = append(ms.vws, vw)
+}
+
 func (ms *MultiSubscription) reportUsage() {
 	if len(ms.vws) == 0 {
 		return
 	}
 	select {
 	case ms.C <- ms.vws:
+		glog.Infof("*MultiSubscription.reportUsage(_) reported views %v.", len(ms.vws))
 	default:
-		log.Printf("*MultiSubscription.reportUsage(_) dropped views %v. Receiver channel not ready.", ms.vws)
+		glog.Infof("*MultiSubscription.reportUsage(_) dropped views %v. Receiver channel not ready.", ms.vws)
 	}
 	ms.vws = nil
+}
+
+func (ms *MultiSubscription) String() string {
+	return fmt.Sprintf("MultiSubscription{ViewNames: %v, MeasureNames: %v}", ms.ViewNames, ms.MeasureNames)
 }

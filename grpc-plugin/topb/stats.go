@@ -19,8 +19,7 @@ import (
 	"fmt"
 	"time"
 
-	"log"
-
+	"github.com/golang/glog"
 	istats "github.com/google/instrumentation-go/stats"
 	pb "github.com/google/instrumentation-proto/stats"
 )
@@ -63,7 +62,7 @@ func distributionViewPb(vw *istats.DistributionView) *pb.View_DistributionView {
 		for _, t := range a.Tags {
 			v, ok := t.Value().(string)
 			if !ok {
-				log.Printf("%v is of type %t. Expecting type string", t.Value(), t.Value())
+				glog.Infof("%v is of type %T. Expecting type string", t.Value(), t.Value())
 			}
 			agg.Tags = append(agg.Tags, &pb.Tag{
 				Key:   t.Key().Name(),
@@ -95,7 +94,7 @@ func intervalViewPb(vw *istats.IntervalView) *pb.View_IntervalView {
 		for _, t := range a.Tags {
 			v, ok := t.Value().(string)
 			if !ok {
-				log.Printf("%v is of type %t. Expecting type string", t.Value(), t.Value())
+				glog.Infof("%v is of type %T. Expecting type string", t.Value(), t.Value())
 			}
 			agg.Tags = append(agg.Tags, &pb.Tag{
 				Key:   t.Key().Name(),

@@ -26,7 +26,7 @@ import (
 	"google.golang.org/grpc/grpclog"
 )
 
-var serverAddr = flag.String("server_addr", "127.0.0.1:10001", "The instrumentation server address in the format of host:port")
+var serverAddr = flag.String("server_addr", "127.0.0.1:10000", "The instrumentation server address in the format of host:port")
 
 func main() {
 	flag.Parse()

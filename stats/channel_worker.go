@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/golang/glog"
 	"github.com/google/instrumentation-go/stats/tagging"
 	"golang.org/x/net/context"
 )
@@ -47,6 +48,7 @@ type channelWorker struct {
 }
 
 func (w *channelWorker) registerMeasureDesc(md MeasureDesc) error {
+	glog.Infof("registerMeasureDesc(_) registered MeasureDesc %v", md)
 	mr := &measureDescRegistration{
 		md:  md,
 		err: make(chan error),
@@ -56,6 +58,7 @@ func (w *channelWorker) registerMeasureDesc(md MeasureDesc) error {
 }
 
 func (w *channelWorker) unregisterMeasureDesc(mName string) error {
+	glog.Infof("unregisterMeasureDesc(_) unregistered name %v", mName)
 	mu := &measureDescUnregistration{
 		mn:  mName,
 		err: make(chan error),
@@ -65,6 +68,7 @@ func (w *channelWorker) unregisterMeasureDesc(mName string) error {
 }
 
 func (w *channelWorker) registerViewDesc(vd ViewDesc) error {
+	glog.Infof("registerViewDesc(_) registered ViewDesc %v", vd.String())
 	vr := &viewDescRegistration{
 		vd:  vd,
 		err: make(chan error),
@@ -74,6 +78,7 @@ func (w *channelWorker) registerViewDesc(vd ViewDesc) error {
 }
 
 func (w *channelWorker) unregisterViewDesc(vwName string) error {
+	glog.Infof("unregisterViewDesc(_) unregistered name %v", vwName)
 	vu := &viewDescUnregistration{
 		vn:  vwName,
 		err: make(chan error),
@@ -82,7 +87,8 @@ func (w *channelWorker) unregisterViewDesc(vwName string) error {
 	return <-vu.err
 }
 
-func (w *channelWorker) subscribeToViewDesc(s Subscription) error {
+func (w *channelWorker) subscribe(s Subscription) error {
+	glog.Infof("subscribeToViewDesc(_) with %v", s.String())
 	vs := &viewDescSubscription{
 		s:   s,
 		err: make(chan error),
@@ -91,7 +97,8 @@ func (w *channelWorker) subscribeToViewDesc(s Subscription) error {
 	return <-vs.err
 }
 
-func (w *channelWorker) unsubscribeFromViewDesc(s Subscription) error {
+func (w *channelWorker) unsubscribe(s Subscription) error {
+	glog.Infof("unsubscribeFromViewDesc(_) with %v", s)
 	vu := &viewDescUnsubscription{
 		s:   s,
 		err: make(chan error),
@@ -119,6 +126,7 @@ func (w *channelWorker) recordManyMeasurement(ctx context.Context, ms ...Measure
 }
 
 func (w *channelWorker) changeCallbackPeriod(min time.Duration, max time.Duration) {
+	glog.Infof("changeCallbackPeriod(_) min: %v, max: %v", min, max)
 	rf := &reportingPeriod{min, max}
 	w.inputs <- rf
 }
@@ -139,11 +147,11 @@ func (w *channelWorker) unregisterViewDescHandler(vwName string) error {
 	return w.collector.unregisterViewDesc(vwName)
 }
 
-func (w *channelWorker) subscribe(s Subscription) error {
+func (w *channelWorker) subscribeHandler(s Subscription) error {
 	return w.collector.addSubscription(s)
 }
 
-func (w *channelWorker) unsubscribe(s Subscription) error {
+func (w *channelWorker) unsubscribeHandler(s Subscription) error {
 	return w.collector.unsubscribe(s)
 }
 
@@ -207,15 +215,25 @@ func (w *channelWorker) tryReportUsageIfMinTimeElapsed() {
 }
 
 func (w *channelWorker) reportUsage() {
+	glog.Info("reportUsage(_) started")
 	now := time.Now()
 	views := w.collector.retrieveViews(now)
+	glog.Infof("reportUsage(_) %v views retrieved", len(views))
 
 	for _, vw := range views {
-		for s := range vw.ViewDesc.ViewDescCommon().subscriptions {
-			s.reportUsage()
+		vdc := vw.ViewDesc.ViewDescCommon()
+		glog.Infof("reportUsage(_) %v view's subscriptions %v", vdc.Name, len(vdc.subscriptions))
+		for subscription := range vdc.subscriptions {
+			subscription.addView(vw)
 		}
 	}
+
+	for s := range w.collector.subscriptions {
+		s.reportUsage()
+	}
+
 	w.lastReportingTime = now
+	glog.Info("reportUsage(_) completed")
 }
 
 func (w *channelWorker) resetTimer(d time.Duration) {
@@ -228,8 +246,8 @@ func newChannelWorker() *channelWorker {
 		collector:         newUsageCollector(),
 		lastReportingTime: time.Now(),
 		reportingPeriod: &reportingPeriod{
-			max: 6 * time.Second,
-			min: 5 * time.Second,
+			max: 10 * time.Second,
+			min: 10 * time.Second,
 		},
 		inputs:       make(chan interface{}, 8192),
 		maxWaitTimer: time.NewTicker(10 * time.Second),
@@ -249,9 +267,9 @@ func newChannelWorker() *channelWorker {
 				case *viewDescUnregistration:
 					cmd.err <- cw.unregisterViewDescHandler(cmd.vn)
 				case *viewDescSubscription:
-					cmd.err <- cw.subscribe(cmd.s)
+					cmd.err <- cw.subscribeHandler(cmd.s)
 				case *viewDescUnsubscription:
-					cmd.err <- cw.unsubscribe(cmd.s)
+					cmd.err <- cw.unsubscribeHandler(cmd.s)
 				case *reportingPeriod:
 					cw.changeCallbackPeriodHandler(cmd)
 				case *multiRecords:
