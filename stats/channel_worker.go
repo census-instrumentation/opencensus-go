@@ -229,7 +229,9 @@ func (w *channelWorker) tryReportUsageIfMinTimeElapsed() {
 }
 
 func (w *channelWorker) reportUsage() {
-	glog.Info("reportUsage(_) started")
+	if glog.V(3) {
+		glog.Info("reportUsage(_) started")
+	}
 	now := time.Now()
 	views := w.collector.retrieveViews(now)
 	if glog.V(3) {

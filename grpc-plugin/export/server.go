@@ -105,11 +105,14 @@ func (s *server) WatchStats(req *spb.StatsRequest, stream spb.Monitoring_WatchSt
 	if err != nil {
 		return fmt.Errorf("WatchStats(_) failed to subscribe. %v", err)
 	}
-	glog.Infof("export.server.WatchStats(_) subscribed to (views, measures) = (%v,%v)", subscription.ViewNames, subscription.MeasureNames)
-
+	if glog.V(3) {
+		glog.Infof("export.server.WatchStats(_) subscribed to (views, measures) = (%v,%v)", subscription.ViewNames, subscription.MeasureNames)
+	}
 	for {
 		views := <-subscription.C
-		glog.Infof("export.server.WatchStats(_) %v views retrieved", len(views))
+		if glog.V(3) {
+			glog.Infof("export.server.WatchStats(_) %v views retrieved", len(views))
+		}
 
 		resp, err := buildStatsResponse(views)
 		if err != nil {

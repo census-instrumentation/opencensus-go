@@ -122,9 +122,13 @@ func (ms *MultiSubscription) reportUsage() {
 	}
 	select {
 	case ms.C <- ms.vws:
-		glog.Infof("*MultiSubscription.reportUsage(_) reported views %v.", len(ms.vws))
+		if glog.V(3) {
+			glog.Infof("*MultiSubscription.reportUsage(_) reported views %v.", len(ms.vws))
+		}
 	default:
-		glog.Infof("*MultiSubscription.reportUsage(_) dropped views %v. Receiver channel not ready.", ms.vws)
+		if glog.V(3) {
+			glog.Infof("*MultiSubscription.reportUsage(_) dropped views %v. Receiver channel not ready.", ms.vws)
+		}
 	}
 	ms.vws = nil
 }

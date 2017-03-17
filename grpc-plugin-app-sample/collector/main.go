@@ -20,6 +20,7 @@ import (
 	"io"
 
 	"github.com/golang/glog"
+	statsPb "github.com/google/instrumentation-proto/stats"
 	pb "github.com/grpc/grpc-proto/grpc/instrumentation/v1alpha"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -55,6 +56,18 @@ func main() {
 		if err != nil {
 			glog.Fatalf("%v.WatchStats(_) = _, %v: ", client, err)
 		}
-		glog.Infof("%v", resp.GetViewResponses())
+		for _, vr := range resp.GetViewResponses() {
+			glog.Infof("%v:", vr.View.ViewName)
+			switch vt := vr.View.View.(type) {
+			case *statsPb.View_DistributionView:
+				glog.Infof("\t%v", vt.DistributionView)
+			case *statsPb.View_IntervalView:
+				for _, a := range vt.IntervalView.Aggregations {
+					glog.Infof("\t%v", a)
+				}
+			default:
+				glog.Infof("\tcannot print view %T", vr.View.View)
+			}
+		}
 	}
 }
