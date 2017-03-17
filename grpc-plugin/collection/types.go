@@ -21,6 +21,27 @@ import (
 	"time"
 )
 
+const (
+	// traceKey is the metadata key used to identify the tracing info in the
+	// gRPC metadata context.
+	traceKey = "grpc-tracing-bin"
+
+	// statsKey is the metadata key used to identify both the census tags in
+	// the gRPC metadata context as well as RpcServerStats info sent back from
+	// the server to the client in the gRPC metadata context.
+	statsKey = "grpc-stats-bin"
+)
+
+type grpcRPCKey struct{}
+type grpcConnKey struct{}
+
+var (
+	// grpcInstConnKey is the key used to store connection related data to context.
+	grpcInstConnKey grpcConnKey
+	// grpcInstRPCKey is the key used to store RPC related data to context.
+	grpcInstRPCKey grpcRPCKey
+)
+
 // rpcData holds the instrumentation data that is mutated between the start and
 // end the call. It holds all tracing and stats collection/census info. All its
 // fields are only accessible by the instrumentation package and do not need to

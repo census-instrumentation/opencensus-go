@@ -48,7 +48,9 @@ type channelWorker struct {
 }
 
 func (w *channelWorker) registerMeasureDesc(md MeasureDesc) error {
-	glog.Infof("registerMeasureDesc(_) registered MeasureDesc %v", md)
+	if glog.V(3) {
+		glog.Infof("registerMeasureDesc(_) registered MeasureDesc %v", md)
+	}
 	mr := &measureDescRegistration{
 		md:  md,
 		err: make(chan error),
@@ -58,7 +60,9 @@ func (w *channelWorker) registerMeasureDesc(md MeasureDesc) error {
 }
 
 func (w *channelWorker) unregisterMeasureDesc(mName string) error {
-	glog.Infof("unregisterMeasureDesc(_) unregistered name %v", mName)
+	if glog.V(3) {
+		glog.Infof("unregisterMeasureDesc(_) unregistered name %v", mName)
+	}
 	mu := &measureDescUnregistration{
 		mn:  mName,
 		err: make(chan error),
@@ -68,7 +72,9 @@ func (w *channelWorker) unregisterMeasureDesc(mName string) error {
 }
 
 func (w *channelWorker) registerViewDesc(vd ViewDesc) error {
-	glog.Infof("registerViewDesc(_) registered ViewDesc %v", vd.String())
+	if glog.V(3) {
+		glog.Infof("registerViewDesc(_) registered ViewDesc %v", vd.String())
+	}
 	vr := &viewDescRegistration{
 		vd:  vd,
 		err: make(chan error),
@@ -78,7 +84,9 @@ func (w *channelWorker) registerViewDesc(vd ViewDesc) error {
 }
 
 func (w *channelWorker) unregisterViewDesc(vwName string) error {
-	glog.Infof("unregisterViewDesc(_) unregistered name %v", vwName)
+	if glog.V(3) {
+		glog.Infof("unregisterViewDesc(_) unregistered name %v", vwName)
+	}
 	vu := &viewDescUnregistration{
 		vn:  vwName,
 		err: make(chan error),
@@ -88,7 +96,9 @@ func (w *channelWorker) unregisterViewDesc(vwName string) error {
 }
 
 func (w *channelWorker) subscribe(s Subscription) error {
-	glog.Infof("subscribeToViewDesc(_) with %v", s.String())
+	if glog.V(3) {
+		glog.Infof("subscribeToViewDesc(_) with %v", s.String())
+	}
 	vs := &viewDescSubscription{
 		s:   s,
 		err: make(chan error),
@@ -98,7 +108,9 @@ func (w *channelWorker) subscribe(s Subscription) error {
 }
 
 func (w *channelWorker) unsubscribe(s Subscription) error {
-	glog.Infof("unsubscribeFromViewDesc(_) with %v", s)
+	if glog.V(3) {
+		glog.Infof("unsubscribeFromViewDesc(_) with %v", s)
+	}
 	vu := &viewDescUnsubscription{
 		s:   s,
 		err: make(chan error),
@@ -126,7 +138,9 @@ func (w *channelWorker) recordManyMeasurement(ctx context.Context, ms ...Measure
 }
 
 func (w *channelWorker) changeCallbackPeriod(min time.Duration, max time.Duration) {
-	glog.Infof("changeCallbackPeriod(_) min: %v, max: %v", min, max)
+	if glog.V(3) {
+		glog.Infof("changeCallbackPeriod(_) min: %v, max: %v", min, max)
+	}
 	rf := &reportingPeriod{min, max}
 	w.inputs <- rf
 }
@@ -218,11 +232,15 @@ func (w *channelWorker) reportUsage() {
 	glog.Info("reportUsage(_) started")
 	now := time.Now()
 	views := w.collector.retrieveViews(now)
-	glog.Infof("reportUsage(_) %v views retrieved", len(views))
+	if glog.V(3) {
+		glog.Infof("reportUsage(_) %v views retrieved", len(views))
+	}
 
 	for _, vw := range views {
 		vdc := vw.ViewDesc.ViewDescCommon()
-		glog.Infof("reportUsage(_) %v view's subscriptions %v", vdc.Name, len(vdc.subscriptions))
+		if glog.V(3) {
+			glog.Infof("reportUsage(_) %v view's subscriptions %v", vdc.Name, len(vdc.subscriptions))
+		}
 		for subscription := range vdc.subscriptions {
 			subscription.addView(vw)
 		}
@@ -233,7 +251,9 @@ func (w *channelWorker) reportUsage() {
 	}
 
 	w.lastReportingTime = now
-	glog.Info("reportUsage(_) completed")
+	if glog.V(3) {
+		glog.Info("reportUsage(_) completed")
+	}
 }
 
 func (w *channelWorker) resetTimer(d time.Duration) {
