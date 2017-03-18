@@ -207,8 +207,8 @@ func handleRPCServerEnd(ctx context.Context, s *stats.End) error {
 	d.err = s.Error
 
 	var measurements []istats.Measurement
-	measurements = append(measurements, RPCserverRequestBytes.CreateMeasurement(float64(d.reqLen)))
-	measurements = append(measurements, RPCserverResponseBytes.CreateMeasurement(float64(d.respLen)))
+	//measurements = append(measurements, RPCserverRequestBytes.CreateMeasurement(float64(d.reqLen)))
+	//measurements = append(measurements, RPCserverResponseBytes.CreateMeasurement(float64(d.respLen)))
 	measurements = append(measurements, RPCserverServerElapsedTime.CreateMeasurement(float64(d.serverElapsedTime)/float64(time.Millisecond)))
 
 	if d.err != nil {

@@ -92,4 +92,4 @@ var SetCallbackPeriod func(min, max time.Duration)
 // doesn't reset the view's collected data, and just returns a snapshot of the
 // view as it is currently collected by the library.
 // TODO(mmoakil): implement this.
-var RetrieveViews func(viewNames, measureNames []string) ([]*View, error)
+var RetrieveViews func(viewNames, measureNames []string) []*View

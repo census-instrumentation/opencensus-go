@@ -16,7 +16,9 @@
 package main
 
 import (
+	"bytes"
 	"flag"
+	"fmt"
 	"io"
 
 	"github.com/golang/glog"
@@ -27,6 +29,7 @@ import (
 )
 
 var serverAddr = flag.String("server_addr", "127.0.0.1:10000", "The instrumentation server address in the format of host:port")
+var vname = flag.String("view_name", "", "The view name to extract. If empty (the default) will return all views")
 
 func main() {
 	flag.Parse()
@@ -38,6 +41,16 @@ func main() {
 	}
 	defer conn.Close()
 	client := pb.NewMonitoringClient(conn)
+
+	resp, err := client.GetStats(context.Background(), &pb.StatsRequest{
+		MeasurementNames: []string{"/rpc/server/server_latency"},
+		ViewNames:        []string{},
+	})
+	if err != nil {
+		glog.Fatalf("%v.WatchStats(_) = _, %v: ", client, err)
+	}
+	processResponse(resp)
+	return
 
 	stream, err := client.WatchStats(context.Background(), &pb.StatsRequest{
 		DontIncludeDescriptorsInFirstResponse: true,
@@ -56,18 +69,24 @@ func main() {
 		if err != nil {
 			glog.Fatalf("%v.WatchStats(_) = _, %v: ", client, err)
 		}
-		for _, vr := range resp.GetViewResponses() {
-			glog.Infof("%v:", vr.View.ViewName)
-			switch vt := vr.View.View.(type) {
-			case *statsPb.View_DistributionView:
-				glog.Infof("\t%v", vt.DistributionView)
-			case *statsPb.View_IntervalView:
-				for _, a := range vt.IntervalView.Aggregations {
-					glog.Infof("\t%v", a)
-				}
-			default:
-				glog.Infof("\tcannot print view %T", vr.View.View)
+		processResponse(resp)
+	}
+}
+
+func processResponse(resp *pb.StatsResponse) {
+	for _, vr := range resp.GetViewResponses() {
+		switch vt := vr.View.View.(type) {
+		case *statsPb.View_DistributionView:
+			glog.Infof("%v:\n\t%v", vr.View.ViewName, vt.DistributionView.Aggregations)
+		case *statsPb.View_IntervalView:
+			var b bytes.Buffer
+			b.WriteString(fmt.Sprintf("%v:\n", vr.View.ViewName))
+			for _, a := range vt.IntervalView.Aggregations {
+				b.WriteString(fmt.Sprintf("\t%v\n", a))
 			}
+			glog.Infof("%v", b.String())
+		default:
+			glog.Infof("\tcannot print view %T", vr.View.View)
 		}
 	}
 }

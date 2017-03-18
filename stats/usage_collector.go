@@ -198,6 +198,56 @@ func (uc *usageCollector) add(start, now time.Time, signatures map[string]aggreg
 	return nil
 }
 
+func (uc *usageCollector) retrieveViewsAdhoc(viewNames, measureNames []string, now time.Time) []*View {
+	var mds []MeasureDesc
+	if len(measureNames) == 0 {
+		for _, md := range uc.mDescriptors {
+			mds = append(mds, md)
+		}
+	} else {
+		for _, mn := range measureNames {
+			md, ok := uc.mDescriptors[mn]
+			if !ok {
+				continue
+			}
+			mds = append(mds, md)
+		}
+	}
+
+	tmp := make(map[string]ViewDesc)
+	for _, md := range mds {
+		for vd := range md.Meta().aggViewDescs {
+			tmp[vd.ViewDescCommon().Name] = vd
+		}
+	}
+
+	var views []*View
+	if len(viewNames) == 0 {
+		for _, vd := range tmp {
+			vw, err := vd.retrieveView(now)
+			if err != nil {
+				glog.Errorf("usageCollector.retrieveViews(_) failed retrieving view for ViewDesc: %v. %v", vd, err)
+				continue
+			}
+			views = append(views, vw)
+		}
+	} else {
+		for _, vn := range viewNames {
+			vd, ok := tmp[vn]
+			if !ok {
+				continue
+			}
+			vw, err := vd.retrieveView(now)
+			if err != nil {
+				glog.Errorf("usageCollector.retrieveViews(_) failed retrieving view for ViewDesc: %v. %v", vd, err)
+				continue
+			}
+			views = append(views, vw)
+		}
+	}
+	return views
+}
+
 func (uc *usageCollector) retrieveViews(now time.Time) []*View {
 	var views []*View
 	for _, vd := range uc.vDescriptors {

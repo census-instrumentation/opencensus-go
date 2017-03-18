@@ -49,6 +49,14 @@ type viewDescUnregistration struct {
 	err chan error
 }
 
+// retrieveViewsQuery is a message requesting that channelWorker goroutine
+// returns matching views.
+type retrieveViewsQuery struct {
+	vns, mns []string
+	vws      chan []*View
+	err      chan error
+}
+
 // viewDescSubscription is a message requesting that the channelWorker
 // goroutine subscribes the caller to the view named vn.
 type viewDescSubscription struct {

@@ -50,13 +50,13 @@ func main() {
 
 	start := time.Now()
 	var durations []int64
-	for i := 0; i < 10000; i++ {
+	for i := 0; i < 10; i++ {
 		rpcstart := time.Now()
 		resp, err := client.SayHello(context.Background(), &pb.HelloRequest{Name: "unary"})
 		if err != nil {
 			glog.Fatalf("%v.SayHello(_) = _, %v: ", client, err)
 		}
-		if i%10000 == 0 {
+		if i%10 == 0 {
 			if glog.V(3) {
 				glog.Infof("%v", resp.GetMessage())
 			}

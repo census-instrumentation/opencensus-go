@@ -95,6 +95,17 @@ func (w *channelWorker) unregisterViewDesc(vwName string) error {
 	return <-vu.err
 }
 
+func (w *channelWorker) retrieveViews(viewNames, measureNames []string) []*View {
+	vs := &retrieveViewsQuery{
+		vns: viewNames,
+		mns: measureNames,
+		vws: make(chan []*View),
+		err: make(chan error),
+	}
+	w.inputs <- vs
+	return <-vs.vws
+}
+
 func (w *channelWorker) subscribe(s Subscription) error {
 	if glog.V(3) {
 		glog.Infof("subscribeToViewDesc(_) with %v", s.String())
@@ -161,6 +172,10 @@ func (w *channelWorker) unregisterViewDescHandler(vwName string) error {
 	return w.collector.unregisterViewDesc(vwName)
 }
 
+func (w *channelWorker) retrieveViewsHandler(vns, mns []string) []*View {
+	return w.collector.retrieveViewsAdhoc(vns, mns, time.Now())
+}
+
 func (w *channelWorker) subscribeHandler(s Subscription) error {
 	return w.collector.addSubscription(s)
 }
@@ -179,6 +194,9 @@ func (w *channelWorker) recordMeasurementHandler(sr *singleRecord) {
 
 func (w *channelWorker) recordMultiMeasurementHandler(mr *multiRecords) {
 	if err := w.collector.recordManyMeasurement(time.Now(), mr.ts, mr.ms); err != nil {
+		if glog.V(2) {
+			glog.Infof("recordMultiMeasurementHandler(_) error: %v", err)
+		}
 		// TODO(iamm2): log that measureDesc is not registered.
 		return
 	}
@@ -268,8 +286,8 @@ func newChannelWorker() *channelWorker {
 		collector:         newUsageCollector(),
 		lastReportingTime: time.Now(),
 		reportingPeriod: &reportingPeriod{
-			max: 10 * time.Second,
-			min: 10 * time.Second,
+			max: 10000 * time.Second,
+			min: 10000 * time.Second,
 		},
 		inputs:       make(chan interface{}, 8192),
 		maxWaitTimer: time.NewTicker(10 * time.Second),
@@ -292,6 +310,8 @@ func newChannelWorker() *channelWorker {
 					cmd.err <- cw.subscribeHandler(cmd.s)
 				case *viewDescUnsubscription:
 					cmd.err <- cw.unsubscribeHandler(cmd.s)
+				case *retrieveViewsQuery:
+					cmd.vws <- cw.retrieveViewsHandler(cmd.vns, cmd.mns)
 				case *reportingPeriod:
 					cw.changeCallbackPeriodHandler(cmd)
 				case *multiRecords:
@@ -324,5 +344,6 @@ func init() {
 	RecordMeasurement = cw.recordMeasurement
 	RecordMeasurements = cw.recordManyMeasurement
 	SetCallbackPeriod = cw.changeCallbackPeriod
+	RetrieveViews = cw.retrieveViews
 	// TODO(acetechnologist): RetrieveViews =cw.retrieveViews
 }

@@ -71,10 +71,7 @@ func (s *server) GetCanonicalRpcStats(ctx context.Context, empty *pb.Empty) (*sp
 
 // Query the server for specific stats
 func (s *server) GetStats(ctx context.Context, req *spb.StatsRequest) (*spb.StatsResponse, error) {
-	views, err := istats.RetrieveViews(req.ViewNames, req.MeasurementNames)
-	if err != nil {
-		return nil, err
-	}
+	views := istats.RetrieveViews(req.ViewNames, req.MeasurementNames)
 
 	resp, err := buildStatsResponse(views)
 	if err != nil {
