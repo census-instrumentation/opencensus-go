@@ -43,7 +43,8 @@ type KeysManager interface {
 
 type keysManager struct {
 	*sync.Mutex
-	keys map[string]Key
+	keys      map[string]Key
+	nextKeyId int32
 }
 
 var defaultKeysManager = &keysManager{
@@ -79,7 +80,9 @@ func (km *keysManager) CreateKeyStringUTF8(name string) (KeyStringUTF8, error) {
 
 	ks := &keyStringUTF8{
 		name: name,
+		id:   km.nextKeyId,
 	}
+	km.nextKeyId++
 	km.keys[name] = ks
 	return ks, nil
 }
@@ -105,7 +108,9 @@ func (km *keysManager) CreateKeyBytes(name string) (KeyBytes, error) {
 
 	ks := &keyBytes{
 		name: name,
+		id:   km.nextKeyId,
 	}
+	km.nextKeyId++
 	km.keys[name] = ks
 	return ks, nil
 }
@@ -130,7 +135,9 @@ func (km *keysManager) CreateKeyBool(name string) (KeyBool, error) {
 
 	kb := &keyBool{
 		name: name,
+		id:   km.nextKeyId,
 	}
+	km.nextKeyId++
 	km.keys[name] = kb
 	return kb, nil
 }
@@ -155,7 +162,9 @@ func (km *keysManager) CreateKeyInt64(name string) (KeyInt64, error) {
 
 	ki := &keyInt64{
 		name: name,
+		id:   km.nextKeyId,
 	}
+	km.nextKeyId++
 	km.keys[name] = ki
 	return ki, nil
 }

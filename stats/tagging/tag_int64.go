@@ -24,10 +24,15 @@ import (
 // keyInt64 is implementation for keys which values are of type int64.
 type keyInt64 struct {
 	name string
+	id   int32
 }
 
 func (ki *keyInt64) Name() string {
 	return ki.name
+}
+
+func (ki *keyInt64) ID() int32 {
+	return ki.id
 }
 
 func (ki *keyInt64) Type() keyType {

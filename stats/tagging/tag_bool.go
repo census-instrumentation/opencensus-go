@@ -23,10 +23,15 @@ import (
 // keyBool is implementation for keys which values are of type bool.
 type keyBool struct {
 	name string
+	id   int32
 }
 
 func (kb *keyBool) Name() string {
 	return kb.name
+}
+
+func (kb *keyBool) ID() int32 {
+	return kb.id
 }
 
 func (kb *keyBool) Type() keyType {

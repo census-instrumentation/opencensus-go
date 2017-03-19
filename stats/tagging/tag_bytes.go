@@ -23,10 +23,15 @@ import (
 // keyBytes is implementation for keys which values are of type string.
 type keyBytes struct {
 	name string
+	id   int32
 }
 
 func (kb *keyBytes) Name() string {
 	return kb.name
+}
+
+func (kb *keyBytes) ID() int32 {
+	return kb.id
 }
 
 func (kb *keyBytes) Type() keyType {

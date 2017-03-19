@@ -251,7 +251,7 @@ func (w *channelWorker) reportUsage() {
 		glog.Info("reportUsage(_) started")
 	}
 	now := time.Now()
-	views := w.collector.retrieveViews(now)
+	views := w.collector.retrieveAllViews(now)
 	if glog.V(3) {
 		glog.Infof("reportUsage(_) %v views retrieved", len(views))
 	}
@@ -345,5 +345,4 @@ func init() {
 	RecordMeasurements = cw.recordManyMeasurement
 	SetCallbackPeriod = cw.changeCallbackPeriod
 	RetrieveViews = cw.retrieveViews
-	// TODO(acetechnologist): RetrieveViews =cw.retrieveViews
 }

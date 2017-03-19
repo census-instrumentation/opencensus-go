@@ -248,7 +248,7 @@ func (uc *usageCollector) retrieveViewsAdhoc(viewNames, measureNames []string, n
 	return views
 }
 
-func (uc *usageCollector) retrieveViews(now time.Time) []*View {
+func (uc *usageCollector) retrieveAllViews(now time.Time) []*View {
 	var views []*View
 	for _, vd := range uc.vDescriptors {
 		vw, err := vd.retrieveView(now)

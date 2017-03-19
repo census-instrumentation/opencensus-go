@@ -23,10 +23,15 @@ import (
 // keyStringUTF8 is implementation for keys which values are of type string.
 type keyStringUTF8 struct {
 	name string
+	id   int32
 }
 
 func (ks *keyStringUTF8) Name() string {
 	return ks.name
+}
+
+func (ks *keyStringUTF8) ID() int32 {
+	return ks.id
 }
 
 func (ks *keyStringUTF8) Type() keyType {

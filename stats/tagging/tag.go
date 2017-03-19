@@ -20,6 +20,7 @@ import "bytes"
 // Key is the interface for all key types.
 type Key interface {
 	Name() string
+	ID() int32
 	Type() keyType
 }
 

@@ -18,10 +18,13 @@ package stats
 import (
 	"fmt"
 	"reflect"
+	"strconv"
 	"testing"
 	"time"
 
+	"github.com/golang/glog"
 	"github.com/google/instrumentation-go/stats/tagging"
+	"golang.org/x/net/context"
 )
 
 type record struct {
@@ -406,5 +409,116 @@ func TestUsageCollection(t *testing.T) {
 			}
 
 		}
+	}
+}
+
+func registerKeys(count int) []tagging.KeyStringUTF8 {
+	mgr := tagging.DefaultKeyManager()
+	var keys []tagging.KeyStringUTF8
+
+	for i := 0; i < count; i++ {
+		k1, err := mgr.CreateKeyStringUTF8("keyIdentifier" + strconv.Itoa(i))
+		if err != nil {
+			glog.Fatalf("RegisterKeys(_) failed. %v\n", err)
+		}
+		keys = append(keys, k1)
+	}
+	return keys
+}
+
+func createMutations(keys []tagging.KeyStringUTF8) []tagging.Mutation {
+	var mutations []tagging.Mutation
+	for i, k := range keys {
+		mutations = append(mutations, k.CreateMutation("valueIdentifier"+strconv.Itoa(i), tagging.BehaviorAddOrReplace))
+	}
+	return mutations
+}
+
+func registerMeasure(uc *usageCollector, n string) *measureDescFloat64 {
+	mu := &MeasurementUnit{
+		Power10: 6,
+		Numerators: []BasicUnit{
+			BytesUnit,
+		},
+	}
+	mf64 := NewMeasureDescFloat64(n, "", mu)
+	if err := uc.registerMeasureDesc(mf64); err != nil {
+		glog.Fatalf("RegisterMeasure(_) failed. %v\n", err)
+	}
+	return mf64
+}
+
+func registerView(uc *usageCollector, n string, measureName string, keys []tagging.KeyStringUTF8) *DistributionViewDesc {
+	vw := &DistributionViewDesc{
+		Vdc: &ViewDescCommon{
+			Name:            n,
+			Description:     "",
+			MeasureDescName: measureName,
+		},
+		Bounds: []float64{0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100},
+	}
+	for _, k := range keys {
+		vw.Vdc.TagKeys = append(vw.Vdc.TagKeys, k)
+	}
+	if err := uc.registerViewDesc(vw, time.Now()); err != nil {
+		glog.Fatalf("RegisterView(_) failed. %v\n", err)
+	}
+	return vw
+}
+
+// 10 keys. 1 measure. 1 view. 10 records.
+func TestUsageCollector_10Keys_1Measure_1View_10Records(t *testing.T) {
+	keys := registerKeys(10)
+	mutations := createMutations(keys)
+
+	uc := newUsageCollector()
+	m := registerMeasure(uc, "m")
+	_ = registerView(uc, "v", "m", keys)
+
+	ctx := tagging.NewContextWithMutations(context.Background(), mutations...)
+	ts := tagging.FromContext(ctx)
+
+	for j := 0; j < 10; j++ {
+		measurement := m.CreateMeasurement(float64(j))
+		uc.recordMeasurement(time.Now(), ts, measurement)
+	}
+	retrieved := uc.retrieveViewsAdhoc(nil, nil, time.Now())
+
+	if len(retrieved) != 1 {
+		t.Fatalf("got %v views retrieved, want 1 view", len(retrieved))
+	}
+
+	dv, ok := retrieved[0].ViewAgg.(*DistributionView)
+	if !ok {
+		t.Errorf("got retrieved view of type %T, want view of type *DistributionView", dv)
+	}
+
+	if len(dv.Aggregations) != 1 {
+		t.Errorf("got %v unique aggregations, want 1 single aggregation", len(dv.Aggregations))
+	}
+
+	for _, agg := range dv.Aggregations {
+		if agg.DistributionStats.Count != 10 {
+			t.Errorf("got %v records for aggregation %v, want 10 records", agg.DistributionStats.Count, agg)
+		}
+	}
+}
+
+func Benchmark_Create_1Measurement_Record_1Measurement(b *testing.B) {
+	keys := registerKeys(10)
+	mutations := createMutations(keys)
+	uc := newUsageCollector()
+	m := registerMeasure(uc, "m")
+
+	for i := 0; i < 10; i++ {
+		_ = registerView(uc, "v"+strconv.Itoa(i), "m", keys)
+	}
+
+	ctx := tagging.NewContextWithMutations(context.Background(), mutations...)
+	ts := tagging.FromContext(ctx)
+
+	measurement := m.CreateMeasurement(float64(1))
+	for i := 0; i < b.N; i++ {
+		uc.recordMeasurement(time.Now(), ts, measurement)
 	}
 }

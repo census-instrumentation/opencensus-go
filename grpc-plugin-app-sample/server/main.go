@@ -22,7 +22,7 @@ import (
 
 	"github.com/golang/glog"
 	pb "github.com/google/instrumentation-go/grpc-plugin-app-sample"
-	"github.com/google/instrumentation-go/grpc-plugin/collection"
+	cstats "github.com/google/instrumentation-go/grpc-plugin/collection/stats"
 	"github.com/google/instrumentation-go/grpc-plugin/export"
 	instPb "github.com/grpc/grpc-proto/grpc/instrumentation/v1alpha"
 	"golang.org/x/net/context"
@@ -63,8 +63,8 @@ func main() {
 
 	{
 		// insturmentaiton specific
-		collection.RegisterServerDefaults()
-		statsHandler := collection.ServerHandler{}
+		cstats.RegisterServerDefaults()
+		statsHandler := cstats.ServerHandler{}
 		opts = append(opts, grpc.StatsHandler(statsHandler))
 
 		unaryInt := func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {

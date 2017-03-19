@@ -22,7 +22,7 @@ import (
 
 	"github.com/golang/glog"
 	pb "github.com/google/instrumentation-go/grpc-plugin-app-sample"
-	"github.com/google/instrumentation-go/grpc-plugin/collection"
+	cstats "github.com/google/instrumentation-go/grpc-plugin/collection/stats"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
@@ -36,8 +36,8 @@ func main() {
 
 	{
 		// insturmentaiton specific
-		collection.RegisterClientDefaults()
-		statsHandler := collection.ClientHandler{}
+		cstats.RegisterClientDefaults()
+		statsHandler := cstats.ClientHandler{}
 		opts = append(opts, grpc.WithStatsHandler(statsHandler))
 	}
 

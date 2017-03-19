@@ -43,7 +43,7 @@ func main() {
 	client := pb.NewMonitoringClient(conn)
 
 	resp, err := client.GetStats(context.Background(), &pb.StatsRequest{
-		MeasurementNames: []string{"/rpc/server/server_latency"},
+		MeasurementNames: []string{"/rpc/server/server_elapsed_time"},
 		ViewNames:        []string{},
 	})
 	if err != nil {
