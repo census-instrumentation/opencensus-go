@@ -21,6 +21,7 @@ import (
 	"strconv"
 	"testing"
 	"time"
+	"unsafe"
 
 	"github.com/golang/glog"
 	"github.com/google/instrumentation-go/stats/tagging"
@@ -466,7 +467,6 @@ func registerView(uc *usageCollector, n string, measureName string, keys []taggi
 	return vw
 }
 
-// 10 keys. 1 measure. 1 view. 10 records.
 func TestUsageCollector_10Keys_1Measure_1View_10Records(t *testing.T) {
 	keys := registerKeys(10)
 	mutations := createMutations(keys)
@@ -504,21 +504,69 @@ func TestUsageCollector_10Keys_1Measure_1View_10Records(t *testing.T) {
 	}
 }
 
-func Benchmark_Create_1Measurement_Record_1Measurement(b *testing.B) {
-	keys := registerKeys(10)
+func Benchmark_Record_1Measurement_With_1Tags_To_1View(b *testing.B) {
+	keys := registerKeys(1)
 	mutations := createMutations(keys)
 	uc := newUsageCollector()
 	m := registerMeasure(uc, "m")
 
-	for i := 0; i < 10; i++ {
-		_ = registerView(uc, "v"+strconv.Itoa(i), "m", keys)
-	}
-
 	ctx := tagging.NewContextWithMutations(context.Background(), mutations...)
 	ts := tagging.FromContext(ctx)
+
+	_ = registerView(uc, "v1", "m", keys)
 
 	measurement := m.CreateMeasurement(float64(1))
 	for i := 0; i < b.N; i++ {
 		uc.recordMeasurement(time.Now(), ts, measurement)
 	}
+}
+
+func Benchmark_Record_1Measurement_With_10Tags_To_10Views(b *testing.B) {
+	keys := registerKeys(10)
+	mutations := createMutations(keys)
+	uc := newUsageCollector()
+	m := registerMeasure(uc, "m")
+
+	ctx := tagging.NewContextWithMutations(context.Background(), mutations...)
+	ts := tagging.FromContext(ctx)
+
+	for i := 0; i < 10; i++ {
+		_ = registerView(uc, "v"+strconv.Itoa(i), "m", keys)
+	}
+
+	measurement := m.CreateMeasurement(float64(1))
+	for i := 0; i < b.N; i++ {
+		uc.recordMeasurement(time.Now(), ts, measurement)
+	}
+}
+
+func TestUnsafe(t *testing.T) {
+	sss := ""
+	ss := "a"
+	ls := "abcdefghijklmnopqrst"
+	f := 100.55
+	i := int64(100)
+	b := true
+
+	dataSSS := []byte(sss)
+
+	dataSS := []byte(ss)
+
+	dataLS := []byte(ls)
+
+	dataF := make([]byte, 8)
+	*(*float64)(unsafe.Pointer(&dataF[0])) = f
+
+	dataI := make([]byte, 8)
+	*(*int64)(unsafe.Pointer(&dataI[0])) = i
+
+	dataB := make([]byte, 1)
+	*(*bool)(unsafe.Pointer(&dataB[0])) = b
+
+	fmt.Printf("SSS: %v\n", string(dataSSS))
+	fmt.Printf("SS: %v\n", string(dataSS))
+	fmt.Printf("LS: %v\n", string(dataLS))
+	fmt.Printf("F: %v\n", *(*float64)(unsafe.Pointer(&dataF[0])))
+	fmt.Printf("I: %v\n", *(*int64)(unsafe.Pointer(&dataI[0])))
+	fmt.Printf("B: %v\n", *(*int64)(unsafe.Pointer(&dataB[0])))
 }

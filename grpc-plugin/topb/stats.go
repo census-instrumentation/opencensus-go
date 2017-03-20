@@ -125,22 +125,22 @@ func intervalViewPb(vw *istats.IntervalView) *pb.View_IntervalView {
 	}
 }
 
-// func ToGaugeBoolViewPb(vw *istats.GaugeBoolView) *pb.View_GaugeBoolView {
+// func gaugeBoolViewPb(vw *istats.GaugeBoolView) *pb.View_GaugeBoolView {
 // 	return &pb.GaugeBoolView{}
 // }
 
-// func ToGaugeFloat64ViewPb(vw *istats.GaugeFloat64View) *pb.View_GaugeFloat64View {
+// func gaugeFloat64ViewPb(vw *istats.GaugeFloat64View) *pb.View_GaugeFloat64View {
 // 	return &pb.GaugeFloat64View{}
 // }
 
-// func ToGaugeInt64ViewPb(vw *istats.GaugeInt64View) *pb.View_GaugeInt64View {
+// func gaugeInt64ViewPb(vw *istats.GaugeInt64View) *pb.View_GaugeInt64View {
 // 	return &pb.GaugeInt64View{}
 // }
 
-// func ToGaugeStringViewPb(vw *istats.GaugeStringView) *pb.View_GaugeStringView {
+// func gaugeStringViewPb(vw *istats.GaugeStringView) *pb.View_GaugeStringView {
 // 	return &pb.GaugeStringView{}
 // }
 
-//func ToCounterInt64ViewPb(vw istats.CounterInt64View) *pb.View_CounterInt64View {
+//func counterInt64ViewPb(vw istats.CounterInt64View) *pb.View_CounterInt64View {
 //  return &pb.CounterInt64View{}
 //}
