@@ -85,7 +85,7 @@ func decodeVarint(sig []byte, idx int) (l int, newIdx int, err error) {
 
 func encodeVarintString(dst *bytes.Buffer, s string) {
 	encodeVarint(dst, int16(len(s)))
-	dst.Write([]byte(s))
+	dst.WriteString(s)
 }
 
 func encodeVarintBytes(dst *bytes.Buffer, b []byte) {
