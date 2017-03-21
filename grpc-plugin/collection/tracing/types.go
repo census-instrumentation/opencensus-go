@@ -13,8 +13,12 @@
 // limitations under the License.
 //
 
+// Package tracing defines the two handlers (ClientHandler and ServerHandler)
+// for processing GRPC lifecycle events and process tracing data. Both are
+// different implementations of the "google.golang.org/grpc/stats.Handler"
+// interface.
 package tracing
 
 // traceKey is the metadata key used to identify the tracing info in the
-// gRPC metadata context.
+// GRPC context metadata.
 const traceKey = "grpc-tracing-bin"

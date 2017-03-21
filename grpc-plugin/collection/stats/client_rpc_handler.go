@@ -31,6 +31,9 @@ import (
 	pb "github.com/google/instrumentation-proto/stats"
 )
 
+// handleRPCClientContext gets the github.com/google/instrumentation-go/stats/tagging.TagsSet
+// set by the application code, serializes its tags into the GRPC metadata in
+// order to be sent to the server.
 func handleRPCClientContext(ctx context.Context, info *stats.RPCTagInfo) context.Context {
 	startTime := time.Now()
 	names := strings.Split(info.FullMethodName, "/")

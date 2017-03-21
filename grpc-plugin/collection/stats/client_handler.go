@@ -57,7 +57,7 @@ func (ch ClientHandler) TagConn(ctx context.Context, info *stats.ConnTagInfo) co
 	return ctx
 }
 
-// HandleConn processes the Conn events.
+// HandleConn processes the connection events.
 func (ch ClientHandler) HandleConn(ctx context.Context, s stats.ConnStats) {
 	_, ok := ctx.Value(grpcInstConnKey).(*clientConnStatus)
 	if !ok {
@@ -80,8 +80,9 @@ func (ch ClientHandler) HandleConn(ctx context.Context, s stats.ConnStats) {
 	return
 }
 
-// TagRPC gets the tagging.TagsSet set by the application code, serializes its
-// tags into the GRPC metadata in order to be sent to the server.
+// TagRPC just forwards the call to handleRPCClientContext. This is necessary
+// because this package implementation of RPC handling methds is a lot more
+// granular the interface requirements by "google.golang.org/grpc/stats.Handler".
 func (ch ClientHandler) TagRPC(ctx context.Context, info *stats.RPCTagInfo) context.Context {
 	return handleRPCClientContext(ctx, info)
 }

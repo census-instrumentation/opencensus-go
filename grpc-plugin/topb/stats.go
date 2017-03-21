@@ -13,6 +13,8 @@
 // limitations under the License.
 //
 
+// Package topb defines the helpers methods to convert pure Go objects to
+// protobuf descriptors to representing them.
 package topb
 
 import (
@@ -24,8 +26,8 @@ import (
 	pb "github.com/google/instrumentation-proto/stats"
 )
 
-// View converts the pure Go struct github.com/google/instrumentation-go/stats.View
-// to a protocol buffer View object.
+// View converts the pure Go struct to a protocol buffer View object defined in
+// github.com/google/instrumentation-go/stats.View
 func View(vw *istats.View) (*pb.View, error) {
 	vwPb := &pb.View{
 		ViewName: vw.ViewDesc.ViewDescCommon().Name,

@@ -13,6 +13,10 @@
 // limitations under the License.
 //
 
+// Package export defines the GRPC server implementing the GRPC server
+// "github.com/grpc/grpc-proto/grpc/instrumentation/v1alpha". This is a sample
+// endpoint to report/export collected statistics and tracing information for
+// both the default GRPC metrics and any other ad hoc collected metric.
 package export
 
 import (
@@ -31,6 +35,8 @@ type server struct {
 	c chan *istats.View
 }
 
+// NewServer returns a new instance of the server implementing the GRPC server
+// "github.com/grpc/grpc-proto/grpc/instrumentation/v1alpha".
 func NewServer() spb.MonitoringServer {
 	s := &server{
 		c: make(chan *istats.View, 1024),
@@ -38,9 +44,8 @@ func NewServer() spb.MonitoringServer {
 	return s
 }
 
-// Return canonical RPC stats
+// GetCanonicalRpcStats returns the canonical/default RPC stats for GRPC.
 func (s *server) GetCanonicalRpcStats(ctx context.Context, empty *pb.Empty) (*spb.CanonicalRpcStats, error) {
-
 	/*
 			RpcClientErrors
 			RpcClientRequestBytes
@@ -69,7 +74,7 @@ func (s *server) GetCanonicalRpcStats(ctx context.Context, empty *pb.Empty) (*sp
 	return nil, nil
 }
 
-// Query the server for specific stats
+// GetStats allows to query for any specific stat or set of stats,
 func (s *server) GetStats(ctx context.Context, req *spb.StatsRequest) (*spb.StatsResponse, error) {
 	views := istats.RetrieveViews(req.ViewNames, req.MeasurementNames)
 
@@ -121,14 +126,14 @@ func (s *server) WatchStats(req *spb.StatsRequest, stream spb.Monitoring_WatchSt
 	}
 }
 
-// Return request traces.
+// GetRequestTraces returns collected traces.
 func (s *server) GetRequestTraces(ctx context.Context, req *spb.TraceRequest) (*spb.TraceResponse, error) {
 	return nil, nil
 }
 
-// Return application-defined groups of monitoring data.
-// This is a low level facility to allow extension of the monitoring API to
-// application-specific monitoring data. Frameworks may use this to define
+// GetCustomMonitoringData return application-defined groups of monitoring
+// data. This is a low level facility to allow extension of the monitoring API
+// to application-specific monitoring data. Frameworks may use this to define
 // additional groups of monitoring data made available by servers.
 func (s *server) GetCustomMonitoringData(ctx context.Context, req *spb.MonitoringDataGroup) (*spb.CustomMonitoringData, error) {
 	return nil, nil

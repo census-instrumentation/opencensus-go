@@ -13,6 +13,8 @@
 // limitations under the License.
 //
 
+// Package frompb defines the helpers methods to convert protobuf descriptors
+// to pure Go objects representing them.
 package frompb
 
 import (
@@ -24,8 +26,8 @@ import (
 	pb "github.com/google/instrumentation-proto/stats"
 )
 
-// Desc converts a protocol buffer ViewDescriptor to a pure Go struct
-// implementing github.com/google/instrumentation-go/stats.ViewDesc.
+// Desc converts a protocol buffer view descriptor defined in
+// github.com/google/instrumentation-go/stats.ViewDesc to a pure Go struct.
 func Desc(d *pb.ViewDescriptor) (istats.ViewDesc, error) {
 	var vd istats.ViewDesc
 	switch t := d.Aggregation.(type) {

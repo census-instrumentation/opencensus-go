@@ -6,7 +6,7 @@ import (
 
 	"golang.org/x/net/context"
 
-	"github.com/google/instrumentation-go/grpc-plugin/collection"
+	cstats "github.com/google/instrumentation-go/grpc-plugin/collection/stats"
 	"github.com/google/instrumentation-go/stats"
 	spb "github.com/grpc/grpc-proto/grpc/instrumentation/v1alpha"
 )
@@ -16,11 +16,11 @@ var c = make(chan *stats.View, 256)
 func main() {
 	//registerViews()
 	fmt.Println("1")
-	collection.RegisterServerDefaults()
+	cstats.RegisterServerDefaults()
 	//registerRpcCanonical()
 
 	var measurements []stats.Measurement
-	measurements = append(measurements, collection.RPCserverServerElapsedTime.CreateMeasurement(float64(200000)/float64(time.Millisecond)))
+	measurements = append(measurements, cstats.RPCserverServerElapsedTime.CreateMeasurement(float64(200000)/float64(time.Millisecond)))
 	stats.RecordMeasurements(context.Background(), measurements...)
 
 	// ---------------------------------------RETRIEVE USAGE---------------------------

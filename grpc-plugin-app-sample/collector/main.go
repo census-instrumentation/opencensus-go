@@ -13,6 +13,9 @@
 // limitations under the License.
 //
 
+// Package main is a sample GRPC program that connects to the export server
+// exposed by "github.com/google/instrumentation-go/grpc-plugin/grpc-plugin-app-sample/server"
+// and collects the exported data.
 package main
 
 import (

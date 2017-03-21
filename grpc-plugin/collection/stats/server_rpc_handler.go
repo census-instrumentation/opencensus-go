@@ -34,6 +34,10 @@ import (
 	pb "github.com/google/instrumentation-proto/stats"
 )
 
+// handleRPCServerContext gets the metadata from GRPC context, extracts the
+// encoded tags from it, creates a new github.com/google/instrumentation-go/stats/tagging.TagsSet,
+// adds it to the local context using tagging.NewContextWithTagsSet and finally
+// returns the new ctx.
 func handleRPCServerContext(ctx context.Context, info *stats.RPCTagInfo) context.Context {
 	startTime := time.Now()
 	if ctx == nil {
@@ -173,6 +177,8 @@ func handleRPCServerOutPayload(ctx context.Context, s *stats.OutPayload) error {
 	return nil
 }
 
+// GenerateServerTrailer records the elapsed time of the RPC, and generates the
+// server trailer metadata that needs to be sent to the client.
 func generateRPCServerTrailer(ctx context.Context) (metadata.MD, error) {
 	d, ok := ctx.Value(grpcInstRPCKey).(*rpcData)
 	if !ok {

@@ -30,5 +30,7 @@ go_source=$GOPATH/src/
 // go test -v -bench=. ./stats/
 
 
+// string := proto.MarshalTextString(pb_message)
+// proto "github.com/golang/protobuf/proto"
 
-
+go build ./stats/ ./stats/tagging/ ./grpc-plugin/topb/ ./grpc-plugin/frompb/ ./grpc-plugin/export/ ./grpc-plugin/collection/ ./grpc-plugin/collection/stats/ ./grpc-plugin/collection/tracing/ ./stats-app-sample/

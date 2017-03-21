@@ -13,6 +13,14 @@
 // limitations under the License.
 //
 
+// Package stats defines the two handlers (ClientHandler and ServerHandler) for
+// processing GRPC lifecycle events and process statistics data. Both are
+// different implementations of the "google.golang.org/grpc/stats.Handler"
+// interface. This package also defines the default metrics (a.k.a.
+// measurements) to be collected by the instrumentation package from GRPC. Once
+// collected, they can be exported to any external package or system.
+// "github.com/google/instrumentation-go/grpc-plugin/export"" defines a sample
+// server for exporting these metrics.
 package stats
 
 import (
@@ -21,26 +29,25 @@ import (
 	"time"
 )
 
-// statsKey is the metadata key used to identify both the census tags in
-// the gRPC metadata context as well as RpcServerStats info sent back from
-// the server to the client in the gRPC metadata context.
+// statsKey is the metadata key used to identify both the stats tags in the
+// GRPC context metadata, as well as the RpcServerStats info sent back from
+// the server to the client in the GRPC context metadata.
 const statsKey = "grpc-stats-bin"
-
 
 type grpcRPCKey struct{}
 type grpcConnKey struct{}
 
 var (
-	// grpcInstConnKey is the key used to store connection related data to context.
+	// grpcInstConnKey is the key used to store connection related data to
+	// context.
 	grpcInstConnKey grpcConnKey
 	// grpcInstRPCKey is the key used to store RPC related data to context.
 	grpcInstRPCKey grpcRPCKey
 )
 
-// rpcData holds the instrumentation data that is mutated between the start and
-// end the call. It holds all tracing and stats collection/census info. All its
-// fields are only accessible by the instrumentation package and do not need to
-// be written/modified/read by external packages.
+// rpcData holds the instrumentation RPC data that is needed between the start
+// and end of an call. It holds the info that this package needs to keep track
+// of between the various GRPC events.
 type rpcData struct {
 	isClient, isStream bool
 
@@ -52,37 +59,43 @@ type rpcData struct {
 	// sequence number if streaming RPC.
 	sequenceNumber int32
 
-	// deadline is the grpc deadline for this call.
+	// deadline is the GRPC deadline for this call.
 	deadline time.Time
 
-	// startTime as observed on the server side. This is the time at which the
-	// server started processing the request.
+	// startTime as observed on the server side. It represents the time at
+	// which the server started processing the request. In reality it is the
+	// time at which GRPC invoked stats.handleRPCServerContext.
 	startTime time.Time
 
 	// elapsedTime as observed on the server side. This cannot be populated
 	// until after the call completes.
 	serverElapsedTime time.Duration
 
-	// elapsedTime as observed on the server side. This cannot be populated
-	// until after the call completes.
+	// elapsedTime as observed on the server side. This is computed after the
+	// call completes and GRPC invokes stats.generateRPCServerTrailer
 	totalElapsedTime time.Duration
 
 	authProtocol string
 	err          error
 }
 
-// connData holds connection related data for instrumentation.
+// connData holds the instrumentation connection data that is needed between
+// the start and end of a connection.
 type connData struct {
 	mu                    sync.Mutex
 	creationTime          time.Time
 	localAddr, remoteAddr net.Addr
-	activeRequests        int32 // activeRequests returns the number of active requests on this conn.
+	// activeRequests tracks the number of active requests on this connection.
+	activeRequests int32
 }
 
 // clientConnStatus contains the status of a client connection.
 type clientConnStatus struct {
 	*connData
-	reachable     bool // false when health checking fails
+	// false when health checking fails
+	reachable bool
+
+	// if connection is active but in lameduck (not in use for now).
 	lameduck      bool
 	draining      bool
 	sockConnected bool

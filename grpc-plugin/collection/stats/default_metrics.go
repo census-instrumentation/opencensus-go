@@ -22,6 +22,14 @@ import (
 	"github.com/google/instrumentation-go/stats/tagging"
 )
 
+// The following variables define the default hard-coded auxiliary data used by
+// both the default GRPC client and GRPC server metrics.
+// These are Go objects instances mirroring the some of the proto definitions
+// found at "github.com/google/instrumentation-proto/census.proto".
+// A complete description of each can be found there.
+// TODO(acetechnologist): This is temporary and will need to be replaced by a
+// mechanism to load these defaults from a common repository/config shared by
+// all supported languages. Likely a serialized protobuf of these defaults.
 var (
 	// C is the channel where the client code can access the collected views.
 	C                         chan *istats.View
@@ -62,6 +70,8 @@ func createDefaultMeasurementUnits() {
 	}
 }
 
+// init initialize the auxiliary data that is used when registering the default
+// metrics for both the GRPC client and the GRPC server.
 func init() {
 	createDefaultKeys()
 	createDefaultMeasurementUnits()

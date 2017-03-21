@@ -13,6 +13,11 @@
 // limitations under the License.
 //
 
+// Package collection defines the GRPC adapter that converts from/to GRPC wire
+// format the propagated statistics tags (a.k.a. labels) and the propagated
+// trace info. It also handles the GRPC connection and RPC lifecycle events and
+// the statistics they expose, by aggregating and converting these exposed
+// statistics to the instrumentation-go/stats API.
 package collection
 
 import (
@@ -22,8 +27,9 @@ import (
 
 // Handler is a composite type implementing the "google.golang.org/grpc/stats.Handler"
 // interface to process lifecycle events from a GRPC client or server. Its only
-// purpose is to allow for both stats and tracing (maybe others) subHandlers to
-// be chained together.
+// purpose is to allow for chaining others types implementing the
+// "google.golang.org/grpc/stats.Handler" interface. In this package it allows
+// both stats and tracing subHandlers to be chained together.
 type Handler struct {
 	subHandlers []stats.Handler
 }
@@ -43,7 +49,7 @@ func (h Handler) TagConn(ctx context.Context, info *stats.ConnTagInfo) context.C
 	return ctx
 }
 
-// HandleConn calls all Conn stats subHandlers.
+// HandleConn calls all registered connection subHandlers.
 func (h Handler) HandleConn(ctx context.Context, s stats.ConnStats) {
 	for _, sh := range h.subHandlers {
 		sh.HandleConn(ctx, s)
@@ -59,14 +65,16 @@ func (h Handler) TagRPC(ctx context.Context, info *stats.RPCTagInfo) context.Con
 	return ctx
 }
 
-// HandleRPC calls all RPC stats subHandlers.
+// HandleRPC calls all registered RPC subHandlers.
 func (h Handler) HandleRPC(ctx context.Context, s stats.RPCStats) {
 	for _, sh := range h.subHandlers {
 		sh.HandleRPC(ctx, s)
 	}
 }
 
-// AddHandler add a handler to the list of subHandlers to call.
+// AddHandler adds a handler to the list of registered subHandlers. This list
+// contains all the subhandlers that will be called during HandleConn and
+// HandleRPC.
 func (h Handler) AddHandler(sh stats.Handler) {
 	h.subHandlers = append(h.subHandlers, sh)
 }

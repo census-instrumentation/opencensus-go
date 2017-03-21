@@ -58,7 +58,7 @@ func (sh ServerHandler) TagConn(ctx context.Context, info *stats.ConnTagInfo) co
 	return ctx
 }
 
-// HandleConn processes the Conn events.
+// HandleConn processes the connection events.
 func (sh ServerHandler) HandleConn(ctx context.Context, s stats.ConnStats) {
 	_, ok := ctx.Value(grpcInstConnKey).(*serverConnStatus)
 	if !ok {
@@ -81,11 +81,9 @@ func (sh ServerHandler) HandleConn(ctx context.Context, s stats.ConnStats) {
 	return
 }
 
-// TagRPC can attach some information to the given context. The returned
-// context is used in the rest lifetime of the RPC. HandleRPCServerContext gets
-// the metadata from context, extracts encoded tags from it, creates a new
-// tagging.TagsSet, add it to the local context using tagging.NewContextWithTagsSet
-// and finally returns the new ctx.
+// TagRPC just forwards the call to handleRPCServerContext. This is necessary
+// because this package implementation of RPC handling methds is a lot more
+// granular the interface requirements by "google.golang.org/grpc/stats.Handler".
 func (sh ServerHandler) TagRPC(ctx context.Context, info *stats.RPCTagInfo) context.Context {
 	return handleRPCServerContext(ctx, info)
 }
@@ -100,7 +98,8 @@ func (sh ServerHandler) HandleRPC(ctx context.Context, s stats.RPCStats) {
 	case *stats.InPayload:
 		handleRPCServerInPayload(ctx, st)
 	case *stats.OutPayload:
-		handleRPCServerOutPayload(ctx, st) // For stream it can be called multiple times.
+		// For stream it can be called multiple times per RPC.
+		handleRPCServerOutPayload(ctx, st)
 	case *stats.End:
 		handleRPCServerEnd(ctx, st)
 	default:
@@ -108,9 +107,8 @@ func (sh ServerHandler) HandleRPC(ctx context.Context, s stats.RPCStats) {
 	}
 }
 
-// GenerateServerTrailer records the elapsed time of the RPC in Data, and
-// generates the server trailer metadata that needs to be sent to the client.
-// It's intended to be called in server interceptor.
+// GenerateServerTrailer just forwards the call to handleRPCServerContext. It
+// is intended to be called in server interceptor.
 func (sh ServerHandler) GenerateServerTrailer(ctx context.Context) (metadata.MD, error) {
 	return generateRPCServerTrailer(ctx)
 }

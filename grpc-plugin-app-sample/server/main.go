@@ -13,6 +13,9 @@
 // limitations under the License.
 //
 
+// Package main is a sample GRPC server using github.com/google/instrumentation-go/stats
+// and the github.com/google/instrumentation-go/grpc-plugin to collect GRPC
+// stats and exports them througha GRPC endpoint.
 package main
 
 import (

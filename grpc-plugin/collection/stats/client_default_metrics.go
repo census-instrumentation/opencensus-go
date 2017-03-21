@@ -23,6 +23,13 @@ import (
 	"github.com/google/instrumentation-go/stats/tagging"
 )
 
+// The following variables define the default hard-coded metrics to collect for
+// a GRPC client. These are Go objects instances mirroring the proto
+// definitions found at "github.com/google/instrumentation-proto/census.proto".
+// A complete description of each can be found there.
+// TODO(acetechnologist): This is temporary and will need to be replaced by a
+// mechanism to load these defaults from a common repository/config shared by
+// all supported languages. Likely a serialized protobuf of these defaults.
 var (
 	RPCclientErrorCount                istats.MeasureDescFloat64
 	RPCclientRequestBytes              istats.MeasureDescFloat64
@@ -262,6 +269,8 @@ func registerClientDefaultViews() {
 	}
 }
 
+// RegisterClientDefaults registers the default metrics (measures and views)
+// for a GRPC client.
 func RegisterClientDefaults() {
 	registerClientDefaultMeasures()
 	registerClientDefaultViews()
