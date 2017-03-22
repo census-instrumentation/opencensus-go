@@ -105,3 +105,35 @@ func encodeVarint(dst *bytes.Buffer, i int16) {
 	varIntSize := binary.PutVarint(tmp, int64(i))
 	dst.Write(tmp[:varIntSize])
 }
+
+/*
+func encodeVarintString(dst *buffer, s string) {
+	encodeVarint(dst, int16(len(s)))
+	copy(dst.bytes[dst.writeIdx:], s)
+}
+
+func encodeVarintBytes(dst *buffer, b []byte) {
+	encodeVarint(dst, int16(len(b)))
+	copy(dst.bytes, b)
+}
+
+func encodeVarintInt64(dst *buffer, i int64) {
+	if len(dst.bytes)-dst.writeIdx < binary.MaxVarintLen64+1 {
+		dst.resize()
+	}
+	// the +1 in the next line is because we skip 1 byte so we can fill it
+	// later with the length of the encoded int64. We know that it will be less
+	// than 255, so 1 byte is enough.
+	varIntSize := binary.PutVarint(dst.bytes[dst.writeIdx+1:], i)
+	encodeVarint(dst, int16(varIntSize))
+	dst.writeIdx += varIntSize + 1
+}
+
+func encodeVarint(dst *buffer, i int16) {
+	if len(dst.bytes)-dst.writeIdx < binary.MaxVarintLen16 {
+		dst.resize()
+	}
+	varIntSize := binary.PutVarint(dst.bytes[dst.writeIdx:], int64(i))
+	dst.writeIdx += varIntSize
+}
+*/

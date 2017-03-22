@@ -26,75 +26,50 @@ import (
 const longKey = "long tag key name that is more than fifty characters for testing puposes"
 const longValue = "long tag value name that is more than fifty characters for testing puposes"
 
-func createMutations(keysCount, valuesPerKey int) (tags []Tag, muts []Mutation) {
+func createMutations(keysCount int) (*TagsSet, []Mutation) {
+	var muts []Mutation
+	ts := &TagsSet{
+		m: make(map[Key]Tag),
+	}
 	for i := 0; i < keysCount; i++ {
 		k, _ := DefaultKeyManager().CreateKeyStringUTF8(fmt.Sprintf("%s%d", "long key name that is more than fifty characters for testing puposes", i))
-		for j := 0; j < valuesPerKey; j++ {
-			v := fmt.Sprintf("%s%d", longValue, j)
-			tags = append(tags, &tagStringUTF8{k, v})
-			muts = append(muts, &mutationStringUTF8{
-				tag: &tagStringUTF8{
-					k: k,
-					v: v,
-				},
-				behavior: BehaviorAddOrReplace,
-			})
-		}
+		ts.m[k] = &tagStringUTF8{k, longValue}
+		muts = append(muts, &mutationStringUTF8{
+			tag: &tagStringUTF8{
+				k: k,
+				v: longValue,
+			},
+			behavior: BehaviorAddOrReplace,
+		})
 	}
-	return
+	return ts, muts
 }
 
-func createNewContextWithMutations(muts []Mutation) (context.Context, error) {
-	ctx := context.Background()
-	for _, m := range muts {
-		ctx = ContextWithDerivedTagsSet(ctx, m)
-	}
-	return ctx, nil
-}
+func Test_Context_WithDerivedTagsSet_WhenNoTagPresent(t *testing.T) {
+	testData := []int{1, 100}
 
-func TestNewContextWithMutations(t *testing.T) {
-	type newContextTestData struct {
-		keysCount, valuesPerKey int
-	}
-	testData := []newContextTestData{}
-	testData = append(testData, newContextTestData{1, 1})
-	testData = append(testData, newContextTestData{100, 1})
+	for _, i := range testData {
+		want, muts := createMutations(i)
 
-	builder := &TagsSetBuilder{}
-	for _, td := range testData {
-		tags, muts := createMutations(td.keysCount, td.valuesPerKey)
-		builder.StartFromEmpty()
-		for _, t := range tags {
-			builder.AddOrReplaceTag(t)
-		}
-		ctx, err := createNewContextWithMutations(muts)
-		if err != nil {
-			t.Fatal(err)
-		}
-
+		ctx := ContextWithDerivedTagsSet(context.Background(), muts...)
 		v := ctx.Value(ctxKey{})
 		if v == nil {
-			t.Error("context has no census value")
+			t.Error("context has no *tagsSet value")
 		}
 
-		ts := builder.Build()
-		if !reflect.DeepEqual(ts, v.(*TagsSet)) {
-			t.Errorf("\ngot: %v\nwant: %v\n", ts, v.(*TagsSet))
+		if !reflect.DeepEqual(v.(*TagsSet), want) {
+			t.Errorf("\ngot: %v\nwant: %v\n", v.(*TagsSet), want)
 		}
 	}
 }
 
-// BenchmarkNewContextWithTag_When1TagPresent measures the performance of
-// calling NewContextWithTag with a (key,value) tuple where key and value are
-// each around 80 characters, and the context already carries 1 tag.
-func BenchmarkNewContextWithTag_When1TagPresent(b *testing.B) {
-	tags, muts := createMutations(1, 1)
-	builder := &TagsSetBuilder{}
-	builder.StartFromEmpty()
-	for _, t := range tags {
-		builder.AddOrReplaceTag(t)
-	}
+// BenchmarkContext_WithDerivedTagsSet_When1TagPresent measures the performance
+// of calling ContextWithDerivedTagsSet with a (key,value) tuple where key and
+// value are each around 80 characters, and the context already carries 1 tag.
+func Benchmark_Context_WithDerivedTagsSet_When1TagPresent(b *testing.B) {
+	_, muts := createMutations(1)
 	ctx := ContextWithDerivedTagsSet(context.Background(), muts...)
+
 	k, _ := DefaultKeyManager().CreateKeyStringUTF8(longKey + "255")
 	mut := &mutationStringUTF8{
 		tag: &tagStringUTF8{
@@ -109,17 +84,14 @@ func BenchmarkNewContextWithTag_When1TagPresent(b *testing.B) {
 	}
 }
 
-// BenchmarkNewContextWithTag_When100TagsPresent measures the performance of
-// calling NewContextWithTag with a (key,value) tuple where key and value are
-// each around 80 characters, and the context already carries 100 tags.
-func BenchmarkNewContextWithTag_When100TagsPresent(b *testing.B) {
-	tags, muts := createMutations(100, 1)
-	builder := &TagsSetBuilder{}
-	builder.StartFromEmpty()
-	for _, t := range tags {
-		builder.AddOrReplaceTag(t)
-	}
+// BenchmarkContext_WithDerivedTagsSet_When100TagsPresent measures the
+// performance of calling ContextWithDerivedTagsSet with a (key,value) tuple
+// where key and value are each around 80 characters, and the context already
+// carries 100 tags.
+func Benchmark_Context_WithDerivedTagsSet_When100TagsPresent(b *testing.B) {
+	_, muts := createMutations(100)
 	ctx := ContextWithDerivedTagsSet(context.Background(), muts...)
+
 	k, _ := DefaultKeyManager().CreateKeyStringUTF8(longKey + "255")
 	mut := &mutationStringUTF8{
 		tag: &tagStringUTF8{

@@ -22,7 +22,7 @@ import (
 	"time"
 )
 
-func TestDistributionAggregator(t *testing.T) {
+func Test_DistributionAggregator(t *testing.T) {
 	tds := []struct {
 		bounds, values                      []float64
 		wantCount                           int64

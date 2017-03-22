@@ -23,85 +23,55 @@ import (
 )
 
 func TestServerDefaultCollections(t *testing.T) {
+	h := ServerHandler{}
+
 	conn1Ctx := context.Background()
 	conn1Info := &stats.ConnTagInfo{}
 
 	// connectConn1
-	conn1CtxWithInfo, err := HandleConnServerContext(conn1Ctx, conn1Info)
-	if err != nil {
-
-	}
+	conn1CtxWithInfo := h.TagConn(conn1Ctx, conn1Info)
 
 	// conn1Rpc1
 	rpc1Ctx := context.Background()
 	rpc1Info := &stats.RPCTagInfo{}
-	_, err = HandleRPCServerContext(rpc1Ctx, rpc1Info)
-	if err != nil {
-
-	}
+	rpc1Ctx = h.TagRPC(rpc1Ctx, rpc1Info)
 
 	rpc1Begin := &stats.Begin{}
-	err = HandleBegin(rpc1Ctx, rpc1Begin)
-	if err != nil {
-
-	}
+	h.HandleRPC(rpc1Ctx, rpc1Begin)
 
 	rpc1InHdr := &stats.InHeader{}
-	err = HandleInHeader(rpc1Ctx, rpc1InHdr)
-	if err != nil {
-
-	}
+	h.HandleRPC(rpc1Ctx, rpc1InHdr)
 
 	rpc1InPay := &stats.InPayload{}
-	err = HandleInPayload(rpc1Ctx, rpc1InPay)
-	if err != nil {
-
-	}
+	h.HandleRPC(rpc1Ctx, rpc1InPay)
 
 	rpc1InTrailer := &stats.InTrailer{}
-	err = HandleInTrailer(rpc1Ctx, rpc1InTrailer)
-	if err != nil {
-
-	}
+	h.HandleRPC(rpc1Ctx, rpc1InTrailer)
 
 	rpc1OutCtx := context.Background()
 	rpc1OutHdr := &stats.OutHeader{}
-	err = HandleOutHeader(rpc1OutCtx, rpc1OutHdr)
-	if err != nil {
-
-	}
+	h.HandleRPC(rpc1OutCtx, rpc1OutHdr)
 
 	rpc1OutPay := &stats.OutPayload{}
-	err = HandleOutPayload(rpc1OutCtx, rpc1OutPay)
+	h.HandleRPC(rpc1OutCtx, rpc1OutPay)
+
+	md, err := h.GenerateServerTrailer(rpc1OutCtx)
 	if err != nil {
-
-	}
-
-	md, err := GenerateServerTrailer(rpc1OutCtx)
-	if err != nil {
-
 	}
 	if md != nil {
-
 	}
 
 	rpc1OutTrailer := &stats.OutTrailer{}
-	err = HandleOutTrailer(rpc1OutCtx, rpc1OutTrailer)
+	h.HandleRPC(rpc1OutCtx, rpc1OutTrailer)
 	if err != nil {
 
 	}
 
 	rpc1End := &stats.End{}
-	err = HandleEnd(rpc1OutCtx, rpc1End)
-	if err != nil {
-
-	}
+	h.HandleRPC(rpc1OutCtx, rpc1End)
 
 	conn1End := &stats.ConnEnd{}
-	err = HandleConnEnd(conn1CtxWithInfo, conn1End)
-	if err != nil {
-
-	}
+	h.HandleConn(conn1CtxWithInfo, conn1End)
 
 	// connectConn2
 	// conn2Rpc1
@@ -110,22 +80,19 @@ func TestServerDefaultCollections(t *testing.T) {
 }
 
 func TestClientDefaultCollections(t *testing.T) {
+	c := ClientHandler{}
 	conn1Ctx := context.Background()
 	conn1Info := &stats.ConnTagInfo{}
 
 	// connectConn1
-	conn1CtxWithConnInfo, err := HandleConnClientContext(conn1Ctx, conn1Info)
-	if err != nil {
+	conn1CtxWithConnInfo := c.TagConn(conn1Ctx, conn1Info)
 
-	}
 	// conn1Rpc1
 	// conn1Rpc2
 	// conn1Rpc3
 	c1End := &stats.ConnEnd{}
-	err = HandleConnEnd(conn1CtxWithConnInfo, c1End)
-	if err != nil {
+	c.HandleConn(conn1CtxWithConnInfo, c1End)
 
-	}
 	// connectConn2
 	// conn2Rpc1
 	// conn2Rpc2

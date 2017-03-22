@@ -17,7 +17,7 @@ package tagging
 
 import "testing"
 
-func TestKeysManagerNoErrors(t *testing.T) {
+func Test_KeysManager_NoErrors(t *testing.T) {
 	type testData struct {
 		createCommands      []func() (Key, error)
 		wantCount           int
@@ -90,7 +90,7 @@ func TestKeysManagerNoErrors(t *testing.T) {
 	}
 }
 
-func TestKeysManagerExpectErrors(t *testing.T) {
+func Test_KeysManager_ExpectErrors(t *testing.T) {
 	type testData struct {
 		createCommands []func() (Key, error)
 		wantErrCount   int

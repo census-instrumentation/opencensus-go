@@ -15,74 +15,118 @@
 
 package tagging
 
-import "testing"
+import (
+	"reflect"
+	"testing"
+)
 
-// BenchmarkEncodeToFullSignature_When1TagPresent measures the performance of
-// calling encodeToFullSignature a context with 1 tag where its key and
-// value are around 80 characters each.
-func BenchmarkEncodeToFullSignature_When1TagPresent(b *testing.B) {
-	tags, _ := createMutations(1, 1)
-	builder := &TagsSetBuilder{}
-	builder.StartFromEmpty()
-	for _, t := range tags {
-		builder.AddOrReplaceTag(t)
+func Test_EncodeDecode_FullSignature(t *testing.T) {
+	type testData struct {
+		tagsSlice []Tag
+		wantSlice []Tag
 	}
-	ts := builder.Build()
+
+	DefaultKeyManager().Clear()
+	k1, _ := DefaultKeyManager().CreateKeyStringUTF8("k1")
+	k2, _ := DefaultKeyManager().CreateKeyStringUTF8("k2")
+	k3, _ := DefaultKeyManager().CreateKeyInt64("k3")
+	k4, _ := DefaultKeyManager().CreateKeyBool("k4")
+
+	testSet := []testData{
+		{
+			[]Tag{},
+			nil,
+		},
+		{
+			[]Tag{k1.CreateTag("v1")},
+			[]Tag{k1.CreateTag("v1")},
+		},
+		{
+			[]Tag{k1.CreateTag("v1"), k2.CreateTag("v2")},
+			[]Tag{k1.CreateTag("v1"), k2.CreateTag("v2")},
+		},
+		{
+			[]Tag{k3.CreateTag(100), k2.CreateTag("v2"), k1.CreateTag("v1")},
+			[]Tag{k3.CreateTag(100), k2.CreateTag("v2"), k1.CreateTag("v1")},
+		},
+		{
+			[]Tag{k4.CreateTag(true), k3.CreateTag(100), k2.CreateTag("v2"), k1.CreateTag("v1")},
+			[]Tag{k4.CreateTag(true), k3.CreateTag(100), k2.CreateTag("v2"), k1.CreateTag("v1")},
+		},
+	}
+
+	builder := &TagsSetBuilder{}
+	for i, td := range testSet {
+		builder.StartFromTags(td.tagsSlice)
+		ts := builder.Build()
+
+		encoded := EncodeToFullSignature(ts)
+
+		decoded, err := DecodeFromFullSignatureToTagsSet(encoded)
+		if err != nil {
+			t.Errorf("got error %v, want no error when decoding. Test case: %v", err, i)
+			continue
+		}
+
+		if len(decoded.m) != len(td.wantSlice) {
+			t.Errorf("got len(decoded)=%v, want %v. Test case: %v", len(decoded.m), len(td.wantSlice), i)
+			continue
+		}
+
+		for _, tag := range td.wantSlice {
+			v, ok := decoded.m[tag.Key()]
+			if !ok {
+				t.Errorf("got key %v not found in decoded %v, want it found. Test case: %v", tag.Key().Name, decoded, i)
+				continue
+			}
+			if !reflect.DeepEqual(v, tag) {
+				t.Errorf("got tag %v in decoded, want %v. Test case: %v", v, tag, i)
+			}
+		}
+	}
+}
+
+// Benchmark_Encode_FullSignature_When1TagPresent measures the performance of
+// calling EncodeToFullSignature a context with 1 tag where its key and value
+// are around 80 characters each.
+func Benchmark_Encode_FullSignature_When1TagPresent(b *testing.B) {
+	ts, _ := createMutations(1)
 	for i := 0; i < b.N; i++ {
 		_ = EncodeToFullSignature(ts)
 	}
 }
 
-// BenchmarkDecodeFromFullSignatureToSlice_When1TagPresent measures the
-// performance of calling decodeFromFullSignatureToSlice when signature has 1
-// tag and its key and value are around 80 characters each.
-func BenchmarkDecodeFromFullSignatureToSlice_When1TagPresent(b *testing.B) {
-	tags, _ := createMutations(1, 1)
-	builder := &TagsSetBuilder{}
-	builder.StartFromEmpty()
-	for _, t := range tags {
-		builder.AddOrReplaceTag(t)
-	}
-	ts := builder.Build()
+// Benchmark_Decode_FullSignature_When1TagPresent measures the performance of
+// calling DecodeFromFullSignatureToTagsSet when signature has 1 tag and its
+// key and value are around 80 characters each.
+func Benchmark_Decode_FullSignature_When1TagPresent(b *testing.B) {
+	ts, _ := createMutations(1)
 	encoded := EncodeToFullSignature(ts)
 
 	for i := 0; i < b.N; i++ {
-		_, err := DecodeFromFullSignatureToTagsSet([]byte(encoded))
+		_, err := DecodeFromFullSignatureToTagsSet(encoded)
 		if err != nil {
 			b.Fatal(err)
 		}
 	}
 }
 
-// BenchmarkEncodeToFullSignature_When100TagsPresent measures the performance
-// of calling encodeToFullSignature a context with 100 tags where each tag key
+// Benchmark_Encode_FullSignature_When100TagsPresent measures the performance
+// of calling EncodeToFullSignature a context with 100 tags where each tag key
 // and value are around 80 characters each.
-func BenchmarkEncodeToFullSignature_When100TagsPresent(b *testing.B) {
-	tags, _ := createMutations(100, 1)
-	builder := &TagsSetBuilder{}
-	builder.StartFromEmpty()
-	for _, t := range tags {
-		builder.AddOrReplaceTag(t)
-	}
-	ts := builder.Build()
+func Benchmark_Encode_FullSignature_When100TagsPresent(b *testing.B) {
+	ts, _ := createMutations(100)
 
 	for i := 0; i < b.N; i++ {
 		_ = EncodeToFullSignature(ts)
 	}
 }
 
-// BenchmarkDecodeFromFullSignatureToSlice_When100TagsPresent measures the
-// performance of calling decodeFromFullSignatureToSlice when signature has 100
-// tags and each tag key and value are around 80 characters each.
-func BenchmarkDecodeFromFullSignatureToSlice_When100TagsPresent(b *testing.B) {
-	tags, _ := createMutations(100, 1)
-	builder := &TagsSetBuilder{}
-	builder.StartFromEmpty()
-	for _, t := range tags {
-		builder.AddOrReplaceTag(t)
-	}
-	ts := builder.Build()
-
+// Benchmark_Decode_FullSignature_When100TagsPresent measures the performance
+// of calling DecodeFromFullSignatureToTagsSet when signature has 100 tags and
+// each tag key and value are around 80 characters each.
+func Benchmark_Decode_FullSignature_When100TagsPresent(b *testing.B) {
+	ts, _ := createMutations(100)
 	encoded := EncodeToFullSignature(ts)
 
 	for i := 0; i < b.N; i++ {

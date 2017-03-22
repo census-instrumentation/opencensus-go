@@ -33,4 +33,26 @@ go_source=$GOPATH/src/
 // string := proto.MarshalTextString(pb_message)
 // proto "github.com/golang/protobuf/proto"
 
-go build ./stats/ ./stats/tagging/ ./grpc-plugin/topb/ ./grpc-plugin/frompb/ ./grpc-plugin/export/ ./grpc-plugin/collection/ ./grpc-plugin/collection/stats/ ./grpc-plugin/collection/tracing/ ./stats-app-sample/
+go build ./grpc-plugin/collection/ ./grpc-plugin/collection/stats/ ./grpc-plugin/collection/tracing/ ./grpc-plugin/export/ ./grpc-plugin/frompb/ ./grpc-plugin/topb/ ./grpc-plugin-app-sample/ ./grpc-plugin-app-sample/client/ ./grpc-plugin-app-sample/server/ ./grpc-plugin-app-sample/collector/ ./stats/ ./stats/tagging/ ./stats-app-sample/
+
+go test ./grpc-plugin/collection/ ./grpc-plugin/collection/stats/ ./grpc-plugin/collection/tracing/ ./grpc-plugin/export/ ./grpc-plugin/frompb/ ./grpc-plugin/topb/ ./grpc-plugin-app-sample/ ./grpc-plugin-app-sample/client/ ./grpc-plugin-app-sample/server/ ./grpc-plugin-app-sample/collector/ ./stats/ ./stats/tagging/ ./stats-app-sample/
+
+
+
+
+BENCHMARKS:
+go test -run none -v -bench=. -benchmem ./stats/
+Benchmark_Record_1Measurement_With_1Tags_To_1View-8              5000000               375 ns/op             144 B/op          2 allocs/op
+Benchmark_Record_1Measurement_With_10Tags_To_10Views-8            100000             15254 ns/op            7520 B/op         40 allocs/op
+
+Benchmark_Context_WithDerivedTagsSet_When1TagPresent-8           2000000               637 ns/op             392 B/op          4 allocs/op
+Benchmark_Context_WithDerivedTagsSet_When100TagsPresent-8         200000             11199 ns/op            5799 B/op          6 allocs/op
+Benchmark_Encode_FullSignature_When1TagPresent-8                 3000000               488 ns/op             320 B/op          2 allocs/op
+Benchmark_Decode_FullSignature_When1TagPresent-8                 2000000               817 ns/op             536 B/op          6 allocs/op
+Benchmark_Encode_FullSignature_When100TagsPresent-8                50000             26590 ns/op           36896 B/op          8 allocs/op
+Benchmark_Decode_FullSignature_When100TagsPresent-8                20000             64882 ns/op           29982 B/op        312 allocs/op
+Benchmark_Encode_ValuesSignature_When1TagPresent-8               5000000               349 ns/op             320 B/op          2 allocs/op
+Benchmark_Decode_ValuesSignature_When1TagPresent-8               3000000               469 ns/op             456 B/op          5 allocs/op
+Benchmark_Encode_ValuesSignature_When100TagsPresent-8             100000             14777 ns/op           18592 B/op          7 allocs/op
+Benchmark_Decode_ValuesSignature_When100TagsPresent-8              50000             32523 ns/op           21974 B/op        212 allocs/op
+

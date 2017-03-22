@@ -20,7 +20,7 @@ import (
 	"time"
 )
 
-func TestIntervalAggregator(t *testing.T) {
+func Test_IntervalAggregator(t *testing.T) {
 	type record struct {
 		t time.Time
 		v float64

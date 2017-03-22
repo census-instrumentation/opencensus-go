@@ -42,47 +42,6 @@ type TagsFullSignature struct {
 	sig []byte
 }
 
-// DecodeFromFullSignatureToSlice creates a []Tag] from an encodded []byte.
-func DecodeFromFullSignatureToSlice(fullSig []byte) ([]Tag, error) {
-	var ts []Tag
-	if len(fullSig) == 0 {
-		return ts, nil
-	}
-
-	var t Tag
-	var err error
-	idx := 0
-	for idx < len(fullSig) {
-		typ := keyType(fullSig[idx])
-		idx++
-
-		switch typ {
-		case keyTypeStringUTF8:
-			t = &tagStringUTF8{}
-		case keyTypeInt64:
-			t = &tagInt64{}
-		case keyTypeBool:
-			t = &tagBool{}
-		case keyTypeBytes:
-			t = &tagBytes{}
-		default:
-			return nil, fmt.Errorf("TagsFromValuesSignature failed. Key type invalid %v", typ)
-		}
-
-		idx, err = t.setKeyFromBytes(fullSig, idx)
-		if err != nil {
-			return nil, err
-		}
-		idx, err = t.setValueFromBytes(fullSig, idx)
-		if err != nil {
-			return nil, err
-		}
-
-		ts = append(ts, t)
-	}
-	return ts, nil
-}
-
 // DecodeFromFullSignatureToTagsSet creates a TagsSet from an encodded []byte.
 func DecodeFromFullSignatureToTagsSet(fullSig []byte) (*TagsSet, error) {
 	ts := &TagsSet{

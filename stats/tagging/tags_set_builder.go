@@ -32,6 +32,18 @@ func (tb *TagsSetBuilder) StartFromEmpty() *TagsSetBuilder {
 	return tb
 }
 
+// StartFromTags starts building a new TagsSet from a slice of tags.
+func (tb *TagsSetBuilder) StartFromTags(tags []Tag) {
+	m := make(map[Key]Tag, len(tags))
+	for _, t := range tags {
+		m[t.Key()] = t
+	}
+
+	tb.ts = &TagsSet{
+		m: m,
+	}
+}
+
 // StartFromTagsSet starts building a new TagsSet from an existing TagSet.
 func (tb *TagsSetBuilder) StartFromTagsSet(ts *TagsSet) {
 	var m map[Key]Tag
@@ -89,5 +101,7 @@ func (tb *TagsSetBuilder) AddOrReplaceTag(t Tag) {
 
 // Build returns the built TagsSet and clears the builder.
 func (tb *TagsSetBuilder) Build() *TagsSet {
-	return tb.ts
+	ret := tb.ts
+	tb.ts = nil
+	return ret
 }

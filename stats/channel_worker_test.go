@@ -20,7 +20,7 @@ import (
 	"testing"
 )
 
-func TestRegisterMeasureDesc(t *testing.T) {
+func Test_RegisterMeasureDesc(t *testing.T) {
 	type testData struct {
 		mds            []MeasureDesc
 		wantErrorCount int
@@ -59,7 +59,7 @@ func TestRegisterMeasureDesc(t *testing.T) {
 	}
 }
 
-func TestUnregisterMeasureDesc(t *testing.T) {
+func Test_UnregisterMeasureDesc(t *testing.T) {
 	type testData struct {
 		mds        []MeasureDesc
 		unregister string

@@ -29,15 +29,6 @@ func FromContext(ctx context.Context) *TagsSet {
 	return ts
 }
 
-// FromContextWireFormat returns the TagsSet stored in the context encoded in
-// the library custom wire format. This wire format is understood by the same
-// libraries in other languages.
-func FromContextWireFormat(ctx context.Context) []byte {
-	ts := FromContext(ctx)
-	encoded := EncodeToFullSignature(ts)
-	return encoded
-}
-
 // ContextWithNewTagsSet creates a new context from the old one replacing any
 // existing TagsSet with the new parameter TagsSet ts.
 func ContextWithNewTagsSet(ctx context.Context, ts *TagsSet) (context.Context, error) {

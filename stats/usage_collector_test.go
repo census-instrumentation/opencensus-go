@@ -54,7 +54,61 @@ func (td *ucTestData) String() string {
 	return fmt.Sprintf("%v", td.measureDesc)
 }
 
-func TestUsageCollection(t *testing.T) {
+func registerKeys(count int) []tagging.KeyStringUTF8 {
+	mgr := tagging.DefaultKeyManager()
+	var keys []tagging.KeyStringUTF8
+
+	for i := 0; i < count; i++ {
+		k1, err := mgr.CreateKeyStringUTF8("keyIdentifier" + strconv.Itoa(i))
+		if err != nil {
+			glog.Fatalf("RegisterKeys(_) failed. %v\n", err)
+		}
+		keys = append(keys, k1)
+	}
+	return keys
+}
+
+func createMutations(keys []tagging.KeyStringUTF8) []tagging.Mutation {
+	var mutations []tagging.Mutation
+	for i, k := range keys {
+		mutations = append(mutations, k.CreateMutation("valueIdentifier"+strconv.Itoa(i), tagging.BehaviorAddOrReplace))
+	}
+	return mutations
+}
+
+func registerMeasure(uc *usageCollector, n string) *measureDescFloat64 {
+	mu := &MeasurementUnit{
+		Power10: 6,
+		Numerators: []BasicUnit{
+			BytesUnit,
+		},
+	}
+	mf64 := NewMeasureDescFloat64(n, "", mu)
+	if err := uc.registerMeasureDesc(mf64); err != nil {
+		glog.Fatalf("RegisterMeasure(_) failed. %v\n", err)
+	}
+	return mf64
+}
+
+func registerView(uc *usageCollector, n string, measureName string, keys []tagging.KeyStringUTF8) *DistributionViewDesc {
+	vw := &DistributionViewDesc{
+		Vdc: &ViewDescCommon{
+			Name:            n,
+			Description:     "",
+			MeasureDescName: measureName,
+		},
+		Bounds: []float64{0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100},
+	}
+	for _, k := range keys {
+		vw.Vdc.TagKeys = append(vw.Vdc.TagKeys, k)
+	}
+	if err := uc.registerViewDesc(vw, time.Now()); err != nil {
+		glog.Fatalf("RegisterView(_) failed. %v\n", err)
+	}
+	return vw
+}
+
+func Test_UsageCollector_CreateKeys_RegisterMeasure_RegisterView_Records_RetrieveView(t *testing.T) {
 	registerTime := time.Now()
 	retrieveTime := registerTime.Add(10 * time.Second)
 
@@ -415,61 +469,7 @@ func TestUsageCollection(t *testing.T) {
 	}
 }
 
-func registerKeys(count int) []tagging.KeyStringUTF8 {
-	mgr := tagging.DefaultKeyManager()
-	var keys []tagging.KeyStringUTF8
-
-	for i := 0; i < count; i++ {
-		k1, err := mgr.CreateKeyStringUTF8("keyIdentifier" + strconv.Itoa(i))
-		if err != nil {
-			glog.Fatalf("RegisterKeys(_) failed. %v\n", err)
-		}
-		keys = append(keys, k1)
-	}
-	return keys
-}
-
-func createMutations(keys []tagging.KeyStringUTF8) []tagging.Mutation {
-	var mutations []tagging.Mutation
-	for i, k := range keys {
-		mutations = append(mutations, k.CreateMutation("valueIdentifier"+strconv.Itoa(i), tagging.BehaviorAddOrReplace))
-	}
-	return mutations
-}
-
-func registerMeasure(uc *usageCollector, n string) *measureDescFloat64 {
-	mu := &MeasurementUnit{
-		Power10: 6,
-		Numerators: []BasicUnit{
-			BytesUnit,
-		},
-	}
-	mf64 := NewMeasureDescFloat64(n, "", mu)
-	if err := uc.registerMeasureDesc(mf64); err != nil {
-		glog.Fatalf("RegisterMeasure(_) failed. %v\n", err)
-	}
-	return mf64
-}
-
-func registerView(uc *usageCollector, n string, measureName string, keys []tagging.KeyStringUTF8) *DistributionViewDesc {
-	vw := &DistributionViewDesc{
-		Vdc: &ViewDescCommon{
-			Name:            n,
-			Description:     "",
-			MeasureDescName: measureName,
-		},
-		Bounds: []float64{0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100},
-	}
-	for _, k := range keys {
-		vw.Vdc.TagKeys = append(vw.Vdc.TagKeys, k)
-	}
-	if err := uc.registerViewDesc(vw, time.Now()); err != nil {
-		glog.Fatalf("RegisterView(_) failed. %v\n", err)
-	}
-	return vw
-}
-
-func TestUsageCollector_10Keys_1Measure_1View_10Records(t *testing.T) {
+func Test_UsageCollector_10Keys_1Measure_1View_10Records(t *testing.T) {
 	keys := registerKeys(10)
 	mutations := createMutations(keys)
 
