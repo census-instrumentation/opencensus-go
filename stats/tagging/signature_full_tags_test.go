@@ -22,11 +22,12 @@ import "testing"
 // value are around 80 characters each.
 func BenchmarkEncodeToFullSignature_When1TagPresent(b *testing.B) {
 	tags, _ := createMutations(1, 1)
-	ts := make(TagsSet)
+	builder := &TagsSetBuilder{}
+	builder.StartFromEmpty()
 	for _, t := range tags {
-		ts[t.Key()] = t
+		builder.AddOrReplaceTag(t)
 	}
-
+	ts := builder.Build()
 	for i := 0; i < b.N; i++ {
 		_ = EncodeToFullSignature(ts)
 	}
@@ -37,10 +38,12 @@ func BenchmarkEncodeToFullSignature_When1TagPresent(b *testing.B) {
 // tag and its key and value are around 80 characters each.
 func BenchmarkDecodeFromFullSignatureToSlice_When1TagPresent(b *testing.B) {
 	tags, _ := createMutations(1, 1)
-	ts := make(TagsSet)
+	builder := &TagsSetBuilder{}
+	builder.StartFromEmpty()
 	for _, t := range tags {
-		ts[t.Key()] = t
+		builder.AddOrReplaceTag(t)
 	}
+	ts := builder.Build()
 	encoded := EncodeToFullSignature(ts)
 
 	for i := 0; i < b.N; i++ {
@@ -56,10 +59,12 @@ func BenchmarkDecodeFromFullSignatureToSlice_When1TagPresent(b *testing.B) {
 // and value are around 80 characters each.
 func BenchmarkEncodeToFullSignature_When100TagsPresent(b *testing.B) {
 	tags, _ := createMutations(100, 1)
-	ts := make(TagsSet)
+	builder := &TagsSetBuilder{}
+	builder.StartFromEmpty()
 	for _, t := range tags {
-		ts[t.Key()] = t
+		builder.AddOrReplaceTag(t)
 	}
+	ts := builder.Build()
 
 	for i := 0; i < b.N; i++ {
 		_ = EncodeToFullSignature(ts)
@@ -71,10 +76,13 @@ func BenchmarkEncodeToFullSignature_When100TagsPresent(b *testing.B) {
 // tags and each tag key and value are around 80 characters each.
 func BenchmarkDecodeFromFullSignatureToSlice_When100TagsPresent(b *testing.B) {
 	tags, _ := createMutations(100, 1)
-	ts := make(TagsSet)
+	builder := &TagsSetBuilder{}
+	builder.StartFromEmpty()
 	for _, t := range tags {
-		ts[t.Key()] = t
+		builder.AddOrReplaceTag(t)
 	}
+	ts := builder.Build()
+
 	encoded := EncodeToFullSignature(ts)
 
 	for i := 0; i < b.N; i++ {

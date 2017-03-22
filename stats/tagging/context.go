@@ -19,34 +19,43 @@ import "golang.org/x/net/context"
 
 type ctxKey struct{}
 
-func FromContext(ctx context.Context) TagsSet {
-	ts, ok := ctx.Value(ctxKey{}).(TagsSet)
+// FromContext returns the TagsSet stored in the context. The TagSet shoudln't
+// be modified.
+func FromContext(ctx context.Context) *TagsSet {
+	ts, ok := ctx.Value(ctxKey{}).(*TagsSet)
 	if !ok {
 		ts = nil
 	}
 	return ts
 }
 
-// NewContextWithTagsSet creates a new context containing the new TagsSet.
-func NewContextWithTagsSet(ctx context.Context, ts TagsSet) context.Context {
-	return context.WithValue(ctx, ctxKey{}, ts)
+// FromContextWireFormat returns the TagsSet stored in the context encoded in
+// the library custom wire format. This wire format is understood by the same
+// libraries in other languages.
+func FromContextWireFormat(ctx context.Context) []byte {
+	ts := FromContext(ctx)
+	encoded := EncodeToFullSignature(ts)
+	return encoded
 }
 
-// NewContextWithMutations creates a new context containing a new TagsSet. The
-// new TagsSet is constructed from the existing TagsSet to which the mutations
-// are applied.
-func NewContextWithMutations(ctx context.Context, mut ...Mutation) context.Context {
-	parentTagsSet, _ := ctx.Value(ctxKey{}).(TagsSet)
-
-	return context.WithValue(ctx, ctxKey{}, newTagsSet(parentTagsSet, mut...))
+// ContextWithNewTagsSet creates a new context from the old one replacing any
+// existing TagsSet with the new parameter TagsSet ts.
+func ContextWithNewTagsSet(ctx context.Context, ts *TagsSet) (context.Context, error) {
+	return context.WithValue(ctx, ctxKey{}, ts), nil
 }
 
-func newTagsSet(oldTs TagsSet, ms ...Mutation) TagsSet {
-	newTs := make(TagsSet)
-	for k, t := range oldTs {
-		newTs[k] = t
+// ContextWithDerivedTagsSet creates a new context from the old one replacing any
+// existing TagsSet. The new TagsSet contains the tags already presents in the
+// existing TagsSet to which the mutations ms are applied
+func ContextWithDerivedTagsSet(ctx context.Context, mut ...Mutation) context.Context {
+	builder := &TagsSetBuilder{}
+
+	oldTs, ok := ctx.Value(ctxKey{}).(*TagsSet)
+	if !ok {
+		builder.StartFromEmpty()
+	} else {
+		builder.StartFromTagsSet(oldTs)
 	}
-
-	newTs.ApplyMutations(ms...)
-	return newTs
+	builder.AddMutations(mut...)
+	return context.WithValue(ctx, ctxKey{}, builder.Build())
 }

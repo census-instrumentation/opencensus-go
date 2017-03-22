@@ -197,7 +197,7 @@ func registerViews() {
 	mut2 := k2.CreateMutation(1, tagging.BehaviorAdd)
 	mut3 := k3.CreateMutation("s1", tagging.BehaviorAdd)
 	// ---------------------------------------RECORD USAGE---------------------------
-	ctx := tagging.NewContextWithMutations(context.Background(), mut1, mut2, mut3)
+	ctx := tagging.ContextWithDerivedTagsSet(context.Background(), mut1, mut2, mut3)
 
 	//...
 	// DoStuff()
@@ -217,7 +217,7 @@ func registerViews() {
 	mut2 = k2.CreateMutation(2, tagging.BehaviorAdd)
 	mut3 = k3.CreateMutation("s2", tagging.BehaviorAdd)
 	// ---------------------------------------RECORD USAGE---------------------------
-	ctx = tagging.NewContextWithMutations(context.Background(), mut1, mut2, mut3)
+	ctx = tagging.ContextWithDerivedTagsSet(context.Background(), mut1, mut2, mut3)
 
 	//...
 	// DoStuff()

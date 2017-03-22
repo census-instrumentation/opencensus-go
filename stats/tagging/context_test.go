@@ -47,7 +47,7 @@ func createMutations(keysCount, valuesPerKey int) (tags []Tag, muts []Mutation) 
 func createNewContextWithMutations(muts []Mutation) (context.Context, error) {
 	ctx := context.Background()
 	for _, m := range muts {
-		ctx = NewContextWithMutations(ctx, m)
+		ctx = ContextWithDerivedTagsSet(ctx, m)
 	}
 	return ctx, nil
 }
@@ -60,11 +60,12 @@ func TestNewContextWithMutations(t *testing.T) {
 	testData = append(testData, newContextTestData{1, 1})
 	testData = append(testData, newContextTestData{100, 1})
 
+	builder := &TagsSetBuilder{}
 	for _, td := range testData {
 		tags, muts := createMutations(td.keysCount, td.valuesPerKey)
-		ts := make(TagsSet)
+		builder.StartFromEmpty()
 		for _, t := range tags {
-			ts[t.Key()] = t
+			builder.AddOrReplaceTag(t)
 		}
 		ctx, err := createNewContextWithMutations(muts)
 		if err != nil {
@@ -76,8 +77,9 @@ func TestNewContextWithMutations(t *testing.T) {
 			t.Error("context has no census value")
 		}
 
-		if !reflect.DeepEqual(ts, v.(TagsSet)) {
-			t.Errorf("\ngot: %v\nwant: %v\n", ts, v.(TagsSet))
+		ts := builder.Build()
+		if !reflect.DeepEqual(ts, v.(*TagsSet)) {
+			t.Errorf("\ngot: %v\nwant: %v\n", ts, v.(*TagsSet))
 		}
 	}
 }
@@ -87,14 +89,12 @@ func TestNewContextWithMutations(t *testing.T) {
 // each around 80 characters, and the context already carries 1 tag.
 func BenchmarkNewContextWithTag_When1TagPresent(b *testing.B) {
 	tags, muts := createMutations(1, 1)
-	ts := make(TagsSet)
+	builder := &TagsSetBuilder{}
+	builder.StartFromEmpty()
 	for _, t := range tags {
-		ts[t.Key()] = t
+		builder.AddOrReplaceTag(t)
 	}
-	ctx, err := createNewContextWithMutations(muts)
-	if err != nil {
-		b.Fatal(err)
-	}
+	ctx := ContextWithDerivedTagsSet(context.Background(), muts...)
 	k, _ := DefaultKeyManager().CreateKeyStringUTF8(longKey + "255")
 	mut := &mutationStringUTF8{
 		tag: &tagStringUTF8{
@@ -105,7 +105,7 @@ func BenchmarkNewContextWithTag_When1TagPresent(b *testing.B) {
 	}
 
 	for i := 0; i < b.N; i++ {
-		_ = NewContextWithMutations(ctx, mut)
+		_ = ContextWithDerivedTagsSet(ctx, mut)
 	}
 }
 
@@ -114,14 +114,12 @@ func BenchmarkNewContextWithTag_When1TagPresent(b *testing.B) {
 // each around 80 characters, and the context already carries 100 tags.
 func BenchmarkNewContextWithTag_When100TagsPresent(b *testing.B) {
 	tags, muts := createMutations(100, 1)
-	ts := make(TagsSet)
+	builder := &TagsSetBuilder{}
+	builder.StartFromEmpty()
 	for _, t := range tags {
-		ts[t.Key()] = t
+		builder.AddOrReplaceTag(t)
 	}
-	ctx, err := createNewContextWithMutations(muts)
-	if err != nil {
-		b.Fatal(err)
-	}
+	ctx := ContextWithDerivedTagsSet(context.Background(), muts...)
 	k, _ := DefaultKeyManager().CreateKeyStringUTF8(longKey + "255")
 	mut := &mutationStringUTF8{
 		tag: &tagStringUTF8{
@@ -132,6 +130,6 @@ func BenchmarkNewContextWithTag_When100TagsPresent(b *testing.B) {
 	}
 
 	for i := 0; i < b.N; i++ {
-		_ = NewContextWithMutations(ctx, mut)
+		_ = ContextWithDerivedTagsSet(ctx, mut)
 	}
 }

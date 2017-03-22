@@ -87,8 +87,10 @@ func DecodeFromValuesSignatureToSlice(valuesSig []byte, keys []Key) ([]Tag, erro
 // DecodeFromValuesSignatureToTagsSet creates a TagsSet from an encodded []byte
 // and a slice of keys. The slice of keys is expected to be the same one as the
 // one used for encoding.
-func DecodeFromValuesSignatureToTagsSet(valuesSig []byte, keys []Key) (TagsSet, error) {
-	ts := make(TagsSet)
+func DecodeFromValuesSignatureToTagsSet(valuesSig []byte, keys []Key) (*TagsSet, error) {
+	ts := &TagsSet{
+		m: make(map[Key]Tag),
+	}
 	if len(valuesSig) == 0 {
 		return ts, nil
 	}
@@ -137,16 +139,16 @@ func DecodeFromValuesSignatureToTagsSet(valuesSig []byte, keys []Key) (TagsSet, 
 			return nil, err
 		}
 
-		ts[k] = t
+		ts.m[k] = t
 	}
 	return ts, nil
 }
 
 // EncodeToValuesSignature creates a TagValuesSignature from TagsSet
-func EncodeToValuesSignature(ts TagsSet, keys []Key) []byte {
+func EncodeToValuesSignature(ts *TagsSet, keys []Key) []byte {
 	var b bytes.Buffer
 	for _, k := range keys {
-		t, ok := ts[k]
+		t, ok := ts.m[k]
 		if !ok {
 			// write 0 (len(value) = 0) meaning no value is encoded for this key.
 			encodeVarint(&b, 0)

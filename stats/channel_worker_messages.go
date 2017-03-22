@@ -74,14 +74,14 @@ type viewDescUnsubscription struct {
 // singleRecord is a message requesting that the channelWorker goroutine
 // records the value v for the MeasureDesc md and tags in ct.
 type singleRecord struct {
-	ts tagging.TagsSet
+	ts *tagging.TagsSet
 	m  Measurement
 }
 
 // multiRecords is a message requesting that the channelWorker goroutine
 // records the values vs for the MeasureDesc mds and tags in ct.
 type multiRecords struct {
-	ts tagging.TagsSet
+	ts *tagging.TagsSet
 	ms []Measurement
 }
 

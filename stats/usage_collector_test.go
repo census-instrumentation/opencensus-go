@@ -29,9 +29,9 @@ import (
 )
 
 type record struct {
-	t  time.Time
-	ts tagging.TagsSet
-	v  float64
+	t    time.Time
+	muts []tagging.Mutation
+	v    float64
 }
 
 type view struct {
@@ -119,46 +119,46 @@ func TestUsageCollection(t *testing.T) {
 			[]record{
 				{
 					registerTime.Add(1 * time.Second),
-					tagging.TagsSet{
-						k1: k1.CreateTag("v1"),
+					[]tagging.Mutation{
+						k1.CreateMutation("v1", tagging.BehaviorAddOrReplace),
 					},
 					10,
 				},
 				{
 					registerTime.Add(2 * time.Second),
-					tagging.TagsSet{
-						k1: k1.CreateTag("v1"),
+					[]tagging.Mutation{
+						k1.CreateMutation("v1", tagging.BehaviorAddOrReplace),
 					},
 					20,
 				},
 				{
 					registerTime.Add(3 * time.Second),
-					tagging.TagsSet{
-						k1: k1.CreateTag("v1"),
+					[]tagging.Mutation{
+						k1.CreateMutation("v1", tagging.BehaviorAddOrReplace),
 					},
 					30,
 				},
 				{
 					registerTime.Add(4 * time.Second),
-					tagging.TagsSet{
-						k1: k1.CreateTag("v1"),
-						k2: k2.CreateTag("v2"),
+					[]tagging.Mutation{
+						k1.CreateMutation("v1", tagging.BehaviorAddOrReplace),
+						k2.CreateMutation("v2", tagging.BehaviorAddOrReplace),
 					},
 					10,
 				},
 				{
 					registerTime.Add(5 * time.Second),
-					tagging.TagsSet{
-						k1: k1.CreateTag("v1"),
-						k2: k2.CreateTag("v2"),
+					[]tagging.Mutation{
+						k1.CreateMutation("v1", tagging.BehaviorAddOrReplace),
+						k2.CreateMutation("v2", tagging.BehaviorAddOrReplace),
 					},
 					20,
 				},
 				{
 					registerTime.Add(6 * time.Second),
-					tagging.TagsSet{
-						k1: k1.CreateTag("v1"),
-						k2: k2.CreateTag("v2"),
+					[]tagging.Mutation{
+						k1.CreateMutation("v1", tagging.BehaviorAddOrReplace),
+						k2.CreateMutation("v2", tagging.BehaviorAddOrReplace),
 					},
 					30,
 				},
@@ -314,46 +314,46 @@ func TestUsageCollection(t *testing.T) {
 			[]record{
 				{
 					registerTime.Add(1 * time.Second),
-					tagging.TagsSet{
-						k1: k1.CreateTag("v1"),
+					[]tagging.Mutation{
+						k1.CreateMutation("v1", tagging.BehaviorAddOrReplace),
 					},
 					10,
 				},
 				{
 					registerTime.Add(2 * time.Second),
-					tagging.TagsSet{
-						k1: k1.CreateTag("v1"),
+					[]tagging.Mutation{
+						k1.CreateMutation("v1", tagging.BehaviorAddOrReplace),
 					},
 					20,
 				},
 				{
 					registerTime.Add(3 * time.Second),
-					tagging.TagsSet{
-						k1: k1.CreateTag("v1"),
+					[]tagging.Mutation{
+						k1.CreateMutation("v1", tagging.BehaviorAddOrReplace),
 					},
 					30,
 				},
 				{
 					registerTime.Add(4 * time.Second),
-					tagging.TagsSet{
-						k1: k1.CreateTag("v1"),
-						k2: k2.CreateTag("v2"),
+					[]tagging.Mutation{
+						k1.CreateMutation("v1", tagging.BehaviorAddOrReplace),
+						k2.CreateMutation("v2", tagging.BehaviorAddOrReplace),
 					},
 					10,
 				},
 				{
 					registerTime.Add(5 * time.Second),
-					tagging.TagsSet{
-						k1: k1.CreateTag("v1"),
-						k2: k2.CreateTag("v2"),
+					[]tagging.Mutation{
+						k1.CreateMutation("v1", tagging.BehaviorAddOrReplace),
+						k2.CreateMutation("v2", tagging.BehaviorAddOrReplace),
 					},
 					20,
 				},
 				{
 					registerTime.Add(6 * time.Second),
-					tagging.TagsSet{
-						k1: k1.CreateTag("v1"),
-						k2: k2.CreateTag("v2"),
+					[]tagging.Mutation{
+						k1.CreateMutation("v1", tagging.BehaviorAddOrReplace),
+						k2.CreateMutation("v2", tagging.BehaviorAddOrReplace),
 					},
 					30,
 				},
@@ -377,7 +377,9 @@ func TestUsageCollection(t *testing.T) {
 				md: td.measureDesc,
 				v:  r.v,
 			}
-			uc.recordMeasurement(r.t, r.ts, m)
+			ctx := tagging.ContextWithDerivedTagsSet(context.Background(), r.muts...)
+			ts := tagging.FromContext(ctx)
+			uc.recordMeasurement(r.t, ts, m)
 		}
 
 		for _, vw := range td.views {
@@ -475,7 +477,7 @@ func TestUsageCollector_10Keys_1Measure_1View_10Records(t *testing.T) {
 	m := registerMeasure(uc, "m")
 	_ = registerView(uc, "v", "m", keys)
 
-	ctx := tagging.NewContextWithMutations(context.Background(), mutations...)
+	ctx := tagging.ContextWithDerivedTagsSet(context.Background(), mutations...)
 	ts := tagging.FromContext(ctx)
 
 	for j := 0; j < 10; j++ {
@@ -510,7 +512,7 @@ func Benchmark_Record_1Measurement_With_1Tags_To_1View(b *testing.B) {
 	uc := newUsageCollector()
 	m := registerMeasure(uc, "m")
 
-	ctx := tagging.NewContextWithMutations(context.Background(), mutations...)
+	ctx := tagging.ContextWithDerivedTagsSet(context.Background(), mutations...)
 	ts := tagging.FromContext(ctx)
 
 	_ = registerView(uc, "v1", "m", keys)
@@ -527,7 +529,7 @@ func Benchmark_Record_1Measurement_With_10Tags_To_10Views(b *testing.B) {
 	uc := newUsageCollector()
 	m := registerMeasure(uc, "m")
 
-	ctx := tagging.NewContextWithMutations(context.Background(), mutations...)
+	ctx := tagging.ContextWithDerivedTagsSet(context.Background(), mutations...)
 	ts := tagging.FromContext(ctx)
 
 	for i := 0; i < 10; i++ {

@@ -79,10 +79,12 @@ func TestEncodeDecodeValuesSignature(t *testing.T) {
 	}
 
 	for i, td := range testSet {
-		ts := make(TagsSet)
+		builder := &TagsSetBuilder{}
+		builder.StartFromEmpty()
 		for _, t := range td.tagsSet {
-			ts[t.Key()] = t
+			builder.AddOrReplaceTag(t)
 		}
+		ts := builder.Build()
 
 		encoded := EncodeToValuesSignature(ts, td.keys)
 
@@ -102,12 +104,12 @@ func TestEncodeDecodeValuesSignature(t *testing.T) {
 			t.Errorf("got error %v, want no error when decoding to map. Test case: %v", err, i)
 		}
 
-		if len(decodedSlice) != len(decodedMap) {
+		if len(decodedSlice) != len(decodedMap.m) {
 			t.Errorf("got len(decodedSlice) %v different than len(decodedMap) %v, want them equal when decoding. Test case: %v", decodedSlice, decodedMap, i)
 		}
 
 		for _, tag := range decodedSlice {
-			v, ok := decodedMap[tag.Key()]
+			v, ok := decodedMap.m[tag.Key()]
 			if !ok {
 				t.Errorf("got key %v in decodedSlice not found in decodedMap %v , want them equivalent when decoding. Test case: %v", tag.Key().Name, decodedMap, i)
 			}
@@ -154,10 +156,12 @@ func TestEncodeDecodeFullSignature(t *testing.T) {
 	}
 
 	for _, td := range testSet {
-		ts := make(TagsSet)
+		builder := &TagsSetBuilder{}
+		builder.StartFromEmpty()
 		for _, t := range td.tagsSet {
-			ts[t.Key()] = t
+			builder.AddOrReplaceTag(t)
 		}
+		ts := builder.Build()
 
 		encoded := EncodeToFullSignature(ts)
 
@@ -180,13 +184,13 @@ func TestEncodeDecodeFullSignature(t *testing.T) {
 			continue
 		}
 
-		if len(decodedSlice) != len(decodedMap) {
+		if len(decodedSlice) != len(decodedMap.m) {
 			t.Errorf("got len(decodedSlice) %v different than len(decodedMap) %v, want them equal when decoding %v", decodedSlice, decodedMap, td)
 			continue
 		}
 
 		for _, tag := range decodedSlice {
-			v, ok := decodedMap[tag.Key()]
+			v, ok := decodedMap.m[tag.Key()]
 			if !ok {
 				t.Errorf("got key %v in decodedSlice not found in decodedMap %v , want them equivalent when decoding %v", tag.Key().Name(), decodedMap, td)
 				continue

@@ -51,8 +51,7 @@ func handleRPCClientContext(ctx context.Context, info *stats.RPCTagInfo) context
 		isClient:    true,
 	}
 
-	ts := tagging.FromContext(ctx)
-	encoded := tagging.EncodeToFullSignature(ts)
+	encoded := tagging.FromContextWireFormat(ctx)
 
 	statsCtx := &pb.StatsContext{
 		Tags: encoded,

@@ -138,7 +138,7 @@ func (uc *usageCollector) unsubscribe(s Subscription) error {
 	return nil
 }
 
-func (uc *usageCollector) recordMeasurement(now time.Time, ts tagging.TagsSet, m Measurement) error {
+func (uc *usageCollector) recordMeasurement(now time.Time, ts *tagging.TagsSet, m Measurement) error {
 	md := m.measureDesc()
 	meta := md.Meta()
 	tmp, ok := uc.mDescriptors[meta.name]
@@ -163,7 +163,7 @@ func (uc *usageCollector) recordMeasurement(now time.Time, ts tagging.TagsSet, m
 	return nil
 }
 
-func (uc *usageCollector) recordManyMeasurement(now time.Time, ts tagging.TagsSet, ms []Measurement) error {
+func (uc *usageCollector) recordManyMeasurement(now time.Time, ts *tagging.TagsSet, ms []Measurement) error {
 	for _, m := range ms {
 		md := m.measureDesc()
 		meta := md.Meta()

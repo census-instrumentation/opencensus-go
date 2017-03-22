@@ -247,12 +247,10 @@ func createStatsContext(ctx context.Context, md metadata.MD, methodName string) 
 		}
 	}
 
-	tagsSet, err := tagging.DecodeFromFullSignatureToTagsSet(cc.Tags)
-	if err != nil {
-		return nil, fmt.Errorf("createStatsContext(_) failed. %v", err)
-	}
+	mut := keyMethod.CreateMutation(methodName, tagging.BehaviorAddOrReplace)
 
-	tagsSet[keyMethod] = keyMethod.CreateTag(methodName)
-
-	return tagging.NewContextWithTagsSet(ctx, tagsSet), nil
+	builder := &tagging.TagsSetBuilder{}
+	builder.StartFromEncoded(cc.Tags)
+	builder.AddMutations(mut)
+	return tagging.ContextWithNewTagsSet(ctx, builder.Build())
 }

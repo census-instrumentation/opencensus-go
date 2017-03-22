@@ -20,39 +20,14 @@ import (
 	"fmt"
 )
 
-// TagsSet is the tags set representation in the context.
-type TagsSet map[Key]Tag
-
-// ApplyMutation applies a single mutation to the TagsSet
-func (ts TagsSet) ApplyMutation(m Mutation) {
-	t := m.Tag()
-	k := t.Key()
-	switch m.Behavior() {
-	case BehaviorReplace:
-		if _, ok := ts[k]; ok {
-			ts[k] = t
-		}
-	case BehaviorAdd:
-		if _, ok := ts[k]; !ok {
-			ts[k] = t
-		}
-	case BehaviorAddOrReplace:
-		ts[k] = t
-	default:
-		panic(fmt.Sprintf("mutation type is %v. This is a bug and should never happen.", m.Behavior()))
-	}
+// TagsSet is the object holding the tags stored in context.
+type TagsSet struct {
+	m map[Key]Tag
 }
 
-// ApplyMutations applies multiple mutations to the TagsSet
-func (ts TagsSet) ApplyMutations(ms ...Mutation) {
-	for _, m := range ms {
-		ts.ApplyMutation(m)
-	}
-}
-
-func (ts TagsSet) String() string {
+func (ts *TagsSet) String() string {
 	var b bytes.Buffer
-	for k, v := range ts {
+	for k, v := range ts.m {
 		b.WriteString(fmt.Sprintf("{%v:%v} ", k.Name(), v))
 	}
 	return string(b.Bytes())

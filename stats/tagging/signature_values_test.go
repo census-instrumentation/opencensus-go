@@ -22,12 +22,14 @@ import "testing"
 // value are around 80 characters each.
 func BenchmarkEncodeToValuesSignature_When1TagPresent(b *testing.B) {
 	tags, _ := createMutations(1, 1)
-	ts := make(TagsSet)
+	builder := &TagsSetBuilder{}
+	builder.StartFromEmpty()
 	var keys []Key
 	for _, t := range tags {
-		ts[t.Key()] = t
+		builder.AddOrReplaceTag(t)
 		keys = append(keys, t.Key())
 	}
+	ts := builder.Build()
 
 	for i := 0; i < b.N; i++ {
 		_ = EncodeToValuesSignature(ts, keys)
@@ -39,12 +41,14 @@ func BenchmarkEncodeToValuesSignature_When1TagPresent(b *testing.B) {
 // tag and its key and value are around 80 characters each.
 func BenchmarkDecodeFromValuesSignatureToSlice_When1TagPresent(b *testing.B) {
 	tags, _ := createMutations(1, 1)
-	ts := make(TagsSet)
+	builder := &TagsSetBuilder{}
+	builder.StartFromEmpty()
 	var keys []Key
 	for _, t := range tags {
-		ts[t.Key()] = t
+		builder.AddOrReplaceTag(t)
 		keys = append(keys, t.Key())
 	}
+	ts := builder.Build()
 
 	encoded := EncodeToValuesSignature(ts, keys)
 
@@ -61,12 +65,14 @@ func BenchmarkDecodeFromValuesSignatureToSlice_When1TagPresent(b *testing.B) {
 // key and value are around 80 characters each.
 func BenchmarkEncodeToValuesSignature_When100TagsPresent(b *testing.B) {
 	tags, _ := createMutations(100, 1)
-	ts := make(TagsSet)
+	builder := &TagsSetBuilder{}
+	builder.StartFromEmpty()
 	var keys []Key
 	for _, t := range tags {
-		ts[t.Key()] = t
+		builder.AddOrReplaceTag(t)
 		keys = append(keys, t.Key())
 	}
+	ts := builder.Build()
 
 	for i := 0; i < b.N; i++ {
 		_ = EncodeToValuesSignature(ts, keys)
@@ -78,12 +84,14 @@ func BenchmarkEncodeToValuesSignature_When100TagsPresent(b *testing.B) {
 // 100 tags and each tag key and value are around 80 characters each.
 func BenchmarkDecodeFromValuesSignatureToSlice_When100TagsPresent(b *testing.B) {
 	tags, _ := createMutations(100, 1)
-	ts := make(TagsSet)
+	builder := &TagsSetBuilder{}
+	builder.StartFromEmpty()
 	var keys []Key
 	for _, t := range tags {
-		ts[t.Key()] = t
+		builder.AddOrReplaceTag(t)
 		keys = append(keys, t.Key())
 	}
+	ts := builder.Build()
 
 	encoded := EncodeToValuesSignature(ts, keys)
 

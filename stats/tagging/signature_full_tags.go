@@ -84,8 +84,10 @@ func DecodeFromFullSignatureToSlice(fullSig []byte) ([]Tag, error) {
 }
 
 // DecodeFromFullSignatureToTagsSet creates a TagsSet from an encodded []byte.
-func DecodeFromFullSignatureToTagsSet(fullSig []byte) (TagsSet, error) {
-	ts := make(TagsSet)
+func DecodeFromFullSignatureToTagsSet(fullSig []byte) (*TagsSet, error) {
+	ts := &TagsSet{
+		m: make(map[Key]Tag),
+	}
 	if len(fullSig) == 0 {
 		return ts, nil
 	}
@@ -119,15 +121,15 @@ func DecodeFromFullSignatureToTagsSet(fullSig []byte) (TagsSet, error) {
 			return nil, err
 		}
 
-		ts[t.Key()] = t
+		ts.m[t.Key()] = t
 	}
 	return ts, nil
 }
 
 // EncodeToFullSignature creates a full signature []byte from TagsSet
-func EncodeToFullSignature(ts TagsSet) []byte {
+func EncodeToFullSignature(ts *TagsSet) []byte {
 	var b bytes.Buffer
-	for _, t := range ts {
+	for _, t := range ts.m {
 		b.WriteByte(byte(t.Key().Type()))
 		t.encodeKeyToBuffer(&b)
 		t.encodeValueToBuffer(&b)
