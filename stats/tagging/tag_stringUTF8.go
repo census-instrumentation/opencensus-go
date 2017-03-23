@@ -16,7 +16,6 @@
 package tagging
 
 import (
-	"bytes"
 	"fmt"
 )
 
@@ -115,12 +114,12 @@ func (ts *tagStringUTF8) setValueFromBytesKnownLength(valuesSig []byte, idx int,
 	return endIdx, nil
 }
 
-func (ts *tagStringUTF8) encodeValueToBuffer(dst *bytes.Buffer) {
-	encodeVarintString(dst, ts.v)
+func (ts *tagStringUTF8) encodeValueToBuffer(dst *buffer) {
+	dst.writeStringUTF8(ts.v)
 }
 
-func (ts *tagStringUTF8) encodeKeyToBuffer(dst *bytes.Buffer) {
-	encodeVarintString(dst, ts.k.Name())
+func (ts *tagStringUTF8) encodeKeyToBuffer(dst *buffer) {
+	dst.writeStringUTF8(ts.k.Name())
 }
 
 func (ts *tagStringUTF8) String() string {

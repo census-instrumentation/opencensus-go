@@ -64,7 +64,7 @@ func Test_EncodeDecode_FullSignature(t *testing.T) {
 
 		decoded, err := DecodeFromFullSignatureToTagsSet(encoded)
 		if err != nil {
-			t.Errorf("got error %v, want no error when decoding. Test case: %v", err, i)
+			t.Errorf("got error '%v', want no error when decoding. Test case: '%v'", err, i)
 			continue
 		}
 
@@ -83,6 +83,23 @@ func Test_EncodeDecode_FullSignature(t *testing.T) {
 				t.Errorf("got tag %v in decoded, want %v. Test case: %v", v, tag, i)
 			}
 		}
+	}
+}
+
+func Test_EncodeDecode_FullSignature_When100TagsPresent(t *testing.T) {
+	ts, _ := createMutations(100)
+	encoded := EncodeToFullSignature(ts)
+	decoded, err := DecodeFromFullSignatureToTagsSet(encoded)
+	if err != nil {
+		t.Fatalf("got error %v, want no error when decoding", err)
+	}
+
+	if len(decoded.m) != len(ts.m) {
+		t.Fatalf("got len(decoded)=%v, want %vv", len(decoded.m), len(ts.m))
+	}
+
+	if !reflect.DeepEqual(decoded.m, ts.m) {
+		t.Fatalf("got %v in decoded, want %v", decoded.m, ts.m)
 	}
 }
 

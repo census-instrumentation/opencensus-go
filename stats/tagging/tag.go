@@ -15,8 +15,6 @@
 
 package tagging
 
-import "bytes"
-
 // Key is the interface for all key types.
 type Key interface {
 	Name() string
@@ -67,8 +65,8 @@ type Tag interface {
 	setKeyFromBytes(fullSig []byte, idx int) (newIdx int, err error)
 	setValueFromBytes(fullSig []byte, idx int) (newIdx int, err error)
 	setValueFromBytesKnownLength(valuesSig []byte, idx int, len int) (newIdx int, err error)
-	encodeValueToBuffer(dst *bytes.Buffer)
-	encodeKeyToBuffer(dst *bytes.Buffer)
+	encodeValueToBuffer(dst *buffer)
+	encodeKeyToBuffer(dst *buffer)
 }
 
 type tagSliceByName []Tag

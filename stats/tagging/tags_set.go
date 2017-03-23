@@ -22,7 +22,7 @@ import (
 
 // TagsSet is the object holding the tags stored in context.
 type TagsSet struct {
-	m map[Key]Tag
+	m       map[Key]Tag
 }
 
 func (ts *TagsSet) String() string {

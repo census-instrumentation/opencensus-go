@@ -16,7 +16,6 @@
 package tagging
 
 import (
-	"bytes"
 	"encoding/binary"
 	"fmt"
 )
@@ -117,12 +116,12 @@ func (ti *tagInt64) setValueFromBytesKnownLength(valuesSig []byte, idx int, leng
 	return endIdx, nil
 }
 
-func (ti *tagInt64) encodeValueToBuffer(dst *bytes.Buffer) {
-	encodeVarintInt64(dst, ti.v)
+func (ti *tagInt64) encodeValueToBuffer(dst *buffer) {
+	dst.writeValueInt64(ti.v)
 }
 
-func (ti *tagInt64) encodeKeyToBuffer(dst *bytes.Buffer) {
-	encodeVarintString(dst, ti.k.Name())
+func (ti *tagInt64) encodeKeyToBuffer(dst *buffer) {
+	dst.writeStringUTF8(ti.k.Name())
 }
 
 func (ti *tagInt64) String() string {

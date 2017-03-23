@@ -16,7 +16,6 @@
 package tagging
 
 import (
-	"bytes"
 	"fmt"
 )
 
@@ -68,7 +67,7 @@ func DecodeFromFullSignatureToTagsSet(fullSig []byte) (*TagsSet, error) {
 		case keyTypeBytes:
 			t = &tagBytes{}
 		default:
-			return nil, fmt.Errorf("TagsFromValuesSignature failed. Key type invalid %v", typ)
+			return nil, fmt.Errorf("DecodeFromFullSignatureToTagsSet failed. Key type invalid %v", typ)
 		}
 
 		idx, err = t.setKeyFromBytes(fullSig, idx)
@@ -87,12 +86,13 @@ func DecodeFromFullSignatureToTagsSet(fullSig []byte) (*TagsSet, error) {
 
 // EncodeToFullSignature creates a full signature []byte from TagsSet
 func EncodeToFullSignature(ts *TagsSet) []byte {
-	var b bytes.Buffer
-	for _, t := range ts.m {
-		b.WriteByte(byte(t.Key().Type()))
-		t.encodeKeyToBuffer(&b)
-		t.encodeValueToBuffer(&b)
+	b := &buffer{
+		bytes: make([]byte, 25*len(ts.m)),
 	}
-
-	return b.Bytes()
+	for _, t := range ts.m {
+		b.writeByte(byte(t.Key().Type()))
+		t.encodeKeyToBuffer(b)
+		t.encodeValueToBuffer(b)
+	}
+	return b.bytes[:b.writeIdx]
 }

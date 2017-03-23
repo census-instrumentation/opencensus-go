@@ -16,7 +16,6 @@
 package tagging
 
 import (
-	"bytes"
 	"fmt"
 )
 
@@ -135,18 +134,16 @@ func (tb *tagBool) setValueFromBytesKnownLength(valuesSig []byte, idx int, lengt
 	return endIdx, nil
 }
 
-func (tb *tagBool) encodeValueToBuffer(dst *bytes.Buffer) {
-	encodeVarint(dst, 1)
-
+func (tb *tagBool) encodeValueToBuffer(dst *buffer) {
 	if tb.v {
-		dst.WriteByte(byte(1))
+		dst.writeValueTrue()
 		return
 	}
-	dst.WriteByte(byte(0))
+	dst.writeValueFalse()
 }
 
-func (tb *tagBool) encodeKeyToBuffer(dst *bytes.Buffer) {
-	encodeVarintString(dst, tb.k.Name())
+func (tb *tagBool) encodeKeyToBuffer(dst *buffer) {
+	dst.writeStringUTF8(tb.k.Name())
 }
 
 func (tb *tagBool) String() string {

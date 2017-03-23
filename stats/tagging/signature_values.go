@@ -16,7 +16,6 @@
 package tagging
 
 import (
-	"bytes"
 	"fmt"
 )
 
@@ -44,7 +43,7 @@ func DecodeFromValuesSignatureToSlice(valuesSig []byte, keys []Key) ([]Tag, erro
 	)
 	for _, k := range keys {
 		if idx > len(valuesSig) {
-			return nil, fmt.Errorf("DecodeFromValuesSignature failed. Unexpected signature end '%v' for keys '%v'", valuesSig, keys)
+			return nil, fmt.Errorf("DecodeFromValuesSignatureToSlice failed. Unexpected signature end '%v' for keys '%v'", valuesSig, keys)
 		}
 		if length, idx, err = decodeVarint(valuesSig, idx); err != nil {
 			return nil, err
@@ -72,7 +71,7 @@ func DecodeFromValuesSignatureToSlice(valuesSig []byte, keys []Key) ([]Tag, erro
 				k: typ,
 			}
 		default:
-			return nil, fmt.Errorf("TagsFromValuesSignature failed. Key type invalid %v", k)
+			return nil, fmt.Errorf("DecodeFromValuesSignatureToSlice failed. Key type invalid %v", k)
 		}
 		idx, err = t.setValueFromBytesKnownLength(valuesSig, idx, length)
 		if err != nil {
@@ -103,7 +102,7 @@ func DecodeFromValuesSignatureToTagsSet(valuesSig []byte, keys []Key) (*TagsSet,
 	)
 	for _, k := range keys {
 		if idx > len(valuesSig) {
-			return nil, fmt.Errorf("DecodeFromValuesSignature failed. Unexpected signature end '%v' for keys '%v'", valuesSig, keys)
+			return nil, fmt.Errorf("DecodeFromValuesSignatureToTagsSet failed. Unexpected signature end '%v' for keys '%v'", valuesSig, keys)
 		}
 		if length, idx, err = decodeVarint(valuesSig, idx); err != nil {
 			return nil, err
@@ -132,7 +131,7 @@ func DecodeFromValuesSignatureToTagsSet(valuesSig []byte, keys []Key) (*TagsSet,
 				k: typ,
 			}
 		default:
-			return nil, fmt.Errorf("TagsFromValuesSignature failed. Key type invalid %v", k)
+			return nil, fmt.Errorf("DecodeFromValuesSignatureToTagsSet failed. Key type invalid %v", k)
 		}
 		idx, err = t.setValueFromBytesKnownLength(valuesSig, idx, length)
 		if err != nil {
@@ -146,15 +145,17 @@ func DecodeFromValuesSignatureToTagsSet(valuesSig []byte, keys []Key) (*TagsSet,
 
 // EncodeToValuesSignature creates a TagValuesSignature from TagsSet
 func EncodeToValuesSignature(ts *TagsSet, keys []Key) []byte {
-	var b bytes.Buffer
+	b := &buffer{
+		bytes: make([]byte, 10*len(keys)),
+	}
 	for _, k := range keys {
 		t, ok := ts.m[k]
 		if !ok {
 			// write 0 (len(value) = 0) meaning no value is encoded for this key.
-			encodeVarint(&b, 0)
+			b.writeZero()
 			continue
 		}
-		t.encodeValueToBuffer(&b)
+		t.encodeValueToBuffer(b)
 	}
-	return b.Bytes()
+	return b.bytes
 }

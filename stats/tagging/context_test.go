@@ -32,7 +32,7 @@ func createMutations(keysCount int) (*TagsSet, []Mutation) {
 		m: make(map[Key]Tag),
 	}
 	for i := 0; i < keysCount; i++ {
-		k, _ := DefaultKeyManager().CreateKeyStringUTF8(fmt.Sprintf("%s%d", "long key name that is more than fifty characters for testing puposes", i))
+		k, _ := DefaultKeyManager().CreateKeyStringUTF8(fmt.Sprintf("%s%d", longKey, i))
 		ts.m[k] = &tagStringUTF8{k, longValue}
 		muts = append(muts, &mutationStringUTF8{
 			tag: &tagStringUTF8{
