@@ -5,7 +5,7 @@ go:
   - 1.7.x
   - 1.8.x
 
-go_import_path: github.com/census-instrumentation/instrumentation-go
+go_import_path: github.com/census-instrumentation/opencensus-go
 
 before_install:
   - if [[ $TRAVIS_GO_VERSION = 1.8* ]]; then go get -u github.com/golang/lint/golint honnef.co/go/tools/cmd/staticcheck; fi
