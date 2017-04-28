@@ -22,7 +22,7 @@ import (
 	"time"
 )
 
-func TestDistributionAggregator(t *testing.T) {
+func Test_DistributionAggregator(t *testing.T) {
 	tds := []struct {
 		bounds, values                      []float64
 		wantCount                           int64
@@ -154,7 +154,7 @@ func TestDistributionAggregator(t *testing.T) {
 	for _, td := range tds {
 		da := newDistributionAggregator(td.bounds)
 		for _, v := range td.values {
-			da.addSample(v, time.Time{})
+			da.addSample(&measurementFloat64{v: v}, time.Time{})
 		}
 
 		ds := da.retrieveCollected()

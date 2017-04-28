@@ -21,6 +21,31 @@ import (
 	"time"
 )
 
+// IntervalStats records stats result of an IntervalAgg aggregation for a
+// specific time window.
+type IntervalStats struct {
+	Duration   time.Duration
+	Count, Sum float64
+}
+
+func (is *IntervalStats) stringWithIndent(tabs string) string {
+	if is == nil {
+		return "nil"
+	}
+
+	var buf bytes.Buffer
+	fmt.Fprintf(&buf, "%T {\n", is)
+	fmt.Fprintf(&buf, "%v  Duration: %v,\n", tabs, is.Duration)
+	fmt.Fprintf(&buf, "%v  Count: %v,\n", tabs, is.Count)
+	fmt.Fprintf(&buf, "%v  Sum: %v,\n", tabs, is.Sum)
+	fmt.Fprintf(&buf, "%v}", tabs)
+	return buf.String()
+}
+
+func (is *IntervalStats) String() string {
+	return is.stringWithIndent("")
+}
+
 type intervalsAggregator struct {
 	buffers []*timeSeriesBuffer
 }
@@ -38,12 +63,12 @@ func newIntervalsAggregator(now time.Time, intervals []time.Duration, subInterva
 	}
 }
 
-func (ia *intervalsAggregator) addSample(v float64, now time.Time) {
+func (ia *intervalsAggregator) addSample(m Measurement, now time.Time) {
 	for _, b := range ia.buffers {
 		b.moveToCurrentEntry(now)
 		e := b.entries[b.idx]
 		e.count++
-		e.sum += v
+		e.sum += m.(*measurementFloat64).v
 	}
 }
 

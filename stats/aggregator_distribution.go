@@ -16,9 +16,42 @@
 package stats
 
 import (
+	"bytes"
+	"fmt"
 	"math"
 	"time"
 )
+
+// DistributionStats records a distribution of float64 sample values.
+// It is the result of a DistributionAgg aggregation.
+type DistributionStats struct {
+	Count               int64
+	Min, Mean, Max, Sum float64
+	// CountPerBucket is the set of occurrences count per bucket. The
+	// buckets bounds are the same as the ones setup in
+	// AggregationDesc.
+	CountPerBucket []int64
+}
+
+func (ds *DistributionStats) stringWithIndent(tabs string) string {
+	if ds == nil {
+		return "nil"
+	}
+	var buf bytes.Buffer
+	fmt.Fprintf(&buf, "%T {\n", ds)
+	fmt.Fprintf(&buf, "%v  Count: %v,\n", tabs, ds.Count)
+	fmt.Fprintf(&buf, "%v  Min: %v,\n", tabs, ds.Min)
+	fmt.Fprintf(&buf, "%v  Mean: %v,\n", tabs, ds.Mean)
+	fmt.Fprintf(&buf, "%v  Max: %v,\n", tabs, ds.Max)
+	fmt.Fprintf(&buf, "%v  Sum: %v,\n", tabs, ds.Sum)
+	fmt.Fprintf(&buf, "%v  CountPerBucket: %v,\n", tabs, ds.CountPerBucket)
+	fmt.Fprintf(&buf, "%v}", tabs)
+	return buf.String()
+}
+
+func (ds *DistributionStats) String() string {
+	return ds.stringWithIndent("")
+}
 
 // newDistributionAggregator creates a distributionAggregator. For a single
 // DistributionAggregationDescriptor it is expected to be called multiple
@@ -39,7 +72,8 @@ type distributionAggregator struct {
 	ds     *DistributionStats
 }
 
-func (da *distributionAggregator) addSample(v float64, _ time.Time) {
+func (da *distributionAggregator) addSample(m Measurement, _ time.Time) {
+	v := m.(*measurementFloat64).v
 	if v < da.ds.Min {
 		da.ds.Min = v
 	}
