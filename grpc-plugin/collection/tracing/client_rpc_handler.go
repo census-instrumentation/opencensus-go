@@ -28,7 +28,7 @@ package tracing
 // 	"google.golang.org/grpc/stats"
 
 // 	istats "github.com/google/instrumentation-go/stats"
-// 	"github.com/google/instrumentation-go/stats/tagging"
+// 	"github.com/google/instrumentation-go/stats/tags"
 // 	pb "github.com/google/instrumentation-proto/stats"
 // )
 

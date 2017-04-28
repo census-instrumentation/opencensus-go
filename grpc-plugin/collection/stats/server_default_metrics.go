@@ -20,7 +20,7 @@ import (
 	"time"
 
 	istats "github.com/google/instrumentation-go/stats"
-	"github.com/google/instrumentation-go/stats/tagging"
+	"github.com/google/instrumentation-go/stats/tags"
 )
 
 // The following variables define the default hard-coded metrics to collect for

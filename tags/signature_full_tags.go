@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-package tagging
+package tags
 
 import (
 	"fmt"
@@ -41,9 +41,9 @@ type TagsFullSignature struct {
 	sig []byte
 }
 
-// DecodeFromFullSignatureToTagsSet creates a TagsSet from an encodded []byte.
-func DecodeFromFullSignatureToTagsSet(fullSig []byte) (*TagsSet, error) {
-	ts := &TagsSet{
+// DecodeFromFullSignatureToTagSet creates a TagSet from an encodded []byte.
+func DecodeFromFullSignatureToTagSet(fullSig []byte) (*TagSet, error) {
+	ts := &TagSet{
 		m: make(map[Key]Tag),
 	}
 	if len(fullSig) == 0 {
@@ -67,7 +67,7 @@ func DecodeFromFullSignatureToTagsSet(fullSig []byte) (*TagsSet, error) {
 		case keyTypeBytes:
 			t = &tagBytes{}
 		default:
-			return nil, fmt.Errorf("DecodeFromFullSignatureToTagsSet failed. Key type invalid %v", typ)
+			return nil, fmt.Errorf("DecodeFromFullSignatureToTagSet failed. Key type invalid %v", typ)
 		}
 
 		idx, err = t.setKeyFromBytes(fullSig, idx)
@@ -84,8 +84,8 @@ func DecodeFromFullSignatureToTagsSet(fullSig []byte) (*TagsSet, error) {
 	return ts, nil
 }
 
-// EncodeToFullSignature creates a full signature []byte from TagsSet
-func EncodeToFullSignature(ts *TagsSet) []byte {
+// EncodeToFullSignature creates a full signature []byte from TagSet
+func EncodeToFullSignature(ts *TagSet) []byte {
 	b := &buffer{
 		bytes: make([]byte, 25*len(ts.m)),
 	}

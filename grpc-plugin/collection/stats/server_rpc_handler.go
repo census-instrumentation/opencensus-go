@@ -30,13 +30,13 @@ import (
 	"google.golang.org/grpc/stats"
 
 	istats "github.com/google/instrumentation-go/stats"
-	"github.com/google/instrumentation-go/stats/tagging"
+	"github.com/google/instrumentation-go/stats/tags"
 	pb "github.com/google/instrumentation-proto/stats"
 )
 
 // handleRPCServerContext gets the metadata from GRPC context, extracts the
-// encoded tags from it, creates a new github.com/google/instrumentation-go/stats/tagging.TagsSet,
-// adds it to the local context using tagging.NewContextWithTagsSet and finally
+// encoded tags from it, creates a new github.com/google/instrumentation-go/stats/tagging.TagSet,
+// adds it to the local context using tagging.NewContextWithTagSet and finally
 // returns the new ctx.
 func handleRPCServerContext(ctx context.Context, info *stats.RPCTagInfo) context.Context {
 	startTime := time.Now()
@@ -249,8 +249,8 @@ func createStatsContext(ctx context.Context, md metadata.MD, methodName string) 
 
 	mut := keyMethod.CreateMutation(methodName, tagging.BehaviorAddOrReplace)
 
-	builder := &tagging.TagsSetBuilder{}
+	builder := &tagging.TagSetBuilder{}
 	builder.StartFromEncoded(cc.Tags)
 	builder.AddMutations(mut)
-	return tagging.ContextWithNewTagsSet(ctx, builder.Build())
+	return tagging.ContextWithNewTagSet(ctx, builder.Build())
 }

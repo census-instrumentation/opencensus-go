@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-package tagging
+package tags
 
 // Key is the interface for all key types.
 type Key interface {

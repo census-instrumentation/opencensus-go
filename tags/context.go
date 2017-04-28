@@ -13,39 +13,39 @@
 // limitations under the License.
 //
 
-package tagging
+package tags
 
 import "golang.org/x/net/context"
 
 type ctxKey struct{}
 
-// FromContext returns the TagsSet stored in the context. The TagSet shoudln't
+// FromContext returns the TagSet stored in the context. The TagSet shoudln't
 // be modified.
-func FromContext(ctx context.Context) *TagsSet {
-	ts, ok := ctx.Value(ctxKey{}).(*TagsSet)
+func FromContext(ctx context.Context) *TagSet {
+	ts, ok := ctx.Value(ctxKey{}).(*TagSet)
 	if !ok {
 		ts = nil
 	}
 	return ts
 }
 
-// ContextWithNewTagsSet creates a new context from the old one replacing any
-// existing TagsSet with the new parameter TagsSet ts.
-func ContextWithNewTagsSet(ctx context.Context, ts *TagsSet) (context.Context, error) {
+// ContextWithNewTagSet creates a new context from the old one replacing any
+// existing TagSet with the new parameter TagSet ts.
+func ContextWithNewTagSet(ctx context.Context, ts *TagSet) (context.Context, error) {
 	return context.WithValue(ctx, ctxKey{}, ts), nil
 }
 
-// ContextWithDerivedTagsSet creates a new context from the old one replacing any
-// existing TagsSet. The new TagsSet contains the tags already presents in the
-// existing TagsSet to which the mutations ms are applied
-func ContextWithDerivedTagsSet(ctx context.Context, mut ...Mutation) context.Context {
-	builder := &TagsSetBuilder{}
+// ContextWithDerivedTagSet creates a new context from the old one replacing any
+// existing TagSet. The new TagSet contains the tags already presents in the
+// existing TagSet to which the mutations ms are applied
+func ContextWithDerivedTagSet(ctx context.Context, mut ...Mutation) context.Context {
+	builder := &TagSetBuilder{}
 
-	oldTs, ok := ctx.Value(ctxKey{}).(*TagsSet)
+	oldTs, ok := ctx.Value(ctxKey{}).(*TagSet)
 	if !ok {
 		builder.StartFromEmpty()
 	} else {
-		builder.StartFromTagsSet(oldTs)
+		builder.StartFromTagSet(oldTs)
 	}
 	builder.AddMutations(mut...)
 	return context.WithValue(ctx, ctxKey{}, builder.Build())

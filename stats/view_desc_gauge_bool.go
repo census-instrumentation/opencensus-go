@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/google/instrumentation-go/stats/tagging"
+	"github.com/google/instrumentation-go/stats/tags"
 )
 
 // GaugeBoolViewDesc defines an bool gauge view.

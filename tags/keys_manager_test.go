@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-package tagging
+package tags
 
 import "testing"
 

@@ -27,11 +27,11 @@ import (
 	"google.golang.org/grpc/stats"
 
 	istats "github.com/google/instrumentation-go/stats"
-	"github.com/google/instrumentation-go/stats/tagging"
+	"github.com/google/instrumentation-go/stats/tags"
 	pb "github.com/google/instrumentation-proto/stats"
 )
 
-// handleRPCClientContext gets the github.com/google/instrumentation-go/stats/tagging.TagsSet
+// handleRPCClientContext gets the github.com/google/instrumentation-go/stats/tagging.TagSet
 // set by the application code, serializes its tags into the GRPC metadata in
 // order to be sent to the server.
 func handleRPCClientContext(ctx context.Context, info *stats.RPCTagInfo) context.Context {

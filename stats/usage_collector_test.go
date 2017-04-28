@@ -24,7 +24,7 @@ import (
 	"unsafe"
 
 	"github.com/golang/glog"
-	"github.com/google/instrumentation-go/stats/tagging"
+	"github.com/google/instrumentation-go/stats/tags"
 	"golang.org/x/net/context"
 )
 
@@ -431,7 +431,7 @@ func Test_UsageCollector_CreateKeys_RegisterMeasure_RegisterView_Records_Retriev
 				md: td.measureDesc,
 				v:  r.v,
 			}
-			ctx := tagging.ContextWithDerivedTagsSet(context.Background(), r.muts...)
+			ctx := tagging.ContextWithDerivedTagSet(context.Background(), r.muts...)
 			ts := tagging.FromContext(ctx)
 			uc.recordMeasurement(r.t, ts, m)
 		}
@@ -477,7 +477,7 @@ func Test_UsageCollector_10Keys_1Measure_1View_10Records(t *testing.T) {
 	m := registerMeasure(uc, "m")
 	_ = registerView(uc, "v", "m", keys)
 
-	ctx := tagging.ContextWithDerivedTagsSet(context.Background(), mutations...)
+	ctx := tagging.ContextWithDerivedTagSet(context.Background(), mutations...)
 	ts := tagging.FromContext(ctx)
 
 	for j := 0; j < 10; j++ {
@@ -512,7 +512,7 @@ func Benchmark_Record_1Measurement_With_1Tags_To_1View(b *testing.B) {
 	uc := newUsageCollector()
 	m := registerMeasure(uc, "m")
 
-	ctx := tagging.ContextWithDerivedTagsSet(context.Background(), mutations...)
+	ctx := tagging.ContextWithDerivedTagSet(context.Background(), mutations...)
 	ts := tagging.FromContext(ctx)
 
 	_ = registerView(uc, "v1", "m", keys)
@@ -529,7 +529,7 @@ func Benchmark_Record_1Measurement_With_10Tags_To_10Views(b *testing.B) {
 	uc := newUsageCollector()
 	m := registerMeasure(uc, "m")
 
-	ctx := tagging.ContextWithDerivedTagsSet(context.Background(), mutations...)
+	ctx := tagging.ContextWithDerivedTagSet(context.Background(), mutations...)
 	ts := tagging.FromContext(ctx)
 
 	for i := 0; i < 10; i++ {

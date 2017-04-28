@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-package tagging
+package tags
 
 import (
 	"fmt"
@@ -83,11 +83,11 @@ func DecodeFromValuesSignatureToSlice(valuesSig []byte, keys []Key) ([]Tag, erro
 	return ts, nil
 }
 
-// DecodeFromValuesSignatureToTagsSet creates a TagsSet from an encodded []byte
+// DecodeFromValuesSignatureToTagSet creates a TagSet from an encodded []byte
 // and a slice of keys. The slice of keys is expected to be the same one as the
 // one used for encoding.
-func DecodeFromValuesSignatureToTagsSet(valuesSig []byte, keys []Key) (*TagsSet, error) {
-	ts := &TagsSet{
+func DecodeFromValuesSignatureToTagSet(valuesSig []byte, keys []Key) (*TagSet, error) {
+	ts := &TagSet{
 		m: make(map[Key]Tag),
 	}
 	if len(valuesSig) == 0 {
@@ -102,7 +102,7 @@ func DecodeFromValuesSignatureToTagsSet(valuesSig []byte, keys []Key) (*TagsSet,
 	)
 	for _, k := range keys {
 		if idx > len(valuesSig) {
-			return nil, fmt.Errorf("DecodeFromValuesSignatureToTagsSet failed. Unexpected signature end '%v' for keys '%v'", valuesSig, keys)
+			return nil, fmt.Errorf("DecodeFromValuesSignatureToTagSet failed. Unexpected signature end '%v' for keys '%v'", valuesSig, keys)
 		}
 		if length, idx, err = decodeVarint(valuesSig, idx); err != nil {
 			return nil, err
@@ -131,7 +131,7 @@ func DecodeFromValuesSignatureToTagsSet(valuesSig []byte, keys []Key) (*TagsSet,
 				k: typ,
 			}
 		default:
-			return nil, fmt.Errorf("DecodeFromValuesSignatureToTagsSet failed. Key type invalid %v", k)
+			return nil, fmt.Errorf("DecodeFromValuesSignatureToTagSet failed. Key type invalid %v", k)
 		}
 		idx, err = t.setValueFromBytesKnownLength(valuesSig, idx, length)
 		if err != nil {
@@ -143,8 +143,8 @@ func DecodeFromValuesSignatureToTagsSet(valuesSig []byte, keys []Key) (*TagsSet,
 	return ts, nil
 }
 
-// EncodeToValuesSignature creates a TagValuesSignature from TagsSet
-func EncodeToValuesSignature(ts *TagsSet, keys []Key) []byte {
+// EncodeToValuesSignature creates a TagValuesSignature from TagSet
+func EncodeToValuesSignature(ts *TagSet, keys []Key) []byte {
 	b := &buffer{
 		bytes: make([]byte, 10*len(keys)),
 	}

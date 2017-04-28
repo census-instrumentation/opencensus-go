@@ -13,19 +13,19 @@
 // limitations under the License.
 //
 
-package tagging
+package tags
 
 import (
 	"bytes"
 	"fmt"
 )
 
-// TagsSet is the object holding the tags stored in context.
-type TagsSet struct {
+// TagSet is the object holding the tags stored in context.
+type TagSet struct {
 	m       map[Key]Tag
 }
 
-func (ts *TagsSet) String() string {
+func (ts *TagSet) String() string {
 	var b bytes.Buffer
 	for k, v := range ts.m {
 		b.WriteString(fmt.Sprintf("{%v:%v} ", k.Name(), v))

@@ -18,7 +18,7 @@ package stats
 import (
 	"time"
 
-	"github.com/google/instrumentation-go/stats/tagging"
+	"github.com/google/instrumentation-go/stats/tags"
 )
 
 // measureDescRegistration is a message requesting that the channelWorker
@@ -74,14 +74,14 @@ type viewDescUnsubscription struct {
 // singleRecord is a message requesting that the channelWorker goroutine
 // records the value v for the MeasureDesc md and tags in ct.
 type singleRecord struct {
-	ts *tagging.TagsSet
+	ts *tagging.TagSet
 	m  Measurement
 }
 
 // multiRecords is a message requesting that the channelWorker goroutine
 // records the values vs for the MeasureDesc mds and tags in ct.
 type multiRecords struct {
-	ts *tagging.TagsSet
+	ts *tagging.TagSet
 	ms []Measurement
 }
 

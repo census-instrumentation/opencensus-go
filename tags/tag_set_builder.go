@@ -13,39 +13,39 @@
 // limitations under the License.
 //
 
-package tagging
+package tags
 
 import "fmt"
 
-// TagsSetBuilder is the data structure used to build new TagsSet. Its purpose
-// to ensure TagsSet can be built from multiple pieces over time but that it is
+// TagSetBuilder is the data structure used to build new TagSet. Its purpose
+// to ensure TagSet can be built from multiple pieces over time but that it is
 // immutable once built.
-type TagsSetBuilder struct {
-	ts *TagsSet
+type TagSetBuilder struct {
+	ts *TagSet
 }
 
-// StartFromEmpty starts building a new TagsSet.
-func (tb *TagsSetBuilder) StartFromEmpty() *TagsSetBuilder {
-	tb.ts = &TagsSet{
+// StartFromEmpty starts building a new TagSet.
+func (tb *TagSetBuilder) StartFromEmpty() *TagSetBuilder {
+	tb.ts = &TagSet{
 		m: make(map[Key]Tag),
 	}
 	return tb
 }
 
-// StartFromTags starts building a new TagsSet from a slice of tags.
-func (tb *TagsSetBuilder) StartFromTags(tags []Tag) {
+// StartFromTags starts building a new TagSet from a slice of tags.
+func (tb *TagSetBuilder) StartFromTags(tags []Tag) {
 	m := make(map[Key]Tag, len(tags))
 	for _, t := range tags {
 		m[t.Key()] = t
 	}
 
-	tb.ts = &TagsSet{
+	tb.ts = &TagSet{
 		m: m,
 	}
 }
 
-// StartFromTagsSet starts building a new TagsSet from an existing TagSet.
-func (tb *TagsSetBuilder) StartFromTagsSet(ts *TagsSet) {
+// StartFromTagSet starts building a new TagSet from an existing TagSet.
+func (tb *TagSetBuilder) StartFromTagSet(ts *TagSet) {
 	var m map[Key]Tag
 	if len(ts.m) == 0 {
 		m = make(map[Key]Tag)
@@ -55,23 +55,23 @@ func (tb *TagsSetBuilder) StartFromTagsSet(ts *TagsSet) {
 			m[k] = t
 		}
 	}
-	tb.ts = &TagsSet{
+	tb.ts = &TagSet{
 		m: m,
 	}
 }
 
-// StartFromEncoded starts building a new TagsSet from an encoded []byte.
-func (tb *TagsSetBuilder) StartFromEncoded(encoded []byte) error {
+// StartFromEncoded starts building a new TagSet from an encoded []byte.
+func (tb *TagSetBuilder) StartFromEncoded(encoded []byte) error {
 	var err error
-	tb.ts, err = DecodeFromFullSignatureToTagsSet(encoded)
+	tb.ts, err = DecodeFromFullSignatureToTagSet(encoded)
 	if err != nil {
 		return fmt.Errorf("NewContextWithWireFormat(_) failed. %v", err)
 	}
 	return nil
 }
 
-// AddMutations applies multiple mutations to the TagsSet being built.
-func (tb *TagsSetBuilder) AddMutations(muts ...Mutation) {
+// AddMutations applies multiple mutations to the TagSet being built.
+func (tb *TagSetBuilder) AddMutations(muts ...Mutation) {
 	ts := tb.ts
 	for _, m := range muts {
 		t := m.Tag()
@@ -93,14 +93,14 @@ func (tb *TagsSetBuilder) AddMutations(muts ...Mutation) {
 	}
 }
 
-// AddOrReplaceTag adds a Tag to the TagsSet being built. If the TagsSet
+// AddOrReplaceTag adds a Tag to the TagSet being built. If the TagSet
 // already contains a Tag with the same key it is replaced by the new Tag.
-func (tb *TagsSetBuilder) AddOrReplaceTag(t Tag) {
+func (tb *TagSetBuilder) AddOrReplaceTag(t Tag) {
 	tb.ts.m[t.Key()] = t
 }
 
-// Build returns the built TagsSet and clears the builder.
-func (tb *TagsSetBuilder) Build() *TagsSet {
+// Build returns the built TagSet and clears the builder.
+func (tb *TagSetBuilder) Build() *TagSet {
 	ret := tb.ts
 	tb.ts = nil
 	return ret

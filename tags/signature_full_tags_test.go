@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-package tagging
+package tags
 
 import (
 	"reflect"
@@ -55,14 +55,14 @@ func Test_EncodeDecode_FullSignature(t *testing.T) {
 		},
 	}
 
-	builder := &TagsSetBuilder{}
+	builder := &TagSetBuilder{}
 	for i, td := range testSet {
 		builder.StartFromTags(td.tagsSlice)
 		ts := builder.Build()
 
 		encoded := EncodeToFullSignature(ts)
 
-		decoded, err := DecodeFromFullSignatureToTagsSet(encoded)
+		decoded, err := DecodeFromFullSignatureToTagSet(encoded)
 		if err != nil {
 			t.Errorf("got error '%v', want no error when decoding. Test case: '%v'", err, i)
 			continue
@@ -89,7 +89,7 @@ func Test_EncodeDecode_FullSignature(t *testing.T) {
 func Test_EncodeDecode_FullSignature_When100TagsPresent(t *testing.T) {
 	ts, _ := createMutations(100)
 	encoded := EncodeToFullSignature(ts)
-	decoded, err := DecodeFromFullSignatureToTagsSet(encoded)
+	decoded, err := DecodeFromFullSignatureToTagSet(encoded)
 	if err != nil {
 		t.Fatalf("got error %v, want no error when decoding", err)
 	}
@@ -114,14 +114,14 @@ func Benchmark_Encode_FullSignature_When1TagPresent(b *testing.B) {
 }
 
 // Benchmark_Decode_FullSignature_When1TagPresent measures the performance of
-// calling DecodeFromFullSignatureToTagsSet when signature has 1 tag and its
+// calling DecodeFromFullSignatureToTagSet when signature has 1 tag and its
 // key and value are around 80 characters each.
 func Benchmark_Decode_FullSignature_When1TagPresent(b *testing.B) {
 	ts, _ := createMutations(1)
 	encoded := EncodeToFullSignature(ts)
 
 	for i := 0; i < b.N; i++ {
-		_, err := DecodeFromFullSignatureToTagsSet(encoded)
+		_, err := DecodeFromFullSignatureToTagSet(encoded)
 		if err != nil {
 			b.Fatal(err)
 		}
@@ -140,14 +140,14 @@ func Benchmark_Encode_FullSignature_When100TagsPresent(b *testing.B) {
 }
 
 // Benchmark_Decode_FullSignature_When100TagsPresent measures the performance
-// of calling DecodeFromFullSignatureToTagsSet when signature has 100 tags and
+// of calling DecodeFromFullSignatureToTagSet when signature has 100 tags and
 // each tag key and value are around 80 characters each.
 func Benchmark_Decode_FullSignature_When100TagsPresent(b *testing.B) {
 	ts, _ := createMutations(100)
 	encoded := EncodeToFullSignature(ts)
 
 	for i := 0; i < b.N; i++ {
-		_, err := DecodeFromFullSignatureToTagsSet([]byte(encoded))
+		_, err := DecodeFromFullSignatureToTagSet([]byte(encoded))
 		if err != nil {
 			b.Fatal(err)
 		}

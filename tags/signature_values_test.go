@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-package tagging
+package tags
 
 import (
 	"reflect"
@@ -77,14 +77,14 @@ func Test_EncodeDecode_ValuesSignature(t *testing.T) {
 		},
 	}
 
-	builder := &TagsSetBuilder{}
+	builder := &TagSetBuilder{}
 	for i, td := range testSet {
 		builder.StartFromTags(td.tagsSlice)
 		ts := builder.Build()
 
 		encoded := EncodeToValuesSignature(ts, td.keys)
 
-		decoded, err := DecodeFromValuesSignatureToTagsSet(encoded, td.keys)
+		decoded, err := DecodeFromValuesSignatureToTagSet(encoded, td.keys)
 		if err != nil {
 			t.Errorf("got error %v, want no error when decoding. Test case: %v", err, i)
 		}
@@ -121,7 +121,7 @@ func Benchmark_Encode_ValuesSignature_When1TagPresent(b *testing.B) {
 }
 
 // Benchmark_Decode_ValuesSignature_When1TagPresent measures the performance of
-// calling DecodeFromValuesSignatureToTagsSet when signature has 1 tag and its
+// calling DecodeFromValuesSignatureToTagSet when signature has 1 tag and its
 // key and value are around 80 characters each.
 func Benchmark_Decode_ValuesSignature_When1TagPresent(b *testing.B) {
 	ts, _ := createMutations(1)
@@ -132,7 +132,7 @@ func Benchmark_Decode_ValuesSignature_When1TagPresent(b *testing.B) {
 	encoded := EncodeToValuesSignature(ts, keys)
 
 	for i := 0; i < b.N; i++ {
-		_, err := DecodeFromValuesSignatureToTagsSet([]byte(encoded), keys)
+		_, err := DecodeFromValuesSignatureToTagSet([]byte(encoded), keys)
 		if err != nil {
 			b.Fatal(err)
 		}
@@ -155,7 +155,7 @@ func Benchmark_Encode_ValuesSignature_When100TagsPresent(b *testing.B) {
 }
 
 // Benchmark_Decode_ValuesSignature_When100TagsPresent measures the performance
-// of calling DecodeFromValuesSignatureToTagsSet when signature has 100 tags
+// of calling DecodeFromValuesSignatureToTagSet when signature has 100 tags
 // and each tag key and value are around 80 characters each.
 func Benchmark_Decode_ValuesSignature_When100TagsPresent(b *testing.B) {
 	ts, _ := createMutations(100)
@@ -166,7 +166,7 @@ func Benchmark_Decode_ValuesSignature_When100TagsPresent(b *testing.B) {
 	encoded := EncodeToValuesSignature(ts, keys)
 
 	for i := 0; i < b.N; i++ {
-		_, err := DecodeFromValuesSignatureToTagsSet([]byte(encoded), keys)
+		_, err := DecodeFromValuesSignatureToTagSet([]byte(encoded), keys)
 		if err != nil {
 			b.Fatal(err)
 		}
