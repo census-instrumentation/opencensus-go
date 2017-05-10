@@ -13,7 +13,6 @@ const (
 type Key interface {
 	Name() string
 	ID() int32
-	Type() keyType
 }
 
 // KeyString is the interface for keys which values are of type string.
@@ -21,6 +20,34 @@ type KeyString interface {
 	Key
 	CreateTagOp(v string, op TagOp) *ChangeString
 	CreateTag(v string) *tagString
+}
+
+type keyString struct {
+	name string
+	id   int32
+}
+
+func (ks *keyString) Name() string {
+	return ks.name
+}
+
+func (ks *keyString) ID() int32 {
+	return ks.id
+}
+
+func (ks *keyString) CreateTagOp(v string, op TagOp) *ChangeString {
+	return &ChangeString{
+		k:  ks,
+		v:  v,
+		op: op,
+	}
+}
+
+func (ks *keyString) CreateTag(v string) *tagString {
+	return &tagString{
+		k: ks,
+		v: v,
+	}
 }
 
 // KeyBytes is the interface for keys which values are of type []byte.

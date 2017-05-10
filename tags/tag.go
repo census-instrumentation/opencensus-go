@@ -34,6 +34,14 @@ type Tag interface {
 	encodeKeyToBuffer(dst *buffer)
 }
 
+type tag
+
+
+
+
+
+
+
 type tagSliceByName []Tag
 
 func (ts tagSliceByName) Len() int { return len(ts) }
