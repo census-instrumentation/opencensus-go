@@ -15,47 +15,12 @@
 
 package tags
 
-// Key is the interface for all key types.
-type Key interface {
-	Name() string
-	ID() int32
-	Type() keyType
-}
-
-// KeyStringUTF8 is the interface for keys which values are of type stringUTF8.
-type KeyStringUTF8 interface {
-	Key
-	CreateMutation(v string, mb MutationBehavior) *mutationStringUTF8
-	CreateTag(v string) *tagStringUTF8
-}
-
-// KeyBytes is the interface for keys which values are of type []byte.
-type KeyBytes interface {
-	Key
-	CreateMutation(v []byte, mb MutationBehavior) *mutationBytes
-	CreateTag(v []byte) *tagBytes
-}
-
-// KeyBool is the interface for keys which values are of type bool.
-type KeyBool interface {
-	Key
-	CreateMutation(v bool, mb MutationBehavior) *mutationBool
-	CreateTag(v bool) *tagBool
-}
-
-// KeyInt64 is the interface for keys which values are of type int64.
-type KeyInt64 interface {
-	Key
-	CreateMutation(v int64, mb MutationBehavior) *mutationInt64
-	CreateTag(v int64) *tagInt64
-}
-
-// Mutation is the interface that all mutations types need to implements. A
-// mutation is a data structure holding a key, a value and a behavior. The
-// mutations value types supported are string, int64 and bool.
-type Mutation interface {
+// Change is the interface that all changes types need to implements. A
+// change is a data structure holding a key, a value and an operation. The
+// changes value types supported are string, int64 and bool.
+type Change interface {
 	Tag() Tag
-	Behavior() MutationBehavior
+	TagOp() TagOp
 }
 
 // Tag is the tuple (key, value) interface for all tag types.
@@ -77,34 +42,22 @@ func (ts tagSliceByName) Swap(i, j int) { ts[i], ts[j] = ts[j], ts[i] }
 
 func (ts tagSliceByName) Less(i, j int) bool { return ts[i].Key().Name() < ts[j].Key().Name() }
 
-// KeyType defines the types of keys allowed.
-type keyType byte
+// TagOp defines the types of operations allowed.
+type TagOp byte
 
 const (
-	keyTypeStringUTF8 keyType = iota
-	keyTypeInt64
-	keyTypeBool
-	keyTypeBytes
-)
+	// TagOp is not a valid operation. It is here just to detect that a TagOp isn't set.
+	TagOpInvalid TagOp = iota
 
-// MutationBehavior defines the types of mutations allowed.
-type MutationBehavior byte
+	// TagInsert adds the (key, value) to a set if the set doesn't already
+	// contain a tag with the same key. Otherwise it is a no-op.
+	TagOpInsert
 
-const (
-	// BehaviorUnknown is not a valid behavior. It is here just to detect that
-	// a MutationBehavior isn't set.
-	BehaviorUnknown MutationBehavior = iota
-
-	// BehaviorReplace replaces the (key, value) in a set if the set already
+	// TagOpSet adds the (key, value) to a set regardless if the set doesn't
 	// contains a (key, value) pair with the same key. Otherwise it is a no-op.
-	BehaviorReplace
+	TagOpSet
 
-	// BehaviorAdd adds the (key, value) in a set if the set doesn't contains a
+	// TagOpReplace replaces the (key, value) in a set if the set contains a
 	// (key, value) pair with the same key. Otherwise it is a no-op.
-	BehaviorAdd
-
-	// BehaviorAddOrReplace replaces the (key, value) in a set if the set
-	// contains a (key, value) pair with the same key. Otherwise it adds the
-	// (key, value) to the set.
-	BehaviorAddOrReplace
+	TagOpReplace
 )

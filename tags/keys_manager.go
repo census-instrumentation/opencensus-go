@@ -59,6 +59,60 @@ func DefaultKeyManager() KeysManager {
 	return defaultKeysManager
 }
 
+// CreateKeyInt64 creates or retrieves a key of type keyInt64 with name/ID set
+// to the input argument name. Returns an error if a key with the same name
+// exists and is of a different type.
+func (km *keysManager) CreateKeyInt64(name string) (KeyInt64, error) {
+	if !validateKeyName(name) {
+		return nil, fmt.Errorf("key name %v is invalid", name)
+	}
+	km.Lock()
+	defer km.Unlock()
+	k, ok := km.keys[name]
+	if ok {
+		ki, ok := k.(*keyInt64)
+		if !ok {
+			return nil, fmt.Errorf("key with name %v cannot be created/retrieved as type *keyInt64. It was already registered as type %T", name, k)
+		}
+		return ki, nil
+	}
+
+	ki := &keyInt64{
+		name: name,
+		id:   km.nextKeyID,
+	}
+	km.nextKeyID++
+	km.keys[name] = ki
+	return ki, nil
+}
+
+// CreateKeyBool creates or retrieves a key of type keyBool with name/ID set to
+// the input argument name. Returns an error if a key with the same name exists
+// and is of a different type.
+func (km *keysManager) CreateKeyBool(name string) (KeyBool, error) {
+	if !validateKeyName(name) {
+		return nil, fmt.Errorf("key name %v is invalid", name)
+	}
+	km.Lock()
+	defer km.Unlock()
+	k, ok := km.keys[name]
+	if ok {
+		kb, ok := k.(*keyBool)
+		if !ok {
+			return nil, fmt.Errorf("key with name %v cannot be created/retrieved as type *keyBool. It was already registered as type %T", name, k)
+		}
+		return kb, nil
+	}
+
+	kb := &keyBool{
+		name: name,
+		id:   km.nextKeyID,
+	}
+	km.nextKeyID++
+	km.keys[name] = kb
+	return kb, nil
+}
+
 // CreateKeyString creates or retrieves a key of type keyString with name/ID
 // set to the input argument name. Returns an error if a key with the same name
 // exists and is of a different type.
@@ -113,60 +167,6 @@ func (km *keysManager) CreateKeyBytes(name string) (KeyBytes, error) {
 	km.nextKeyID++
 	km.keys[name] = ks
 	return ks, nil
-}
-
-// CreateKeyBool creates or retrieves a key of type keyBool with name/ID set to
-// the input argument name. Returns an error if a key with the same name exists
-// and is of a different type.
-func (km *keysManager) CreateKeyBool(name string) (KeyBool, error) {
-	if !validateKeyName(name) {
-		return nil, fmt.Errorf("key name %v is invalid", name)
-	}
-	km.Lock()
-	defer km.Unlock()
-	k, ok := km.keys[name]
-	if ok {
-		kb, ok := k.(*keyBool)
-		if !ok {
-			return nil, fmt.Errorf("key with name %v cannot be created/retrieved as type *keyBool. It was already registered as type %T", name, k)
-		}
-		return kb, nil
-	}
-
-	kb := &keyBool{
-		name: name,
-		id:   km.nextKeyID,
-	}
-	km.nextKeyID++
-	km.keys[name] = kb
-	return kb, nil
-}
-
-// CreateKeyInt64 creates or retrieves a key of type keyInt64 with name/ID set
-// to the input argument name. Returns an error if a key with the same name
-// exists and is of a different type.
-func (km *keysManager) CreateKeyInt64(name string) (KeyInt64, error) {
-	if !validateKeyName(name) {
-		return nil, fmt.Errorf("key name %v is invalid", name)
-	}
-	km.Lock()
-	defer km.Unlock()
-	k, ok := km.keys[name]
-	if ok {
-		ki, ok := k.(*keyInt64)
-		if !ok {
-			return nil, fmt.Errorf("key with name %v cannot be created/retrieved as type *keyInt64. It was already registered as type %T", name, k)
-		}
-		return ki, nil
-	}
-
-	ki := &keyInt64{
-		name: name,
-		id:   km.nextKeyID,
-	}
-	km.nextKeyID++
-	km.keys[name] = ki
-	return ki, nil
 }
 
 func (km *keysManager) Count() int {

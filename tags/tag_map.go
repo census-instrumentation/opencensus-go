@@ -15,11 +15,27 @@
 
 package tags
 
-// TagSet2 is the object holding the tags stored in context.
-type TagSet2 struct {
+// TagMap is the object holding the tags stored in context.
+type TagMap struct {
 	keysIDs []int32
 	vIndxs  []idxs
 	values  *buffer
+}
+
+func (tm *TagMap) Apply(cs ...Change) *TagMap {
+	n := tm.copy()
+	for _, c := range cs {
+		n.apply(c)
+	}
+	return n
+}
+
+func (tm *TagMap) apply(c Change) {
+	return tm
+}
+
+func (tm *TagMap) copy() *TagMap {
+	return tm
 }
 
 // idxs is a convenience data structure to hold start/end indexes.
@@ -27,7 +43,7 @@ type idxs struct {
 	s, e int
 }
 
-func (ts *TagSet2) Add(t Tag) bool {
+func (ts *TagMap) Add(t Tag) bool {
 	for _, id := range ts.keysIDs {
 		if id == t.Key().ID() {
 			return false
@@ -42,7 +58,7 @@ func (ts *TagSet2) Add(t Tag) bool {
 	return true
 }
 
-func (ts *TagSet2) Replace(t Tag) bool {
+func (ts *TagMap) Replace(t Tag) bool {
 	for i, id := range ts.keysIDs {
 		if id == t.Key().ID() {
 			s := ts.values.writeIdx
@@ -55,7 +71,7 @@ func (ts *TagSet2) Replace(t Tag) bool {
 	return false
 }
 
-func (ts *TagSet2) AddOrReplace(t Tag) {
+func (ts *TagMap) AddOrReplace(t Tag) {
 	for i, id := range ts.keysIDs {
 		if id == t.Key().ID() {
 			s := ts.values.writeIdx
@@ -76,30 +92,30 @@ func (ts *TagSet2) AddOrReplace(t Tag) {
 ////////////////////////////////////////////
 ////////////////////////////////////////////
 ////////////////////////////////////////////
-func (ts *TagSet2) TagKeyExists(key TagKey) bool {
+func (ts *TagMap) TagKeyExists(key TagKey) bool {
 }
 
 ////////////////////////////////////////////
-func (ts *TagSet2) TagValueString(key TagKeyString) string {
+func (ts *TagMap) TagValueString(key TagKeyString) string {
 }
 
-func (ts *TagSet2) TagValueBool(key TagKeyBool) bool {
+func (ts *TagMap) TagValueBool(key TagKeyBool) bool {
 }
 
-func (ts *TagSet2) TagValueInt(key TagKeyInt64) int64 {
+func (ts *TagMap) TagValueInt(key TagKeyInt64) int64 {
 }
 
-func (ts *TagSet2) NewTagSet(tcs []TagChange) (*TagSet2, error) {
+func (ts *TagMap) NewTagSet(tcs []TagChange) (*TagSet2, error) {
 
 }
 
-func (ts *TagSet2) insert(keyIdx int, b []byte) {}
+func (ts *TagMap) insert(keyIdx int, b []byte) {}
 
-func (ts *TagSet2) set(keyIdx int, b []byte) {}
+func (ts *TagMap) set(keyIdx int, b []byte) {}
 
-func (ts *TagSet2) update(keyIdx int, b []byte) {}
+func (ts *TagMap) update(keyIdx int, b []byte) {}
 
-func (ts *TagSet2) clear(keyIdx int, b []byte) {}
+func (ts *TagMap) clear(keyIdx int, b []byte) {}
 
 ////////////////////////////////////////////
 ////////////////////////////////////////////
