@@ -15,7 +15,7 @@ type KeyString struct {
 	id   int32
 }
 
-func (k *KeyString) CreateChange(s string, op TagOp) *TagChange {
+func (k *KeyString) CreateChange(s string, op TagOp) TagChange {
 	return &tagChange{
 		k:  k,
 		v:  []byte(s),
@@ -27,7 +27,7 @@ func (k *KeyString) Name(s string) {
 	return k.name
 }
 
-func (k *KeyString) ID(i int64) {
+func (k *KeyString) ID() int32 {
 	return k.id
 }
 
@@ -38,7 +38,7 @@ type KeyBool struct {
 	id   int32
 }
 
-func (k *KeyBool) CreateChange(b bool, op TagOp) *TagChange {
+func (k *KeyBool) CreateChange(b bool, op TagOp) TagChange {
 	tc := &tagChange{
 		k:  k,
 		op: op,
@@ -51,7 +51,7 @@ func (k *KeyBool) CreateChange(b bool, op TagOp) *TagChange {
 	return tc
 }
 
-func (k *KeyBool) Name(s string) {
+func (k *KeyBool) Name() string {
 	return k.name
 }
 
@@ -66,7 +66,7 @@ type KeyInt64 struct {
 	id   int32
 }
 
-func (k *KeyInt64) CreateChange(i int64, op TagOp) *TagChange {
+func (k *KeyInt64) CreateChange(i int64, op TagOp) TagChange {
 	tc := &tagChange{
 		k:  k,
 		op: op,
@@ -76,7 +76,7 @@ func (k *KeyInt64) CreateChange(i int64, op TagOp) *TagChange {
 	return tc
 }
 
-func (k *KeyInt64) Name(s string) {
+func (k *KeyInt64) Name() string {
 	return k.name
 }
 

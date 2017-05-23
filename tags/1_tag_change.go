@@ -36,7 +36,7 @@ type tagChange struct {
 	op TagOp
 }
 
-func (tc *tagChange) Key() {
+func (tc *tagChange) Key() Key {
 	return tc.k
 }
 

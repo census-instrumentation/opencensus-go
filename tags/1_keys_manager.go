@@ -189,3 +189,7 @@ func validateKeyName(name string) bool {
 	}
 	return true
 }
+
+func init() {
+
+}
