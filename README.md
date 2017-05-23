@@ -2,6 +2,8 @@
 This is still at a very early stage of development and a lot of the API calls
 are in the process of being changed and will certainly break your code.
 
+# Go stats core library
+
 ## Registering views and retrieving their collected data.
 
 ### To register a measure a.k.a resource
@@ -126,3 +128,7 @@ Record measurement against the measure RPCclientErrorCount with the tags:
 Record measurement against the measure RPCclientErrorCount with the tags embeded in the context. This is just a "sugar" helper function that extracts the tags from the context and then calls stats.RecordMeasurement(tags,...)
     
     stats.RecordMeasurement(ctx, RPCclientErrorCount, 1)
+
+# Go tracing core library
+
+TODO

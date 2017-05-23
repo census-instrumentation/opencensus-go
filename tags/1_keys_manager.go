@@ -33,10 +33,9 @@ const (
 // satisfy. The keys manager is invoked to create/retrieve a key given its
 // name/ID. It ensures that keys have unique names/IDs.
 type KeysManager interface {
-	CreateKeyStringUTF8(name string) (KeyStringUTF8, error)
+	CreateKeyString(name string) (KeyString, error)
 	CreateKeyInt64(name string) (KeyInt64, error)
 	CreateKeyBool(name string) (KeyBool, error)
-	CreateKeyBytes(name string) (KeyBytes, error)
 	Count() int
 	Clear()
 }
@@ -116,7 +115,7 @@ func (km *keysManager) CreateKeyBool(name string) (KeyBool, error) {
 // CreateKeyString creates or retrieves a key of type keyString with name/ID
 // set to the input argument name. Returns an error if a key with the same name
 // exists and is of a different type.
-func (km *keysManager) CreateKeyStringUTF8(name string) (KeyStringUTF8, error) {
+func (km *keysManager) CreateKeyString(name string) (KeyString, error) {
 	if !validateKeyName(name) {
 		return nil, fmt.Errorf("key name %v is invalid", name)
 	}

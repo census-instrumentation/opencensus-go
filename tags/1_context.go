@@ -38,7 +38,7 @@ func ContextWithNewTagSet(ctx context.Context, ts *TagSet) (context.Context, err
 // ContextWithDerivedTagSet creates a new context from the old one replacing any
 // existing TagSet. The new TagSet contains the tags already presents in the
 // existing TagSet to which the mutations ms are applied
-func ContextWithDerivedTagSet(ctx context.Context, mut ...Mutation) context.Context {
+func ContextWithDerivedTagSet(ctx context.Context, tcs ...TagChange) context.Context {
 	builder := &TagSetBuilder{}
 
 	oldTs, ok := ctx.Value(ctxKey{}).(*TagSet)
@@ -47,6 +47,7 @@ func ContextWithDerivedTagSet(ctx context.Context, mut ...Mutation) context.Cont
 	} else {
 		builder.StartFromTagSet(oldTs)
 	}
-	builder.AddMutations(mut...)
+
+	builder.Apply(tcs...)
 	return context.WithValue(ctx, ctxKey{}, builder.Build())
 }
