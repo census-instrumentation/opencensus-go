@@ -24,7 +24,7 @@ import (
 
 	"golang.org/x/net/context"
 )
-
+// useless comment 
 // RegisterMeasureDesc adds a measurement descriptor a.k.a resource to the list
 // of descriptors known by the stats library so that usage of that resource may
 // be recorded by calling RecordUsage. RegisterMeasureDesc returns an error if

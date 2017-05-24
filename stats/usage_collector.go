@@ -18,16 +18,29 @@ package stats
 import (
 	"fmt"
 	"time"
+
+	"github.com/golang/glog"
+	"github.com/google/instrumentation-go/stats/tags"
 )
 
 type usageCollector struct {
-	mDescriptors map[string]*MeasureDesc
-	vDescriptors map[string]AggregationViewDesc
+	mDescriptors  map[string]MeasureDesc
+	vDescriptors  map[string]ViewDesc
+	subscriptions map[Subscription]bool
 }
 
-func (uc *usageCollector) registerMeasureDesc(md *MeasureDesc) error {
-	if _, ok := uc.mDescriptors[md.Name]; ok {
-		return fmt.Errorf("a measure descriptor with the same name %s is already registered", md.Name)
+func newUsageCollector() *usageCollector {
+	return &usageCollector{
+		mDescriptors:  make(map[string]MeasureDesc),
+		vDescriptors:  make(map[string]ViewDesc),
+		subscriptions: make(map[Subscription]bool),
+	}
+}
+
+func (uc *usageCollector) registerMeasureDesc(md MeasureDesc) error {
+	meta := md.Meta()
+	if _, ok := uc.mDescriptors[meta.name]; ok {
+		return fmt.Errorf("a measure descriptor with the same name %s is already registered", meta.name)
 	}
 
 	for n, d := range uc.mDescriptors {
@@ -36,8 +49,7 @@ func (uc *usageCollector) registerMeasureDesc(md *MeasureDesc) error {
 		}
 	}
 
-	md.aggViewDescs = make(map[AggregationViewDesc]struct{})
-	uc.mDescriptors[md.Name] = md
+	uc.mDescriptors[meta.name] = md
 	return nil
 }
 
@@ -51,32 +63,33 @@ func (uc *usageCollector) unregisterMeasureDesc(mName string) error {
 	return nil
 }
 
-func (uc *usageCollector) registerViewDesc(avd AggregationViewDesc, now time.Time) error {
-	vd := avd.viewDesc()
-	md, ok := uc.mDescriptors[vd.MeasureDescName]
+func (uc *usageCollector) registerViewDesc(vd ViewDesc, now time.Time) error {
+	vdc := vd.ViewDescCommon()
+	md, ok := uc.mDescriptors[vdc.MeasureDescName]
 	if !ok {
-		return fmt.Errorf("view contains a resource %s that is not registered", vd.MeasureDescName)
+		return fmt.Errorf("registerViewDesc(_) failed. ViewDesc %v cannot be regsitered. It has MeasureDescName=%v which is not registered", *vdc, vdc.MeasureDescName)
 	}
 
-	if v, ok := uc.vDescriptors[vd.Name]; ok {
-		return fmt.Errorf("a view %v with the same name %s is already registered", v, v.viewDesc().Name)
+	if tmp, ok := uc.vDescriptors[vdc.Name]; ok {
+		return fmt.Errorf("registerViewDesc(_) failed. ViewDesc %v cannot be regsitered. A different ViewDesc has already been registered with a Name=%v", *vdc, tmp.ViewDescCommon().Name)
 	}
 
 	for vwName, vwDesc := range uc.vDescriptors {
-		if vwDesc == avd {
-			return fmt.Errorf("view %v is already registered under a different name %s", vd, vwName)
+		if vwDesc == vd {
+			return fmt.Errorf("registerViewDesc(_) failed. ViewDesc %v is already registered under a different name %v", vdc, vwName)
 		}
 	}
 
-	if err := avd.isValid(); err != nil {
-		return err
+	if err := vd.isValid(); err != nil {
+		return fmt.Errorf("registerViewDesc(_) failed. %v", err)
 	}
 
-	vd.start = now
-	vd.signatures = make(map[string]aggregator)
+	vdc.start = now
+	vdc.signatures = make(map[string]aggregator)
 
-	uc.vDescriptors[vd.Name] = avd
-	md.aggViewDescs[avd] = struct{}{}
+	uc.vDescriptors[vdc.Name] = vd
+	vdc.subscriptions = make(map[Subscription]bool)
+	md.Meta().aggViewDescs[vd] = struct{}{}
 
 	return nil
 }
@@ -87,86 +100,83 @@ func (uc *usageCollector) unregisterViewDesc(vwName string) error {
 		return fmt.Errorf("no view descriptor with the name %s is registered", vwName)
 	}
 
-	vd := avd.viewDesc()
+	vd := avd.ViewDescCommon()
 	md, ok := uc.mDescriptors[vd.MeasureDescName]
 	if !ok {
 		return fmt.Errorf("no measure descriptor with the name %s is registered", vd.MeasureDescName)
 	}
 
 	delete(uc.vDescriptors, vwName)
-	delete(md.aggViewDescs, avd)
+	delete(md.Meta().aggViewDescs, avd)
 	return nil
 }
 
-func (uc *usageCollector) subscribeToViewDesc(vwName string, c chan *View) error {
-	avd, ok := uc.vDescriptors[vwName]
-	if !ok {
-		return fmt.Errorf("no view descriptor with the name %s is registered", vwName)
+func (uc *usageCollector) addSubscription(s Subscription) error {
+	if uc.subscriptions[s] {
+		return fmt.Errorf("addSubscription(_) failed. Subscription %v already used to subscribe", s)
 	}
 
-	vd := avd.viewDesc()
-	if _, ok := vd.vChans[c]; ok {
-		return fmt.Errorf("channel is already used to subscribe to this viewDesc %s", vwName)
+	uc.subscriptions[s] = true
+	for _, desc := range uc.vDescriptors {
+		if s.contains(desc) {
+			s.addViewDesc(desc)
+			desc.ViewDescCommon().subscriptions[s] = true
+		}
 	}
-
-	vd.vChans[c] = struct{}{}
 	return nil
 }
 
-func (uc *usageCollector) unsubscribeFromViewDesc(vwName string, c chan *View) error {
-	avd, ok := uc.vDescriptors[vwName]
-	if !ok {
-		return fmt.Errorf("no view descriptor with the name %s is registered", vwName)
+func (uc *usageCollector) unsubscribe(s Subscription) error {
+	if !uc.subscriptions[s] {
+		return fmt.Errorf("removeSubscription(_) failed. Subscription %v not used to subscribe", s)
 	}
 
-	vd := avd.viewDesc()
-	if _, ok := vd.vChans[c]; !ok {
-		return fmt.Errorf("channel is not used to subscribe to this viewDesc %s", vwName)
+	for _, desc := range uc.vDescriptors {
+		delete(desc.ViewDescCommon().subscriptions, s)
 	}
-
-	delete(vd.vChans, c)
+	delete(uc.subscriptions, s)
 	return nil
 }
 
-func (uc *usageCollector) recordMeasurement(now time.Time, ct contextTags, md *MeasureDesc, v float64) error {
-	tmp, ok := uc.mDescriptors[md.Name]
+func (uc *usageCollector) recordMeasurement(now time.Time, ts *tagging.TagSet, m Measurement) error {
+	md := m.measureDesc()
+	meta := md.Meta()
+	tmp, ok := uc.mDescriptors[meta.name]
 	if !ok || tmp != md {
 		return fmt.Errorf("error recording measurement. %v was not registered or its name was modified after registration", md)
 	}
 
-	for avd := range md.aggViewDescs {
-		var sig string
-		vd := avd.viewDesc()
-		if len(vd.TagKeys) == 0 {
-			// This is the all keys view.
-			sig = ct.encodeToFullSignature()
+	for avd := range meta.aggViewDescs {
+		var sig []byte
+		vdc := avd.ViewDescCommon()
+		if len(vdc.TagKeys) == 0 {
+			// This is a "don't care about keys" view. sig is empty for all
+			// records. Aggregates all records in the same view aggregation.
 		} else {
-			sig = ct.encodeToValuesSignature(vd.TagKeys)
+			sig = tagging.EncodeToValuesSignature(ts, vdc.TagKeys)
 		}
 
-		if err := uc.add(vd.start, now, vd.signatures, sig, avd, v); err != nil {
+		if err := uc.add(vdc.start, now, vdc.signatures, string(sig), avd, m); err != nil {
 			return fmt.Errorf("error recording measurement %v", err)
 		}
 	}
 	return nil
 }
 
-func (uc *usageCollector) recordManyMeasurement(now time.Time, ct contextTags, mds []*MeasureDesc, vs []float64) error {
-	for _, tmp := range mds {
-		md, ok := uc.mDescriptors[tmp.Name]
-		if !ok || md != tmp {
+func (uc *usageCollector) recordManyMeasurement(now time.Time, ts *tagging.TagSet, ms []Measurement) error {
+	for _, m := range ms {
+		md := m.measureDesc()
+		meta := md.Meta()
+		tmp, ok := uc.mDescriptors[meta.name]
+		if !ok || tmp != md {
 			return fmt.Errorf("error recording measurement. %v was not registered or its name was modified after registration", md)
 		}
 	}
 
-	if len(mds) != len(vs) {
-		return fmt.Errorf("len([]*MeasureDesc)=%v different than len(vs)=%v", len(mds), len(vs))
-	}
-
 	// TODO(iamm2): optimize this to avoid calling recordMeasurement multiple
 	// times. Reuse fullSignature on as many "all tags views" as possible.
-	for i, md := range mds {
-		err := uc.recordMeasurement(now, ct, md, vs[i])
+	for _, md := range ms {
+		err := uc.recordMeasurement(now, ts, md)
 		if err != nil {
 			return err
 		}
@@ -174,48 +184,112 @@ func (uc *usageCollector) recordManyMeasurement(now time.Time, ct contextTags, m
 	return nil
 }
 
-func (uc *usageCollector) add(start, now time.Time, signatures map[string]aggregator, sig string, avd AggregationViewDesc, val float64) error {
+func (uc *usageCollector) add(start, now time.Time, signatures map[string]aggregator, sig string, vd ViewDesc, m Measurement) error {
 	agg, found := signatures[sig]
 	if !found {
 		var err error
-		if agg, err = avd.createAggregator(start); err != nil {
+		if agg, err = vd.createAggregator(start); err != nil {
 			return err
 		}
 		signatures[sig] = agg
 	}
 
-	agg.addSample(val, now)
+	agg.addSample(m, now)
 	return nil
 }
 
-func (uc *usageCollector) retrieveViews(now time.Time) []*View {
-	var views []*View
-	for _, avd := range uc.vDescriptors {
-		vw, err := avd.retrieveView(now)
-		if err != nil {
-			//// TODO(iamm2) log error fmt.Errorf("error retrieving view for view description %v. %v", *vd, err)
+func (uc *usageCollector) retrieveViewsAdhoc(viewNames, measureNames []string, now time.Time) []*View {
+	var mds []MeasureDesc
+	if len(measureNames) == 0 {
+		for _, md := range uc.mDescriptors {
+			mds = append(mds, md)
 		}
+	} else {
+		for _, mn := range measureNames {
+			md, ok := uc.mDescriptors[mn]
+			if !ok {
+				continue
+			}
+			mds = append(mds, md)
+		}
+	}
 
+	tmp := make(map[string]ViewDesc)
+	for _, md := range mds {
+		for vd := range md.Meta().aggViewDescs {
+			tmp[vd.ViewDescCommon().Name] = vd
+		}
+	}
+
+	var views []*View
+	if len(viewNames) == 0 {
+		for _, vd := range tmp {
+			vw, err := vd.retrieveView(now)
+			if err != nil {
+				glog.Errorf("usageCollector.retrieveViews(_) failed retrieving view for ViewDesc: %v. %v", vd, err)
+				continue
+			}
+			views = append(views, vw)
+		}
+	} else {
+		for _, vn := range viewNames {
+			vd, ok := tmp[vn]
+			if !ok {
+				continue
+			}
+			vw, err := vd.retrieveView(now)
+			if err != nil {
+				glog.Errorf("usageCollector.retrieveViews(_) failed retrieving view for ViewDesc: %v. %v", vd, err)
+				continue
+			}
+			views = append(views, vw)
+		}
+	}
+	return views
+}
+
+func (uc *usageCollector) retrieveAllViews(now time.Time) []*View {
+	var views []*View
+	for _, vd := range uc.vDescriptors {
+		vw, err := vd.retrieveView(now)
+		if err != nil {
+			glog.Errorf("usageCollector.retrieveViews(_) failed retrieving view for ViewDesc: %v. %v", vd, err)
+			continue
+		}
 		views = append(views, vw)
 	}
 	return views
 }
 
-func (uc *usageCollector) retrieveView(now time.Time, avd AggregationViewDesc) (*View, error) {
-	vd := avd.viewDesc()
+func (uc *usageCollector) retrieveView(name string, now time.Time, vd ViewDesc) (*View, error) {
+	vdc := vd.ViewDescCommon()
 
-	tmp, ok := uc.vDescriptors[vd.Name]
+	tmp, ok := uc.vDescriptors[vdc.Name]
 	if !ok {
-		return nil, fmt.Errorf("no view descriptor with the name %s is registered", vd.MeasureDescName)
+		return nil, fmt.Errorf("no view descriptor with the name %s is registered", vdc.MeasureDescName)
 	}
 
-	if tmp != avd {
-		return nil, fmt.Errorf("a different view %v was registered with this name %v", tmp, vd.Name)
+	if tmp != vd {
+		return nil, fmt.Errorf("a different view %v was registered with this name %v", tmp, vdc.Name)
 	}
 
-	vw, err := avd.retrieveView(now)
+	vw, err := vd.retrieveView(now)
 	if err != nil {
-		return nil, fmt.Errorf("error retrieving view for view description %v. %v", avd, err)
+		return nil, fmt.Errorf("error retrieving view for view description %v. %v", vd, err)
+	}
+
+	return vw, nil
+}
+
+func (uc *usageCollector) retrieveViewByName(name string, now time.Time) (*View, error) {
+	vd, ok := uc.vDescriptors[name]
+	if !ok {
+		return nil, fmt.Errorf("no view descriptor with the name %s is registered", name)
+	}
+
+	vw, err := vd.retrieveView(now)
+	if err != nil {
+		return nil, fmt.Errorf("error retrieving view for view description %v. %v", vd, err)
 	}
 
 	return vw, nil
