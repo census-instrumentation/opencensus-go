@@ -22,6 +22,7 @@ type buffer struct {
 	writeIdx int
 }
 
+func (b * buffer) Read()
 func (b *buffer) writeMetadataTypeStringUTF8() {
 	b.growIfRequired(1)
 	b.bytes[b.writeIdx] = 0
@@ -85,8 +86,8 @@ func (b *buffer) writeByte(i byte) {
 }
 
 func (b *buffer) writeZero() {
-	b.growIfRequired(1)
-	b.bytes[b.writeIdx] = 0
+	b.growIfRequired(2)
+	b.bytes[b.writeIdx] = uint16(0)
 	b.writeIdx++
 }
 

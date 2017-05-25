@@ -1,19 +1,84 @@
 package tags
-
-import "fmt"
-
+/*
+import (
+	"fmt"
+	"encoding/binary"
+)
+*/
 // TagSet is the object holding the tags stored in context.
 type TagSet struct {
 	m map[Key][]byte
-}
-
-func (ts *TagSet) Tags() []Tag {
 }
 
 func newTagSet(size int) *TagSet {
 	return &TagSet{
 		m: make(map[Key][]byte, size),
 	}
+}
+
+func (ts *TagSet) toValueBytes(ks []Key) *valueBytes{
+	vb := &valueBytes{
+		bytes: make([]byte, len(ks)),
+	}
+
+	for _, k := range ks {
+		v := ts.m[k]
+		vb.writeValue(v)
+	}
+	return vb
+}
+
+func (ts *TagSet) insertBytes(k Key, b []byte) bool {
+	if _, ok := ts.m[k]; ok {
+		return false
+	}
+	ts.m[k] = b
+	return true
+}
+
+func (ts *TagSet) updateBytes(k Key, b []byte) bool {
+	if _, ok := ts.m[k]; !ok {
+		return false
+	}
+	ts.m[k] = b
+	return true
+}
+
+func (ts *TagSet) upsertBytes(k Key, b []byte) {
+	ts.m[k] = b
+}
+
+func (ts *TagSet) delete(k Key) bool {
+	return delete(ts.m, k)
+}
+
+
+
+
+/*
+
+func (bc *bytesCodec) ReadBytes() ([]byte, err) {
+
+	endIdx := bc.ridx+sizeOfUint16
+	if end > len(bc.b) {
+		return nil, fmt.Errorf("ReadBytes() failed. endIdx=%v, bytes=%v", endIdx, bc.b)
+	}
+
+	length :=  binary.LittleEndian.Uint16(valuesSig[idx:])
+	idx += sizeOfUint16
+
+	if idx+length > len(valuesSig) {
+		return nil, fmt.Errorf("DecodeFromValuesSignature failed. Unexpected signature end '%v' for keys '%v'", valuesSig, keys)
+	}
+
+	if length == 0 {
+		// No value was encoded for this key
+		continue
+	}
+
+	ts.m[k] = valuesSig[idx:idx+length]
+	idx += length
+
 }
 
 // DecodeFromValuesSignatureToTagSet creates a TagSet from an encoded []byte
@@ -23,58 +88,27 @@ func newTagSet(size int) *TagSet {
 // library.
 func DecodeFromValuesSignature(valuesSig []byte, keys []Key) (*TagSet, error) {
 	ts := &TagSet{
-		m: make(map[Key]Tag),
+		m: make(map[Key][]byte),
 	}
 	if len(valuesSig) == 0 {
 		return ts, nil
 	}
 
-	var (
-		t      Tag
-		err    error
-		idx    int
-		length int
-	)
+	br := bytesReader{valuesSig}
 	for _, k := range keys {
-		if idx > len(valuesSig) {
-			return nil, fmt.Errorf("DecodeFromValuesSignatureToTagSet failed. Unexpected signature end '%v' for keys '%v'", valuesSig, keys)
-		}
-		if length, idx, err = decodeVarint(valuesSig, idx); err != nil {
-			return nil, err
-		}
-
-		if length == 0 {
-			// No value was encoded for this key
-			continue
-		}
-
-		switch typ := k.(type) {
-		case *keyStringUTF8:
-			t = &tagStringUTF8{
-				k: typ,
-			}
-		case *keyInt64:
-			t = &tagInt64{
-				k: typ,
-			}
-		case *keyBool:
-			t = &tagBool{
-				k: typ,
-			}
-		case *keyBytes:
-			t = &tagBytes{
-				k: typ,
-			}
-		default:
-			return nil, fmt.Errorf("DecodeFromValuesSignatureToTagSet failed. Key type invalid %v", k)
-		}
-		idx, err = t.setValueFromBytesKnownLength(valuesSig, idx, length)
+		bytes, err := bc.ReadBytes()
 		if err != nil {
 			return nil, err
 		}
 
-		ts.m[k] = t
+		if len(bytes) > 0 {
+			// No value was encoded for this key
+			continue
+		}
+
+		ts.m[k] = bytes
 	}
+
 	return ts, nil
 }
 
@@ -82,17 +116,16 @@ func DecodeFromValuesSignature(valuesSig []byte, keys []Key) (*TagSet, error) {
 // This method is intended to be used by the package instrumentation/stats
 // library.
 func EncodeToValuesSignature(ts *TagSet, keys []Key) []byte {
-	b := &buffer{
-		bytes: make([]byte, 10*len(keys)),
-	}
+	var b buffer
 	for _, k := range keys {
-		t, ok := ts.m[k]
+		v, ok := ts.m[k]
 		if !ok {
-			// write 0 (len(value) = 0) meaning no value is encoded for this key.
-			b.writeZero()
+			// write 0 (len(value) == 0) meaning no value is encoded for this key.
+			b.WriteUint16(0)
 			continue
 		}
-		t.encodeValueToBuffer(b)
+		b.WriteUint16(len(v))
+		b.WriteBytes(v)
 	}
 	return b.bytes
 }
@@ -115,8 +148,8 @@ func DecodeFromFullSignature(fullSig []byte) (*TagSet, error) {
 		idx++
 
 		switch typ {
-		case keyTypeStringUTF8:
-			t = &tagStringUTF8{}
+		case keyTypeString:
+			t = &tagString{}
 		case keyTypeInt64:
 			t = &tagInt64{}
 		case keyTypeBool:
@@ -162,14 +195,6 @@ func (ts *TagSet) GetTagInt64(k KeyInt64) (int64, err) {}
 
 func (ts *TagSet) GetTagBool(k KeyBool) (bool, err) {}
 
-func (ts *TagSet) insertBytes(k Key, b []byte) bool {}
-
-func (ts *TagSet) updateBytes(k Key, b []byte) bool {}
-
-func (ts *TagSet) upsertBytes(k Key, b []byte) {}
-
-func (ts *TagSet) deleteBytes(k Key, b []byte) bool {}
-
 func (tb *TagSet) insertString(k KeyString, s string) bool {}
 
 func (tb *TagSet) updateString(k KeyString, s string) bool {}
@@ -193,3 +218,68 @@ func (tb *TagSet) updateBool(k KeyBool, b bool) bool {}
 func (tb *TagSet) upsertBool(k KeyBool, b bool) {}
 
 func (tb *TagSet) deleteBool(k KeyBool, b bool) bool {}
+
+
+
+
+
+
+
+func tagSetFromValueBytes(vs []byte, ks []Key) *TagSet {
+	ts := &TagSet{
+		m : make(map[Key][]byte),
+	}
+
+	for _, k := range ks {
+		v = vs.readValue()
+		vs = vs[len(v)+2:]
+		if v != nil {
+			ts.m[k] = v
+		}
+	}
+	return ts
+}
+
+
+
+
+func tagSetFromKeyValueBytes(kvs keyValueSet) *TagSet {
+	ts := &TagSet{
+		m : make(map[Key][]byte),
+	}
+
+	ks := kvs.keySet
+	vs := kvs.valueSet
+
+	for ;len(ks) > 0; {
+		k := ks.readValue()
+		ks = ks[2:]
+		v:= vs.readValue()
+		vs = vs[len(v)+2:]
+		if bytes != nil {
+			ts.m[k] bytes
+		}
+	}
+	return ts
+}
+
+type keyValueSet struct {
+	keySet []byte
+	valueSet []byte
+}
+
+
+func readValue(bytes []byte) []byte {}
+
+
+func readKey(bytes []byte) key {
+	id := *(*uint16)(unsafe.Pointer(&bytes[0]))
+	return getKeyByID(id)
+}
+
+func writeKeyID(bytes []byte, k key) []byte{
+	tmp := *(*[2]byte)(unsafe.Pointer(&k.id))
+	copy(bytes[len(bytes), tmp)
+	return bytes
+}
+*/

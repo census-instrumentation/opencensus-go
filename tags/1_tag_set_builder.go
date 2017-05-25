@@ -38,10 +38,11 @@ func (tb *TagSetBuilder) StartFromTagSet(ts *TagSet) {
 
 	tb.ts = newTagSet(len(ts.m))
 	for k, b := range ts.m {
-		tb.ts.upsert(k, b)
+		tb.ts.upsertBytes(k, b)
 	}
 }
 
+/*
 // StartFromEncoded starts building a new TagSet from an encoded []byte.
 func (tb *TagSetBuilder) StartFromEncoded(encoded []byte) error {
 	var err error
@@ -51,6 +52,7 @@ func (tb *TagSetBuilder) StartFromEncoded(encoded []byte) error {
 	}
 	return nil
 }
+*/
 
 func (tb *TagSetBuilder) InsertString(k KeyString, s string) bool {
 	tb.ts.insertString(k, s)

@@ -2,17 +2,19 @@ package tags
 
 import "encoding/binary"
 
+var keys []Key
+
 // Key is the interface for all key types.
 type Key interface {
 	Name() string
-	ID() int32
+	ID() uint16
 }
 
 // KeyString implements the Key interface and is used to represent keys for
 // which the value type is a string.
 type KeyString struct {
 	name string
-	id   int32
+	id   uint16
 }
 
 func (k *KeyString) CreateChange(s string, op TagOp) TagChange {
@@ -23,11 +25,11 @@ func (k *KeyString) CreateChange(s string, op TagOp) TagChange {
 	}
 }
 
-func (k *KeyString) Name(s string) {
+func (k *KeyString) Name() string{
 	return k.name
 }
 
-func (k *KeyString) ID() int32 {
+func (k *KeyString) ID() uint16 {
 	return k.id
 }
 
@@ -35,7 +37,7 @@ func (k *KeyString) ID() int32 {
 // the value type is a string.
 type KeyBool struct {
 	name string
-	id   int32
+	id   uint16
 }
 
 func (k *KeyBool) CreateChange(b bool, op TagOp) TagChange {
@@ -55,7 +57,7 @@ func (k *KeyBool) Name() string {
 	return k.name
 }
 
-func (k *KeyBool) ID(i int64) {
+func (k *KeyBool) ID() uint16{
 	return k.id
 }
 
@@ -63,7 +65,7 @@ func (k *KeyBool) ID(i int64) {
 // which the value type is a int64.
 type KeyInt64 struct {
 	name string
-	id   int32
+	id   uint16
 }
 
 func (k *KeyInt64) CreateChange(i int64, op TagOp) TagChange {
@@ -72,7 +74,7 @@ func (k *KeyInt64) CreateChange(i int64, op TagOp) TagChange {
 		op: op,
 	}
 	tc.v = make([]byte, 8)
-	binary.LittleEndian.PutIint64(tc.v, i)
+	binary.LittleEndian.PutUint64(tc.v, uint64(i))
 	return tc
 }
 
@@ -80,6 +82,13 @@ func (k *KeyInt64) Name() string {
 	return k.name
 }
 
-func (k *KeyInt64) ID(i int64) {
+func (k *KeyInt64) ID() uint16 {
 	return k.id
+}
+
+func getKeyByID(id uint16) Key {
+	if int(id) >= len(keys) {
+		return nil
+	}
+	return keys[id]
 }
