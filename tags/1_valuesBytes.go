@@ -5,29 +5,31 @@ import "unsafe"
 var sizeOfUint16 = (int)(unsafe.Sizeof(uint16(0)))
 
 type valueBytes struct {
-	bytes []byte
+	buf []byte
 	wIdx, rIdx int
 }
 
-func (vb *valueBytes) grow(s int) {
-	for ;len(vb.bytes) <= s; {
-		newSize := 2*len(vb.bytes)+1
-		tmp := make([]byte, newSize)
-		copy(tmp, vb.bytes)
-		vb.bytes = tmp
+func (vb *valueBytes) growIfRequired(expected int) {
+	if len(vb.buf)-vb.wIdx < expected {
+		tmp := make([]byte, 2*(len(vb.buf)+1)+expected)
+		copy(tmp, vb.buf)
+		vb.buf = tmp
 	}
 }
 
 func (vb *valueBytes) writeValue(v []byte) {
 	length := len(v)
+	vb.growIfRequired(sizeOfUint16 + length)
+
+/*	length := len(v)
 	endIdx := vb.wIdx + sizeOfUint16 + int(length)
-	vb.grow(endIdx)
-	
+	vb.growIfRequired(endIdx)
+*/	
 	// writing length of v
 	bytes := *(*[2]byte)(unsafe.Pointer(&length))
-	vb.bytes[vb.wIdx] = bytes[0]
+	vb.buf[vb.wIdx] = bytes[0]
 	vb.wIdx++
-	vb.bytes[vb.wIdx] = bytes[1]
+	vb.buf[vb.wIdx] = bytes[1]
 	vb.wIdx++
 
 	if length == 0 {
@@ -36,13 +38,15 @@ func (vb *valueBytes) writeValue(v []byte) {
 	}
 
 	// writing v
-	copy(vb.bytes[vb.wIdx:], v)
-	vb.wIdx = endIdx
+	copy(vb.buf[vb.wIdx:], v)
+	vb.wIdx += length
 }
 
+// readValue is the helper method to read the values when decoding valueBytes to a map[Key][]byte.
+// It is meant to be used by toMap(...) only.
 func (vb *valueBytes) readValue() []byte {
 	// read length of v
-	length := (int)(*(*uint16)(unsafe.Pointer(&vb.bytes[vb.rIdx])))
+	length := (int)(*(*uint16)(unsafe.Pointer(&vb.buf[vb.rIdx])))
 	vb.rIdx += sizeOfUint16
 	if length == 0 {
 		// No value was encoded for this key
@@ -52,11 +56,10 @@ func (vb *valueBytes) readValue() []byte {
 	// read value of v
 	v := make([]byte, length)
 	endIdx := vb.rIdx+length
-	copy(v, vb.bytes[vb.rIdx:endIdx])
+	copy(v, vb.buf[vb.rIdx:endIdx])
 	vb.rIdx += endIdx
 	return v
 }
-
 
 func (vb *valueBytes) toMap(ks []Key) map[Key][]byte {
 	m := make(map[Key][]byte, len(ks))

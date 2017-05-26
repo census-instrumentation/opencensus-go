@@ -18,7 +18,7 @@ func newTagSet(size int) *TagSet {
 
 func (ts *TagSet) toValueBytes(ks []Key) *valueBytes{
 	vb := &valueBytes{
-		bytes: make([]byte, len(ks)),
+		buf: make([]byte, len(ks)),
 	}
 
 	for _, k := range ks {
@@ -48,8 +48,8 @@ func (ts *TagSet) upsertBytes(k Key, b []byte) {
 	ts.m[k] = b
 }
 
-func (ts *TagSet) delete(k Key) bool {
-	return delete(ts.m, k)
+func (ts *TagSet) delete(k Key) {
+	delete(ts.m, k)
 }
 
 

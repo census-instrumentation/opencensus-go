@@ -15,8 +15,6 @@
 
 package tags
 
-import "fmt"
-
 // TagSetBuilder is the data structure used to build new TagSet. Its purpose
 // to ensure TagSet can be built from multiple pieces over time but that it is
 // immutable once built.
@@ -25,21 +23,23 @@ type TagSetBuilder struct {
 }
 
 // StartFromEmpty starts building a new TagSet.
-func (tb *TagSetBuilder) StartFromEmpty() {
+func (tb *TagSetBuilder) StartFromEmpty() *TagSetBuilder {
 	tb.ts = newTagSet(0)
+	return tb
 }
 
 // StartFromTagSet starts building a new TagSet from an existing TagSet.
-func (tb *TagSetBuilder) StartFromTagSet(ts *TagSet) {
+func (tb *TagSetBuilder) StartFromTagSet(ts *TagSet) *TagSetBuilder {
 	if ts == nil {
 		tb.ts = newTagSet(0)
-		return
+		return tb
 	}
 
 	tb.ts = newTagSet(len(ts.m))
 	for k, b := range ts.m {
 		tb.ts.upsertBytes(k, b)
 	}
+	return tb
 }
 
 /*
@@ -54,6 +54,7 @@ func (tb *TagSetBuilder) StartFromEncoded(encoded []byte) error {
 }
 */
 
+/*
 func (tb *TagSetBuilder) InsertString(k KeyString, s string) bool {
 	tb.ts.insertString(k, s)
 }
@@ -64,10 +65,6 @@ func (tb *TagSetBuilder) InsertInt64(k KeyInt64, i int64) bool {
 
 func (tb *TagSetBuilder) InsertBool(k KeyBool, b bool) bool {
 	tb.ts.insertBool(k, b)
-}
-
-func (tb *TagSetBuilder) InsertBytes(k Key, bs []byte) bool {
-	tb.ts.insertBytes(k, bs)
 }
 
 func (tb *TagSetBuilder) UpdateString(k KeyString, s string) bool {
@@ -82,10 +79,6 @@ func (tb *TagSetBuilder) UpdateBool(k KeyBool, b bool) bool {
 	tb.ts.updateBool(k, b)
 }
 
-func (tb *TagSetBuilder) UpdateBytes(k Key, bs []byte) bool {
-	tb.ts.updateBytes(k, bs)
-}
-
 func (tb *TagSetBuilder) UpsertString(k KeyString, s string) {
 	tb.ts.upsertString(k, s)
 }
@@ -97,35 +90,49 @@ func (tb *TagSetBuilder) UpsertInt64(k KeyInt64, i int64) {
 func (tb *TagSetBuilder) UpsertBool(k KeyBool, b bool) {
 	tb.ts.upsertBool(k, b)
 }
+*/
 
-func (tb *TagSetBuilder) UpsertBytes(k Key, bs []byte) {
+func (tb *TagSetBuilder) InsertBytes(k Key, bs []byte) *TagSetBuilder {
+	tb.ts.insertBytes(k, bs)
+	return tb
+}
+
+func (tb *TagSetBuilder) UpdateBytes(k Key, bs []byte) *TagSetBuilder {
+	tb.ts.updateBytes(k, bs)
+	return tb
+}
+
+func (tb *TagSetBuilder) UpsertBytes(k Key, bs []byte) *TagSetBuilder {
 	tb.ts.upsertBytes(k, bs)
+	return tb
 }
 
-func (tb *TagSetBuilder) Delete(k Key) bool {
-	delete(tb.ts, k)
+func (tb *TagSetBuilder) Delete(k Key) *TagSetBuilder {
+	tb.ts.delete(k)
+	return tb
 }
 
-func (tb *TagSetBuilder) Apply(tcs ...TagChange) {
+func (tb *TagSetBuilder) Apply(tcs ...TagChange) *TagSetBuilder {
 	for _, tc := range tcs {
-		switch tc.op {
+		switch tc.Op() {
 		case TagOpInsert:
-			builder.InsertBytes(tc.k, tc.v)
+			tb.ts.insertBytes(tc.Key(), tc.Value())
 		case TagOpUpdate:
-			builder.UpdateBytes(tc.k, tc.v)
+			tb.ts.updateBytes(tc.Key(), tc.Value())
 		case TagOpUpsert:
-			builder.UpsertBytes(tc.k, tc.v)
+			tb.ts.upsertBytes(tc.Key(), tc.Value())
 		case TagOpDelete:
-			builder.Delete(tc.k)
+			tb.ts.delete(tc.Key())
 		default:
 			continue
 		}
 	}
+	return tb
 }
 
 // Build returns the built TagSet and clears the builder.
 func (tb *TagSetBuilder) Build() *TagSet {
-	ret := tb.ts
+	ts := tb.ts
 	tb.ts = nil
-	return ret
+	return ts
 }

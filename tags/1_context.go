@@ -24,7 +24,7 @@ type ctxKey struct{}
 func FromContext(ctx context.Context) *TagSet {
 	ts, ok := ctx.Value(ctxKey{}).(*TagSet)
 	if !ok {
-		ts = nil
+		ts = newTagSet(0)
 	}
 	return ts
 }

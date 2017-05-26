@@ -11,13 +11,17 @@ const (
 	// contain a tag with the same key. Otherwise it is a no-op.
 	TagOpInsert
 
-	// TagOpSet adds the (key, value) to a set regardless if the set doesn't
-	// contains a (key, value) pair with the same key. Otherwise it is a no-op.
-	TagOpSet
-
-	// TagOpReplace replaces the (key, value) in a set if the set contains a
+	// TagOpUpdate replaces the (key, value) in a set if the set contains a
 	// (key, value) pair with the same key. Otherwise it is a no-op.
-	TagOpReplace
+	TagOpUpdate
+
+	// TagOpUpsert adds the (key, value) to a set regardless if the set does
+	// contain or doesn't contain a (key, value) pair with the same key.
+	TagOpUpsert
+
+	// TagOpDelete deletes the (key, value) from a set if it contain a pair
+	// with the same key. Otherwise it is a no-op.
+	TagOpDelete
 )
 
 // TagChange is the interface for tag changes. It is not expected to have
@@ -26,7 +30,7 @@ const (
 type TagChange interface {
 	Key() Key
 	Value() []byte
-	TagOp() TagOp
+	Op() TagOp
 }
 
 // tagChange implements TagChange
@@ -44,6 +48,6 @@ func (tc *tagChange) Value() []byte {
 	return tc.v
 }
 
-func (tc *tagChange) TagOp() TagOp {
+func (tc *tagChange) Op() TagOp {
 	return tc.op
 }
