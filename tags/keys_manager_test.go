@@ -27,8 +27,8 @@ func Test_KeysManager_NoErrors(t *testing.T) {
 	testSet := []testData{
 		{
 			[]func() (Key, error){
-				func() (Key, error) { return DefaultKeyManager().CreateKeyStringUTF8("k1") },
-				func() (Key, error) { return DefaultKeyManager().CreateKeyStringUTF8("k2") },
+				func() (Key, error) { return DefaultKeyManager().CreateKeyString("k1") },
+				func() (Key, error) { return DefaultKeyManager().CreateKeyString("k2") },
 				func() (Key, error) { return DefaultKeyManager().CreateKeyInt64("k3") },
 				func() (Key, error) { return DefaultKeyManager().CreateKeyBool("k4") },
 			},
@@ -37,8 +37,8 @@ func Test_KeysManager_NoErrors(t *testing.T) {
 		},
 		{
 			[]func() (Key, error){
-				func() (Key, error) { return DefaultKeyManager().CreateKeyStringUTF8("k1") },
-				func() (Key, error) { return DefaultKeyManager().CreateKeyStringUTF8("k1") },
+				func() (Key, error) { return DefaultKeyManager().CreateKeyString("k1") },
+				func() (Key, error) { return DefaultKeyManager().CreateKeyString("k1") },
 			},
 			1,
 			0,
@@ -61,10 +61,8 @@ func Test_KeysManager_NoErrors(t *testing.T) {
 		},
 		{
 			[]func() (Key, error){
-				func() (Key, error) { return DefaultKeyManager().CreateKeyBytes("k1") },
-				func() (Key, error) { return DefaultKeyManager().CreateKeyBytes("k1") },
 			},
-			1,
+			0,
 			0,
 		},
 	}
@@ -99,12 +97,12 @@ func Test_KeysManager_ExpectErrors(t *testing.T) {
 	testSet := []testData{
 		{
 			[]func() (Key, error){
-				func() (Key, error) { return DefaultKeyManager().CreateKeyStringUTF8("k1") },
+				func() (Key, error) { return DefaultKeyManager().CreateKeyString("k1") },
 				func() (Key, error) { return DefaultKeyManager().CreateKeyInt64("k1") },
 				func() (Key, error) { return DefaultKeyManager().CreateKeyBool("k1") },
-				func() (Key, error) { return DefaultKeyManager().CreateKeyBytes("k1") },
+				func() (Key, error) { return DefaultKeyManager().CreateKeyString("k1") },
 			},
-			3,
+			2,
 		},
 		{
 			[]func() (Key, error){
@@ -116,14 +114,14 @@ func Test_KeysManager_ExpectErrors(t *testing.T) {
 		{
 			[]func() (Key, error){
 				func() (Key, error) { return DefaultKeyManager().CreateKeyInt64("k1") },
-				func() (Key, error) { return DefaultKeyManager().CreateKeyBytes("k1") },
+				func() (Key, error) { return DefaultKeyManager().CreateKeyString("k1") },
 			},
 			1,
 		},
 		{
 			[]func() (Key, error){
 				func() (Key, error) { return DefaultKeyManager().CreateKeyBool("k1") },
-				func() (Key, error) { return DefaultKeyManager().CreateKeyBytes("k1") },
+				func() (Key, error) { return DefaultKeyManager().CreateKeyString("k1") },
 			},
 			1,
 		},

@@ -1,15 +1,30 @@
+// Copyright 2017 Google Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+
 package tags
 
 import "unsafe"
 
 var sizeOfUint16 = (int)(unsafe.Sizeof(uint16(0)))
 
-type valueBytes struct {
+type valuesBytes struct {
 	buf []byte
 	wIdx, rIdx int
 }
 
-func (vb *valueBytes) growIfRequired(expected int) {
+func (vb *valuesBytes) growIfRequired(expected int) {
 	if len(vb.buf)-vb.wIdx < expected {
 		tmp := make([]byte, 2*(len(vb.buf)+1)+expected)
 		copy(tmp, vb.buf)
@@ -17,14 +32,10 @@ func (vb *valueBytes) growIfRequired(expected int) {
 	}
 }
 
-func (vb *valueBytes) writeValue(v []byte) {
+func (vb *valuesBytes) writeValue(v []byte) {
 	length := len(v)
 	vb.growIfRequired(sizeOfUint16 + length)
 
-/*	length := len(v)
-	endIdx := vb.wIdx + sizeOfUint16 + int(length)
-	vb.growIfRequired(endIdx)
-*/	
 	// writing length of v
 	bytes := *(*[2]byte)(unsafe.Pointer(&length))
 	vb.buf[vb.wIdx] = bytes[0]
@@ -42,9 +53,9 @@ func (vb *valueBytes) writeValue(v []byte) {
 	vb.wIdx += length
 }
 
-// readValue is the helper method to read the values when decoding valueBytes to a map[Key][]byte.
+// readValue is the helper method to read the values when decoding valuesBytes to a map[Key][]byte.
 // It is meant to be used by toMap(...) only.
-func (vb *valueBytes) readValue() []byte {
+func (vb *valuesBytes) readValue() []byte {
 	// read length of v
 	length := (int)(*(*uint16)(unsafe.Pointer(&vb.buf[vb.rIdx])))
 	vb.rIdx += sizeOfUint16
@@ -61,7 +72,7 @@ func (vb *valueBytes) readValue() []byte {
 	return v
 }
 
-func (vb *valueBytes) toMap(ks []Key) map[Key][]byte {
+func (vb *valuesBytes) toMap(ks []Key) map[Key][]byte {
 	m := make(map[Key][]byte, len(ks))
 	for _, k := range ks {
 		v := vb.readValue()
