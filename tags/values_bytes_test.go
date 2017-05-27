@@ -51,53 +51,53 @@ func Test_EncodeDecode_ValuesBytes(t *testing.T) {
 		},
 		{
 			&TagSet{
-				map[Key][]byte{ k2:k2.CreateTag("v2").V},
-			},		
+				map[Key][]byte{k2: k2.CreateTag("v2").V},
+			},
 			[]Key{k1},
 			nil,
 		},
 		{
 			&TagSet{
-				map[Key][]byte{ k2:k2.CreateTag("v2").V},
-			},		
+				map[Key][]byte{k2: k2.CreateTag("v2").V},
+			},
 			[]Key{k2},
 			[]*Tag{k2.CreateTag("v2")},
 		},
 		{
 			&TagSet{
-				map[Key][]byte{ 
-					k1:k1.CreateTag("v1").V,
-					k2:k2.CreateTag("v2").V},
+				map[Key][]byte{
+					k1: k1.CreateTag("v1").V,
+					k2: k2.CreateTag("v2").V},
 			},
 			[]Key{k1},
 			[]*Tag{k1.CreateTag("v1")},
 		},
 		{
 			&TagSet{
-				map[Key][]byte{ 
-					k2:k2.CreateTag("v2").V,
-					k1:k1.CreateTag("v1").V},
+				map[Key][]byte{
+					k2: k2.CreateTag("v2").V,
+					k1: k1.CreateTag("v1").V},
 			},
 			[]Key{k1},
 			[]*Tag{k1.CreateTag("v1")},
 		},
 		{
 			&TagSet{
-				map[Key][]byte{ 
-					k1:k1.CreateTag("v1").V,
-					k2:k2.CreateTag("v2").V,
-					k3:k3.CreateTag("v3").V},
-			},			
+				map[Key][]byte{
+					k1: k1.CreateTag("v1").V,
+					k2: k2.CreateTag("v2").V,
+					k3: k3.CreateTag("v3").V},
+			},
 			[]Key{k3, k1},
 			[]*Tag{k3.CreateTag("v3"), k1.CreateTag("v1")},
 		},
 		{
 			&TagSet{
-				map[Key][]byte{ 
-					k1:k1.CreateTag("v1").V,
-					k4:k4.CreateTag(10).V,
-					k5:k5.CreateTag(true).V},
-			},			
+				map[Key][]byte{
+					k1: k1.CreateTag("v1").V,
+					k4: k4.CreateTag(10).V,
+					k5: k5.CreateTag(true).V},
+			},
 			[]Key{k3, k4, k5},
 			[]*Tag{k4.CreateTag(10), k5.CreateTag(true)},
 		},
@@ -109,9 +109,7 @@ func Test_EncodeDecode_ValuesBytes(t *testing.T) {
 		ts := builder.Build()
 
 		vb := ts.toValuesBytes(td.keys)
-t.Logf("------------\n%v\n", vb.buf)
 		got := vb.toMap(td.keys)
-
 		if len(got) != len(td.wantSlice) {
 			t.Errorf("got len(decoded)=%v, want %v. Test case: %v", len(got), len(td.wantSlice), i)
 		}
@@ -149,7 +147,7 @@ func Benchmark_Encode_ValuesBytes_When1TagPresent(b *testing.B) {
 func Benchmark_Decode_ValuesBytes_When1TagPresent(b *testing.B) {
 	ts, _ := createTagChange(1)
 	var keys []Key
-	for k, _ := range ts.m {
+	for k := range ts.m {
 		keys = append(keys, k)
 	}
 	vb := ts.toValuesBytes(keys)
@@ -165,7 +163,7 @@ func Benchmark_Decode_ValuesBytes_When1TagPresent(b *testing.B) {
 func Benchmark_Encode_ValuesBytes_When100TagsPresent(b *testing.B) {
 	ts, _ := createTagChange(100)
 	var keys []Key
-	for k, _ := range ts.m {
+	for k := range ts.m {
 		keys = append(keys, k)
 	}
 
@@ -180,7 +178,7 @@ func Benchmark_Encode_ValuesBytes_When100TagsPresent(b *testing.B) {
 func Benchmark_Decode_ValuesBytes_When100TagsPresent(b *testing.B) {
 	ts, _ := createTagChange(100)
 	var keys []Key
-	for k, _ := range ts.m {
+	for k := range ts.m {
 		keys = append(keys, k)
 	}
 	vb := ts.toValuesBytes(keys)

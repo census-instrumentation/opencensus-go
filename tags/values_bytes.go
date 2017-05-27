@@ -20,7 +20,7 @@ import "unsafe"
 var sizeOfUint16 = (int)(unsafe.Sizeof(uint16(0)))
 
 type valuesBytes struct {
-	buf []byte
+	buf        []byte
 	wIdx, rIdx int
 }
 
@@ -66,9 +66,9 @@ func (vb *valuesBytes) readValue() []byte {
 
 	// read value of v
 	v := make([]byte, length)
-	endIdx := vb.rIdx+length
+	endIdx := vb.rIdx + length
 	copy(v, vb.buf[vb.rIdx:endIdx])
-	vb.rIdx += endIdx
+	vb.rIdx = endIdx
 	return v
 }
 
@@ -80,5 +80,10 @@ func (vb *valuesBytes) toMap(ks []Key) map[Key][]byte {
 			m[k] = v
 		}
 	}
-	return m	
+	vb.rIdx = 0
+	return m
+}
+
+func (vb *valuesBytes) Bytes() []byte {
+	return vb.buf[:vb.wIdx]
 }

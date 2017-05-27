@@ -16,8 +16,8 @@
 package tags
 
 import (
-	"fmt"
 	"encoding/binary"
+	"fmt"
 	"unsafe"
 )
 
@@ -45,24 +45,42 @@ const (
 	traceParenSpanFieldID              = byte(0xFE)
 )
 
-type GRPCCodec struct{
-	buf []byte
-	wIdx, rIdx int	
+type GRPCCodec struct {
+	buf        []byte
+	wIdx, rIdx int
 }
 
 func (gc *GRPCCodec) EncodeTagSet(ts *TagSet) []byte {
 	gc.buf = make([]byte, len(ts.m))
-	gc.wIdx, gc.rIdx = 0,0
+	gc.wIdx, gc.rIdx = 0, 0
 
 	gc.writeByte(byte(tagsVersionID))
 	for k, v := range ts.m {
 		if k.Name() == "method" || k.Name() == "caller" {
 			continue
 		}
-		
-		gc.writeByte(byte(keyTypeString))
-		gc.writeStringWithVarintLen(k.Name())
-		gc.writeBytesWithVarintLen(v)
+
+		switch k.(type) {
+		case *KeyString:
+			gc.writeByte(byte(keyTypeString))
+			gc.writeStringWithVarintLen(k.Name())
+			gc.writeBytesWithVarintLen(v)
+			break
+		case *KeyInt64:
+			gc.writeByte(byte(keyTypeInt64))
+			gc.writeStringWithVarintLen(k.Name())
+			gc.writeBytes(v)
+			break
+		case *KeyBool:
+			if v[0] == 1 {
+				gc.writeTagTrue(k.Name())
+			} else {
+				gc.writeTagFalse(k.Name())
+			}
+			break
+		default:
+			continue
+		}
 	}
 
 	return gc.buf[:gc.wIdx]
@@ -70,14 +88,14 @@ func (gc *GRPCCodec) EncodeTagSet(ts *TagSet) []byte {
 
 func (gc *GRPCCodec) DecodeTagSet(bytes []byte) (*TagSet, error) {
 	gc.buf = bytes
-	gc.wIdx, gc.rIdx = 0,0
+	gc.wIdx, gc.rIdx = 0, 0
 	ts := newTagSet(0)
 
 	if len(gc.buf) == 0 {
 		return ts, nil
 	}
 
-	version,err := gc.readByte()
+	version, err := gc.readByte()
 	if err != nil {
 		return nil, err
 	}
@@ -107,7 +125,7 @@ func (gc *GRPCCodec) DecodeTagSet(bytes []byte) (*TagSet, error) {
 			k, err = DefaultKeyManager().CreateKeyString(kName)
 			if err != nil {
 				continue
-			}			
+			}
 			break
 		case keyTypeInt64:
 			v, err = gc.readBytes(8)
@@ -117,22 +135,22 @@ func (gc *GRPCCodec) DecodeTagSet(bytes []byte) (*TagSet, error) {
 			k, err = DefaultKeyManager().CreateKeyInt64(kName)
 			if err != nil {
 				continue
-			}		
-			break;
+			}
+			break
 		case keyTypeFalse:
 			v = []byte{0}
 			k, err = DefaultKeyManager().CreateKeyBool(kName)
 			if err != nil {
 				continue
-			}			
+			}
 			break
 		case keyTypeTrue:
 			v = []byte{1}
 			k, err = DefaultKeyManager().CreateKeyBool(kName)
 			if err != nil {
 				continue
-			}			
-			break	
+			}
+			break
 		default:
 			return nil, fmt.Errorf("toStubbyTagsFormat failed. Key type invalid %v", typ)
 		}
@@ -240,6 +258,13 @@ func (gc *GRPCCodec) writeByte(v byte) {
 	gc.wIdx++
 }
 
+func (gc *GRPCCodec) writeBytes(bytes []byte) {
+	length := len(bytes)
+	gc.growIfRequired(length)
+	copy(gc.buf[gc.wIdx:], bytes)
+	gc.wIdx += length
+}
+
 func (gc *GRPCCodec) writeUint32(i uint32) {
 	gc.growIfRequired(4)
 	binary.LittleEndian.PutUint32(gc.buf[gc.wIdx:], i)
@@ -255,7 +280,7 @@ func (gc *GRPCCodec) writeUint64(i uint64) {
 func (gc *GRPCCodec) readByte() (byte, error) {
 	if len(gc.buf) < gc.rIdx+1 {
 		return 0, fmt.Errorf("unexpected end while readByte '%x' starting at idx '%v'", gc.buf, gc.rIdx)
-	}		
+	}
 	b := gc.buf[gc.rIdx]
 	gc.rIdx++
 	return b, nil
@@ -264,14 +289,14 @@ func (gc *GRPCCodec) readByte() (byte, error) {
 func (gc *GRPCCodec) readBytes(count int) ([]byte, error) {
 	if len(gc.buf) < gc.rIdx+count {
 		return nil, fmt.Errorf("unexpected end while readBytes '%x' starting at idx '%v'", gc.buf, gc.rIdx)
-	}	
-	endIdx := gc.rIdx+count
+	}
+	endIdx := gc.rIdx + count
 	tmp := gc.buf[gc.rIdx:endIdx]
 	gc.rIdx = endIdx
 	return tmp, nil
 }
 
-func (gc *GRPCCodec) readUint32() (uint32,error) {
+func (gc *GRPCCodec) readUint32() (uint32, error) {
 	if len(gc.buf) < gc.rIdx+4 {
 		return 0, fmt.Errorf("unexpected end while readUint32 '%x' starting at idx '%v'", gc.buf, gc.rIdx)
 	}
@@ -283,7 +308,7 @@ func (gc *GRPCCodec) readUint32() (uint32,error) {
 func (gc *GRPCCodec) readUint64() (uint64, error) {
 	if len(gc.buf) < gc.rIdx+8 {
 		return 0, fmt.Errorf("unexpected end while readUint64 '%x' starting at idx '%v'", gc.buf, gc.rIdx)
-	}	
+	}
 	i := binary.LittleEndian.Uint64(gc.buf[gc.rIdx:])
 	gc.rIdx += 8
 	return i, nil
