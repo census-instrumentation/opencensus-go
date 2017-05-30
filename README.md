@@ -8,6 +8,53 @@ are in the process of being changed and will certainly break your code.
 
 # Go stats core library
 
+## Keys and tagging
+
+### To create/retrieve a key
+A key is defined by its name. To use a key a user needs to know its name and type (currently only keys of type string are supported. Later support for keys of type int64 and bool will be supported).
+To create/retrieve a key the user calls a keys manager appropriate function. Keys are safe to be reused and called from multiple go routines.
+
+Create/retrieve key:
+
+    key1 := tagging.DefaultKeyManager().CreateKeyString("keyNameID1")
+    key2 := tagging.DefaultKeyManager().CreateKeyInt64("keyNameID2")
+    ...
+
+### Create a set of tags using keys
+To create a new tag set from scratch using changes:
+
+    change1 := key1.CreateChange("tagValue", TagOpUpsert)   // key1 is a KeyString so its value is a string
+    change2 := key2.CreateChange(10, TagOpInsert)           // key2 is a KeyInt64 so its value is an int64
+    builder := stats.NewTagsBuilder()
+    builder.StartFromEmpty()
+    builder.Apply(c1,c2)
+    tags := builder.Build()
+
+To create a new tag set from scratch using direct values (fastest):
+
+    builder := stats.NewTagsBuilder()
+    builder.StartFromEmpty()
+    builder.UpsertString(key1, "tagValue")  // key1 is a KeyString so its value is a string
+    builder.InsertInt64(key2, 10)           // key2 is a KeyInt64 so its value is an int64
+    tags := builder.Build()
+
+### Add tags to a context 
+Add tags to a context for propagation to downstream methods and downstream rpcs:
+To create a new context with the tags. This will create a new context where all the existing tags in the current context are deleted and replaced with the tags passed as argument.    
+    
+    ctx2 := stats.ContextWithNewTags(ctx, tags)
+
+Create a new context derived from an existing context using a set of changes. This will create a new context where the changed passed as argument as applied to the existing tags in the current context.
+
+    var changes []tags.Change
+    changes = append(changes, tags.Change(key1, "someValue", tagOpInsert))
+    changes = append(changes, ...)
+    ctx2 := stats.ContextWithChanges(ctx, changes)
+
+Extract tagsSet from a context:
+    
+    tags := stats.FromContext()
+
 ## Registering views and retrieving their collected data.
 
 ### To register a measure a.k.a resource
@@ -36,9 +83,6 @@ Register measures:
     ...
 
 ### To create/retrieve a key
-To use a key. It needs to be created/retrieved. If a key is already created the KeysManager will just return it. Calling CreateKey(...) multiple times with the same name for the same type will return the same key.
-
-Register/retrieve key:
 
     key1 := tagging.DefaultKeyManager().CreateKeyString("keyNameID1")
     key2 := tagging.DefaultKeyManager().CreateKeyInt64("keyNameID2")
@@ -88,42 +132,7 @@ Unubscribe from a view:
 
     viewResults := stats.Retrieve("/some/view/name")    // Fails if view is not registered
 
-## Recording usage against the registered views using the registered/created keys
-
-### Create tags
-To create a new tag set from scratch.
-
-    builder := stats.NewTagsBuilder()
-    builder.StartFromEmpty()
-    builder.AddTag(key1.CreateTag("tagValue"))  // key1 is a KeyString so its value is a string
-    builder.UpsertTag(key2.CreateTag(10))       // key2 is a KeyInt64 so its value is an int64
-    tags := builder.Build()
-
-To create a set of tags from an existing tag set:
-
-    builder.StartFromTags(existingTags)
-    builder.AddTag(key1.CreateTag("tagValue"))   // key1 is a KeyString so its value is a string
-    builder.UpdateTag(key2.CreateTag(10))        // key2 is a KeyInt64 so its value is an int64
-    tags := builder.Build()
-
-### Add tags 
-Add tags to a context for propagation to downstream methods and downstream rpcs:
-Create a new context with the tags.
-    
-    ctx := stats.ContextWithNewTags(ctx, tags)       // this will create a new context where the existing tags in the current context are replaced with the tags passed as argument.
-
-Create a new context derived from an existing context using a changes
-    
-    var changes []tags.Change
-    changes = append(changes, tags.Change(key1, "someValue", tagOpInsert))
-    changes = append(changes, ...)
-    ctx := stats.ContextWithChanges(ctx, changes)    // this will create a new context where the changed passed as argument as applied to the existing tags in the current context.
-
-Extract tags from a context:
-    
-    tags := stats.FromContext()
-
-## Record measurements against Measures with a set of tags:
+## Recording usage/measurements against the registered views using a set of tags / context:
 
 Record measurement against the measure RPCclientErrorCount with the tags:   
     

@@ -15,6 +15,8 @@
 
 package tags
 
+import "encoding/binary"
+
 // TagSetBuilder is the data structure used to build new TagSet. Its purpose
 // to ensure TagSet can be built from multiple pieces over time but that it is
 // immutable once built.
@@ -54,43 +56,74 @@ func (tb *TagSetBuilder) StartFromEncoded(encoded []byte) error {
 }
 */
 
-/*
-func (tb *TagSetBuilder) InsertString(k KeyString, s string) bool {
-	tb.ts.insertString(k, s)
+func (tb *TagSetBuilder) InsertString(k *KeyString, s string) *TagSetBuilder {
+	tb.InsertBytes(k, []byte(s))
+	return tb
 }
 
-func (tb *TagSetBuilder) InsertInt64(k KeyInt64, i int64) bool {
-	tb.ts.insertInt64(k, i)
+func (tb *TagSetBuilder) InsertInt64(k *KeyInt64, i int64) *TagSetBuilder {
+	v := make([]byte, 8)
+	binary.LittleEndian.PutUint64(v, uint64(i))
+	tb.InsertBytes(k, v)
+	return tb
 }
 
-func (tb *TagSetBuilder) InsertBool(k KeyBool, b bool) bool {
-	tb.ts.insertBool(k, b)
+func (tb *TagSetBuilder) InsertBool(k *KeyBool, b bool) *TagSetBuilder {
+	v := make([]byte, 1)
+	if b {
+		v[0] = 1
+	} else {
+		v[1] = 0
+	}
+	tb.InsertBytes(k, v)
+	return tb
 }
 
-func (tb *TagSetBuilder) UpdateString(k KeyString, s string) bool {
-	tb.ts.updateString(k, s)
+func (tb *TagSetBuilder) UpdateString(k *KeyString, s string) *TagSetBuilder {
+	tb.UpdateBytes(k, []byte(s))
+	return tb
 }
 
-func (tb *TagSetBuilder) UpdateInt64(k KeyInt64, i int64) bool {
-	tb.ts.updateInt64(k, i)
+func (tb *TagSetBuilder) UpdateInt64(k *KeyInt64, i int64) *TagSetBuilder {
+	v := make([]byte, 8)
+	binary.LittleEndian.PutUint64(v, uint64(i))
+	tb.UpdateBytes(k, v)
+	return tb
 }
 
-func (tb *TagSetBuilder) UpdateBool(k KeyBool, b bool) bool {
-	tb.ts.updateBool(k, b)
+func (tb *TagSetBuilder) UpdateBool(k *KeyBool, b bool) *TagSetBuilder {
+	v := make([]byte, 1)
+	if b {
+		v[0] = 1
+	} else {
+		v[1] = 0
+	}
+	tb.UpdateBytes(k, v)
+	return tb
 }
 
-func (tb *TagSetBuilder) UpsertString(k KeyString, s string) {
-	tb.ts.upsertString(k, s)
+func (tb *TagSetBuilder) UpsertString(k *KeyString, s string) *TagSetBuilder {
+	tb.UpsertBytes(k, []byte(s))
+	return tb
 }
 
-func (tb *TagSetBuilder) UpsertInt64(k KeyInt64, i int64) {
-	tb.ts.upsertInt64(k, i)
+func (tb *TagSetBuilder) UpsertInt64(k *KeyInt64, i int64) *TagSetBuilder {
+	v := make([]byte, 8)
+	binary.LittleEndian.PutUint64(v, uint64(i))
+	tb.UpsertBytes(k, v)
+	return tb
 }
 
-func (tb *TagSetBuilder) UpsertBool(k KeyBool, b bool) {
-	tb.ts.upsertBool(k, b)
+func (tb *TagSetBuilder) UpsertBool(k *KeyBool, b bool) *TagSetBuilder {
+	v := make([]byte, 1)
+	if b {
+		v[0] = 1
+	} else {
+		v[1] = 0
+	}
+	tb.UpsertBytes(k, v)
+	return tb
 }
-*/
 
 func (tb *TagSetBuilder) InsertBytes(k Key, bs []byte) *TagSetBuilder {
 	tb.ts.insertBytes(k, bs)
