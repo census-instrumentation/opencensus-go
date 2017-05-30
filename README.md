@@ -35,7 +35,7 @@ Register measures:
     stats.RegisterMeasureDesc(RPCclientRequestBytes)
     ...
 
-### To create/retrive a key
+### To create/retrieve a key
 To use a key. It needs to be created/retrieved. If a key is already created the KeysManager will just return it. Calling CreateKey(...) multiple times with the same name for the same type will return the same key.
 
 Register/retrieve key:
