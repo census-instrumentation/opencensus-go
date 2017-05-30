@@ -20,7 +20,7 @@ Create/retrieve key:
     key2 := tagging.DefaultKeyManager().CreateKeyInt64("keyNameID2")
     ...
 
-### Create a set of tags using keys
+### Create a set of tags associated with keys
 To create a new tag set from scratch using changes:
 
     change1 := key1.CreateChange("tagValue", TagOpUpsert)   // key1 is a KeyString so its value is a string
