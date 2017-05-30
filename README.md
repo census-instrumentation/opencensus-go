@@ -51,7 +51,7 @@ Create a new context derived from an existing context using a set of changes. Th
     changes = append(changes, ...)
     ctx2 := stats.ContextWithChanges(ctx, changes)
 
-Extract tagsSet from a context:
+### Extract tags from a context 
     
     tags := stats.FromContext()
 
