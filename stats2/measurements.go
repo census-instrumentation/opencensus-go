@@ -21,19 +21,25 @@ package stats2
 import "context"
 
 type measurementFloat64 struct {
-	m *measureDescFloat64
+	m *measureFloat64
 	v float64
 }
 
-func (md *measurementFloat64) record(ctx context.Context) {
-	// TODO(acetechnologist): record
+func (md *measurementFloat64) record(ts tagsSet) {
+	for v := range md.m.viewAggs {
+		// TODO(acetechnologist): record
+		// v.Record(ts, md.v)
+	}
 }
 
 type measurementInt64 struct {
-	m *measureDescInt64
+	m *measureInt64
 	v int64
 }
 
 func (md *measurementInt64) record(ctx context.Context) {
-	// TODO(acetechnologist): record
+	for v := range md.m.viewAggs {
+		// TODO(acetechnologist): record
+		// v.Record(ts, md.v)
+	}
 }

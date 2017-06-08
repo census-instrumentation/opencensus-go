@@ -25,149 +25,133 @@ import (
 	"github.com/google/working-instrumentation-go/tags"
 )
 
-// RegisterViewDesc registers an AggregationViewDesc. It returns an error if
-// the AggregationViewDesc cannot be registered.
-// Subsequent calls to RecordUsage with tags that match a AggregationViewDesc
-// will cause the usage to be recorded. If the registration is successful, the
-// channel is used to subscribe to the view -i.e. the collected measurements
-// for the registered AggregationViewDesc will be reported to the client
-// through channel c. Data in the channel is differential, meaning the returned
-// value is the aggregation of collected data for that view since the last
-// report. To avoid data loss, clients must ensure that channel sends proceed
-// in a timely manner. The calling code is responsible for using a buffered
-// channel for anything else than blocking on the channel waiting for the
-// collected view. Limits on the aggregation period can be set by
-// SetCallbackPeriod.
-var RegisterViewDesc func(vd *ViewDesc, c chan *View) error
-
-// UnregisterViewDesc deletes a previously registered viewDesc with the same
-// vwName. It returns an error if no registered ViewDesc can be found with the
-// same name. All data collected and not reported for the corresponding view
-// will be lost. All clients subscribed to this view are unsubscribed
-// automatically and their subscriptions channels closed.
-var UnregisterViewDesc func(vwName string) error
-
-// SubscribeToView subscribes a client to an already registered ViewDesc. It
-// allows for many clients to consume the same View with a single registration.
-// It returns an error if no registered ViewDesc can be found with the
-// same name.
-var SubscribeToView func(vwName string, c chan *View) error
-
-// UnsubscribeFromView unsubscribes a previously subscribed channel from the
-// ViewDesc subscriptions.
-// It returns an error if no ViewDesc with name vwName is found or if c is
-// not subscribed to it.
-var UnsubscribeFromView func(vwName string, c chan *View) error
-
-// RecordMeasurement records a measurement against the tags passed as part of
-// the context.
-var RecordMeasurement func(ctx context.Context, m *Measurement)
-
-// RecordManyMeasurement records multiple measurements with the same tags at
-// once.
-var RecordManyMeasurement func(ctx context.Context, ms []*Measurement)
-
-// SetCallbackPeriod sets the minimum and maximum periods for aggregation
-// reporting for all registered views in the program. The maximum period is
-// only advisory; reports may be generated less frequently than this.
-// The default period is determined by internal memory usage.  Calling
-// SetCallbackPeriod with either argument equal to zero re-enables the default
-// behavior.
-var SetCallbackPeriod func(min, max time.Duration)
-
-// CreateMeasureDescfloat64 creates a float64 measure descriptor. The name must
-// be unique. Used to link the MeasureDescFloat64 to a ViewDesc. Examples are:
+// CreateMeasureFloat64 creates a float64 measure descriptor. The name must be
+// unique. Used to link the MeasureFloat64 to a View. Examples are:
 // cpu:tickCount, diskio:time...
 // The description is used for display purposes only. It is meant to be human
 // readable and is used to show the resource in dashboards. Example are:
 // CPU profile ticks, Disk I/O, Disk usage in usecs...
-var func RegisterMeasureDescFloat64(name string, description string) (MeasureDescFloat64, error)
+var CreateMeasureFloat64 func(name string, description string) (MeasureFloat64, error)
 
-// RegisterMeasureDescInt64 creates an int64 measure descriptor. The name must
-// be unique. Used to link the MeasureDescInt64 to a ViewDesc. Examples are:
+// CreateMeasureInt64 creates an int64 measure descriptor. The name must be
+// unique. Used to link the MeasureInt64 to a View. Examples are:
 // cpu:tickCount, diskio:time...
 // The description is used for display purposes only. It is meant to be human
 // readable and is used to show the resource in dashboards. Example are:
 // CPU profile ticks, Disk I/O, Disk usage in usecs...
-var func RegisterMeasureDescInt64(name string, description string) MeasureDescFloat64
+var CreateMeasureInt64 func(name string, description string) (MeasureInt64, error)
 
-// UnregisterMeasureDesc deletes a previously registered MeasureDesc with the
-// same mName. It returns an error if no registered mName can be found with the
-// same name or if ViewDesc referring to it is still registered.
-var func UnRegisterMeasureDesc(name string) error
+// UnRegisterMeasure deletes a previously registered Measure with the same
+// mName. It returns an error if no registered mName can be found with the same
+// name or if View referring to it is still registered.
+var UnRegisterMeasure func(name string) error
 
-var func CreateMeasurementFloat64(mdf MeasureDescFloat64, f float64) Measurement
+// RecordFloat64 records a float64 value against a measure and the tags passed
+// as part of the context.
+var RecordFloat64 func(ctx context.Context, mf MeasureFloat64, v float64)
 
-var func CreateMeasurementInt64(mdi MeasureDescInt64, i int64) Measurement
+// RecordInt64 records an int64 value against a measure and the tags passed as
+// part of the context.
+var RecordInt64 func(ctx context.Context, mf MeasureInt64, v int64)
 
+// Record records one or multiple measurements with the same tags at once.
+var Record func(ctx context.Context, ms []*Measurement)
 
-
-type MeasureDesc interface {
-	isMeasureDesc() bool
+// Measure is the interface for all measure types. A measure is required when
+// defining a view.
+type Measure interface {
+	isMeasure() bool
 }
 
-type MeasureDescFloat64 interface {
-	MeasureDesc
-	CreateMeasurement(v float64) Measurement
+// MeasureFloat64 is the interface for measureFloat64.
+type MeasureFloat64 interface {
+	Measure
+	Is(v float64) Measurement
 }
 
-type MeasureDescInt64 interface {
-	MeasureDesc
-	CreateMeasurement(v int64) Measurement
+// MeasureInt64 is the interface for measureInt64.
+type MeasureInt64 interface {
+	Measure
+	Is(v int64) Measurement
 }
 
+// Measurement is the interface for all measurement types. Measurements are
+// required when recording stats.
 type Measurement interface {
 	record(ctx context.Context)
 }
 
-func CreateViewDesc(name string, description string, tagKeys []string, measureDescName string, aggregationDesc AggregationDesc, windowDesc WindowDesc) ViewDesc {
-	return nil
+// RegisterView registers view. It returns an error if the view cannot be
+// registered. Subsequent calls to Record with the same measure as the one in
+// the view will cause the usage to be recorded. If the registration is
+// successful, the channel is used to subscribe to the view -i.e. the collected
+// measurements for the registered AggregationView will be reported to the
+// client through channel c. Data in the channel is differential, meaning the
+// returned value is the aggregation of collected data for that view since the
+// last report. To avoid data loss, clients must ensure that channel sends
+// proceed in a timely manner. The calling code is responsible for using a
+// buffered channel for anything else than blocking on the channel waiting for
+// the collected view. Limits on the aggregation period can be set by
+// SetCallbackPeriod.
+var RegisterView func(vwName, description, string, tagKeys []tags.Key, measureName string, agg Aggregation, wnd Window, c chan *View) error
+
+// UnregisterView deletes a previously registered view with the same vwName. It
+// returns an error if no registered View can be found with the same name. All
+// data collected and not reported for the corresponding view will be lost. All
+// clients subscribed to this view are unsubscribed automatically and their
+// subscriptions channels closed.
+var UnregisterView func(vwName string) error
+
+// SubscribeToView subscribes a client to an already registered View. It allows
+// for many clients to consume the same View with a single registration. It
+// returns an error if no registered View can be found with the same name.
+var SubscribeToView func(vwName string, c chan *View) error
+
+// UnsubscribeFromView unsubscribes a previously subscribed channel from the
+// View subscriptions. It returns an error if no View with name vwName is found
+// or if c is not subscribed to it.
+var UnsubscribeFromView func(vwName string, c chan *View) error
+
+// SetCallbackPeriod sets the minimum and maximum periods for aggregation
+// reporting for all registered views in the program. The maximum period is
+// only advisory; reports may be generated less frequently than this. The
+// default period is determined by internal memory usage.  Calling
+// SetCallbackPeriod with either argument equal to zero re-enables the default
+// behavior.
+var SetCallbackPeriod func(min, max time.Duration)
+
+type Aggregation interface {
+	isAggregation() bool
 }
 
-// ViewDesc is a helper data structure that holds common fields to all
-// ViewAggregationDesc. It should never be used standalone but always as part
-// of a ViewAggregationDesc.
-type ViewDesc interface {
-	IsViewDesc() bool
-	Name() string
-	TagKeys() []tags.Key
-	MeasureDescName() string
-	AggregationDesc() AggregationDesc
-	WindowDesc() WindowDesc
+type Window interface {
+	isWindow() bool
 }
 
-type AggregationDesc interface {
-	IsAggregationDesc() bool
+type WindowCumulative struct {
 }
 
-type WindowDesc interface {
-	IsWindowDesc() bool
+type WindowSlidingTime struct {
 }
 
-type WindowDescCumulative struct {
-}
-
-type WindowDescSlidingTime struct {
-}
-
-type WindowDescJumpingTime struct {
+type WindowJumpingTime struct {
 }
 
 /* TODO(acetechnologist): add support for other types: slidingSpace,
 //jumpingSpace.
-type WindowDescSlidingSpace struct {
+type WindowSlidingSpace struct {
 }
 
-type WindowDescJumpingSpace struct {
+type WindowJumpingSpace struct {
 }
 */
 
-type Aggregation interface {
-	IsAggregation() bool
+type AggregationValue interface {
+	isAggregationValue() bool
 	Tags() []tags.Tag
 }
 
-type AggContinuousStatsFloat64 struct {
+type AggValueContinuousStatsFloat64 struct {
 	Count         int64
 	Min, Max, Sum float64
 	// The sum of squared deviations from the mean of the values in the
@@ -185,7 +169,7 @@ type AggContinuousStatsFloat64 struct {
 	tags           []tags.Tag
 }
 
-type AggGaugeStatsFloat64 struct {
+type AggValueGaugeStatsFloat64 struct {
 	Value float64
 	tags  []tags.Tag
 }
@@ -196,9 +180,15 @@ type AggGaugeStatsFloat64 struct {
 // reports a stream of View events to the application for further processing
 // such as further aggregations, logging and export to other services.
 type View struct {
-	ViewDesc ViewDesc
+	vwName, description string
+	tagKeys             []tags.Key
+	measure             Measure
+	agg                 Aggregation
+	wnd                 Window
+	c                   chan *View
+
 	// Aggregations is expected to be a []*AggContinuousStatsFloat64,
 	// []*AggContinuousStatsInt64a, []*AggGaugeStatsFloat64,
 	// []*AggGaugeStatsInt64, []*AggGaugeStatsBool or []*AggGaugeStatsString.
-	Aggregations interface{}
+	aggregationValues interface{}
 }

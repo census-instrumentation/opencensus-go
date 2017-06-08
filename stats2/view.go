@@ -24,34 +24,34 @@ import (
 	"github.com/google/working-instrumentation-go/tags"
 )
 
-// viewDesc is the data structure that holds the info describing the view as
-// well as the aggregated data.
-type viewDesc struct {
-	// name of ViewDesc. Must be unique.
+// view is the data structure that holds the info describing the view as well
+// as the aggregated data.
+type view struct {
+	// name of View. Must be unique.
 	name        string
 	description string
 
 	// tagKeys to perform the aggregation on.
 	tagKeys []tags.Key
 
-	// measureDescName is the name of a Measure. Examples are cpu:tickCount,
+	// measureName is the name of a Measure. Examples are cpu:tickCount,
 	// diskio:time...
-	measureDescName string
+	measureName string
 
-	// AggregationDesc is an aggregation description.
-	aggregationDesc AggregationDesc
+	// aggregation is the aggregation to perform for this view.
+	aggregation Aggregation
 
-	// WindowDesc is an aggregation window description.
-	windowDesc WindowDesc
+	// window is the window under which the aggregation is performed.
+	window Window
 
-	// start is time when ViewDesc was registered.
+	// start is time when view collection was started originally.
 	start time.Time
 
-	// vChans are the channels through which the collected views for this ViewDesc
-	// are sent to the consumers of this view.
+	// vChans are the channels through which the collected views data for this
+	// view are sent to the consumers of this view.
 	vChans map[chan *View]struct{}
 
-	// signatures holds the aggregations for each unique tag signature (values
-	// for all keys) to its *stats.Aggregator.
+	// signatures holds the aggregations values for each unique tag signature
+	// (values for all keys) to its *stats.Aggregator.
 	signatures map[string]Aggregation
 }

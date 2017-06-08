@@ -18,40 +18,48 @@
 
 package stats2
 
-type measureDescFloat64 struct {
-	name         string
-	description  string
-	aggViewDescs map[ViewDesc]struct{}
+type measureFloat64 struct {
+	name        string
+	description string
+	viewAggs    map[*View]struct{}
 }
 
-func (md *measureDescFloat64) isMeasureDesc() bool { return true }
+func (md *measureFloat64) isMeasure() bool { return true }
 
-func (md *measureDescFloat64) CreateMeasurement(v float64) Measurement {
+func (md *measureFloat64) Is(v float64) Measurement {
 	return &measurementFloat64{
 		m: md,
 		v: v,
 	}
 }
 
-type measureDescInt64 struct {
-	name         string
-	description  string
-	aggViewDescs map[ViewDesc]struct{}
+func createMeasureFloat64(name string, description string) MeasureFloat64 {
+	return &measureFloat64{
+		name:        name,
+		description: description,
+		viewAggs:    make(map[*View]struct{}),
+	}
 }
 
-func (md *measureDescInt64) isMeasureDesc() bool { return true }
+type measureInt64 struct {
+	name        string
+	description string
+	viewAggs    map[*View]struct{}
+}
 
-func (md *measureDescInt64) CreateMeasurement(v int64) Measurement {
+func (md *measureInt64) isMeasure() bool { return true }
+
+func (md *measureInt64) Is(v int64) Measurement {
 	return &measurementInt64{
 		m: md,
 		v: v,
 	}
 }
 
-func registerMeasureDescFloat64(name string, description string) MeasureDescFloat64 {
-	return &measureDescFloat64{
-		name:         name,
-		description:  description,
-		aggViewDescs: make(map[ViewDesc]struct{}),
+func createMeasureInt64(name string, description string) MeasureInt64 {
+	return &measureInt64{
+		name:        name,
+		description: description,
+		viewAggs:    make(map[*View]struct{}),
 	}
 }
