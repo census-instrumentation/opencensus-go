@@ -15,7 +15,9 @@
 
 package tags
 
-// TagSet is the object holding the tags stored in context.
+// TagSet is the object holding the tags stored in context. It is not meant to
+// be created manually by code outside the library. It should only be created
+// using the TagSetBuilder class.
 type TagSet struct {
 	m map[Key][]byte
 }

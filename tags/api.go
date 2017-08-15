@@ -32,6 +32,7 @@ var CreateChangeString func(k *KeyString, s string, op TagOp) TagChange
 // with a new set of tags. The original context set of tags is unchanged. The
 // new set of tags is the result of the old set of tags to which the Tagchanges
 // are applied.
+// NOT supported in v0.1 and is subject to change
 var ContextWithChanges func(ctx context.Context, tcs ...TagChange) context.Context
 
 // Extra functionality not supported/needed for V1.

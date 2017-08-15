@@ -52,59 +52,11 @@ func (tb *TagSetBuilder) InsertString(k *KeyString, s string) *TagSetBuilder {
 	return tb
 }
 
-// InsertInt64 inserts an int64 value 'i' associated with the the key 'k' in
-// the tags set being built. If a tag with the same key already exists in the
-// tags set being built then this is a no-op.
-func (tb *TagSetBuilder) InsertInt64(k *KeyInt64, i int64) *TagSetBuilder {
-	v := make([]byte, 8)
-	binary.LittleEndian.PutUint64(v, uint64(i))
-	tb.insertBytes(k, v)
-	return tb
-}
-
-// InsertBool inserts an bool value 'b' associated with the the key 'k' in the
-// tags set being built. If a tag with the same key already exists in the tags
-// set being built then this is a no-op.
-func (tb *TagSetBuilder) InsertBool(k *KeyBool, b bool) *TagSetBuilder {
-	v := make([]byte, 1)
-	if b {
-		v[0] = 1
-	} else {
-		v[1] = 0
-	}
-	tb.insertBytes(k, v)
-	return tb
-}
-
 // UpdateString updates a string value 's' associated with the the key 'k' in
 // the tags set being built. If a no tag with the same key is already present
 // in the tags set being built then this is a no-op.
 func (tb *TagSetBuilder) UpdateString(k *KeyString, s string) *TagSetBuilder {
 	tb.updateBytes(k, []byte(s))
-	return tb
-}
-
-// UpdateInt64 updates an int64 value 'i' associated with the the key 'k' in
-// the tags set being built. If a no tag with the same key is already present
-// in the tags set being built then this is a no-op.
-func (tb *TagSetBuilder) UpdateInt64(k *KeyInt64, i int64) *TagSetBuilder {
-	v := make([]byte, 8)
-	binary.LittleEndian.PutUint64(v, uint64(i))
-	tb.updateBytes(k, v)
-	return tb
-}
-
-// UpdateBool updates a bool value 'b' associated with the the key 'k' in the
-// tags set being built. If a no tag with the same key is already present in
-// the tags set being built then this is a no-op.
-func (tb *TagSetBuilder) UpdateBool(k *KeyBool, b bool) *TagSetBuilder {
-	v := make([]byte, 1)
-	if b {
-		v[0] = 1
-	} else {
-		v[1] = 0
-	}
-	tb.updateBytes(k, v)
 	return tb
 }
 
@@ -115,26 +67,19 @@ func (tb *TagSetBuilder) UpsertString(k *KeyString, s string) *TagSetBuilder {
 	return tb
 }
 
-// UpsertInt64 updates or insert an int64 value 'i' associated with the key 'k'
-// in the tags set being built.
-func (tb *TagSetBuilder) UpsertInt64(k *KeyInt64, i int64) *TagSetBuilder {
-	v := make([]byte, 8)
-	binary.LittleEndian.PutUint64(v, uint64(i))
-	tb.upsertBytes(k, v)
+// Delete deletes the tag associated with the the key 'k' in the tags set being
+// built. If a no tag with the same key exists in the tags set being built then
+// this is a no-op.
+func (tb *TagSetBuilder) Delete(k Key) *TagSetBuilder {
+	tb.ts.delete(k)
 	return tb
 }
 
-// UpsertBool updates or insert a bool value 'b' associated with the key 'k' in
-// the tags set being built.
-func (tb *TagSetBuilder) UpsertBool(k *KeyBool, b bool) *TagSetBuilder {
-	v := make([]byte, 1)
-	if b {
-		v[0] = 1
-	} else {
-		v[1] = 0
-	}
-	tb.upsertBytes(k, v)
-	return tb
+// Build returns the built TagSet and clears the builder.
+func (tb *TagSetBuilder) Build() *TagSet {
+	ts := tb.ts
+	tb.ts = nil
+	return ts
 }
 
 func (tb *TagSetBuilder) insertBytes(k Key, bs []byte) *TagSetBuilder {
@@ -152,13 +97,87 @@ func (tb *TagSetBuilder) upsertBytes(k Key, bs []byte) *TagSetBuilder {
 	return tb
 }
 
-// Delete deletes the tag associated with the the key 'k' in the tags set being
-// built. If a no tag with the same key exists in the tags set being built then
-// this is a no-op.
-func (tb *TagSetBuilder) Delete(k Key) *TagSetBuilder {
-	tb.ts.delete(k)
+//-----------------------------------------------------------------------------
+// The methods below related to int64 tag types are not supported in v0.1 and
+// are subject to change.
+
+// InsertInt64 inserts an int64 value 'i' associated with the the key 'k' in
+// the tags set being built. If a tag with the same key already exists in the
+// tags set being built then this is a no-op.
+func (tb *TagSetBuilder) InsertInt64(k *KeyInt64, i int64) *TagSetBuilder {
+	v := make([]byte, 8)
+	binary.LittleEndian.PutUint64(v, uint64(i))
+	tb.insertBytes(k, v)
 	return tb
 }
+
+// UpdateInt64 updates an int64 value 'i' associated with the the key 'k' in
+// the tags set being built. If a no tag with the same key is already present
+// in the tags set being built then this is a no-op.
+func (tb *TagSetBuilder) UpdateInt64(k *KeyInt64, i int64) *TagSetBuilder {
+	v := make([]byte, 8)
+	binary.LittleEndian.PutUint64(v, uint64(i))
+	tb.updateBytes(k, v)
+	return tb
+}
+
+// UpsertInt64 updates or insert an int64 value 'i' associated with the key 'k'
+// in the tags set being built.
+func (tb *TagSetBuilder) UpsertInt64(k *KeyInt64, i int64) *TagSetBuilder {
+	v := make([]byte, 8)
+	binary.LittleEndian.PutUint64(v, uint64(i))
+	tb.upsertBytes(k, v)
+	return tb
+}
+
+//-----------------------------------------------------------------------------
+// The methods below related to bool tag types are not supported in v0.1 and
+// are subject to change.
+
+// UpsertBool updates or insert a bool value 'b' associated with the key 'k' in
+// the tags set being built.
+func (tb *TagSetBuilder) UpsertBool(k *KeyBool, b bool) *TagSetBuilder {
+	v := make([]byte, 1)
+	if b {
+		v[0] = 1
+	} else {
+		v[1] = 0
+	}
+	tb.upsertBytes(k, v)
+	return tb
+}
+
+// UpdateBool updates a bool value 'b' associated with the the key 'k' in the
+// tags set being built. If a no tag with the same key is already present in
+// the tags set being built then this is a no-op.
+func (tb *TagSetBuilder) UpdateBool(k *KeyBool, b bool) *TagSetBuilder {
+	v := make([]byte, 1)
+	if b {
+		v[0] = 1
+	} else {
+		v[1] = 0
+	}
+	tb.updateBytes(k, v)
+	return tb
+}
+
+// InsertBool inserts an bool value 'b' associated with the the key 'k' in the
+// tags set being built. If a tag with the same key already exists in the tags
+// set being built then this is a no-op.
+func (tb *TagSetBuilder) InsertBool(k *KeyBool, b bool) *TagSetBuilder {
+	v := make([]byte, 1)
+	if b {
+		v[0] = 1
+	} else {
+		v[1] = 0
+	}
+	tb.insertBytes(k, v)
+	return tb
+}
+
+//-----------------------------------------------------------------------------
+// The methods below related to TagChange are not supported in v0.1 and are
+// subject to change
 
 // Apply applies a set of changes to the tags set being built.
 func (tb *TagSetBuilder) Apply(tcs ...TagChange) *TagSetBuilder {
@@ -177,11 +196,4 @@ func (tb *TagSetBuilder) Apply(tcs ...TagChange) *TagSetBuilder {
 		}
 	}
 	return tb
-}
-
-// Build returns the built TagSet and clears the builder.
-func (tb *TagSetBuilder) Build() *TagSet {
-	ts := tb.ts
-	tb.ts = nil
-	return ts
 }
