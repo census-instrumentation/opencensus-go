@@ -25,14 +25,14 @@ import (
 
 // RecordFloat64 records a float64 value against a measure and the tags passed
 // as part of the context.
-var RecordFloat64 func(ctx context.Context, mf MeasureFloat64, v float64)
+func RecordFloat64(ctx context.Context, mf MeasureFloat64, v float64) {}
 
 // RecordInt64 records an int64 value against a measure and the tags passed as
 // part of the context.
-var RecordInt64 func(ctx context.Context, mf MeasureInt64, v int64)
+func RecordInt64(ctx context.Context, mf MeasureInt64, v int64) {}
 
 // Record records one or multiple measurements with the same tags at once.
-var Record func(ctx context.Context, ms []*Measurement)
+func Record(ctx context.Context, ms []Measurement) {}
 
 // SetCallbackPeriod sets the minimum and maximum periods for aggregation
 // reporting for all registered views in the program. The maximum period is
@@ -40,4 +40,4 @@ var Record func(ctx context.Context, ms []*Measurement)
 // default period is determined by internal memory usage.  Calling
 // SetCallbackPeriod with either argument equal to zero re-enables the default
 // behavior.
-var SetCallbackPeriod func(min, max time.Duration)
+func SetCallbackPeriod func(min, max time.Duration) {}

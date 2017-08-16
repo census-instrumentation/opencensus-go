@@ -35,7 +35,7 @@ func UnregisterView(m Measure) error {
 }
 
 // GetMeasureByName returns the registered measure associated with name.
-func GetMeasureByName func(name string) (Measure, error) {
+func GetMeasureByName(name string) (Measure, error) {
 	// TODO
 	return nil
 }
