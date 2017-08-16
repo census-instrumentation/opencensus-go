@@ -13,10 +13,11 @@
 // limitations under the License.
 //
 
-// Package stats defines the stats collection API and its native Go
-// implementation.
-
 package stats2
+
+//-----------------------------------------------------------------------------
+// Part of measurements.go
+//-----------------------------------------------------------------------------
 
 /* TODO(acetechnologist): add support for other types: AggContinuousStatsInt64,
 // AggGaugeStatsInt64, AggGaugeStatsBool, AggGaugeStatsString
@@ -33,7 +34,7 @@ type AggContinuousStatsInt64 struct {
 	SumOfSquaredDeviation float64
 	// CountPerBucket is the set of occurrences count per bucket. The
 	// buckets bounds are the same as the ones setup in
-	// AggregationDesc.
+	// Aggregation.
 	CountPerBucket []int64
 	tags           []tags.Tag
 }

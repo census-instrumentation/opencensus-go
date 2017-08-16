@@ -13,10 +13,29 @@
 // limitations under the License.
 //
 
-package tags
+// Package stats defines the stats collection API and its native Go
+// implementation.
 
-// Tag is the tuple (key, value) used only when extracting []Tag from a TagSet.
-type Tag struct {
-	K Key
-	V []byte
+package stats2
+
+type Window interface {
+	isWindow() bool
 }
+
+type WindowCumulative struct {
+}
+
+type WindowSlidingTime struct {
+}
+
+type WindowJumpingTime struct {
+}
+
+/* TODO(acetechnologist): add support for other types: slidingSpace,
+//jumpingSpace.
+type WindowSlidingSpace struct {
+}
+
+type WindowJumpingSpace struct {
+}
+*/

@@ -22,20 +22,20 @@ import (
 
 func Test_EncodeDecode_ValuesBytes(t *testing.T) {
 	type testData struct {
+		label     int
 		tagsSet   *TagSet
 		keys      []Key
-		wantSlice []*Tag
+		wantSlice map[Key][]byte
 	}
 
-	DefaultKeyManager().Clear()
-	k1, _ := DefaultKeyManager().CreateKeyString("k1")
-	k2, _ := DefaultKeyManager().CreateKeyString("k2")
-	k3, _ := DefaultKeyManager().CreateKeyString("k3")
-	k4, _ := DefaultKeyManager().CreateKeyInt64("k4")
-	k5, _ := DefaultKeyManager().CreateKeyBool("k5")
+	km := newKeysManager()
+	k1, _ := km.createKeyString("k1")
+	k2, _ := km.createKeyString("k2")
+	k3, _ := km.createKeyString("k3")
 
 	testSet := []testData{
 		{
+			0,
 			&TagSet{
 				map[Key][]byte{},
 			},
@@ -43,63 +43,69 @@ func Test_EncodeDecode_ValuesBytes(t *testing.T) {
 			nil,
 		},
 		{
+			1,
 			&TagSet{
-				map[Key][]byte{},
+				map[Key][]byte{k2: []byte("v2")},
 			},
-			[]Key{k2},
+			[]Key{},
 			nil,
 		},
 		{
+			3,
 			&TagSet{
-				map[Key][]byte{k2: k2.CreateTag("v2").V},
+				map[Key][]byte{k2: []byte("v2")},
 			},
 			[]Key{k1},
 			nil,
 		},
 		{
+			4,
 			&TagSet{
-				map[Key][]byte{k2: k2.CreateTag("v2").V},
+				map[Key][]byte{k2: []byte("v2")},
 			},
 			[]Key{k2},
-			[]*Tag{k2.CreateTag("v2")},
+			map[Key][]byte{
+				k2: []byte("v2"),
+			},
 		},
 		{
+			5,
 			&TagSet{
 				map[Key][]byte{
-					k1: k1.CreateTag("v1").V,
-					k2: k2.CreateTag("v2").V},
+					k1: []byte("v1"),
+					k2: []byte("v2")},
 			},
 			[]Key{k1},
-			[]*Tag{k1.CreateTag("v1")},
-		},
-		{
-			&TagSet{
-				map[Key][]byte{
-					k2: k2.CreateTag("v2").V,
-					k1: k1.CreateTag("v1").V},
+			map[Key][]byte{
+				k1: []byte("v1"),
 			},
-			[]Key{k1},
-			[]*Tag{k1.CreateTag("v1")},
 		},
 		{
+			6,
 			&TagSet{
 				map[Key][]byte{
-					k1: k1.CreateTag("v1").V,
-					k2: k2.CreateTag("v2").V,
-					k3: k3.CreateTag("v3").V},
+					k2: []byte("v2"),
+					k1: []byte("v1")},
+			},
+			[]Key{k1, k2},
+			map[Key][]byte{
+				k1: []byte("v1"),
+				k2: []byte("v2"),
+			},
+		},
+		{
+			7,
+			&TagSet{
+				map[Key][]byte{
+					k1: []byte("v1"),
+					k2: []byte("v2"),
+					k3: []byte("v3")},
 			},
 			[]Key{k3, k1},
-			[]*Tag{k3.CreateTag("v3"), k1.CreateTag("v1")},
-		},
-		{
-			&TagSet{
-				map[Key][]byte{
-					k1: k1.CreateTag("v1").V,
-					k4: k4.CreateTag(10).V,
-					k5: k5.CreateTag(true).V},
+			map[Key][]byte{
+				k1: []byte("v1"),
+				k3: []byte("v3"),
 			},
-			[]Key{k3, k4, k5},
-			[]*Tag{k4.CreateTag(10), k5.CreateTag(true)},
 		},
 	}
 
@@ -108,82 +114,20 @@ func Test_EncodeDecode_ValuesBytes(t *testing.T) {
 		builder.StartFromTagSet(td.tagsSet)
 		ts := builder.Build()
 
-		vb := ts.toValuesBytes(td.keys)
+		vb := toValuesBytes(ts, td.keys)
 		got := vb.toMap(td.keys)
 		if len(got) != len(td.wantSlice) {
 			t.Errorf("got len(decoded)=%v, want %v. Test case: %v", len(got), len(td.wantSlice), i)
 		}
 
-		for _, tag := range td.wantSlice {
-			v, ok := got[tag.K]
+		for wantK, wantV := range td.wantSlice {
+			v, ok := got[wantK]
 			if !ok {
-				t.Errorf("got key %v not found in decoded %v, want it found. Test case: %v", tag.K.Name(), got, i)
+				t.Errorf("got key %v not found in decoded %v, want it found. Test case: %v", wantK.Name(), got, i)
 			}
-			if !reflect.DeepEqual(v, tag.V) {
-				t.Errorf("got tag %v in decoded, want %v. Test case: %v", v, tag.V, i)
+			if !reflect.DeepEqual(v, wantV) {
+				t.Errorf("got tag %v in decoded, want %v. Test case: %v", v, wantV, i)
 			}
 		}
-	}
-}
-
-// Benchmark_Encode_ValuesBytes_When1TagPresent measures the performance of
-// calling EncodeToValuesBytes a context with 1 tag where its key and value
-// are around 80 characters each.
-func Benchmark_Encode_ValuesBytes_When1TagPresent(b *testing.B) {
-	ts, _ := createTagChange(1)
-	var keys []Key
-	for k, _ := range ts.m {
-		keys = append(keys, k)
-	}
-
-	for i := 0; i < b.N; i++ {
-		_ = ts.toValuesBytes(keys)
-	}
-}
-
-// Benchmark_Decode_ValuesBytes_When1TagPresent measures the performance of
-// calling DecodeFromValuesBytesToTagSet when signature has 1 tag and its
-// key and value are around 80 characters each.
-func Benchmark_Decode_ValuesBytes_When1TagPresent(b *testing.B) {
-	ts, _ := createTagChange(1)
-	var keys []Key
-	for k := range ts.m {
-		keys = append(keys, k)
-	}
-	vb := ts.toValuesBytes(keys)
-
-	for i := 0; i < b.N; i++ {
-		_ = vb.toMap(keys)
-	}
-}
-
-// Benchmark_Encode_ValuesBytes_When100TagsPresent measures the performance
-// of calling EncodeToValuesBytes a context with 100 tags where each tag
-// key and value are around 80 characters each.
-func Benchmark_Encode_ValuesBytes_When100TagsPresent(b *testing.B) {
-	ts, _ := createTagChange(100)
-	var keys []Key
-	for k := range ts.m {
-		keys = append(keys, k)
-	}
-
-	for i := 0; i < b.N; i++ {
-		_ = ts.toValuesBytes(keys)
-	}
-}
-
-// Benchmark_Decode_ValuesBytes_When100TagsPresent measures the performance
-// of calling DecodeFromValuesBytesToTagSet when signature has 100 tags
-// and each tag key and value are around 80 characters each.
-func Benchmark_Decode_ValuesBytes_When100TagsPresent(b *testing.B) {
-	ts, _ := createTagChange(100)
-	var keys []Key
-	for k := range ts.m {
-		keys = append(keys, k)
-	}
-	vb := ts.toValuesBytes(keys)
-
-	for i := 0; i < b.N; i++ {
-		_ = vb.toMap(keys)
 	}
 }

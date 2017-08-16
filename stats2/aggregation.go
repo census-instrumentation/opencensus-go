@@ -18,6 +18,21 @@
 
 package stats2
 
+import "github.com/google/working-instrumentation-go/tags"
+
+type Rows struct {
+	Tags           []tags.Tags
+	AggregateValue AggregateValue
+}
+
+type AggregateValue interface {
+	isAggregate() bool
+}
+
+type Aggregation interface {
+	isAggregation() bool
+}
+
 // aggDescContinuousFloat64 holds the parameters describing a histogram
 // distribution.
 type aggDescContinuousFloat64 struct {
@@ -74,4 +89,27 @@ type aggDescGaugeBool struct {
 
 // aggDescGaugeString describes a gauge distribution.
 type aggDescGaugeString struct {
+}
+
+type AggValueContinuousStatsFloat64 struct {
+	Count         int64
+	Min, Max, Sum float64
+	// The sum of squared deviations from the mean of the values in the
+	// population. For values x_i this is:
+	//
+	//     Sum[i=1..n]((x_i - mean)^2)
+	//
+	// Knuth, "The Art of Computer Programming", Vol. 2, page 323, 3rd edition
+	// describes Welford's method for accumulating this sum in one pass.
+	SumOfSquaredDeviation float64
+	// CountPerBucket is the set of occurrences count per bucket. The
+	// buckets bounds are the same as the ones setup in
+	// Aggregation.
+	CountPerBucket []int64
+	tags           []tags.Tag
+}
+
+type AggValueGaugeStatsFloat64 struct {
+	Value float64
+	tags  []tags.Tag
 }

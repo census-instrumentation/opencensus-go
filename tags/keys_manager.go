@@ -29,93 +29,23 @@ const (
 	validKeysMax = 0x7e
 )
 
-// KeysManager is the interface that a keys manager implementation needs to
-// satisfy. The keys manager is invoked to create/retrieve a key given its
-// name/ID. It ensures that keys have unique names/IDs.
-type KeysManager interface {
-	CreateKeyString(name string) (*KeyString, error)
-	CreateKeyInt64(name string) (*KeyInt64, error)
-	CreateKeyBool(name string) (*KeyBool, error)
-	Count() int
-	Clear()
-}
-
 type keysManager struct {
 	*sync.Mutex
 	keys      map[string]Key
 	nextKeyID uint16
 }
 
-var defaultKeysManager = &keysManager{
-	keys:  make(map[string]Key),
-	Mutex: &sync.Mutex{},
-}
-
-// DefaultKeyManager returns the singleton defaultKeysManager. Because it is a
-// singleton, the defaultKeysManager can easily ensure the keys have unique
-// names/IDs.
-func DefaultKeyManager() KeysManager {
-	return defaultKeysManager
-}
-
-// CreateKeyInt64 creates or retrieves a key of type keyInt64 with name/ID set
-// to the input argument name. Returns an error if a key with the same name
-// exists and is of a different type.
-func (km *keysManager) CreateKeyInt64(name string) (*KeyInt64, error) {
-	if !validateKeyName(name) {
-		return nil, fmt.Errorf("key name %v is invalid", name)
+func newKeysManager() *keysManager {
+	return &keysManager{
+		keys:  make(map[string]Key),
+		Mutex: &sync.Mutex{},
 	}
-	km.Lock()
-	defer km.Unlock()
-	k, ok := km.keys[name]
-	if ok {
-		ki, ok := k.(*KeyInt64)
-		if !ok {
-			return nil, fmt.Errorf("key with name %v cannot be created/retrieved as type *keyInt64. It was already registered as type %T", name, k)
-		}
-		return ki, nil
-	}
-
-	ki := &KeyInt64{
-		name: name,
-		id:   km.nextKeyID,
-	}
-	km.nextKeyID++
-	km.keys[name] = ki
-	return ki, nil
-}
-
-// CreateKeyBool creates or retrieves a key of type keyBool with name/ID set to
-// the input argument name. Returns an error if a key with the same name exists
-// and is of a different type.
-func (km *keysManager) CreateKeyBool(name string) (*KeyBool, error) {
-	if !validateKeyName(name) {
-		return nil, fmt.Errorf("key name %v is invalid", name)
-	}
-	km.Lock()
-	defer km.Unlock()
-	k, ok := km.keys[name]
-	if ok {
-		kb, ok := k.(*KeyBool)
-		if !ok {
-			return nil, fmt.Errorf("key with name %v cannot be created/retrieved as type *keyBool. It was already registered as type %T", name, k)
-		}
-		return kb, nil
-	}
-
-	kb := &KeyBool{
-		name: name,
-		id:   km.nextKeyID,
-	}
-	km.nextKeyID++
-	km.keys[name] = kb
-	return kb, nil
 }
 
 // CreateKeyString creates or retrieves a key of type keyString with name/ID
 // set to the input argument name. Returns an error if a key with the same name
 // exists and is of a different type.
-func (km *keysManager) CreateKeyString(name string) (*KeyString, error) {
+func (km *keysManager) createKeyString(name string) (*KeyString, error) {
 	if !validateKeyName(name) {
 		return nil, fmt.Errorf("key name %v is invalid", name)
 	}
@@ -140,13 +70,13 @@ func (km *keysManager) CreateKeyString(name string) (*KeyString, error) {
 	return ks, nil
 }
 
-func (km *keysManager) Count() int {
+func (km *keysManager) count() int {
 	km.Lock()
-	defer km.Unlock()	
+	defer km.Unlock()
 	return len(km.keys)
 }
 
-func (km *keysManager) Clear() {
+func (km *keysManager) clear() {
 	km.Lock()
 	defer km.Unlock()
 	for k := range km.keys {
@@ -165,3 +95,11 @@ func validateKeyName(name string) bool {
 	}
 	return true
 }
+
+func init() {
+	km := newKeysManager()
+	CreateKeyString = km.createKeyString
+}
+
+// CreateKeyString creates/retrieves the *KeyString identified by name.
+var CreateKeyString func(name string) (*KeyString, error)

@@ -20,6 +20,12 @@ package stats2
 
 import "context"
 
+// Measurement is the interface for all measurement types. Measurements are
+// required when recording stats.
+type Measurement interface {
+	record(ts tagsSet)
+}
+
 type measurementFloat64 struct {
 	m *measureFloat64
 	v float64

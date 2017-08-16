@@ -19,126 +19,52 @@ import "testing"
 
 func Test_KeysManager_NoErrors(t *testing.T) {
 	type testData struct {
-		createCommands      []func() (Key, error)
+		createCommands      []func(km *keysManager) (Key, error)
 		wantCount           int
 		wantCountAfterClear int
 	}
 
 	testSet := []testData{
 		{
-			[]func() (Key, error){
-				func() (Key, error) { return DefaultKeyManager().CreateKeyString("k1") },
-				func() (Key, error) { return DefaultKeyManager().CreateKeyString("k2") },
-				func() (Key, error) { return DefaultKeyManager().CreateKeyInt64("k3") },
-				func() (Key, error) { return DefaultKeyManager().CreateKeyBool("k4") },
+			[]func(km *keysManager) (Key, error){
+				func(km *keysManager) (Key, error) { return km.createKeyString("k1") },
+				func(km *keysManager) (Key, error) { return km.createKeyString("k2") },
 			},
-			4,
+			2,
 			0,
 		},
 		{
-			[]func() (Key, error){
-				func() (Key, error) { return DefaultKeyManager().CreateKeyString("k1") },
-				func() (Key, error) { return DefaultKeyManager().CreateKeyString("k1") },
+			[]func(km *keysManager) (Key, error){
+				func(km *keysManager) (Key, error) { return km.createKeyString("k1") },
+				func(km *keysManager) (Key, error) { return km.createKeyString("k1") },
 			},
 			1,
 			0,
 		},
 		{
-			[]func() (Key, error){
-				func() (Key, error) { return DefaultKeyManager().CreateKeyBool("k1") },
-				func() (Key, error) { return DefaultKeyManager().CreateKeyBool("k1") },
-			},
-			1,
-			0,
-		},
-		{
-			[]func() (Key, error){
-				func() (Key, error) { return DefaultKeyManager().CreateKeyInt64("k1") },
-				func() (Key, error) { return DefaultKeyManager().CreateKeyInt64("k1") },
-			},
-			1,
-			0,
-		},
-		{
-			[]func() (Key, error){
-			},
+			[]func(km *keysManager) (Key, error){},
 			0,
 			0,
 		},
 	}
 
 	for i, td := range testSet {
-		DefaultKeyManager().Clear()
+		km := newKeysManager()
 		for j, f := range td.createCommands {
-			_, err := f()
+			_, err := f(km)
 			if err != nil {
-				t.Errorf("got error %v, want no error calling DefaultKeyManager().CreateKeyXYZ(...). Test case: %v, function: %v", err, i, j)
+				t.Errorf("got error %v, want no error calling keysManager.createKeyXYZ(...). Test case: %v, function: %v", err, i, j)
 			}
 		}
-		gotCount := DefaultKeyManager().Count()
+		gotCount := km.count()
 		if gotCount != td.wantCount {
 			t.Errorf("got keys count %v, want keys count %v", gotCount, td.wantCount)
 		}
 
-		DefaultKeyManager().Clear()
-		gotCountAfterClear := DefaultKeyManager().Count()
+		km.clear()
+		gotCountAfterClear := km.count()
 		if gotCountAfterClear != td.wantCountAfterClear {
-			t.Errorf("got keys count %v, want keys count %v after Clear()", gotCountAfterClear, td.wantCountAfterClear)
+			t.Errorf("got keys count %v, want keys count %v after clear()", gotCountAfterClear, td.wantCountAfterClear)
 		}
-	}
-}
-
-func Test_KeysManager_ExpectErrors(t *testing.T) {
-	type testData struct {
-		createCommands []func() (Key, error)
-		wantErrCount   int
-	}
-
-	testSet := []testData{
-		{
-			[]func() (Key, error){
-				func() (Key, error) { return DefaultKeyManager().CreateKeyString("k1") },
-				func() (Key, error) { return DefaultKeyManager().CreateKeyInt64("k1") },
-				func() (Key, error) { return DefaultKeyManager().CreateKeyBool("k1") },
-				func() (Key, error) { return DefaultKeyManager().CreateKeyString("k1") },
-			},
-			2,
-		},
-		{
-			[]func() (Key, error){
-				func() (Key, error) { return DefaultKeyManager().CreateKeyInt64("k1") },
-				func() (Key, error) { return DefaultKeyManager().CreateKeyBool("k1") },
-			},
-			1,
-		},
-		{
-			[]func() (Key, error){
-				func() (Key, error) { return DefaultKeyManager().CreateKeyInt64("k1") },
-				func() (Key, error) { return DefaultKeyManager().CreateKeyString("k1") },
-			},
-			1,
-		},
-		{
-			[]func() (Key, error){
-				func() (Key, error) { return DefaultKeyManager().CreateKeyBool("k1") },
-				func() (Key, error) { return DefaultKeyManager().CreateKeyString("k1") },
-			},
-			1,
-		},
-	}
-
-	for i, td := range testSet {
-		gotErrCount := 0
-		for _, f := range td.createCommands {
-			_, err := f()
-			if err != nil {
-				gotErrCount++
-			}
-		}
-
-		if gotErrCount != td.wantErrCount {
-			t.Errorf("got errors count %v, want errors count %v. Test case %v", gotErrCount, td.wantErrCount, i)
-		}
-		DefaultKeyManager().Clear()
 	}
 }

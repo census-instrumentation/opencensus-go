@@ -24,9 +24,9 @@ import (
 	"github.com/google/working-instrumentation-go/tags"
 )
 
-// view is the data structure that holds the info describing the view as well
+// View is the data structure that holds the info describing the view as well
 // as the aggregated data.
-type view struct {
+type View struct {
 	// name of View. Must be unique.
 	name        string
 	description string
@@ -34,11 +34,11 @@ type view struct {
 	// tagKeys to perform the aggregation on.
 	tagKeys []tags.Key
 
-	// measureName is the name of a Measure. Examples are cpu:tickCount,
-	// diskio:time...
-	measureName string
+	// Examples of measures are cpu:tickCount, diskio:time...
+	measure Measure
 
-	// aggregation is the aggregation to perform for this view.
+	// aggregation is the description of the aggregation to perform for this
+	// view.
 	aggregation Aggregation
 
 	// window is the window under which the aggregation is performed.
@@ -54,4 +54,78 @@ type view struct {
 	// signatures holds the aggregations values for each unique tag signature
 	// (values for all keys) to its *stats.Aggregator.
 	signatures map[string]Aggregation
+}
+
+// A View is a set of Aggregations about usage of the single resource
+// associated with the given view during a particular time interval. Each
+// Aggregation is specific to a unique set of tags. The Census infrastructure
+// reports a stream of View events to the application for further processing
+// such as further aggregations, logging and export to other services.
+type ViewData struct {
+	v *View
+
+	// Aggregations is expected to be a []*AggContinuousStatsFloat64,
+	// []*AggContinuousStatsInt64a, []*AggGaugeStatsFloat64,
+	// []*AggGaugeStatsInt64, []*AggGaugeStatsBool or []*AggGaugeStatsString.
+	rows Rows
+}
+
+// NewView creates a new *view.
+func NewView(name, description, string, keys []tags.Key, measure Measure, agg Aggregation, w Window) (*View, error) {
+	// TODO
+	return nil, nil
+}
+
+// RegisterView registers view. It returns an error if the view cannot be
+// registered. Subsequent calls to Record with the same measure as the one in
+// the view will NOT cause the usage to be recorded unless a consumer is
+// subscribed to the view or StartCollectionForAdhoc for this view is called.
+func RegisterView(v *View) error {
+
+}
+
+// UnregisterView deletes the previously registered view. It returns an error
+// if no registered View can be found with the same name. All data collected
+// and not reported for the corresponding view will be lost. All clients
+// subscribed to this view are unsubscribed automatically and their
+// subscriptions channels closed.
+func UnregisterView(v *View) error {
+
+}
+
+// GetViewByName returns the registered view associated with this name.
+func GetViewByName(name string) (*View, error) {
+
+}
+
+// SubscribeToView subscribes a client to a View. If the view wasn't already
+// registered, it will be automatically registered. It allows for many clients
+// to consume the same ViewData with a single registration. -i.e. the aggregate
+// of the collected measurements will be reported to the calling code through
+// channel c. To avoid data loss, clients must ensure that channel sends
+// proceed in a timely manner. The calling code is responsible for using a
+// buffered channel or blocking on the channel waiting for the collected data.
+func SubscribeToView(v *View, c chan *ViewData) error {
+}
+
+// UnsubscribeFromView unsubscribes a previously subscribed channel from the
+// View subscriptions. If no more subscriber for v exists and the the ad hoc
+// collection for this view isn't active, data stops being collected for this
+// view.
+func UnsubscribeFromView(v *View, c chan *ViewData) error {
+}
+
+// StartCollectionForAdhoc starts data collection for this view even if no
+// listeners are subscribed to it.
+func StartCollectionForAdhoc(v *View) error {
+}
+
+// StopCollectionForAdhoc stops data collection for this view unless at least
+// 1 listener is subscribed to it.
+func StopCollectionForAdhoc(v *View) error {
+}
+
+// RetrieveData returns the current collected data for the view.
+func RetrieveData func(v *View) (*ViewData, error) {
+
 }

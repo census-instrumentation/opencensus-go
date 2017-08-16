@@ -87,3 +87,14 @@ func (vb *valuesBytes) toMap(ks []Key) map[Key][]byte {
 func (vb *valuesBytes) Bytes() []byte {
 	return vb.buf[:vb.wIdx]
 }
+
+func toValuesBytes(ts *TagSet, ks []Key) *valuesBytes {
+	vb := &valuesBytes{
+		buf: make([]byte, len(ks)),
+	}
+	for _, k := range ks {
+		v := ts.m[k]
+		vb.writeValue(v)
+	}
+	return vb
+}
