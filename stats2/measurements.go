@@ -18,33 +18,35 @@
 
 package stats2
 
-import "context"
+import (
+	"github.com/google/working-instrumentation-go/tags"
+)
 
 // Measurement is the interface for all measurement types. Measurements are
 // required when recording stats.
 type Measurement interface {
-	record(ts tagsSet)
+	record(ts tags.TagSet)
 }
 
 type measurementFloat64 struct {
-	m *measureFloat64
+	m *MeasureFloat64
 	v float64
 }
 
-func (md *measurementFloat64) record(ts tagsSet) {
-	for v := range md.m.viewAggs {
+func (mf *measurementFloat64) record(ts tags.TagSet) {
+	for _ = range mf.m.viewAggs {
 		// TODO(acetechnologist): record
 		// v.Record(ts, md.v)
 	}
 }
 
 type measurementInt64 struct {
-	m *measureInt64
+	m *MeasureInt64
 	v int64
 }
 
-func (md *measurementInt64) record(ctx context.Context) {
-	for v := range md.m.viewAggs {
+func (mi *measurementInt64) record(ts tags.TagSet) {
+	for _ = range mi.m.viewAggs {
 		// TODO(acetechnologist): record
 		// v.Record(ts, md.v)
 	}

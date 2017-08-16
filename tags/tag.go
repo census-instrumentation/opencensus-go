@@ -13,14 +13,10 @@
 // limitations under the License.
 //
 
-package stats
+package tags
 
-// measurementInt64 represents a measurement which value is of type int64.
-type measurementInt64 struct {
-	md MeasureDesc
-	v  int64
-}
-
-func (mi *measurementInt64) measureDesc() MeasureDesc {
-	return mi.md
+// Tag is the tuple (key, value) used only when extracting []Tag from a TagSet.
+type Tag struct {
+	K Key
+	V []byte
 }

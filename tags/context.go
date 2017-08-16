@@ -15,7 +15,7 @@
 
 package tags
 
-import "golang.org/x/net/context"
+import "context"
 
 type ctxKey struct{}
 

@@ -40,4 +40,4 @@ func Record(ctx context.Context, ms []Measurement) {}
 // default period is determined by internal memory usage.  Calling
 // SetCallbackPeriod with either argument equal to zero re-enables the default
 // behavior.
-func SetCallbackPeriod func(min, max time.Duration) {}
+func SetCallbackPeriod(min, max time.Duration) {}

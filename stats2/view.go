@@ -81,7 +81,7 @@ func NewView(name, description, string, keys []tags.Key, measure Measure, agg Ag
 // the view will NOT cause the usage to be recorded unless a consumer is
 // subscribed to the view or StartCollectionForAdhoc for this view is called.
 func RegisterView(v *View) error {
-
+	return nil
 }
 
 // UnregisterView deletes the previously registered view. It returns an error
@@ -90,12 +90,12 @@ func RegisterView(v *View) error {
 // subscribed to this view are unsubscribed automatically and their
 // subscriptions channels closed.
 func UnregisterView(v *View) error {
-
+	return nil
 }
 
 // GetViewByName returns the registered view associated with this name.
 func GetViewByName(name string) (*View, error) {
-
+	return nil, nil
 }
 
 // SubscribeToView subscribes a client to a View. If the view wasn't already
@@ -106,6 +106,7 @@ func GetViewByName(name string) (*View, error) {
 // proceed in a timely manner. The calling code is responsible for using a
 // buffered channel or blocking on the channel waiting for the collected data.
 func SubscribeToView(v *View, c chan *ViewData) error {
+	return nil
 }
 
 // UnsubscribeFromView unsubscribes a previously subscribed channel from the
@@ -113,19 +114,22 @@ func SubscribeToView(v *View, c chan *ViewData) error {
 // collection for this view isn't active, data stops being collected for this
 // view.
 func UnsubscribeFromView(v *View, c chan *ViewData) error {
+	return nil
 }
 
 // StartCollectionForAdhoc starts data collection for this view even if no
 // listeners are subscribed to it.
 func StartCollectionForAdhoc(v *View) error {
+	return nil
 }
 
 // StopCollectionForAdhoc stops data collection for this view unless at least
 // 1 listener is subscribed to it.
 func StopCollectionForAdhoc(v *View) error {
+	return nil
 }
 
 // RetrieveData returns the current collected data for the view.
-func RetrieveData func(v *View) (*ViewData, error) {
-
+func RetrieveData(v *View) (*ViewData, error) {
+	return nil, nil
 }

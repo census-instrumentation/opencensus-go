@@ -18,24 +18,25 @@
 
 package stats2
 
+import "time"
+
+// Window represents the interval/samples count over which the aggregation
+// occurs.
 type Window interface {
 	isWindow() bool
 }
 
+// WindowCumulative indicates that the aggregation occurs over all samples seen
+// since the view collection started.
 type WindowCumulative struct {
 }
 
+func (w *WindowCumulative) isWindow() bool { return true }
+
+// WindowSlidingTime indicates that the aggregation occurs over a sliding
+// window of time. i.e. last n seconds, minutes, hours...
 type WindowSlidingTime struct {
+	d time.Duration
 }
 
-type WindowJumpingTime struct {
-}
-
-/* TODO(acetechnologist): add support for other types: slidingSpace,
-//jumpingSpace.
-type WindowSlidingSpace struct {
-}
-
-type WindowJumpingSpace struct {
-}
-*/
+func (w *WindowSlidingTime) isWindow() bool { return true }

@@ -53,18 +53,78 @@ func Test_KeysManager_NoErrors(t *testing.T) {
 		for j, f := range td.createCommands {
 			_, err := f(km)
 			if err != nil {
-				t.Errorf("got error %v, want no error calling keysManager.createKeyXYZ(...). Test case: %v, function: %v", err, i, j)
+				t.Errorf("Test case '%v', function '%v': got error %v, want no error calling keysManager.createKeyXYZ(...)", i, j, err)
 			}
 		}
 		gotCount := km.count()
 		if gotCount != td.wantCount {
-			t.Errorf("got keys count %v, want keys count %v", gotCount, td.wantCount)
+			t.Errorf("Test case '%v': got keys count %v, want keys count %v", i, gotCount, td.wantCount)
 		}
 
 		km.clear()
 		gotCountAfterClear := km.count()
 		if gotCountAfterClear != td.wantCountAfterClear {
-			t.Errorf("got keys count %v, want keys count %v after clear()", gotCountAfterClear, td.wantCountAfterClear)
+			t.Errorf("Test case '%v': got keys count %v, want keys count %v after clear()", i, gotCountAfterClear, td.wantCountAfterClear)
+		}
+	}
+}
+
+func Test_KeysManager_InvalidKeyErrors(t *testing.T) {
+	type testData struct {
+		createCommands []func(km *keysManager) (Key, error)
+		wantCount      int
+	}
+
+	testSet := []testData{
+		{
+			[]func(km *keysManager) (Key, error){
+				func(km *keysManager) (Key, error) { return km.createKeyString("k1") },
+			},
+			1,
+		},
+		{
+			[]func(km *keysManager) (Key, error){
+				func(km *keysManager) (Key, error) { return km.createKeyString("k\xb0") },
+			},
+			0,
+		},
+		{
+			[]func(km *keysManager) (Key, error){
+				func(km *keysManager) (Key, error) { return km.createKeyString("k1") },
+				func(km *keysManager) (Key, error) { return km.createKeyString("k\xb0") },
+			},
+			1,
+		},
+		{
+			[]func(km *keysManager) (Key, error){
+				func(km *keysManager) (Key, error) { return km.createKeyString("k\x19") },
+				func(km *keysManager) (Key, error) { return km.createKeyString("k\x7f") },
+			},
+			0,
+		},
+		{
+			[]func(km *keysManager) (Key, error){
+				func(km *keysManager) (Key, error) { return km.createKeyString("k\x19") },
+				func(km *keysManager) (Key, error) { return km.createKeyString("k\x20") },
+				func(km *keysManager) (Key, error) { return km.createKeyString("k\x7e") },
+				func(km *keysManager) (Key, error) { return km.createKeyString("k\x7f") },
+			},
+			2,
+		},
+		{
+			[]func(km *keysManager) (Key, error){},
+			0,
+		},
+	}
+
+	for i, td := range testSet {
+		km := newKeysManager()
+		for _, f := range td.createCommands {
+			_, _ = f(km)
+		}
+		gotCount := km.count()
+		if gotCount != td.wantCount {
+			t.Errorf("Test case '%v': got keys count %v, want keys count %v", i, gotCount, td.wantCount)
 		}
 	}
 }

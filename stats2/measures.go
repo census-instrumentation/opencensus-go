@@ -29,7 +29,7 @@ func RegisterMeasure(m Measure) error {
 	return nil
 }
 
-func UnregisterView(m Measure) error {
+func UnregisterMeasure(m Measure) error {
 	// TODO
 	return nil
 }
@@ -37,7 +37,7 @@ func UnregisterView(m Measure) error {
 // GetMeasureByName returns the registered measure associated with name.
 func GetMeasureByName(name string) (Measure, error) {
 	// TODO
-	return nil
+	return nil, nil
 }
 
 // MeasureFloat64 is a measure of type float64.
@@ -48,7 +48,7 @@ type MeasureFloat64 struct {
 }
 
 // NewMeasureFloat64 creates a new measure of type MeasureFloat64.
-func NewMeasureFloat64(name string, description string) MeasureFloat64 {
+func NewMeasureFloat64(name string, description string) *MeasureFloat64 {
 	return &MeasureFloat64{
 		name:        name,
 		description: description,
@@ -74,7 +74,7 @@ type MeasureInt64 struct {
 }
 
 // NewMeasureInt64 creates a new measure of type MeasureInt64.
-func NewMeasureInt64(name string, description string) MeasureInt64 {
+func NewMeasureInt64(name string, description string) *MeasureInt64 {
 	return &MeasureInt64{
 		name:        name,
 		description: description,
@@ -90,4 +90,4 @@ func (m *MeasureInt64) Is(v int64) Measurement {
 	}
 }
 
-func (md *measureInt64) isMeasure() bool { return true }
+func (md *MeasureInt64) isMeasure() bool { return true }
