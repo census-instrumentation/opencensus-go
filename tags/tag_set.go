@@ -39,9 +39,9 @@ func (ts *TagSet) ValueAsString(k Key) (string, error) {
 	return string(b), nil
 }
 
-func newTagSet(size int) *TagSet {
+func newTagSet(sizeHint int) *TagSet {
 	return &TagSet{
-		m: make(map[Key][]byte, size),
+		m: make(map[Key][]byte, sizeHint),
 	}
 }
 

@@ -22,13 +22,13 @@ type Aggregation interface {
 	isAggregation() bool
 }
 
+type AggregationInt64 interface {
+	Aggregation
+}
+
 type AggregationCountInt64 struct{}
 
 func (a *AggregationCountInt64) isAggregation() bool { return true }
-
-type AggregationCountDouble64 struct{}
-
-func (a *AggregationCountDouble64) isAggregation() bool { return true }
 
 type AggregationDistributionInt64 struct {
 	// An aggregation distribution may contain a histogram of the values in the
@@ -50,6 +50,14 @@ type AggregationDistributionInt64 struct {
 }
 
 func (a *AggregationDistributionInt64) isAggregation() bool { return true }
+
+type AggregationFloat64 interface {
+	Aggregation
+}
+
+type AggregationCountFloat64 struct{}
+
+func (a *AggregationCountFloat64) isAggregation() bool { return true }
 
 type AggregationDistributionFloat64 struct {
 	// An aggregation distribution may contain a histogram of the values in the

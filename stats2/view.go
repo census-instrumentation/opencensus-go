@@ -24,9 +24,15 @@ import (
 	"github.com/google/working-instrumentation-go/tags"
 )
 
-// View is the data structure that holds the info describing the view as well
-// as the aggregated data.
-type View struct {
+// View is the generic interface defining the various type of views.
+type View interface {
+	isView() bool
+	Name() string
+}
+
+// ViewFloat64 is the data structure that holds the info describing the float64
+// view as well as the aggregated data.
+type ViewFloat64 struct {
 	// name of View. Must be unique.
 	name        string
 	description string
@@ -35,11 +41,11 @@ type View struct {
 	tagKeys []tags.Key
 
 	// Examples of measures are cpu:tickCount, diskio:time...
-	measure Measure
+	measure MeasureFloat64
 
 	// aggregation is the description of the aggregation to perform for this
 	// view.
-	aggregation Aggregation
+	aggregation AggregationFloat64
 
 	// window is the window under which the aggregation is performed.
 	window Window
@@ -49,29 +55,61 @@ type View struct {
 
 	// vChans are the channels through which the collected views data for this
 	// view are sent to the consumers of this view.
-	vChans map[chan *View]struct{}
+	vChans map[chan *ViewData]struct{}
 
 	// signatures holds the aggregations values for each unique tag signature
-	// (values for all keys) to its *stats.Aggregator.
-	signatures map[string]Aggregation
+	// (values for all keys) to its AggregateValueFloat64.
+	signatures map[string]AggregateValueFloat64
 }
 
-// A View is a set of Aggregations about usage of the single resource
-// associated with the given view during a particular time interval. Each
-// Aggregation is specific to a unique set of tags. The Census infrastructure
-// reports a stream of View events to the application for further processing
-// such as further aggregations, logging and export to other services.
+// ViewInt64 is the data structure that holds the info describing the int64
+// view as well as the aggregated data.
+type ViewInt64 struct {
+	// name of View. Must be unique.
+	name        string
+	description string
+
+	// tagKeys to perform the aggregation on.
+	tagKeys []tags.Key
+
+	// Examples of measures are cpu:tickCount, diskio:time...
+	measure MeasureInt64
+
+	// aggregation is the description of the aggregation to perform for this
+	// view.
+	aggregation AggregationInt64
+
+	// window is the window under which the aggregation is performed.
+	window Window
+
+	// start is time when view collection was started originally.
+	start time.Time
+
+	// vChans are the channels through which the collected views data for this
+	// view are sent to the consumers of this view.
+	vChans map[chan *ViewData]struct{}
+
+	// signatures holds the aggregations values for each unique tag signature
+	// (values for all keys) to its AggregateValueInt64.
+	signatures map[string]AggregateValueInt64
+}
+
+// A ViewData is a set of rows about usage of the single measure associated
+// with the given view during a particular window. Each row is specific to a
+// unique set of tags.
 type ViewData struct {
-	v *View
-
-	// Aggregations is expected to be a []*AggContinuousStatsFloat64,
-	// []*AggContinuousStatsInt64a, []*AggGaugeStatsFloat64,
-	// []*AggGaugeStatsInt64, []*AggGaugeStatsBool or []*AggGaugeStatsString.
-	rows Rows
+	v    *View
+	rows []*Rows
 }
 
-// NewView creates a new *view.
-func NewView(name, description, string, keys []tags.Key, measure Measure, agg Aggregation, w Window) (*View, error) {
+// NewViewFloat64 creates a new *ViewFloat64.
+func NewViewFloat64(name, description, string, keys []tags.Key, measure MeasureFloat64, agg AggregationFloat64, w Window) (*ViewFloat64, error) {
+	// TODO
+	return nil, nil
+}
+
+// NewViewInt64 creates a new *ViewInt64.
+func NewViewInt64(name, description, string, keys []tags.Key, measure MeasureFloat64, agg AggregationInt64, w Window) (*ViewInt64, error) {
 	// TODO
 	return nil, nil
 }

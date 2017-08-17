@@ -29,6 +29,14 @@ type AggregateValue interface {
 	isAggregate() bool
 }
 
+type AggregateValueFloat64 interface {
+	AggregateValue
+}
+
+type AggregateValueInt64 interface {
+	AggregateValue
+}
+
 type AggregateCount int64
 
 func (a *AggregateCount) isAggregate() bool { return true }
