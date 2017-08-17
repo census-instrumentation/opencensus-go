@@ -31,11 +31,14 @@ type AggregateValue interface {
 
 type AggregateValueFloat64 interface {
 	AggregateValue
+	addSampleFloat64(f float64)
 }
 
 type AggregateValueInt64 interface {
 	AggregateValue
+	addSampleInt64(f float64)
 }
+
 
 type AggregateCount int64
 

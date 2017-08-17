@@ -39,3 +39,6 @@ func (k *KeyString) Name() string {
 func (k *KeyString) ID() uint16 {
 	return k.id
 }
+
+// CreateKeyString creates/retrieves the *KeyString identified by name.
+var CreateKeyString func(name string) (*KeyString, error)

@@ -23,6 +23,140 @@ import (
 	"time"
 )
 
+type worker struct {
+	measuresByName map[string]Measure
+	measures       map[Measure]bool
+	viewsByName    map[string]View
+	views          map[View]bool
+}
+
+func newWorker() *worker {
+	return &worker{}
+}
+
+// GetMeasureByName returns the registered measure associated with name.
+var GetMeasureByName func(name string) (Measure, error)
+
+// RegisterMeasure registers a measure. It returns an error if a measure with
+// the same name is already registered.
+var RegisterMeasure func(m Measure) error
+
+// UnregisterMeasure de-registers a measure. It returns an error if the measure
+// is not already registered.
+var UnregisterMeasure func(m Measure) error
+
+// GetViewByName returns the registered view associated with this name.
+var GetViewByName func(name string) (View, error)
+
+// RegisterView registers view. It returns an error if the view cannot be
+// registered. Subsequent calls to Record with the same measure as the one in
+// the view will NOT cause the usage to be recorded unless a consumer is
+// subscribed to the view or StartCollectionForAdhoc for this view is called.
+var RegisterView func(v View) error
+
+// UnregisterView deletes the previously registered view. It returns an error
+// if no registered View can be found with the same name. All data collected
+// and not reported for the corresponding view will be lost. All clients
+// subscribed to this view are unsubscribed automatically and their
+// subscriptions channels closed.
+var UnregisterView func(name string) error
+
+// SubscribeToView subscribes a client to a View. If the view wasn't already
+// registered, it will be automatically registered. It allows for many clients
+// to consume the same ViewData with a single registration. -i.e. the aggregate
+// of the collected measurements will be reported to the calling code through
+// channel c. To avoid data loss, clients must ensure that channel sends
+// proceed in a timely manner. The calling code is responsible for using a
+// buffered channel or blocking on the channel waiting for the collected data.
+var SubscribeToView func(v View, c chan *ViewData) error
+
+// UnsubscribeFromView unsubscribes a previously subscribed channel from the
+// View subscriptions. If no more subscriber for v exists and the the ad hoc
+// collection for this view isn't active, data stops being collected for this
+// view.
+var UnsubscribeFromView func(v View, c chan *ViewData) error
+
+// StartCollectionForAdhoc starts data collection for this view even if no
+// listeners are subscribed to it.
+var StartCollectionForAdhoc func(v View) error
+
+// StopCollectionForAdhoc stops data collection for this view unless at least
+// 1 listener is subscribed to it.
+var StopCollectionForAdhoc func(v View) error
+
+// RetrieveData returns the current collected data for the view.
+var RetrieveData func(v View) (*ViewData, error)
+
+func init() {
+	w := newWorker()
+	GetMeasureByName = w.getMeasureByName
+	RegisterMeasure = w.registerMeasure
+	UnregisterMeasure = w.unregisterMeasure
+	GetViewByName = w.getViewByName
+	RegisterView = w.registerView
+	UnregisterView = w.unregisterView
+	SubscribeToView = w.subscribeToView
+	UnsubscribeFromView = w.unsubscribeFromView
+	StartCollectionForAdhoc = w.startCollectionForAdhoc
+	StopCollectionForAdhoc = w.stopCollectionForAdhoc
+	RetrieveData = w.retrieveData
+}
+
+func (w *worker) getMeasureByName(name string) (Measure, error) {
+	return nil, nil
+}
+
+func (w *worker) registerMeasure(m Measure) error {
+	return nil
+}
+
+func (w *worker) unregisterMeasure(m Measure) error {
+	return nil
+}
+
+func (w *worker) getViewByName(name string) (View, error) {
+	return nil, nil
+}
+
+func (w *worker) registerView(v View) error {
+	// if &view registered return true
+	// if other view with same name  return false
+
+	// if measure !registered
+	//  if register(measure) == fail return false
+
+	// registerview and return success
+	return nil
+}
+
+func (w *worker) unregisterView(name string) error {
+	return nil
+}
+
+func (w *worker) subscribeToView(v View, c chan *ViewData) error {
+	// if view !registered
+	// success = registerview
+	// if fail return error
+	//subscribe and return true
+	return nil
+}
+
+func (w *worker) unsubscribeFromView(v View, c chan *ViewData) error {
+	return nil
+}
+
+func (w *worker) startCollectionForAdhoc(v View) error {
+	return nil
+}
+
+func (w *worker) stopCollectionForAdhoc(v View) error {
+	return nil
+}
+
+func (w *worker) retrieveData(v View) (*ViewData, error) {
+	return nil, nil
+}
+
 // RecordFloat64 records a float64 value against a measure and the tags passed
 // as part of the context.
 func RecordFloat64(ctx context.Context, mf MeasureFloat64, v float64) {}

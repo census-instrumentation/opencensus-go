@@ -100,6 +100,3 @@ func init() {
 	km := newKeysManager()
 	CreateKeyString = km.createKeyString
 }
-
-// CreateKeyString creates/retrieves the *KeyString identified by name.
-var CreateKeyString func(name string) (*KeyString, error)

@@ -21,30 +21,15 @@ package stats2
 // Measure is the interface for all measure types. A measure is required when
 // defining a view.
 type Measure interface {
+	Name() string
 	isMeasure() bool
-}
-
-func RegisterMeasure(m Measure) error {
-	// TODO
-	return nil
-}
-
-func UnregisterMeasure(m Measure) error {
-	// TODO
-	return nil
-}
-
-// GetMeasureByName returns the registered measure associated with name.
-func GetMeasureByName(name string) (Measure, error) {
-	// TODO
-	return nil, nil
 }
 
 // MeasureFloat64 is a measure of type float64.
 type MeasureFloat64 struct {
 	name        string
 	description string
-	viewAggs    map[*View]struct{}
+	viewAggs    map[*ViewFloat64]struct{}
 }
 
 // NewMeasureFloat64 creates a new measure of type MeasureFloat64.
@@ -52,7 +37,7 @@ func NewMeasureFloat64(name string, description string) *MeasureFloat64 {
 	return &MeasureFloat64{
 		name:        name,
 		description: description,
-		viewAggs:    make(map[*View]struct{}),
+		viewAggs:    make(map[*ViewFloat64]struct{}),
 	}
 }
 
@@ -64,13 +49,18 @@ func (m *MeasureFloat64) Is(v float64) Measurement {
 	}
 }
 
+// Name returns the name of the measure.
+func (m *MeasureFloat64) Name() string {
+	return m.name
+}
+
 func (m *MeasureFloat64) isMeasure() bool { return true }
 
 // MeasureInt64 is a measure of type int64.
 type MeasureInt64 struct {
 	name        string
 	description string
-	viewAggs    map[*View]struct{}
+	viewAggs    map[*ViewInt64]struct{}
 }
 
 // NewMeasureInt64 creates a new measure of type MeasureInt64.
@@ -78,7 +68,7 @@ func NewMeasureInt64(name string, description string) *MeasureInt64 {
 	return &MeasureInt64{
 		name:        name,
 		description: description,
-		viewAggs:    make(map[*View]struct{}),
+		viewAggs:    make(map[*ViewInt64]struct{}),
 	}
 }
 
@@ -90,4 +80,9 @@ func (m *MeasureInt64) Is(v int64) Measurement {
 	}
 }
 
-func (md *MeasureInt64) isMeasure() bool { return true }
+// Name returns the name of the measure.
+func (m *MeasureInt64) Name() string {
+	return m.name
+}
+
+func (m *MeasureInt64) isMeasure() bool { return true }

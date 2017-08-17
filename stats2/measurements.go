@@ -25,7 +25,7 @@ import (
 // Measurement is the interface for all measurement types. Measurements are
 // required when recording stats.
 type Measurement interface {
-	record(ts tags.TagSet)
+	record(ts *tags.TagSet)
 }
 
 type measurementFloat64 struct {
@@ -33,10 +33,9 @@ type measurementFloat64 struct {
 	v float64
 }
 
-func (mf *measurementFloat64) record(ts tags.TagSet) {
-	for _ = range mf.m.viewAggs {
-		// TODO(acetechnologist): record
-		// v.Record(ts, md.v)
+func (mf *measurementFloat64) record(ts *tags.TagSet) {
+	for v := range mf.m.viewAggs {
+		v.recordFloat64(ts, mf.v)
 	}
 }
 
@@ -45,9 +44,8 @@ type measurementInt64 struct {
 	v int64
 }
 
-func (mi *measurementInt64) record(ts tags.TagSet) {
-	for _ = range mi.m.viewAggs {
-		// TODO(acetechnologist): record
-		// v.Record(ts, md.v)
+func (mi *measurementInt64) record(ts *tags.TagSet) {
+	for v := range mi.m.viewAggs {
+		v.recordInt64(ts, mi.v)
 	}
 }

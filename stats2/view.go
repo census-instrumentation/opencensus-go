@@ -62,6 +62,10 @@ type ViewFloat64 struct {
 	signatures map[string]AggregateValueFloat64
 }
 
+func (v *ViewFloat64) recordFloat64(ts *tags.TagSet, f float64) {
+
+}
+
 // ViewInt64 is the data structure that holds the info describing the int64
 // view as well as the aggregated data.
 type ViewInt64 struct {
@@ -94,80 +98,24 @@ type ViewInt64 struct {
 	signatures map[string]AggregateValueInt64
 }
 
+func (v *ViewInt64) recordInt64(ts *tags.TagSet, i int64) {
+
+}
+
 // A ViewData is a set of rows about usage of the single measure associated
 // with the given view during a particular window. Each row is specific to a
 // unique set of tags.
 type ViewData struct {
-	v    *View
+	v    View
 	rows []*Rows
 }
 
 // NewViewFloat64 creates a new *ViewFloat64.
-func NewViewFloat64(name, description, string, keys []tags.Key, measure MeasureFloat64, agg AggregationFloat64, w Window) (*ViewFloat64, error) {
-	// TODO
+func NewViewFloat64(name, description string, keys []tags.Key, measure MeasureFloat64, agg AggregationFloat64, wnd Window) (*ViewFloat64, error) {
 	return nil, nil
 }
 
 // NewViewInt64 creates a new *ViewInt64.
-func NewViewInt64(name, description, string, keys []tags.Key, measure MeasureFloat64, agg AggregationInt64, w Window) (*ViewInt64, error) {
-	// TODO
-	return nil, nil
-}
-
-// RegisterView registers view. It returns an error if the view cannot be
-// registered. Subsequent calls to Record with the same measure as the one in
-// the view will NOT cause the usage to be recorded unless a consumer is
-// subscribed to the view or StartCollectionForAdhoc for this view is called.
-func RegisterView(v *View) error {
-	return nil
-}
-
-// UnregisterView deletes the previously registered view. It returns an error
-// if no registered View can be found with the same name. All data collected
-// and not reported for the corresponding view will be lost. All clients
-// subscribed to this view are unsubscribed automatically and their
-// subscriptions channels closed.
-func UnregisterView(v *View) error {
-	return nil
-}
-
-// GetViewByName returns the registered view associated with this name.
-func GetViewByName(name string) (*View, error) {
-	return nil, nil
-}
-
-// SubscribeToView subscribes a client to a View. If the view wasn't already
-// registered, it will be automatically registered. It allows for many clients
-// to consume the same ViewData with a single registration. -i.e. the aggregate
-// of the collected measurements will be reported to the calling code through
-// channel c. To avoid data loss, clients must ensure that channel sends
-// proceed in a timely manner. The calling code is responsible for using a
-// buffered channel or blocking on the channel waiting for the collected data.
-func SubscribeToView(v *View, c chan *ViewData) error {
-	return nil
-}
-
-// UnsubscribeFromView unsubscribes a previously subscribed channel from the
-// View subscriptions. If no more subscriber for v exists and the the ad hoc
-// collection for this view isn't active, data stops being collected for this
-// view.
-func UnsubscribeFromView(v *View, c chan *ViewData) error {
-	return nil
-}
-
-// StartCollectionForAdhoc starts data collection for this view even if no
-// listeners are subscribed to it.
-func StartCollectionForAdhoc(v *View) error {
-	return nil
-}
-
-// StopCollectionForAdhoc stops data collection for this view unless at least
-// 1 listener is subscribed to it.
-func StopCollectionForAdhoc(v *View) error {
-	return nil
-}
-
-// RetrieveData returns the current collected data for the view.
-func RetrieveData(v *View) (*ViewData, error) {
+func NewViewInt64(name, description string, keys []tags.Key, measure MeasureInt64, agg AggregationInt64, wnd Window) (*ViewInt64, error) {
 	return nil, nil
 }
