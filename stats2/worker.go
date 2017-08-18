@@ -28,6 +28,8 @@ type worker struct {
 	measures       map[Measure]bool
 	viewsByName    map[string]View
 	views          map[View]bool
+
+	c chan command
 }
 
 func newWorker() *worker {
@@ -55,11 +57,10 @@ var GetViewByName func(name string) (View, error)
 var RegisterView func(v View) error
 
 // UnregisterView deletes the previously registered view. It returns an error
-// if no registered View can be found with the same name. All data collected
-// and not reported for the corresponding view will be lost. All clients
-// subscribed to this view are unsubscribed automatically and their
-// subscriptions channels closed.
-var UnregisterView func(name string) error
+// if the view wasn't registered. All data collected and not reported for the
+// corresponding view will be lost. All clients subscribed to this view are
+// unsubscribed automatically and their subscriptions channels closed.
+var UnregisterView func(v View) error
 
 // SubscribeToView subscribes a client to a View. If the view wasn't already
 // registered, it will be automatically registered. It allows for many clients
@@ -85,7 +86,23 @@ var StartCollectionForAdhoc func(v View) error
 var StopCollectionForAdhoc func(v View) error
 
 // RetrieveData returns the current collected data for the view.
-var RetrieveData func(v View) (*ViewData, error)
+var RetrieveData func(v View) ([]*Rows, error)
+
+// RecordFloat64 records a float64 value against a measure and the tags passed
+// as part of the context.
+var RecordFloat64 func(ctx context.Context, mf MeasureFloat64, v float64)
+
+// RecordInt64 records an int64 value against a measure and the tags passed as
+// part of the context.
+var RecordInt64 func(ctx context.Context, mf MeasureInt64, v int64)
+
+// Record records one or multiple measurements with the same tags at once.
+var Record func(ctx context.Context, ms []Measurement)
+
+// SetReportingPeriod sets the interval between reporting aggregated views in
+// the program. Calling SetReportingPeriod with duration argument equal to zero
+// enables the default behavior.
+var SetReportingPeriod func(d time.Duration)
 
 func init() {
 	w := newWorker()
@@ -100,6 +117,19 @@ func init() {
 	StartCollectionForAdhoc = w.startCollectionForAdhoc
 	StopCollectionForAdhoc = w.stopCollectionForAdhoc
 	RetrieveData = w.retrieveData
+	RecordFloat64 = w.recordFloat64
+	RecordInt64 = w.recordInt64
+	Record = w.record
+	SetReportingPeriod = w.setReportingPeriod
+
+	w.start()
+}
+
+func (w *worker) start() {
+	for {
+		cmd := <-w.c
+		cmd.handleCommand(w)
+	}
 }
 
 func (w *worker) getMeasureByName(name string) (Measure, error) {
@@ -129,7 +159,7 @@ func (w *worker) registerView(v View) error {
 	return nil
 }
 
-func (w *worker) unregisterView(name string) error {
+func (w *worker) unregisterView(v View) error {
 	return nil
 }
 
@@ -153,25 +183,22 @@ func (w *worker) stopCollectionForAdhoc(v View) error {
 	return nil
 }
 
-func (w *worker) retrieveData(v View) (*ViewData, error) {
+func (w *worker) retrieveData(v View) ([]*Rows, error) {
 	return nil, nil
 }
 
-// RecordFloat64 records a float64 value against a measure and the tags passed
-// as part of the context.
-func RecordFloat64(ctx context.Context, mf MeasureFloat64, v float64) {}
+func (w *worker) recordFloat64(ctx context.Context, mf MeasureFloat64, v float64) {
 
-// RecordInt64 records an int64 value against a measure and the tags passed as
-// part of the context.
-func RecordInt64(ctx context.Context, mf MeasureInt64, v int64) {}
+}
 
-// Record records one or multiple measurements with the same tags at once.
-func Record(ctx context.Context, ms []Measurement) {}
+func (w *worker) recordInt64(ctx context.Context, mf MeasureInt64, v int64) {
 
-// SetCallbackPeriod sets the minimum and maximum periods for aggregation
-// reporting for all registered views in the program. The maximum period is
-// only advisory; reports may be generated less frequently than this. The
-// default period is determined by internal memory usage.  Calling
-// SetCallbackPeriod with either argument equal to zero re-enables the default
-// behavior.
-func SetCallbackPeriod(min, max time.Duration) {}
+}
+
+func (w *worker) record(ctx context.Context, ms []Measurement) {
+
+}
+
+func (w *worker) setReportingPeriod(d time.Duration) {
+
+}
