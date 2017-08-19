@@ -35,7 +35,7 @@ type View interface {
 	stopCollectingForAdhoc()
 	isCollectingForAdhoc() bool
 	collectedRows() []*Row
-	clearRows()
+	aggregation() Aggregation
 	window() Window
 	measure() Measure
 	Name() string // Name returns the name of a View.
@@ -54,9 +54,9 @@ type ViewFloat64 struct {
 	// Examples of measures are cpu:tickCount, diskio:time...
 	m *MeasureFloat64
 
-	// aggregation is the description of the aggregation to perform for this
-	// view.
-	a *AggregationFloat64
+	// AggregationFloat64 is the description of the aggregation to perform for
+	// this view.
+	a AggregationFloat64
 
 	// window is the window under which the aggregation is performed.
 	w Window
@@ -72,10 +72,6 @@ type ViewFloat64 struct {
 	// client is subscribed to it. This is necessary for supporting a pull
 	// model.
 	collectingForAdhoc bool
-
-	// signatures holds the aggregations values for each unique tag signature
-	// (values for all keys) to its AggregateValueFloat64.
-	signatures map[string]AggregateValueFloat64
 }
 
 func (v *ViewFloat64) recordFloat64(ts *tags.TagSet, f float64) {
@@ -119,12 +115,12 @@ func (v *ViewFloat64) collectedRows() []*Row {
 	return nil
 }
 
-func (v *ViewFloat64) clearRows() {
-	v.signatures = make(map[string]AggregateValueFloat64)
-}
-
 func (v *ViewFloat64) addSample(ts *tags.TagSet, f float64) {
 	// TODO: add sample
+}
+
+func (v *ViewFloat64) aggregation() Aggregation {
+	return v.a
 }
 
 func (v *ViewFloat64) window() Window {
@@ -155,7 +151,7 @@ type ViewInt64 struct {
 
 	// aggregation is the description of the aggregation to perform for this
 	// view.
-	a *AggregationInt64
+	a AggregationInt64
 
 	// window is the window under which the aggregation is performed.
 	w Window
@@ -171,10 +167,6 @@ type ViewInt64 struct {
 	// client is subscribed to it. This is necessary for supporting a pull
 	// model.
 	collectingForAdhoc bool
-
-	// signatures holds the aggregations values for each unique tag signature
-	// (values for all keys) to its AggregateValueInt64.
-	signatures map[string]AggregateValueInt64
 }
 
 func (v *ViewInt64) recordInt64(ts *tags.TagSet, i int64) {
@@ -218,12 +210,12 @@ func (v *ViewInt64) collectedRows() []*Row {
 	return nil
 }
 
-func (v *ViewInt64) clearRows() {
-	v.signatures = make(map[string]AggregateValueInt64)
-}
-
 func (v *ViewInt64) addSample(ts *tags.TagSet, i int64) {
 	// TODO: add sample
+}
+
+func (v *ViewInt64) aggregation() Aggregation {
+	return v.a
 }
 
 func (v *ViewInt64) window() Window {

@@ -21,6 +21,7 @@ package stats2
 // Aggregation is the generic interface for all aggregtion types.
 type Aggregation interface {
 	isAggregation() bool
+	clearRows()
 }
 
 // AggregationInt64 is the generic interface for all aggregtion  of type int64.
@@ -29,9 +30,18 @@ type AggregationInt64 interface {
 }
 
 // AggregationCountInt64 is the struct representing the count aggregation.
-type AggregationCountInt64 int64
+type AggregationCountInt64 struct {
+	// signatures holds the aggregations values for each unique tag signature
+	// (values for all keys) to its AggregateValueInt64.
+	signatures map[string]AggregateValueInt64
+}
 
 func (a *AggregationCountInt64) isAggregation() bool { return true }
+
+func (a *AggregationCountInt64) clearRows() {
+
+	a.signatures = make(map[string]AggregateValueFloat64)
+}
 
 // AggregationDistributionInt64 is the struct representing the distribution
 // aggregation of type int64.
@@ -52,6 +62,10 @@ type AggregationDistributionInt64 struct {
 	// if len(Bounds) == 1 then there is no finite buckets, and that single
 	// element is the common boundary of the overflow and underflow buckets.
 	Bounds []float64
+
+	// signatures holds the aggregations values for each unique tag signature
+	// (values for all keys) to its AggregateValueInt64.
+	signatures map[string]AggregateValueInt64
 }
 
 func (a *AggregationDistributionInt64) isAggregation() bool { return true }
@@ -81,6 +95,10 @@ type AggregationDistributionFloat64 struct {
 	// if len(Bounds) == 1 then there is no finite buckets, and that single
 	// element is the common boundary of the overflow and underflow buckets.
 	Bounds []float64
+
+	// signatures holds the aggregations values for each unique tag signature
+	// (values for all keys) to its AggregateValueFloat64.
+	signatures map[string]AggregateValueFloat64
 }
 
 func (a *AggregationDistributionFloat64) isAggregation() bool { return true }
