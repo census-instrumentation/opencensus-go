@@ -18,18 +18,22 @@
 
 package stats2
 
+import "fmt"
+
 // Measure is the interface for all measure types. A measure is required when
 // defining a view.
 type Measure interface {
 	Name() string
-	isMeasure() bool
+	addView(v View)
+	removeView(v View)
+	viewsCount() int
 }
 
 // MeasureFloat64 is a measure of type float64.
 type MeasureFloat64 struct {
 	name        string
 	description string
-	viewAggs    map[*ViewFloat64]struct{}
+	views       map[*ViewFloat64]bool
 }
 
 // NewMeasureFloat64 creates a new measure of type MeasureFloat64.
@@ -37,7 +41,7 @@ func NewMeasureFloat64(name string, description string) *MeasureFloat64 {
 	return &MeasureFloat64{
 		name:        name,
 		description: description,
-		viewAggs:    make(map[*ViewFloat64]struct{}),
+		views:       make(map[*ViewFloat64]bool),
 	}
 }
 
@@ -54,13 +58,31 @@ func (m *MeasureFloat64) Name() string {
 	return m.name
 }
 
-func (m *MeasureFloat64) isMeasure() bool { return true }
+func (m *MeasureFloat64) addView(v View) {
+	vf64, ok := v.(*ViewFloat64)
+	if !ok {
+		panic(fmt.Sprintf("adding a view of type '%T' to MeasureFloat64. This is a bug in the stats library. It should never happen.", v))
+	}
+
+	m.views[vf64] = true
+}
+
+func (m *MeasureFloat64) removeView(v View) {
+	vf64, ok := v.(*ViewFloat64)
+	if !ok {
+		panic(fmt.Sprintf("removing a view of type '%T' from MeasureFloat64. This is a bug in the stats library. It should never happen.", v))
+	}
+
+	delete(m.views, vf64)
+}
+
+func (m *MeasureFloat64) viewsCount() int { return len(m.views) }
 
 // MeasureInt64 is a measure of type int64.
 type MeasureInt64 struct {
 	name        string
 	description string
-	viewAggs    map[*ViewInt64]struct{}
+	views       map[*ViewInt64]bool
 }
 
 // NewMeasureInt64 creates a new measure of type MeasureInt64.
@@ -68,7 +90,7 @@ func NewMeasureInt64(name string, description string) *MeasureInt64 {
 	return &MeasureInt64{
 		name:        name,
 		description: description,
-		viewAggs:    make(map[*ViewInt64]struct{}),
+		views:       make(map[*ViewInt64]bool),
 	}
 }
 
@@ -85,4 +107,22 @@ func (m *MeasureInt64) Name() string {
 	return m.name
 }
 
-func (m *MeasureInt64) isMeasure() bool { return true }
+func (m *MeasureInt64) addView(v View) {
+	vi64, ok := v.(*ViewInt64)
+	if !ok {
+		panic(fmt.Sprintf("adding a view of type '%T' to MeasureInt64. This is a bug in the stats library. It should never happen.", v))
+	}
+
+	m.views[vi64] = true
+}
+
+func (m *MeasureInt64) removeView(v View) {
+	vi64, ok := v.(*ViewInt64)
+	if !ok {
+		panic(fmt.Sprintf("removing a view of type '%T' from MeasureInt64. This is a bug in the stats library. It should never happen.", v))
+	}
+
+	delete(m.views, vi64)
+}
+
+func (m *MeasureInt64) viewsCount() int { return len(m.views) }

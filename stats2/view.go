@@ -26,8 +26,19 @@ import (
 
 // View is the generic interface defining the various type of views.
 type View interface {
-	isView() bool
-	Name() string
+	addSubscription(c chan *ViewData)
+	deleteSubscription(c chan *ViewData)
+	subscriptionExists(c chan *ViewData) bool
+	subscriptionsCount() int
+	subscriptions() map[chan *ViewData]subscription
+	startCollectingForAdhoc()
+	stopCollectingForAdhoc()
+	isCollectingForAdhoc() bool
+	collectedRows() []*Row
+	clearRows()
+	window() Window
+	measure() Measure
+	Name() string // Name returns the name of a View.
 }
 
 // ViewFloat64 is the data structure that holds the info describing the float64
@@ -41,21 +52,26 @@ type ViewFloat64 struct {
 	tagKeys []tags.Key
 
 	// Examples of measures are cpu:tickCount, diskio:time...
-	measure MeasureFloat64
+	m *MeasureFloat64
 
 	// aggregation is the description of the aggregation to perform for this
 	// view.
-	aggregation AggregationFloat64
+	a *AggregationFloat64
 
 	// window is the window under which the aggregation is performed.
-	window Window
+	w Window
 
 	// start is time when view collection was started originally.
 	start time.Time
 
-	// vChans are the channels through which the collected views data for this
-	// view are sent to the consumers of this view.
-	vChans map[chan *ViewData]struct{}
+	// ss are the channels through which the collected views data for this view
+	// are sent to the consumers of this view.
+	ss map[chan *ViewData]subscription
+
+	// boolean to indicate if the the view should be collecting data even if no
+	// client is subscribed to it. This is necessary for supporting a pull
+	// model.
+	collectingForAdhoc bool
 
 	// signatures holds the aggregations values for each unique tag signature
 	// (values for all keys) to its AggregateValueFloat64.
@@ -63,7 +79,65 @@ type ViewFloat64 struct {
 }
 
 func (v *ViewFloat64) recordFloat64(ts *tags.TagSet, f float64) {
+}
 
+func (v *ViewFloat64) addSubscription(c chan *ViewData) {
+	v.ss[c] = subscription{}
+}
+
+func (v *ViewFloat64) deleteSubscription(c chan *ViewData) {
+	delete(v.ss, c)
+}
+
+func (v *ViewFloat64) subscriptionExists(c chan *ViewData) bool {
+	_, ok := v.ss[c]
+	return ok
+}
+
+func (v *ViewFloat64) subscriptionsCount() int {
+	return len(v.ss)
+}
+
+func (v *ViewFloat64) subscriptions() map[chan *ViewData]subscription {
+	return v.ss
+}
+
+func (v *ViewFloat64) startCollectingForAdhoc() {
+	v.collectingForAdhoc = true
+}
+
+func (v *ViewFloat64) stopCollectingForAdhoc() {
+	v.collectingForAdhoc = false
+}
+
+func (v *ViewFloat64) isCollectingForAdhoc() bool {
+	return v.collectingForAdhoc
+}
+
+func (v *ViewFloat64) collectedRows() []*Row {
+	// TODO: create []*Row and return them
+	return nil
+}
+
+func (v *ViewFloat64) clearRows() {
+	v.signatures = make(map[string]AggregateValueFloat64)
+}
+
+func (v *ViewFloat64) addSample(ts *tags.TagSet, f float64) {
+	// TODO: add sample
+}
+
+func (v *ViewFloat64) window() Window {
+	return v.w
+}
+
+func (v *ViewFloat64) measure() Measure {
+	return v.m
+}
+
+// Name returns the name of ViewFloat64.
+func (v *ViewFloat64) Name() string {
+	return v.name
 }
 
 // ViewInt64 is the data structure that holds the info describing the int64
@@ -77,21 +151,26 @@ type ViewInt64 struct {
 	tagKeys []tags.Key
 
 	// Examples of measures are cpu:tickCount, diskio:time...
-	measure MeasureInt64
+	m *MeasureInt64
 
 	// aggregation is the description of the aggregation to perform for this
 	// view.
-	aggregation AggregationInt64
+	a *AggregationInt64
 
 	// window is the window under which the aggregation is performed.
-	window Window
+	w Window
 
 	// start is time when view collection was started originally.
 	start time.Time
 
-	// vChans are the channels through which the collected views data for this
-	// view are sent to the consumers of this view.
-	vChans map[chan *ViewData]struct{}
+	// ss are the channels through which the collected views data for this view
+	// are sent to the consumers of this view.
+	ss map[chan *ViewData]subscription
+
+	// boolean to indicate if the the view should be collecting data even if no
+	// client is subscribed to it. This is necessary for supporting a pull
+	// model.
+	collectingForAdhoc bool
 
 	// signatures holds the aggregations values for each unique tag signature
 	// (values for all keys) to its AggregateValueInt64.
@@ -99,7 +178,65 @@ type ViewInt64 struct {
 }
 
 func (v *ViewInt64) recordInt64(ts *tags.TagSet, i int64) {
+}
 
+func (v *ViewInt64) addSubscription(c chan *ViewData) {
+	v.ss[c] = subscription{}
+}
+
+func (v *ViewInt64) deleteSubscription(c chan *ViewData) {
+	delete(v.ss, c)
+}
+
+func (v *ViewInt64) subscriptionExists(c chan *ViewData) bool {
+	_, ok := v.ss[c]
+	return ok
+}
+
+func (v *ViewInt64) subscriptionsCount() int {
+	return len(v.ss)
+}
+
+func (v *ViewInt64) subscriptions() map[chan *ViewData]subscription {
+	return v.ss
+}
+
+func (v *ViewInt64) startCollectingForAdhoc() {
+	v.collectingForAdhoc = true
+}
+
+func (v *ViewInt64) stopCollectingForAdhoc() {
+	v.collectingForAdhoc = false
+}
+
+func (v *ViewInt64) isCollectingForAdhoc() bool {
+	return v.collectingForAdhoc
+}
+
+func (v *ViewInt64) collectedRows() []*Row {
+	// TODO: create []*Row and return them
+	return nil
+}
+
+func (v *ViewInt64) clearRows() {
+	v.signatures = make(map[string]AggregateValueInt64)
+}
+
+func (v *ViewInt64) addSample(ts *tags.TagSet, i int64) {
+	// TODO: add sample
+}
+
+func (v *ViewInt64) window() Window {
+	return v.w
+}
+
+func (v *ViewInt64) measure() Measure {
+	return v.m
+}
+
+// Name returns the name of ViewInt64.
+func (v *ViewInt64) Name() string {
+	return v.name
 }
 
 // A ViewData is a set of rows about usage of the single measure associated
@@ -107,7 +244,7 @@ func (v *ViewInt64) recordInt64(ts *tags.TagSet, i int64) {
 // unique set of tags.
 type ViewData struct {
 	v    View
-	rows []*Rows
+	rows []*Row
 }
 
 // NewViewFloat64 creates a new *ViewFloat64.

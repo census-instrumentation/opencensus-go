@@ -20,7 +20,10 @@ package stats2
 
 import (
 	"context"
+	"fmt"
 	"time"
+
+	"github.com/google/working-instrumentation-go/tags"
 )
 
 type worker struct {
@@ -29,38 +32,83 @@ type worker struct {
 	viewsByName    map[string]View
 	views          map[View]bool
 
-	c chan command
+	timer *time.Ticker
+	c     chan command
 }
 
-func newWorker() *worker {
-	return &worker{}
-}
+var defaultWorker *worker
+
+var defaultReportingDuration = 10 * time.Second
 
 // GetMeasureByName returns the registered measure associated with name.
-var GetMeasureByName func(name string) (Measure, error)
+func GetMeasureByName(name string) (Measure, error) {
+	req := &getMeasureByNameReq{
+		name: name,
+		c:    make(chan *getMeasureByNameResp),
+	}
+	defaultWorker.c <- req
+	resp := <-req.c
+	return resp.m, resp.err
+}
 
 // RegisterMeasure registers a measure. It returns an error if a measure with
 // the same name is already registered.
-var RegisterMeasure func(m Measure) error
+func RegisterMeasure(m Measure) error {
+	req := &registerMeasureReq{
+		m:   m,
+		err: make(chan error),
+	}
+	defaultWorker.c <- req
+	return <-req.err
+}
 
 // UnregisterMeasure de-registers a measure. It returns an error if the measure
 // is not already registered.
-var UnregisterMeasure func(m Measure) error
+func UnregisterMeasure(m Measure) error {
+	req := &unregisterMeasureReq{
+		m:   m,
+		err: make(chan error),
+	}
+	defaultWorker.c <- req
+	return <-req.err
+}
 
 // GetViewByName returns the registered view associated with this name.
-var GetViewByName func(name string) (View, error)
+func GetViewByName(name string) (View, error) {
+	req := &getViewByNameReq{
+		name: name,
+		c:    make(chan *getViewByNameResp),
+	}
+	defaultWorker.c <- req
+	resp := <-req.c
+	return resp.v, resp.err
+}
 
 // RegisterView registers view. It returns an error if the view cannot be
 // registered. Subsequent calls to Record with the same measure as the one in
 // the view will NOT cause the usage to be recorded unless a consumer is
 // subscribed to the view or StartCollectionForAdhoc for this view is called.
-var RegisterView func(v View) error
+func RegisterView(v View) error {
+	req := &registerViewReq{
+		v:   v,
+		err: make(chan error),
+	}
+	defaultWorker.c <- req
+	return <-req.err
+}
 
 // UnregisterView deletes the previously registered view. It returns an error
 // if the view wasn't registered. All data collected and not reported for the
 // corresponding view will be lost. All clients subscribed to this view are
 // unsubscribed automatically and their subscriptions channels closed.
-var UnregisterView func(v View) error
+func UnregisterView(v View) error {
+	req := &unregisterViewReq{
+		v:   v,
+		err: make(chan error),
+	}
+	defaultWorker.c <- req
+	return <-req.err
+}
 
 // SubscribeToView subscribes a client to a View. If the view wasn't already
 // registered, it will be automatically registered. It allows for many clients
@@ -69,136 +117,186 @@ var UnregisterView func(v View) error
 // channel c. To avoid data loss, clients must ensure that channel sends
 // proceed in a timely manner. The calling code is responsible for using a
 // buffered channel or blocking on the channel waiting for the collected data.
-var SubscribeToView func(v View, c chan *ViewData) error
+func SubscribeToView(v View, c chan *ViewData) error {
+	req := &subscribeToViewReq{
+		v:   v,
+		c:   make(chan *ViewData),
+		err: make(chan error),
+	}
+	defaultWorker.c <- req
+	return <-req.err
+}
 
 // UnsubscribeFromView unsubscribes a previously subscribed channel from the
 // View subscriptions. If no more subscriber for v exists and the the ad hoc
 // collection for this view isn't active, data stops being collected for this
 // view.
-var UnsubscribeFromView func(v View, c chan *ViewData) error
+func UnsubscribeFromView(v View, c chan *ViewData) error {
+	req := &unsubscribeFromViewReq{
+		v:   v,
+		c:   make(chan *ViewData),
+		err: make(chan error),
+	}
+	defaultWorker.c <- req
+	return <-req.err
+}
 
 // StartCollectionForAdhoc starts data collection for this view even if no
 // listeners are subscribed to it.
-var StartCollectionForAdhoc func(v View) error
+func StartCollectionForAdhoc(v View) error {
+	req := &startCollectionForAdhocReq{
+		v:   v,
+		err: make(chan error),
+	}
+	defaultWorker.c <- req
+	return <-req.err
+}
 
 // StopCollectionForAdhoc stops data collection for this view unless at least
 // 1 listener is subscribed to it.
-var StopCollectionForAdhoc func(v View) error
+func StopCollectionForAdhoc(v View) error {
+	req := &stopCollectionForAdhocReq{
+		v:   v,
+		err: make(chan error),
+	}
+	defaultWorker.c <- req
+	return <-req.err
+}
 
 // RetrieveData returns the current collected data for the view.
-var RetrieveData func(v View) ([]*Rows, error)
+func RetrieveData(v View) ([]*Row, error) {
+	req := &retrieveDataReq{
+		v: v,
+		c: make(chan *retrieveDataResp),
+	}
+	defaultWorker.c <- req
+	resp := <-req.c
+	return resp.rows, resp.err
+}
 
 // RecordFloat64 records a float64 value against a measure and the tags passed
 // as part of the context.
-var RecordFloat64 func(ctx context.Context, mf MeasureFloat64, v float64)
+func RecordFloat64(ctx context.Context, mf *MeasureFloat64, v float64) {
+	req := &recordFloat64Req{
+		ts: tags.FromContext(ctx),
+		mf: mf,
+		v:  v,
+	}
+	defaultWorker.c <- req
+}
 
 // RecordInt64 records an int64 value against a measure and the tags passed as
 // part of the context.
-var RecordInt64 func(ctx context.Context, mf MeasureInt64, v int64)
+func RecordInt64(ctx context.Context, mi *MeasureInt64, v int64) {
+	req := &recordInt64Req{
+		ts: tags.FromContext(ctx),
+		mi: mi,
+		v:  v,
+	}
+	defaultWorker.c <- req
+}
 
 // Record records one or multiple measurements with the same tags at once.
-var Record func(ctx context.Context, ms []Measurement)
+func Record(ctx context.Context, ms []Measurement) {
+	req := &recordReq{
+		ts: tags.FromContext(ctx),
+		ms: ms,
+	}
+	defaultWorker.c <- req
+}
 
 // SetReportingPeriod sets the interval between reporting aggregated views in
-// the program. Calling SetReportingPeriod with duration argument equal to zero
-// enables the default behavior.
-var SetReportingPeriod func(d time.Duration)
+// the program. Calling SetReportingPeriod with duration argument less than or
+// equal to zero enables the default behavior.
+func SetReportingPeriod(d time.Duration) {
+	req := &setReportingPeriodReq{
+		d: d,
+	}
+	defaultWorker.c <- req
+}
 
 func init() {
-	w := newWorker()
-	GetMeasureByName = w.getMeasureByName
-	RegisterMeasure = w.registerMeasure
-	UnregisterMeasure = w.unregisterMeasure
-	GetViewByName = w.getViewByName
-	RegisterView = w.registerView
-	UnregisterView = w.unregisterView
-	SubscribeToView = w.subscribeToView
-	UnsubscribeFromView = w.unsubscribeFromView
-	StartCollectionForAdhoc = w.startCollectionForAdhoc
-	StopCollectionForAdhoc = w.stopCollectionForAdhoc
-	RetrieveData = w.retrieveData
-	RecordFloat64 = w.recordFloat64
-	RecordInt64 = w.recordInt64
-	Record = w.record
-	SetReportingPeriod = w.setReportingPeriod
-
-	w.start()
+	defaultWorker = &worker{
+		measuresByName: make(map[string]Measure),
+		measures:       make(map[Measure]bool),
+		viewsByName:    make(map[string]View),
+		views:          make(map[View]bool),
+		timer:          time.NewTicker(defaultReportingDuration),
+		c:              make(chan command),
+	}
+	defaultWorker.start()
 }
 
 func (w *worker) start() {
 	for {
-		cmd := <-w.c
-		cmd.handleCommand(w)
+		select {
+		case cmd := <-w.c:
+			cmd.handleCommand(w)
+		case <-w.timer.C:
+			w.reportUsage()
+		}
 	}
 }
 
-func (w *worker) getMeasureByName(name string) (Measure, error) {
-	return nil, nil
-}
+func (w *worker) tryRegisterMeasure(m Measure) error {
+	if x, ok := w.measuresByName[m.Name()]; ok {
+		if x != m {
+			return fmt.Errorf("cannot register the measure with name '%v' because a different measure with the same name is already registered", m.Name())
+		}
 
-func (w *worker) registerMeasure(m Measure) error {
+		// the measure is already registered so there is nothing to do and the
+		// command is considered successful.
+		return nil
+	}
+
+	w.measuresByName[m.Name()] = m
+	w.measures[m] = true
 	return nil
 }
 
-func (w *worker) unregisterMeasure(m Measure) error {
+func (w *worker) tryRegisterView(v View) error {
+	if x, ok := w.viewsByName[v.Name()]; ok {
+		if x != v {
+			return fmt.Errorf("cannot register the view with name '%v' because a different view with the same name is already registered", v.Name())
+		}
+
+		// the view is already registered so there is nothing to do and the
+		// command is considered successful.
+		return nil
+	}
+
+	// view is not registered and needs to be registered, but first its measure
+	// needs to be registered.
+	if err := w.tryRegisterMeasure(v.measure()); err != nil {
+		return fmt.Errorf("%v. Hence cannot register view '%v,", err, v.Name())
+	}
+
+	w.viewsByName[v.Name()] = v
+	w.views[v] = true
 	return nil
 }
 
-func (w *worker) getViewByName(name string) (View, error) {
-	return nil, nil
-}
+func (w *worker) reportUsage() {
+	for v := range w.views {
+		if v.subscriptionsCount() == 0 {
+			continue
+		}
 
-func (w *worker) registerView(v View) error {
-	// if &view registered return true
-	// if other view with same name  return false
+		viewData := &ViewData{
+			v:    v,
+			rows: v.collectedRows(),
+		}
 
-	// if measure !registered
-	//  if register(measure) == fail return false
+		for c, s := range v.subscriptions() {
+			select {
+			case c <- viewData:
+			default:
+				s.droppedViewData++
+			}
+		}
 
-	// registerview and return success
-	return nil
-}
-
-func (w *worker) unregisterView(v View) error {
-	return nil
-}
-
-func (w *worker) subscribeToView(v View, c chan *ViewData) error {
-	// if view !registered
-	// success = registerview
-	// if fail return error
-	//subscribe and return true
-	return nil
-}
-
-func (w *worker) unsubscribeFromView(v View, c chan *ViewData) error {
-	return nil
-}
-
-func (w *worker) startCollectionForAdhoc(v View) error {
-	return nil
-}
-
-func (w *worker) stopCollectionForAdhoc(v View) error {
-	return nil
-}
-
-func (w *worker) retrieveData(v View) ([]*Rows, error) {
-	return nil, nil
-}
-
-func (w *worker) recordFloat64(ctx context.Context, mf MeasureFloat64, v float64) {
-
-}
-
-func (w *worker) recordInt64(ctx context.Context, mf MeasureInt64, v int64) {
-
-}
-
-func (w *worker) record(ctx context.Context, ms []Measurement) {
-
-}
-
-func (w *worker) setReportingPeriod(d time.Duration) {
-
+		if _, ok := v.window().(*WindowCumulative); !ok {
+			v.clearRows()
+		}
+	}
 }

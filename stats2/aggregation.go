@@ -18,18 +18,23 @@
 
 package stats2
 
+// Aggregation is the generic interface for all aggregtion types.
 type Aggregation interface {
 	isAggregation() bool
 }
 
+// AggregationInt64 is the generic interface for all aggregtion  of type int64.
 type AggregationInt64 interface {
 	Aggregation
 }
 
-type AggregationCountInt64 struct{}
+// AggregationCountInt64 is the struct representing the count aggregation.
+type AggregationCountInt64 int64
 
 func (a *AggregationCountInt64) isAggregation() bool { return true }
 
+// AggregationDistributionInt64 is the struct representing the distribution
+// aggregation of type int64.
 type AggregationDistributionInt64 struct {
 	// An aggregation distribution may contain a histogram of the values in the
 	// population. The bucket boundaries for that histogram are described
@@ -51,14 +56,14 @@ type AggregationDistributionInt64 struct {
 
 func (a *AggregationDistributionInt64) isAggregation() bool { return true }
 
+// AggregationFloat64 is the generic interface for all aggregtion  of type
+// float64.
 type AggregationFloat64 interface {
 	Aggregation
 }
 
-type AggregationCountFloat64 struct{}
-
-func (a *AggregationCountFloat64) isAggregation() bool { return true }
-
+// AggregationDistributionFloat64 is the struct representing the distribution
+// aggregation of type float64.
 type AggregationDistributionFloat64 struct {
 	// An aggregation distribution may contain a histogram of the values in the
 	// population. The bucket boundaries for that histogram are described

@@ -20,7 +20,7 @@ package stats2
 
 import "github.com/google/working-instrumentation-go/tags"
 
-type Rows struct {
+type Row struct {
 	Tags           []tags.Tag
 	AggregateValue AggregateValue
 }
@@ -38,7 +38,6 @@ type AggregateValueInt64 interface {
 	AggregateValue
 	addSampleInt64(f float64)
 }
-
 
 type AggregateCount int64
 
