@@ -15,9 +15,21 @@
 
 // Package stats defines the stats collection API and its native Go
 // implementation.
+package stats
 
-package stats2
+import "github.com/google/working-instrumentation-go/tags"
 
-type subscription struct {
-	droppedViewData uint64
+// Measure is the interface for all measure types. A measure is required when
+// defining a view.
+type Measure interface {
+	Name() string
+	addView(v View)
+	removeView(v View)
+	viewsCount() int
+}
+
+// Measurement is the interface for all measurement types. Measurements are
+// required when recording stats.
+type Measurement interface {
+	record(ts *tags.TagSet)
 }

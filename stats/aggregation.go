@@ -15,32 +15,56 @@
 
 // Package stats defines the stats collection API and its native Go
 // implementation.
+package stats
 
-package stats2
+import "github.com/google/working-instrumentation-go/tags"
 
 // Aggregation is the generic interface for all aggregtion types.
 type Aggregation interface {
 	isAggregation() bool
 	clearRows()
+	collectedRows(keys []tags.Key) []*Row
 }
 
 // AggregationInt64 is the generic interface for all aggregtion  of type int64.
 type AggregationInt64 interface {
 	Aggregation
+	addSample(signature string, i int64)
 }
 
 // AggregationCountInt64 is the struct representing the count aggregation.
 type AggregationCountInt64 struct {
 	// signatures holds the aggregations values for each unique tag signature
 	// (values for all keys) to its AggregateValueInt64.
-	signatures map[string]AggregateValueInt64
+	signatures map[string]*AggregateCount
 }
 
 func (a *AggregationCountInt64) isAggregation() bool { return true }
 
 func (a *AggregationCountInt64) clearRows() {
+	a.signatures = make(map[string]*AggregateCount)
+}
 
-	a.signatures = make(map[string]AggregateValueFloat64)
+func (a *AggregationCountInt64) addSample(s string, i int64) {
+	v, ok := a.signatures[s]
+	if !ok {
+		v := newAggregateCount()
+		a.signatures[s] = v
+	}
+	v.addSample()
+}
+
+func (a *AggregationCountInt64) collectedRows(keys []tags.Key) []*Row {
+	var rows []*Row
+
+	for sig, v := range a.signatures {
+		ts := tags.ToTagSet(sig, keys)
+		rows = append(rows, &Row{
+			ts,
+			v,
+		})
+	}
+	return rows
 }
 
 // AggregationDistributionInt64 is the struct representing the distribution
@@ -65,15 +89,42 @@ type AggregationDistributionInt64 struct {
 
 	// signatures holds the aggregations values for each unique tag signature
 	// (values for all keys) to its AggregateValueInt64.
-	signatures map[string]AggregateValueInt64
+	signatures map[string]*AggregateDistribution
 }
 
 func (a *AggregationDistributionInt64) isAggregation() bool { return true }
+
+func (a *AggregationDistributionInt64) clearRows() {
+	a.signatures = make(map[string]*AggregateDistribution)
+}
+
+func (a *AggregationDistributionInt64) addSample(s string, i int64) {
+	v, ok := a.signatures[s]
+	if !ok {
+		v := newAggregateDistribution(a.Bounds)
+		a.signatures[s] = v
+	}
+	v.addSampleInt64(i, a.Bounds)
+}
+
+func (a *AggregationDistributionInt64) collectedRows(keys []tags.Key) []*Row {
+	var rows []*Row
+
+	for sig, v := range a.signatures {
+		ts := tags.ToTagSet(sig, keys)
+		rows = append(rows, &Row{
+			ts,
+			v,
+		})
+	}
+	return rows
+}
 
 // AggregationFloat64 is the generic interface for all aggregtion  of type
 // float64.
 type AggregationFloat64 interface {
 	Aggregation
+	addSample(signature string, f float64)
 }
 
 // AggregationDistributionFloat64 is the struct representing the distribution
@@ -98,7 +149,33 @@ type AggregationDistributionFloat64 struct {
 
 	// signatures holds the aggregations values for each unique tag signature
 	// (values for all keys) to its AggregateValueFloat64.
-	signatures map[string]AggregateValueFloat64
+	signatures map[string]*AggregateDistribution
 }
 
 func (a *AggregationDistributionFloat64) isAggregation() bool { return true }
+
+func (a *AggregationDistributionFloat64) clearRows() {
+	a.signatures = make(map[string]*AggregateDistribution)
+}
+
+func (a *AggregationDistributionFloat64) addSample(s string, f float64) {
+	v, ok := a.signatures[s]
+	if !ok {
+		v := newAggregateDistribution(a.Bounds)
+		a.signatures[s] = v
+	}
+	v.addSampleFloat64(f, a.Bounds)
+}
+
+func (a *AggregationDistributionFloat64) collectedRows(keys []tags.Key) []*Row {
+	var rows []*Row
+
+	for sig, v := range a.signatures {
+		ts := tags.ToTagSet(sig, keys)
+		rows = append(rows, &Row{
+			ts,
+			v,
+		})
+	}
+	return rows
+}

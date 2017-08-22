@@ -15,19 +15,13 @@
 
 // Package stats defines the stats collection API and its native Go
 // implementation.
+package stats
 
-package stats2
+import (
+	"fmt"
 
-import "fmt"
-
-// Measure is the interface for all measure types. A measure is required when
-// defining a view.
-type Measure interface {
-	Name() string
-	addView(v View)
-	removeView(v View)
-	viewsCount() int
-}
+	"github.com/google/working-instrumentation-go/tags"
+)
 
 // MeasureFloat64 is a measure of type float64.
 type MeasureFloat64 struct {
@@ -42,14 +36,6 @@ func NewMeasureFloat64(name string, description string) *MeasureFloat64 {
 		name:        name,
 		description: description,
 		views:       make(map[*ViewFloat64]bool),
-	}
-}
-
-// Is creates a new measurement/datapoint of type measurementFloat64.
-func (m *MeasureFloat64) Is(v float64) Measurement {
-	return &measurementFloat64{
-		m: m,
-		v: v,
 	}
 }
 
@@ -78,51 +64,22 @@ func (m *MeasureFloat64) removeView(v View) {
 
 func (m *MeasureFloat64) viewsCount() int { return len(m.views) }
 
-// MeasureInt64 is a measure of type int64.
-type MeasureInt64 struct {
-	name        string
-	description string
-	views       map[*ViewInt64]bool
-}
-
-// NewMeasureInt64 creates a new measure of type MeasureInt64.
-func NewMeasureInt64(name string, description string) *MeasureInt64 {
-	return &MeasureInt64{
-		name:        name,
-		description: description,
-		views:       make(map[*ViewInt64]bool),
-	}
-}
-
-// Is creates a new measurement/datapoint of type measurementInt64.
-func (m *MeasureInt64) Is(v int64) Measurement {
-	return &measurementInt64{
+// Is creates a new measurement/datapoint of type measurementFloat64.
+func (m *MeasureFloat64) Is(v float64) Measurement {
+	return &measurementFloat64{
 		m: m,
 		v: v,
 	}
 }
 
-// Name returns the name of the measure.
-func (m *MeasureInt64) Name() string {
-	return m.name
+type measurementFloat64 struct {
+	m *MeasureFloat64
+	v float64
 }
 
-func (m *MeasureInt64) addView(v View) {
-	vi64, ok := v.(*ViewInt64)
-	if !ok {
-		panic(fmt.Sprintf("adding a view of type '%T' to MeasureInt64. This is a bug in the stats library. It should never happen.", v))
+func (mf *measurementFloat64) record(ts *tags.TagSet) {
+	for v := range mf.m.views {
+
+		v.addSample(ts, mf.v)
 	}
-
-	m.views[vi64] = true
 }
-
-func (m *MeasureInt64) removeView(v View) {
-	vi64, ok := v.(*ViewInt64)
-	if !ok {
-		panic(fmt.Sprintf("removing a view of type '%T' from MeasureInt64. This is a bug in the stats library. It should never happen.", v))
-	}
-
-	delete(m.views, vi64)
-}
-
-func (m *MeasureInt64) viewsCount() int { return len(m.views) }

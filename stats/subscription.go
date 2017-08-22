@@ -15,28 +15,8 @@
 
 // Package stats defines the stats collection API and its native Go
 // implementation.
+package stats
 
-package stats2
-
-import "time"
-
-// Window represents the interval/samples count over which the aggregation
-// occurs.
-type Window interface {
-	isWindow() bool
+type subscription struct {
+	droppedViewData uint64
 }
-
-// WindowCumulative indicates that the aggregation occurs over all samples seen
-// since the view collection started.
-type WindowCumulative struct {
-}
-
-func (w *WindowCumulative) isWindow() bool { return true }
-
-// WindowSlidingTime indicates that the aggregation occurs over a sliding
-// window of time. i.e. last n seconds, minutes, hours...
-type WindowSlidingTime struct {
-	d time.Duration
-}
-
-func (w *WindowSlidingTime) isWindow() bool { return true }

@@ -15,31 +15,20 @@
 
 // Package stats defines the stats collection API and its native Go
 // implementation.
+package stats
 
-package stats2
-
-import "github.com/google/working-instrumentation-go/tags"
-
-type Row struct {
-	Tags           []tags.Tag
-	AggregateValue AggregateValue
-}
-
+// AggregateValue is the interface for all types of aggregations values.
 type AggregateValue interface {
 	isAggregate() bool
 }
 
-type AggregateValueFloat64 interface {
-	AggregateValue
-	addSampleFloat64(f float64)
-}
-
-type AggregateValueInt64 interface {
-	AggregateValue
-	addSampleInt64(f float64)
-}
-
+// AggregateCount is the aggregated data for an AggregationCountInt64.
 type AggregateCount int64
+
+func newAggregateCount() *AggregateCount {
+	tmp := new(AggregateCount)
+	return tmp
+}
 
 func (a *AggregateCount) isAggregate() bool { return true }
 
@@ -47,6 +36,8 @@ func (a *AggregateCount) addSample() {
 	*a = *a + 1
 }
 
+// AggregateDistribution is the aggregated data for an
+// AggregationDistributionFloat64  or AggregationDistributionInt64.
 type AggregateDistribution struct {
 	Count               int64
 	Min, Mean, Max, Sum float64
@@ -56,6 +47,11 @@ type AggregateDistribution struct {
 	CountPerBucket []int64
 }
 
+func newAggregateDistribution(bounds []float64) *AggregateDistribution {
+	return &AggregateDistribution{
+		CountPerBucket: make([]int64, len(bounds)+1),
+	}
+}
 func (a *AggregateDistribution) isAggregate() bool { return true }
 
 func (a *AggregateDistribution) addSampleFloat64(f float64, bounds []float64) {
@@ -80,4 +76,8 @@ func (a *AggregateDistribution) addSampleFloat64(f float64, bounds []float64) {
 		}
 	}
 	a.CountPerBucket[len(bounds)]++
+}
+
+func (a *AggregateDistribution) addSampleInt64(i int64, bounds []float64) {
+	a.addSampleFloat64(float64(i), bounds)
 }

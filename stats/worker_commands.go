@@ -15,8 +15,7 @@
 
 // Package stats defines the stats collection API and its native Go
 // implementation.
-
-package stats2
+package stats
 
 import (
 	"fmt"
@@ -145,18 +144,14 @@ func (cmd *unregisterViewReq) handleCommand(w *worker) {
 		return
 	}
 
-	if v.subscriptionsCount() != 0 {
-		cmd.err <- fmt.Errorf("cannot unregister view '%v'. All subscriptions to it must be unsubscribed first", cmd.v.Name())
-		return
-	}
-
-	if v.isCollectingForAdhoc() {
-		cmd.err <- fmt.Errorf("cannot unregister view '%v'. Its adhoc collection must be stopped first", cmd.v.Name())
+	if v.isCollecting() {
+		cmd.err <- fmt.Errorf("cannot unregister view '%v'. All subscriptions to it must be unsubscribed and its adhoc collection must be stopped first", cmd.v.Name())
 		return
 	}
 
 	delete(w.viewsByName, cmd.v.Name())
 	delete(w.views, cmd.v)
+	cmd.v.measure().removeView(v)
 	cmd.err <- nil
 }
 
@@ -177,13 +172,6 @@ func (cmd *subscribeToViewReq) handleCommand(w *worker) {
 		return
 	}
 
-	if cmd.v.subscriptionsCount() == 0 || !cmd.v.isCollectingForAdhoc() {
-		// this is the first subscription and isCollectingForAdhoc() is
-		// disabled. Hence we need to start collecting data for this view. This
-		// is done by adding it to the measure.
-		cmd.v.measure().addView(cmd.v)
-	}
-
 	cmd.v.addSubscription(cmd.c)
 
 	cmd.err <- nil
@@ -201,12 +189,10 @@ type unsubscribeFromViewReq struct {
 func (cmd *unsubscribeFromViewReq) handleCommand(w *worker) {
 	cmd.v.deleteSubscription(cmd.c)
 
-	if cmd.v.subscriptionsCount() == 0 && !cmd.v.isCollectingForAdhoc() {
-		// this was the last subscription and isCollectingForAdhoc() is
-		// disabled. Hence we need to stop collecting data for this view. This
-		// is done by removing it from the measure.
-		cmd.v.measure().removeView(cmd.v)
-		cmd.v.clearRows()
+	if !cmd.v.isCollecting() {
+		// this was the last subscription and view is not collecting anymore.
+		// The collected data can be cleared.
+		cmd.v.aggregation().clearRows()
 	}
 
 	// we always return nil because this operation never fails. However we
@@ -228,13 +214,6 @@ func (cmd *startCollectionForAdhocReq) handleCommand(w *worker) {
 		return
 	}
 
-	if cmd.v.subscriptionsCount() == 0 || !cmd.v.isCollectingForAdhoc() {
-		// there are no subscriptions and isCollectingForAdhoc() is disabled.
-		// Hence we need to start collecting data for this view. This is done
-		// by adding it to the measure.
-		cmd.v.measure().addView(cmd.v)
-	}
-
 	cmd.v.startCollectingForAdhoc()
 
 	// we always return nil because this operation never fails. However we
@@ -254,12 +233,8 @@ type stopCollectionForAdhocReq struct {
 func (cmd *stopCollectionForAdhocReq) handleCommand(w *worker) {
 	cmd.v.stopCollectingForAdhoc()
 
-	if cmd.v.subscriptionsCount() == 0 {
-		// there are no subscriptions and isCollectingForAdhoc() is disabled.
-		// Hence we need to stop collecting data for this view. This
-		// is done by removing it from the measure.
-		cmd.v.measure().removeView(cmd.v)
-		cmd.v.clearRows()
+	if !cmd.v.isCollecting() {
+		cmd.v.aggregation().clearRows()
 	}
 
 	// we always return nil because this operation never fails. However we
@@ -288,17 +263,16 @@ func (cmd *retrieveDataReq) handleCommand(w *worker) {
 		return
 	}
 
-	if cmd.v.subscriptionsCount() == 0 && !cmd.v.isCollectingForAdhoc() {
+	if cmd.v.isCollecting() {
 		cmd.c <- &retrieveDataResp{
+			cmd.v.collectedRows(),
 			nil,
-			fmt.Errorf("cannot retrieve data for view with name '%v' because no client is subscribed to it and adhoc collection was not started for it explicitly", cmd.v.Name()),
 		}
 		return
 	}
-
 	cmd.c <- &retrieveDataResp{
-		cmd.v.collectedRows(),
 		nil,
+		fmt.Errorf("cannot retrieve data for view with name '%v' because no client is subscribed to it and adhoc collection was not started for it explicitly", cmd.v.Name()),
 	}
 }
 

@@ -98,3 +98,25 @@ func toValuesBytes(ts *TagSet, ks []Key) *valuesBytes {
 	}
 	return vb
 }
+
+// ToValuesString returns the values bytes resulting from projecting *TagSet
+// along the []Key.
+func ToValuesString(ts *TagSet, ks []Key) string {
+	vb := &valuesBytes{
+		buf: make([]byte, len(ks)),
+	}
+	for _, k := range ks {
+		v := ts.m[k]
+		vb.writeValue(v)
+	}
+	return string(vb.Bytes())
+}
+
+func ToTagSet(s string, ks []Key) *TagSet {
+	vb := &valuesBytes{
+		buf: []byte(s),
+	}
+	return &TagSet{
+		vb.toMap(ks),
+	}
+}

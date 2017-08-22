@@ -15,37 +15,27 @@
 
 // Package stats defines the stats collection API and its native Go
 // implementation.
+package stats
 
-package stats2
+import "time"
 
-import (
-	"github.com/google/working-instrumentation-go/tags"
-)
-
-// Measurement is the interface for all measurement types. Measurements are
-// required when recording stats.
-type Measurement interface {
-	record(ts *tags.TagSet)
+// Window represents the interval/samples count over which the aggregation
+// occurs.
+type Window interface {
+	isWindow() bool
 }
 
-type measurementFloat64 struct {
-	m *MeasureFloat64
-	v float64
+// WindowCumulative indicates that the aggregation occurs over all samples seen
+// since the view collection started.
+type WindowCumulative struct {
 }
 
-func (mf *measurementFloat64) record(ts *tags.TagSet) {
-	for v := range mf.m.views {
-		v.recordFloat64(ts, mf.v)
-	}
+func (w *WindowCumulative) isWindow() bool { return true }
+
+// WindowSlidingTime indicates that the aggregation occurs over a sliding
+// window of time. i.e. last n seconds, minutes, hours...
+type WindowSlidingTime struct {
+	d time.Duration
 }
 
-type measurementInt64 struct {
-	m *MeasureInt64
-	v int64
-}
-
-func (mi *measurementInt64) record(ts *tags.TagSet) {
-	for v := range mi.m.views {
-		v.recordInt64(ts, mi.v)
-	}
-}
+func (w *WindowSlidingTime) isWindow() bool { return true }

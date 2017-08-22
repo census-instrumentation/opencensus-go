@@ -15,8 +15,7 @@
 
 // Package stats defines the stats collection API and its native Go
 // implementation.
-
-package stats2
+package stats
 
 import (
 	"context"
@@ -34,6 +33,7 @@ type worker struct {
 
 	timer *time.Ticker
 	c     chan command
+	quit  chan bool
 }
 
 var defaultWorker *worker
@@ -216,25 +216,45 @@ func SetReportingPeriod(d time.Duration) {
 }
 
 func init() {
-	defaultWorker = &worker{
+	defaultWorker = newWorker()
+	go defaultWorker.start()
+}
+
+func newWorker() *worker {
+	return &worker{
 		measuresByName: make(map[string]Measure),
 		measures:       make(map[Measure]bool),
 		viewsByName:    make(map[string]View),
 		views:          make(map[View]bool),
 		timer:          time.NewTicker(defaultReportingDuration),
 		c:              make(chan command),
+		quit:           make(chan bool),
 	}
-	defaultWorker.start()
 }
 
 func (w *worker) start() {
 	for {
 		select {
 		case cmd := <-w.c:
-			cmd.handleCommand(w)
+			if cmd != nil {
+				cmd.handleCommand(w)
+			}
 		case <-w.timer.C:
 			w.reportUsage()
+		case <-w.quit:
+			w.timer.Stop()
+			close(w.c)
+			break
 		}
+	}
+}
+
+func (w *worker) stop() {
+	select {
+	case w.quit <- true:
+		return
+	default:
+		return
 	}
 }
 
@@ -273,6 +293,7 @@ func (w *worker) tryRegisterView(v View) error {
 
 	w.viewsByName[v.Name()] = v
 	w.views[v] = true
+	v.measure().addView(v)
 	return nil
 }
 
@@ -290,13 +311,14 @@ func (w *worker) reportUsage() {
 		for c, s := range v.subscriptions() {
 			select {
 			case c <- viewData:
+				return
 			default:
 				s.droppedViewData++
 			}
 		}
 
 		if _, ok := v.window().(*WindowCumulative); !ok {
-			v.clearRows()
+			v.aggregation().clearRows()
 		}
 	}
 }
