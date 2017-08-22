@@ -36,9 +36,9 @@ type ViewInt64 struct {
 	// Examples of measures are cpu:tickCount, diskio:time...
 	m *MeasureInt64
 
-	// aggregation is the description of the aggregation to perform for this
+	// Aggregation is the description of the aggregation to perform for this
 	// view.
-	a AggregationInt64
+	a Aggregation
 
 	// window is the window under which the aggregation is performed.
 	w Window
@@ -57,7 +57,7 @@ type ViewInt64 struct {
 }
 
 // NewViewInt64 creates a new *ViewInt64.
-func NewViewInt64(name, description string, keys []tags.Key, measure *MeasureInt64, agg AggregationInt64, wnd Window) *ViewInt64 {
+func NewViewInt64(name, description string, keys []tags.Key, measure *MeasureInt64, agg Aggregation, wnd Window) *ViewInt64 {
 	return &ViewInt64{
 		name,
 		description,

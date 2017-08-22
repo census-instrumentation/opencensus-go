@@ -36,9 +36,9 @@ type ViewFloat64 struct {
 	// Examples of measures are cpu:tickCount, diskio:time...
 	m *MeasureFloat64
 
-	// AggregationFloat64 is the description of the aggregation to perform for
-	// this view.
-	a AggregationFloat64
+	// Aggregation is the description of the aggregation to perform for this
+	// view.
+	a Aggregation
 
 	// window is the window under which the aggregation is performed.
 	w Window
@@ -57,7 +57,7 @@ type ViewFloat64 struct {
 }
 
 // NewViewFloat64 creates a new *ViewFloat64.
-func NewViewFloat64(name, description string, keys []tags.Key, measure *MeasureFloat64, agg AggregationFloat64, wnd Window) *ViewFloat64 {
+func NewViewFloat64(name, description string, keys []tags.Key, measure *MeasureFloat64, agg Aggregation, wnd Window) *ViewFloat64 {
 	return &ViewFloat64{
 		name,
 		description,
