@@ -25,17 +25,26 @@ type Window interface {
 	isWindow() bool
 }
 
-// WindowCumulative indicates that the aggregation occurs over all samples seen
-// since the view collection started.
-type WindowCumulative struct {
-}
+// WindowCumulative indicates that the aggregation occurs over the lifetime of
+// the view.
+type WindowCumulative struct{}
 
-func (w *WindowCumulative) isWindow() bool { return true }
+func (w WindowCumulative) isWindow() bool { return true }
 
 // WindowSlidingTime indicates that the aggregation occurs over a sliding
-// window of time. i.e. last n seconds, minutes, hours...
+// window of time: i.e. last n seconds, minutes, hours...
 type WindowSlidingTime struct {
-	d time.Duration
+	duration     time.Duration
+	subIntervals int
 }
 
-func (w *WindowSlidingTime) isWindow() bool { return true }
+func (w WindowSlidingTime) isWindow() bool { return true }
+
+// WindowSlidingCount indicates that the aggregation occurs over a sliding
+// number of samples.
+type WindowSlidingCount struct {
+	n       int
+	subSets int
+}
+
+func (w WindowSlidingCount) isWindow() bool { return true }

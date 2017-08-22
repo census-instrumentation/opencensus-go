@@ -276,7 +276,7 @@ func Test_Worker_MeasureRegistration(t *testing.T) {
 	}
 }
 
-func Test_Worker_ViewRegistrationAll(t *testing.T) {
+func Test_Worker_ViewRegistration(t *testing.T) {
 	someError := errors.New("some error")
 	mf1 := NewMeasureFloat64("MF1", "desc MF1")
 	mf2 := NewMeasureFloat64("MF2", "desc MF2")
@@ -486,11 +486,19 @@ func Test_Worker_AdhocCollection(t *testing.T) {
 func Test_Worker_Subscription(t *testing.T) {
 	restartDefaultWorker()
 }
+*/
 
 func Test_Worker_RecordFloat64(t *testing.T) {
-	restartDefaultWorker()
+	// register mf1, mf2 register vw1
+	// record(mf1) -> nothing
+	// record(mf2) -> nothing
+	// adhoc vw1
+	// record(mf1) -> 1
+	// record(mf1)*2 -> 2
+	// record(mf2) -> nothing
 }
 
+/*
 func Test_Worker_RecordInt64(t *testing.T) {
 	restartDefaultWorker()
 }
