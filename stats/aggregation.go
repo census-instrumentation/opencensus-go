@@ -22,10 +22,13 @@ type Aggregation interface {
 	isAggregation() bool
 }
 
+// AggregationCount indicates that the desired aggregation is count.
 type AggregationCount struct{}
 
 func (a *AggregationCount) isAggregation() bool { return true }
 
+// AggregationDistribution indicates that the desired aggregation is a histograms
+// distribution.
 type AggregationDistribution struct {
 	// An aggregation distribution may contain a histogram of the values in the
 	// population. The bucket boundaries for that histogram are described

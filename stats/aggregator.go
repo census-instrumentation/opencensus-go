@@ -23,5 +23,5 @@ import "time"
 type aggregator interface {
 	isAggregator() bool
 	addSample(v interface{}, now time.Time)
-	retrieveCollected(now time.Time) AggregateValue
+	retrieveCollected(now time.Time) AggregationValue
 }

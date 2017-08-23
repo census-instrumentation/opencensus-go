@@ -23,9 +23,9 @@ import (
 	"github.com/google/working-instrumentation-go/tags"
 )
 
-// ViewInt64 is the data structure that holds the info describing the int64
+// view is the data structure that holds the info describing the int64
 // view as well as the aggregated data.
-type ViewInt64 struct {
+type view struct {
 	// name of View. Must be unique.
 	name        string
 	description string
@@ -35,13 +35,6 @@ type ViewInt64 struct {
 
 	// Examples of measures are cpu:tickCount, diskio:time...
 	m *MeasureInt64
-
-	// Aggregation is the description of the aggregation to perform for this
-	// view.
-	a Aggregation
-
-	// window is the window under which the aggregation is performed.
-	w Window
 
 	// start is time when view collection was started originally.
 	start time.Time
@@ -58,86 +51,102 @@ type ViewInt64 struct {
 	c *collector
 }
 
-// NewViewInt64 creates a new *ViewInt64.
-func NewViewInt64(name, description string, keys []tags.Key, measure *MeasureInt64, agg Aggregation, wnd Window) *ViewInt64 {
-	return &ViewInt64{
+// NewViewInt64 creates a new *view.
+func NewViewInt64(name, description string, keys []tags.Key, measure *MeasureInt64, agg Aggregation, wnd Window) *view {
+	return &view{
 		name,
 		description,
 		keys,
 		measure,
-		agg,
-		wnd,
 		time.Date(1, 1, 1, 0, 0, 0, 0, time.UTC),
 		make(map[chan *ViewData]subscription),
 		false,
 		&collector{
 			make(map[string]aggregator),
-			wnd,
 			agg,
+			wnd,
 		},
 	}
 }
 
-// Name returns the name of ViewInt64.
-func (v *ViewInt64) Name() string {
+// NewViewFloat64 creates a new *view.
+func NewViewFloat64(name, description string, keys []tags.Key, measure *MeasureFloat64, agg Aggregation, wnd Window) *view {
+	return &view{
+		name,
+		description,
+		keys,
+		measure,
+		time.Date(1, 1, 1, 0, 0, 0, 0, time.UTC),
+		make(map[chan *ViewData]subscription),
+		false,
+		&collector{
+			make(map[string]aggregator),
+			agg,
+			wnd,
+		},
+	}
+}
+
+// Name returns the name of view.
+func (v *view) Name() string {
 	return v.name
 }
 
-// Description returns the name of ViewInt64.
-func (v *ViewInt64) Description() string {
+// Description returns the name of view.
+func (v *view) Description() string {
 	return v.description
 }
 
-func (v *ViewInt64) addSubscription(c chan *ViewData) {
+func (v *view) addSubscription(c chan *ViewData) {
 	v.ss[c] = subscription{}
 }
 
-func (v *ViewInt64) deleteSubscription(c chan *ViewData) {
+func (v *view) deleteSubscription(c chan *ViewData) {
 	delete(v.ss, c)
 }
 
-func (v *ViewInt64) subscriptionExists(c chan *ViewData) bool {
+func (v *view) subscriptionExists(c chan *ViewData) bool {
 	_, ok := v.ss[c]
 	return ok
 }
 
-func (v *ViewInt64) subscriptionsCount() int {
+func (v *view) subscriptionsCount() int {
 	return len(v.ss)
 }
 
-func (v *ViewInt64) subscriptions() map[chan *ViewData]subscription {
+func (v *view) subscriptions() map[chan *ViewData]subscription {
 	return v.ss
 }
 
-func (v *ViewInt64) startCollectingForAdhoc() {
+func (v *view) startCollectingForAdhoc() {
 	v.collectingForAdhoc = true
 }
 
-func (v *ViewInt64) stopCollectingForAdhoc() {
+func (v *view) stopCollectingForAdhoc() {
 	v.collectingForAdhoc = false
 }
 
-func (v *ViewInt64) isCollecting() bool {
+func (v *view) isCollecting() bool {
 	return v.subscriptionsCount() > 0 || v.collectingForAdhoc
 }
 
-func (v *ViewInt64) collector() *collector {
+func (v *view) collector() *collector {
 	return v.c
 }
 
-func (v *ViewInt64) window() Window {
-	return v.w
+func (v *view) window() Window {
+	return v.c.w
 }
 
-func (v *ViewInt64) measure() Measure {
+func (v *view) measure() Measure {
 	return v.m
 }
 
-func (v *ViewInt64) collectedRows() []*Row {
+func (v *view) collectedRows() []*Row {
 	return v.c.collectedRows(v.tagKeys, time.Now())
 }
 
-func (v *ViewInt64) addSample(ts *tags.TagSet, i int64) {
+func (v *view) addSample(ts *tags.TagSet, val interface{}) {
 	sig := tags.ToValuesString(ts, v.tagKeys)
-	v.c.addSample(sig, i, time.Now())
+	v.c.addSample(sig, val, time.Now())
 }

@@ -27,28 +27,32 @@ type collector struct {
 	// signatures holds the aggregations values for each unique tag signature
 	// (values for all keys) to its Window.
 	signatures map[string]aggregator
-	w          Window
-	a          Aggregation
+	// Aggregation is the description of the aggregation to perform for this
+	// view.
+	a Aggregation
+
+	// window is the window under which the aggregation is performed.
+	w Window
 }
 
 func (c *collector) addSample(s string, v interface{}, now time.Time) {
 	aggregator, ok := c.signatures[s]
 	if !ok {
-		var newAggregateValue func() AggregateValue
+		var newAggregationValue func() AggregationValue
 		switch c.a.(type) {
 		case *AggregationCount:
-			newAggregateValue = func() AggregateValue { return newAggregateCount() }
+			newAggregationValue = func() AggregationValue { return newAggregationCountValue() }
 		case *AggregationDistribution:
-			newAggregateValue = func() AggregateValue { return newAggregateDistribution([]float64{}) }
+			newAggregationValue = func() AggregationValue { return newAggregationDistributionValue([]float64{}) }
 		default:
 			// TODO: panic here. This should never be reached. If it is, then it is a bug.
 		}
 
 		switch w := c.w.(type) {
 		case WindowCumulative:
-			aggregator = newAggregatorCumulative(now, newAggregateValue)
+			aggregator = newAggregatorCumulative(now, newAggregationValue)
 		case WindowSlidingTime:
-			aggregator = newAggregatorSlidingTime(now, w.duration, w.subIntervals, newAggregateValue)
+			aggregator = newAggregatorSlidingTime(now, w.duration, w.subIntervals, newAggregationValue)
 		default:
 			// TODO: panic here. This should never be reached. If it is, then it is a bug.
 		}

@@ -17,50 +17,50 @@
 // implementation.
 package stats
 
-// AggregateValue is the interface for all types of aggregations values.
-type AggregateValue interface {
+// AggregationValue is the interface for all types of aggregations values.
+type AggregationValue interface {
 	isAggregate() bool
 	addSample(v interface{})
-	multiplyByFraction(fraction float64) AggregateValue
-	addToIt(other AggregateValue)
+	multiplyByFraction(fraction float64) AggregationValue
+	addToIt(other AggregationValue)
 	clear()
 }
 
-// AggregateCount is the aggregated data for an AggregationCountInt64.
-type AggregateCount int64
+// AggregationCountValue is the aggregated data for an AggregationCountInt64.
+type AggregationCountValue int64
 
-func newAggregateCount() *AggregateCount {
-	tmp := new(AggregateCount)
+func newAggregationCountValue() *AggregationCountValue {
+	tmp := new(AggregationCountValue)
 	return tmp
 }
 
-func (a *AggregateCount) isAggregate() bool { return true }
+func (a *AggregationCountValue) isAggregate() bool { return true }
 
-func (a *AggregateCount) addSample(v interface{}) {
+func (a *AggregationCountValue) addSample(v interface{}) {
 	*a = *a + 1
 }
 
-func (a *AggregateCount) multiplyByFraction(fraction float64) AggregateValue {
-	ret := newAggregateCount()
-	*ret = AggregateCount(float64(int64(*a)) * fraction)
+func (a *AggregationCountValue) multiplyByFraction(fraction float64) AggregationValue {
+	ret := newAggregationCountValue()
+	*ret = AggregationCountValue(float64(int64(*a)) * fraction)
 	return ret
 }
 
-func (a *AggregateCount) addToIt(av AggregateValue) {
-	other, ok := av.(*AggregateCount)
+func (a *AggregationCountValue) addToIt(av AggregationValue) {
+	other, ok := av.(*AggregationCountValue)
 	if !ok {
 		return
 	}
 	*a = *a + *other
 }
 
-func (a *AggregateCount) clear() {
+func (a *AggregationCountValue) clear() {
 	*a = 0
 }
 
-// AggregateDistribution is the aggregated data for an
+// AggregationDistributionValue is the aggregated data for an
 // AggregationDistributionFloat64  or AggregationDistributionInt64.
-type AggregateDistribution struct {
+type AggregationDistributionValue struct {
 	Count               int64
 	Min, Mean, Max, Sum float64
 	// CountPerBucket is the set of occurrences count per bucket. The
@@ -70,16 +70,16 @@ type AggregateDistribution struct {
 	bounds         []float64
 }
 
-func newAggregateDistribution(bounds []float64) *AggregateDistribution {
-	return &AggregateDistribution{
+func newAggregationDistributionValue(bounds []float64) *AggregationDistributionValue {
+	return &AggregationDistributionValue{
 		CountPerBucket: make([]int64, len(bounds)+1),
 		bounds:         bounds,
 	}
 }
 
-func (a *AggregateDistribution) isAggregate() bool { return true }
+func (a *AggregationDistributionValue) isAggregate() bool { return true }
 
-func (a *AggregateDistribution) addSample(v interface{}) {
+func (a *AggregationDistributionValue) addSample(v interface{}) {
 	var f float64
 	switch x := v.(type) {
 	case int:
@@ -115,8 +115,8 @@ func (a *AggregateDistribution) addSample(v interface{}) {
 	a.CountPerBucket[len(a.bounds)]++
 }
 
-func (a *AggregateDistribution) multiplyByFraction(fraction float64) AggregateValue {
-	ret := newAggregateDistribution(a.bounds)
+func (a *AggregationDistributionValue) multiplyByFraction(fraction float64) AggregationValue {
+	ret := newAggregationDistributionValue(a.bounds)
 	ret.Count = int64(float64(a.Count) * fraction)
 	ret.Min = a.Min
 	ret.Max = a.Max
@@ -127,8 +127,8 @@ func (a *AggregateDistribution) multiplyByFraction(fraction float64) AggregateVa
 	return ret
 }
 
-func (a *AggregateDistribution) addToIt(av AggregateValue) {
-	other, ok := av.(*AggregateDistribution)
+func (a *AggregationDistributionValue) addToIt(av AggregationValue) {
+	other, ok := av.(*AggregationDistributionValue)
 	if !ok {
 		return
 	}
@@ -141,7 +141,7 @@ func (a *AggregateDistribution) addToIt(av AggregateValue) {
 	}
 }
 
-func (a *AggregateDistribution) clear() {
+func (a *AggregationDistributionValue) clear() {
 	a.Count = 0
 	a.Min = 0
 	a.Max = 0

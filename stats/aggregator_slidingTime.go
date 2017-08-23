@@ -36,7 +36,7 @@ type aggregatorSlidingTime struct {
 }
 
 // newAggregatorSlidingTime creates an aggregatorSlidingTime.
-func newAggregatorSlidingTime(now time.Time, d time.Duration, subIntervalsCount int, newAggregateValue func() AggregateValue) *aggregatorSlidingTime {
+func newAggregatorSlidingTime(now time.Time, d time.Duration, subIntervalsCount int, newAggregationValue func() AggregationValue) *aggregatorSlidingTime {
 	subDuration := d / time.Duration(subIntervalsCount)
 	start := now.Add(-subDuration * time.Duration(subIntervalsCount))
 	var entries []*timeSerieEntry
@@ -45,7 +45,7 @@ func newAggregatorSlidingTime(now time.Time, d time.Duration, subIntervalsCount 
 	for i := 0; i <= subIntervalsCount; i++ {
 		entries = append(entries, &timeSerieEntry{
 			endTime: start.Add(subDuration),
-			av:      newAggregateValue(),
+			av:      newAggregationValue(),
 		})
 		start = start.Add(subDuration)
 	}
@@ -69,7 +69,7 @@ func (a *aggregatorSlidingTime) addSample(v interface{}, now time.Time) {
 	e.av.addSample(v)
 }
 
-func (a *aggregatorSlidingTime) retrieveCollected(now time.Time) AggregateValue {
+func (a *aggregatorSlidingTime) retrieveCollected(now time.Time) AggregationValue {
 	a.moveToCurrentEntry(now)
 
 	e := a.entries[a.idx]
@@ -102,5 +102,5 @@ func (a *aggregatorSlidingTime) moveToCurrentEntry(now time.Time) {
 
 type timeSerieEntry struct {
 	endTime time.Time
-	av      AggregateValue
+	av      AggregationValue
 }

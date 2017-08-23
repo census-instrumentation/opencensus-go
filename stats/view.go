@@ -38,6 +38,8 @@ type View interface {
 	window() Window
 	measure() Measure
 	collectedRows() []*Row
+
+	addSample(ts *tags.TagSet, val interface{})
 }
 
 // A ViewData is a set of rows about usage of the single measure associated
@@ -51,5 +53,5 @@ type ViewData struct {
 // Row is the collected value for a specific set of key value pairs a.k.a tags.
 type Row struct {
 	Tags           *tags.TagSet
-	AggregateValue AggregateValue
+	AggregationValue AggregationValue
 }

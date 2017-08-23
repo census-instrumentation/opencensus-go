@@ -36,13 +36,6 @@ type ViewFloat64 struct {
 	// Examples of measures are cpu:tickCount, diskio:time...
 	m *MeasureFloat64
 
-	// Aggregation is the description of the aggregation to perform for this
-	// view.
-	a Aggregation
-
-	// window is the window under which the aggregation is performed.
-	w Window
-
 	// start is time when view collection was started originally.
 	start time.Time
 
@@ -65,15 +58,13 @@ func NewViewFloat64(name, description string, keys []tags.Key, measure *MeasureF
 		description,
 		keys,
 		measure,
-		agg,
-		wnd,
 		time.Date(1, 1, 1, 0, 0, 0, 0, time.UTC),
 		make(map[chan *ViewData]subscription),
 		false,
 		&collector{
 			make(map[string]aggregator),
-			wnd,
 			agg,
+			wnd,
 		},
 	}
 }
@@ -126,7 +117,7 @@ func (v *ViewFloat64) collector() *collector {
 }
 
 func (v *ViewFloat64) window() Window {
-	return v.w
+	return v.c.w
 }
 
 func (v *ViewFloat64) measure() Measure {
@@ -137,7 +128,7 @@ func (v *ViewFloat64) collectedRows() []*Row {
 	return v.c.collectedRows(v.tagKeys, time.Now())
 }
 
-func (v *ViewFloat64) addSample(ts *tags.TagSet, f float64) {
+func (v *ViewFloat64) addSample(ts *tags.TagSet, val interface{}) {
 	sig := tags.ToValuesString(ts, v.tagKeys)
-	v.c.addSample(sig, f, time.Now())
+	v.c.addSample(sig, val, time.Now())
 }
