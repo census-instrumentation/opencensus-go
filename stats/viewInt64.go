@@ -54,6 +54,8 @@ type ViewInt64 struct {
 	// client is subscribed to it. This is necessary for supporting a pull
 	// model.
 	collectingForAdhoc bool
+
+	c *collector
 }
 
 // NewViewInt64 creates a new *ViewInt64.
@@ -68,6 +70,11 @@ func NewViewInt64(name, description string, keys []tags.Key, measure *MeasureInt
 		time.Date(1, 1, 1, 0, 0, 0, 0, time.UTC),
 		make(map[chan *ViewData]subscription),
 		false,
+		&collector{
+			make(map[string]aggregator),
+			wnd,
+			agg,
+		},
 	}
 }
 
@@ -114,8 +121,8 @@ func (v *ViewInt64) isCollecting() bool {
 	return v.subscriptionsCount() > 0 || v.collectingForAdhoc
 }
 
-func (v *ViewInt64) aggregation() Aggregation {
-	return v.a
+func (v *ViewInt64) collector() *collector {
+	return v.c
 }
 
 func (v *ViewInt64) window() Window {
@@ -127,10 +134,10 @@ func (v *ViewInt64) measure() Measure {
 }
 
 func (v *ViewInt64) collectedRows() []*Row {
-	return v.aggregation().collectedRows(v.tagKeys)
+	return v.c.collectedRows(v.tagKeys, time.Now())
 }
 
 func (v *ViewInt64) addSample(ts *tags.TagSet, i int64) {
 	sig := tags.ToValuesString(ts, v.tagKeys)
-	v.a.addSample(sig, i)
+	v.c.addSample(sig, i, time.Now())
 }

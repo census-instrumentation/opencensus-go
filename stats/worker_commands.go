@@ -192,7 +192,7 @@ func (cmd *unsubscribeFromViewReq) handleCommand(w *worker) {
 	if !cmd.v.isCollecting() {
 		// this was the last subscription and view is not collecting anymore.
 		// The collected data can be cleared.
-		cmd.v.aggregation().clearRows()
+		cmd.v.collector().clearRows()
 	}
 
 	// we always return nil because this operation never fails. However we
@@ -234,7 +234,7 @@ func (cmd *stopCollectionForAdhocReq) handleCommand(w *worker) {
 	cmd.v.stopCollectingForAdhoc()
 
 	if !cmd.v.isCollecting() {
-		cmd.v.aggregation().clearRows()
+		cmd.v.collector().clearRows()
 	}
 
 	// we always return nil because this operation never fails. However we

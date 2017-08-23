@@ -54,6 +54,8 @@ type ViewFloat64 struct {
 	// client is subscribed to it. This is necessary for supporting a pull
 	// model.
 	collectingForAdhoc bool
+
+	c *collector
 }
 
 // NewViewFloat64 creates a new *ViewFloat64.
@@ -68,6 +70,11 @@ func NewViewFloat64(name, description string, keys []tags.Key, measure *MeasureF
 		time.Date(1, 1, 1, 0, 0, 0, 0, time.UTC),
 		make(map[chan *ViewData]subscription),
 		false,
+		&collector{
+			make(map[string]aggregator),
+			wnd,
+			agg,
+		},
 	}
 }
 
@@ -114,8 +121,8 @@ func (v *ViewFloat64) isCollecting() bool {
 	return v.subscriptionsCount() > 0 || v.collectingForAdhoc
 }
 
-func (v *ViewFloat64) aggregation() Aggregation {
-	return v.a
+func (v *ViewFloat64) collector() *collector {
+	return v.c
 }
 
 func (v *ViewFloat64) window() Window {
@@ -127,10 +134,10 @@ func (v *ViewFloat64) measure() Measure {
 }
 
 func (v *ViewFloat64) collectedRows() []*Row {
-	return v.aggregation().collectedRows(v.tagKeys)
+	return v.c.collectedRows(v.tagKeys, time.Now())
 }
 
 func (v *ViewFloat64) addSample(ts *tags.TagSet, f float64) {
 	sig := tags.ToValuesString(ts, v.tagKeys)
-	v.a.addSample(sig, f)
+	v.c.addSample(sig, f, time.Now())
 }

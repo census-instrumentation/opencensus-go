@@ -318,7 +318,7 @@ func (w *worker) reportUsage() {
 		}
 
 		if _, ok := v.window().(*WindowCumulative); !ok {
-			v.aggregation().clearRows()
+			v.collector().clearRows()
 		}
 	}
 }

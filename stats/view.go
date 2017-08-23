@@ -34,7 +34,7 @@ type View interface {
 
 	isCollecting() bool
 
-	aggregation() Aggregation
+	collector() *collector
 	window() Window
 	measure() Measure
 	collectedRows() []*Row

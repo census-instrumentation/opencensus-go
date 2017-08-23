@@ -17,22 +17,14 @@
 // implementation.
 package stats
 
-import (
-	"time"
-
-	"github.com/google/working-instrumentation-go/tags"
-)
-
 // Aggregation is the generic interface for all aggregtion types.
 type Aggregation interface {
 	isAggregation() bool
-	clearRows()
-	collectedRows(keys []tags.Key) []*Row
 }
 
 type AggregationCount struct{}
 
-func (a AggregationCount) isAggregation() bool { return true }
+func (a *AggregationCount) isAggregation() bool { return true }
 
 type AggregationDistribution struct {
 	// An aggregation distribution may contain a histogram of the values in the
@@ -53,52 +45,4 @@ type AggregationDistribution struct {
 	Bounds []float64
 }
 
-func (a AggregationDistribution) isAggregation() bool { return true }
-
-//--------------------------------------------------------------------
-//--------------------------------------------------------------------
-
-type AggregationBase struct {
-	// signatures holds the aggregations values for each unique tag signature
-	// (values for all keys) to its Window.
-	signatures map[string]aggregator
-	w          Window
-	a          Aggregation
-}
-
-func (ab *AggregationBase) addSample(s string, v interface{}, now time.Time) {
-	aggregator, ok := ab.signatures[s]
-	if !ok {
-		// TODO: use a type switch statement to define newAggregateValue
-		newAggregateValue := func() AggregateValue { return newAggregateDistribution([]float64{}) }
-		//v := newAggregateDistribution(a.Bounds)
-
-		switch w := ab.w.(type) {
-		case WindowCumulative:
-			aggregator = newAggregatorCumulative(now, newAggregateValue)
-		case WindowSlidingTime:
-			aggregator = newAggregatorSlidingTime(now, w.duration, w.subIntervals, newAggregateValue)
-		default:
-			// TODO: panic here. This should never be reached. If it is, then it is a bug.
-		}
-		ab.signatures[s] = aggregator
-	}
-	aggregator.addSample(v, now)
-}
-
-func (ab *AggregationBase) collectedRows(keys []tags.Key, now time.Time) []*Row {
-	var rows []*Row
-
-	for sig, aggregator := range ab.signatures {
-		ts := tags.ToTagSet(sig, keys)
-		rows = append(rows, &Row{
-			ts,
-			aggregator.retrieveCollected(now),
-		})
-	}
-	return rows
-}
-
-func (ab *AggregationBase) clearRows() {
-	ab.signatures = make(map[string]aggregator)
-}
+func (a *AggregationDistribution) isAggregation() bool { return true }
