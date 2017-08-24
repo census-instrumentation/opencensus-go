@@ -17,7 +17,9 @@
 // implementation.
 package stats
 
-import "time"
+import (
+	"time"
+)
 
 // aggregatorSlidingTime indicates that the aggregation occurs over a sliding
 // window of time: i.e. last n seconds, minutes, hours...

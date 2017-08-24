@@ -23,7 +23,7 @@ func Test_Tagset_Insert(t *testing.T) {
 		v string
 	}
 	type testCase struct {
-		insert []*Tag
+		insert []Tag
 		want   []*want
 	}
 
@@ -32,8 +32,8 @@ func Test_Tagset_Insert(t *testing.T) {
 	k2, _ := km.createKeyString("k2")
 	testCases := []testCase{
 		{
-			[]*Tag{
-				&Tag{
+			[]Tag{
+				Tag{
 					k1,
 					[]byte("v1"),
 				},
@@ -50,12 +50,12 @@ func Test_Tagset_Insert(t *testing.T) {
 			},
 		},
 		{
-			[]*Tag{
-				&Tag{
+			[]Tag{
+				Tag{
 					k1,
 					[]byte("v1"),
 				},
-				&Tag{
+				Tag{
 					k1,
 					[]byte("v1new"),
 				},
@@ -94,7 +94,7 @@ func Test_Tagset_Upsert(t *testing.T) {
 		v string
 	}
 	type testCase struct {
-		upsert []*Tag
+		upsert []Tag
 		want   []*want
 	}
 
@@ -103,8 +103,8 @@ func Test_Tagset_Upsert(t *testing.T) {
 	k2, _ := km.createKeyString("k2")
 	testCases := []testCase{
 		{
-			[]*Tag{
-				&Tag{
+			[]Tag{
+				Tag{
 					k1,
 					[]byte("v1"),
 				},
@@ -121,12 +121,12 @@ func Test_Tagset_Upsert(t *testing.T) {
 			},
 		},
 		{
-			[]*Tag{
-				&Tag{
+			[]Tag{
+				Tag{
 					k1,
 					[]byte("v1"),
 				},
-				&Tag{
+				Tag{
 					k1,
 					[]byte("v1new"),
 				},
@@ -165,8 +165,8 @@ func Test_Tagset_Update(t *testing.T) {
 		v string
 	}
 	type testCase struct {
-		insert []*Tag
-		update []*Tag
+		insert []Tag
+		update []Tag
 		want   []*want
 	}
 
@@ -175,14 +175,14 @@ func Test_Tagset_Update(t *testing.T) {
 	k2, _ := km.createKeyString("k2")
 	testCases := []testCase{
 		{
-			[]*Tag{
-				&Tag{
+			[]Tag{
+				Tag{
 					k1,
 					[]byte("v1"),
 				},
 			},
-			[]*Tag{
-				&Tag{
+			[]Tag{
+				Tag{
 					k1,
 					[]byte("v1"),
 				},
@@ -199,18 +199,18 @@ func Test_Tagset_Update(t *testing.T) {
 			},
 		},
 		{
-			[]*Tag{
-				&Tag{
+			[]Tag{
+				Tag{
 					k1,
 					[]byte("v1"),
 				},
 			},
-			[]*Tag{
-				&Tag{
+			[]Tag{
+				Tag{
 					k1,
 					[]byte("v1"),
 				},
-				&Tag{
+				Tag{
 					k2,
 					[]byte("v2"),
 				},
@@ -227,14 +227,14 @@ func Test_Tagset_Update(t *testing.T) {
 			},
 		},
 		{
-			[]*Tag{
-				&Tag{
+			[]Tag{
+				Tag{
 					k1,
 					[]byte("v1"),
 				},
 			},
-			[]*Tag{
-				&Tag{
+			[]Tag{
+				Tag{
 					k1,
 					[]byte("v1new"),
 				},
@@ -251,18 +251,18 @@ func Test_Tagset_Update(t *testing.T) {
 			},
 		},
 		{
-			[]*Tag{
-				&Tag{
+			[]Tag{
+				Tag{
 					k1,
 					[]byte("v1"),
 				},
 			},
-			[]*Tag{
-				&Tag{
+			[]Tag{
+				Tag{
 					k1,
 					[]byte("v1new"),
 				},
-				&Tag{
+				Tag{
 					k1,
 					[]byte("v1latest"),
 				},
@@ -305,7 +305,7 @@ func Test_Tagset_Delete(t *testing.T) {
 		v string
 	}
 	type testCase struct {
-		insert []*Tag
+		insert []Tag
 		delete []Key
 		want   []*want
 	}
@@ -315,8 +315,8 @@ func Test_Tagset_Delete(t *testing.T) {
 	k2, _ := km.createKeyString("k2")
 	testCases := []testCase{
 		{
-			[]*Tag{
-				&Tag{
+			[]Tag{
+				Tag{
 					k1,
 					[]byte("v1"),
 				},
@@ -336,8 +336,8 @@ func Test_Tagset_Delete(t *testing.T) {
 			},
 		},
 		{
-			[]*Tag{
-				&Tag{
+			[]Tag{
+				Tag{
 					k1,
 					[]byte("v1"),
 				},
@@ -357,12 +357,12 @@ func Test_Tagset_Delete(t *testing.T) {
 			},
 		},
 		{
-			[]*Tag{
-				&Tag{
+			[]Tag{
+				Tag{
 					k1,
 					[]byte("v1"),
 				},
-				&Tag{
+				Tag{
 					k1,
 					[]byte("v1new"),
 				},

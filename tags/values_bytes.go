@@ -15,7 +15,10 @@
 
 package tags
 
-import "unsafe"
+import (
+	"sort"
+	"unsafe"
+)
 
 var sizeOfUint16 = (int)(unsafe.Sizeof(uint16(0)))
 
@@ -84,6 +87,18 @@ func (vb *valuesBytes) toMap(ks []Key) map[Key][]byte {
 	return m
 }
 
+func (vb *valuesBytes) toSlice(ks []Key) []Tag {
+	var tags []Tag
+	for _, k := range ks {
+		v := vb.readValue()
+		if v != nil {
+			tags = append(tags, Tag{k, v})
+		}
+	}
+	vb.rIdx = 0
+	return tags
+}
+
 func (vb *valuesBytes) Bytes() []byte {
 	return vb.buf[:vb.wIdx]
 }
@@ -112,11 +127,12 @@ func ToValuesString(ts *TagSet, ks []Key) string {
 	return string(vb.Bytes())
 }
 
-func ToTagSet(s string, ks []Key) *TagSet {
+// ToOrderedTagsSlice returns the extracted and ordered tags from the argument s.
+func ToOrderedTagsSlice(s string, ks []Key) []Tag {
 	vb := &valuesBytes{
 		buf: []byte(s),
 	}
-	return &TagSet{
-		vb.toMap(ks),
-	}
+	tags := vb.toSlice(ks)
+	sort.Slice(tags, func(i, j int) bool { return tags[i].K.Name() < tags[j].K.Name() })
+	return tags
 }

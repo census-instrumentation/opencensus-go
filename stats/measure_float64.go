@@ -17,17 +17,11 @@
 // implementation.
 package stats
 
-import (
-	"fmt"
-
-	"github.com/google/working-instrumentation-go/tags"
-)
-
 // MeasureFloat64 is a measure of type float64.
 type MeasureFloat64 struct {
 	name        string
 	description string
-	views       map[*ViewFloat64]bool
+	views       map[View]bool
 }
 
 // NewMeasureFloat64 creates a new measure of type MeasureFloat64.
@@ -35,7 +29,7 @@ func NewMeasureFloat64(name string, description string) *MeasureFloat64 {
 	return &MeasureFloat64{
 		name:        name,
 		description: description,
-		views:       make(map[*ViewFloat64]bool),
+		views:       make(map[View]bool),
 	}
 }
 
@@ -45,21 +39,11 @@ func (m *MeasureFloat64) Name() string {
 }
 
 func (m *MeasureFloat64) addView(v View) {
-	vf64, ok := v.(*ViewFloat64)
-	if !ok {
-		panic(fmt.Sprintf("adding a view of type '%T' to MeasureFloat64. This is a bug in the stats library. It should never happen.", v))
-	}
-
-	m.views[vf64] = true
+	m.views[v] = true
 }
 
 func (m *MeasureFloat64) removeView(v View) {
-	vf64, ok := v.(*ViewFloat64)
-	if !ok {
-		panic(fmt.Sprintf("removing a view of type '%T' from MeasureFloat64. This is a bug in the stats library. It should never happen.", v))
-	}
-
-	delete(m.views, vf64)
+	delete(m.views, v)
 }
 
 func (m *MeasureFloat64) viewsCount() int { return len(m.views) }
@@ -77,9 +61,4 @@ type measurementFloat64 struct {
 	v float64
 }
 
-func (mf *measurementFloat64) record(ts *tags.TagSet) {
-	for v := range mf.m.views {
-
-		v.addSample(ts, mf.v)
-	}
-}
+func (mf *measurementFloat64) isMeasurement() bool { return true }

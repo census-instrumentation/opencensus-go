@@ -17,17 +17,11 @@
 // implementation.
 package stats
 
-import (
-	"fmt"
-
-	"github.com/google/working-instrumentation-go/tags"
-)
-
 // MeasureInt64 is a measure of type int64.
 type MeasureInt64 struct {
 	name        string
 	description string
-	views       map[*ViewInt64]bool
+	views       map[View]bool
 }
 
 // NewMeasureInt64 creates a new measure of type MeasureInt64.
@@ -35,7 +29,7 @@ func NewMeasureInt64(name string, description string) *MeasureInt64 {
 	return &MeasureInt64{
 		name:        name,
 		description: description,
-		views:       make(map[*ViewInt64]bool),
+		views:       make(map[View]bool),
 	}
 }
 
@@ -45,21 +39,11 @@ func (m *MeasureInt64) Name() string {
 }
 
 func (m *MeasureInt64) addView(v View) {
-	vi64, ok := v.(*ViewInt64)
-	if !ok {
-		panic(fmt.Sprintf("adding a view of type '%T' to MeasureInt64. This is a bug in the stats library. It should never happen.", v))
-	}
-
-	m.views[vi64] = true
+	m.views[v] = true
 }
 
 func (m *MeasureInt64) removeView(v View) {
-	vi64, ok := v.(*ViewInt64)
-	if !ok {
-		panic(fmt.Sprintf("removing a view of type '%T' from MeasureInt64. This is a bug in the stats library. It should never happen.", v))
-	}
-
-	delete(m.views, vi64)
+	delete(m.views, v)
 }
 
 func (m *MeasureInt64) viewsCount() int { return len(m.views) }
@@ -77,8 +61,4 @@ type measurementInt64 struct {
 	v int64
 }
 
-func (mi *measurementInt64) record(ts *tags.TagSet) {
-	for v := range mi.m.views {
-		v.addSample(ts, mi.v)
-	}
-}
+func (mi *measurementInt64) isMeasurement() bool { return true }

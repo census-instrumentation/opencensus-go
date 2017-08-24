@@ -25,6 +25,11 @@ type Aggregation interface {
 // AggregationCount indicates that the desired aggregation is count.
 type AggregationCount struct{}
 
+func NewAggregationCount() *AggregationCount {
+	return &AggregationCount{
+	}
+}
+
 func (a *AggregationCount) isAggregation() bool { return true }
 
 // AggregationDistribution indicates that the desired aggregation is a histograms
@@ -45,7 +50,18 @@ type AggregationDistribution struct {
 	//
 	// if len(Bounds) == 1 then there is no finite buckets, and that single
 	// element is the common boundary of the overflow and underflow buckets.
-	Bounds []float64
+	bounds []float64
+}
+
+func NewAggregationDistribution(bounds []float64) *AggregationDistribution {
+	var copyBounds []float64
+	for _,b:=range bounds {
+		copyBounds = append(copyBounds, b)
+	}
+
+	return &AggregationDistribution{
+		bounds: copyBounds,
+	}
 }
 
 func (a *AggregationDistribution) isAggregation() bool { return true }

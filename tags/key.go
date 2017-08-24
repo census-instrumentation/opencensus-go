@@ -15,6 +15,8 @@
 
 package tags
 
+import "fmt"
+
 var keys []Key
 
 // Key is the interface for all key types.
@@ -38,6 +40,10 @@ func (k *KeyString) Name() string {
 // ID returns the id of a key inside hte process.
 func (k *KeyString) ID() uint16 {
 	return k.id
+}
+
+func (k *KeyString) String() string {
+	return fmt.Sprintf("%v", k.Name())
 }
 
 // CreateKeyString creates/retrieves the *KeyString identified by name.

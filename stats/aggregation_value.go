@@ -17,6 +17,11 @@
 // implementation.
 package stats
 
+import (
+	"fmt"
+	"math"
+)
+
 // AggregationValue is the interface for all types of aggregations values.
 type AggregationValue interface {
 	isAggregate() bool
@@ -24,6 +29,27 @@ type AggregationValue interface {
 	multiplyByFraction(fraction float64) AggregationValue
 	addToIt(other AggregationValue)
 	clear()
+}
+
+func aggregationValueAreEqual(av1, av2 AggregationValue) bool {
+	switch v1 := av1.(type) {
+	case *AggregationCountValue:
+		switch v2 := av2.(type) {
+		case *AggregationCountValue:
+			return int64(*v1) == int64(*v2)
+		default:
+			return false
+		}
+	case *AggregationDistributionValue:
+		switch v2 := av2.(type) {
+		case *AggregationDistributionValue:
+			return aggregationDistributionValueAreEqual(v1, v2)
+		default:
+			return false
+		}
+	default:
+		return false
+	}
 }
 
 // AggregationCountValue is the aggregated data for an AggregationCountInt64.
@@ -42,7 +68,7 @@ func (a *AggregationCountValue) addSample(v interface{}) {
 
 func (a *AggregationCountValue) multiplyByFraction(fraction float64) AggregationValue {
 	ret := newAggregationCountValue()
-	*ret = AggregationCountValue(float64(int64(*a)) * fraction)
+	*ret = AggregationCountValue(float64(int64(*a))*fraction + 0.5) // adding 0.5 because go runtime will take floor instead of rounding
 	return ret
 }
 
@@ -58,23 +84,57 @@ func (a *AggregationCountValue) clear() {
 	*a = 0
 }
 
+func (a *AggregationCountValue) String() string {
+	return fmt.Sprintf("{%v}", *a)
+}
+
 // AggregationDistributionValue is the aggregated data for an
 // AggregationDistributionFloat64  or AggregationDistributionInt64.
 type AggregationDistributionValue struct {
-	Count               int64
-	Min, Mean, Max, Sum float64
-	// CountPerBucket is the set of occurrences count per bucket. The
-	// buckets bounds are the same as the ones setup in
-	// AggregationDesc.
-	CountPerBucket []int64
+	count         int64
+	min, max, sum float64
+	// countPerBucket is the set of occurrences count per bucket. The buckets
+	// bounds are the same as the ones setup in AggregationDistribution.
+	countPerBucket []int64
 	bounds         []float64
 }
 
 func newAggregationDistributionValue(bounds []float64) *AggregationDistributionValue {
 	return &AggregationDistributionValue{
-		CountPerBucket: make([]int64, len(bounds)+1),
+		countPerBucket: make([]int64, len(bounds)+1),
 		bounds:         bounds,
+		min:            math.MaxFloat64,
+		max:            math.SmallestNonzeroFloat64,
 	}
+}
+
+// Count returns the count of all samples collected.
+func (a *AggregationDistributionValue) Count() int64 { return a.count }
+
+// Min returns the min of all samples collected.
+func (a *AggregationDistributionValue) Min() float64 { return a.min }
+
+// Mean returns the mean of all samples collected.
+func (a *AggregationDistributionValue) Mean() float64 { return a.sum / float64(a.count) }
+
+// Max returns the max of all samples collected.
+func (a *AggregationDistributionValue) Max() float64 { return a.max }
+
+// Sum returns the sum of all samples collected.
+func (a *AggregationDistributionValue) Sum() float64 { return a.sum }
+
+func (a *AggregationDistributionValue) String() string {
+	return fmt.Sprintf("{%v %v %v %v %v %v %v}", a.Count(), a.Min(), a.Max(), a.Mean(), a.Sum(), a.countPerBucket, a.bounds)
+}
+
+// CountPerBucket returns count per bucket. The buckets bounds are the same as
+// the ones setup in AggregationDistribution.
+func (a *AggregationDistributionValue) CountPerBucket() []int64 {
+	var ret []int64
+	for _, c := range a.countPerBucket {
+		ret = append(ret, c)
+	}
+	return ret
 }
 
 func (a *AggregationDistributionValue) isAggregate() bool { return true }
@@ -92,38 +152,96 @@ func (a *AggregationDistributionValue) addSample(v interface{}) {
 		return
 	}
 
-	if f < a.Min {
-		a.Min = f
+	if f < a.min {
+		a.min = f
 	}
-	if f > a.Max {
-		a.Max = f
+	if f > a.max {
+		a.max = f
 	}
-	a.Sum += f
-	a.Count++
+	a.sum += f
+	a.count++
 
+	a.incrementBucketCount(f)
+}
+
+func (a *AggregationDistributionValue) incrementBucketCount(f float64) {
 	if len(a.bounds) == 0 {
-		a.CountPerBucket[0]++
+		a.countPerBucket[0]++
 		return
 	}
 
 	for i, b := range a.bounds {
 		if f < b {
-			a.CountPerBucket[i]++
+			a.countPerBucket[i]++
 			return
 		}
 	}
-	a.CountPerBucket[len(a.bounds)]++
+	a.countPerBucket[len(a.bounds)]++
 }
 
 func (a *AggregationDistributionValue) multiplyByFraction(fraction float64) AggregationValue {
 	ret := newAggregationDistributionValue(a.bounds)
-	ret.Count = int64(float64(a.Count) * fraction)
-	ret.Min = a.Min
-	ret.Max = a.Max
-	ret.Sum = a.Sum * fraction
-	for i := range a.CountPerBucket {
-		ret.CountPerBucket[i] = int64(float64(a.CountPerBucket[i]) * fraction)
+	ret.count = int64(float64(a.count)*fraction + 0.5) // adding 0.5 because go runtime will take floor instead of rounding
+	if ret.count == 0 {
+		return ret
 	}
+
+	if ret.count == 1 {
+		ret.min = (a.min + a.max) / 2
+		ret.max = ret.min
+		ret.sum = ret.min
+		ret.incrementBucketCount(ret.min)
+		return ret
+	}
+
+	ret.min = a.min
+	ret.max = a.max
+	ret.sum = ret.min + ret.max
+	ret.incrementBucketCount(ret.min)
+	ret.incrementBucketCount(ret.max)
+
+	// decrementing the bucket with the lowest values to account for min
+	// already added to bucket.
+	for i := range a.countPerBucket {
+		if a.countPerBucket[i] > 0 {
+			a.countPerBucket[i] = a.countPerBucket[i] - 1
+			break
+		}
+	}
+
+	// decrementing the bucket with the largest values to account for max
+	// already added to bucket.
+	for i := len(a.countPerBucket) - 1; i >= 0; i-- {
+		if a.countPerBucket[i] > 0 {
+			a.countPerBucket[i] = a.countPerBucket[i] - 1
+			break
+		}
+	}
+
+	if len(a.bounds) == 0 {
+		n := int64(float64(a.countPerBucket[0])*fraction + 0.5) // adding 0.5 because go runtime will take floor instead of rounding
+		ret.countPerBucket[0] += n
+		ret.sum += float64(n) * (ret.min + ret.max) / 2
+		return ret
+	}
+
+	for i := range a.countPerBucket {
+		n := int64(float64(a.countPerBucket[i])*fraction + 0.5) // adding 0.5 because go runtime will take floor instead of rounding
+		ret.countPerBucket[i] += n
+
+		if i == 0 {
+			ret.sum += float64(n) * (ret.min + math.Min(ret.bounds[i], ret.max)) / 2
+			continue
+		}
+
+		if i == len(a.countPerBucket) {
+			ret.sum += float64(n) * (ret.bounds[i-1] + ret.bounds[i]) / 2
+			continue
+		}
+
+		ret.sum += float64(n) * (math.Max(ret.bounds[i-1], ret.min) + ret.max) / 2
+	}
+
 	return ret
 }
 
@@ -132,21 +250,36 @@ func (a *AggregationDistributionValue) addToIt(av AggregationValue) {
 	if !ok {
 		return
 	}
-	a.Count = a.Count + other.Count
-	a.Min = a.Min + other.Min
-	a.Max = a.Max + other.Max
-	a.Sum = a.Sum + other.Sum
-	for i := range other.CountPerBucket {
-		a.CountPerBucket[i] = a.CountPerBucket[i] * other.CountPerBucket[i]
+
+	if other.min < a.min {
+		a.min = other.min
+	}
+	if other.max > a.max {
+		a.max = other.max
+	}
+
+	a.sum = a.sum + other.sum
+	a.count = a.count + other.count
+	for i := range other.countPerBucket {
+		a.countPerBucket[i] = a.countPerBucket[i] + other.countPerBucket[i]
 	}
 }
 
 func (a *AggregationDistributionValue) clear() {
-	a.Count = 0
-	a.Min = 0
-	a.Max = 0
-	a.Sum = 0
-	for i := range a.CountPerBucket {
-		a.CountPerBucket[i] = 0
+	a.count = 0
+	a.min = math.MaxFloat64
+	a.max = math.SmallestNonzeroFloat64
+	a.sum = 0
+	for i := range a.countPerBucket {
+		a.countPerBucket[i] = 0
 	}
+}
+
+func aggregationDistributionValueAreEqual(v1, v2 *AggregationDistributionValue) bool {
+	for i := range v1.countPerBucket {
+		if v1.countPerBucket[i] != v2.countPerBucket[i] {
+			return false
+		}
+	}
+	return v1.Count() == v2.Count() && v1.Min() == v2.Min() && v1.Mean() == v2.Mean() && v1.Max() == v2.Max() && v1.Sum() == v2.Sum()
 }

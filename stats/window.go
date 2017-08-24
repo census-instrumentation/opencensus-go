@@ -29,7 +29,12 @@ type Window interface {
 // the view.
 type WindowCumulative struct{}
 
-func (w WindowCumulative) isWindow() bool { return true }
+func NewWindowCumulative() *WindowCumulative {
+	return &WindowCumulative{
+	}
+}
+
+func (w *WindowCumulative) isWindow() bool { return true }
 
 // WindowSlidingTime indicates that the aggregation occurs over a sliding
 // window of time: i.e. last n seconds, minutes, hours...
@@ -38,7 +43,14 @@ type WindowSlidingTime struct {
 	subIntervals int
 }
 
-func (w WindowSlidingTime) isWindow() bool { return true }
+func NewWindowSlidingTime(duration time.Duration, subIntervals int) *WindowSlidingTime {
+	return &WindowSlidingTime{
+		duration: duration,
+		subIntervals: subIntervals,
+	}
+}
+
+func (w *WindowSlidingTime) isWindow() bool { return true }
 
 // WindowSlidingCount indicates that the aggregation occurs over a sliding
 // number of samples.
@@ -47,4 +59,11 @@ type WindowSlidingCount struct {
 	subSets int
 }
 
-func (w WindowSlidingCount) isWindow() bool { return true }
+func NewWindowSlidingCount(count, subSets int) *WindowSlidingCount {
+	return &WindowSlidingCount{
+		n: count,
+		subSets: subSets,
+	}
+}
+
+func (w *WindowSlidingCount) isWindow() bool { return true }

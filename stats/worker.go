@@ -166,8 +166,9 @@ func StopCollectionForAdhoc(v View) error {
 // RetrieveData returns the current collected data for the view.
 func RetrieveData(v View) ([]*Row, error) {
 	req := &retrieveDataReq{
-		v: v,
-		c: make(chan *retrieveDataResp),
+		now: time.Now(),
+		v:   v,
+		c:   make(chan *retrieveDataResp),
 	}
 	defaultWorker.c <- req
 	resp := <-req.c
@@ -178,9 +179,10 @@ func RetrieveData(v View) ([]*Row, error) {
 // as part of the context.
 func RecordFloat64(ctx context.Context, mf *MeasureFloat64, v float64) {
 	req := &recordFloat64Req{
-		ts: tags.FromContext(ctx),
-		mf: mf,
-		v:  v,
+		now: time.Now(),
+		ts:  tags.FromContext(ctx),
+		mf:  mf,
+		v:   v,
 	}
 	defaultWorker.c <- req
 }
@@ -189,9 +191,10 @@ func RecordFloat64(ctx context.Context, mf *MeasureFloat64, v float64) {
 // part of the context.
 func RecordInt64(ctx context.Context, mi *MeasureInt64, v int64) {
 	req := &recordInt64Req{
-		ts: tags.FromContext(ctx),
-		mi: mi,
-		v:  v,
+		now: time.Now(),
+		ts:  tags.FromContext(ctx),
+		mi:  mi,
+		v:   v,
 	}
 	defaultWorker.c <- req
 }
@@ -199,8 +202,9 @@ func RecordInt64(ctx context.Context, mi *MeasureInt64, v int64) {
 // Record records one or multiple measurements with the same tags at once.
 func Record(ctx context.Context, ms []Measurement) {
 	req := &recordReq{
-		ts: tags.FromContext(ctx),
-		ms: ms,
+		now: time.Now(),
+		ts:  tags.FromContext(ctx),
+		ms:  ms,
 	}
 	defaultWorker.c <- req
 }
@@ -240,7 +244,7 @@ func (w *worker) start() {
 				cmd.handleCommand(w)
 			}
 		case <-w.timer.C:
-			w.reportUsage()
+			w.reportUsage(time.Now())
 		case <-w.quit:
 			w.timer.Stop()
 			close(w.c)
@@ -297,7 +301,7 @@ func (w *worker) tryRegisterView(v View) error {
 	return nil
 }
 
-func (w *worker) reportUsage() {
+func (w *worker) reportUsage(now time.Time) {
 	for v := range w.views {
 		if v.subscriptionsCount() == 0 {
 			continue
@@ -305,7 +309,7 @@ func (w *worker) reportUsage() {
 
 		viewData := &ViewData{
 			v:    v,
-			rows: v.collectedRows(),
+			rows: v.collectedRows(now),
 		}
 
 		for c, s := range v.subscriptions() {
@@ -318,7 +322,7 @@ func (w *worker) reportUsage() {
 		}
 
 		if _, ok := v.window().(*WindowCumulative); !ok {
-			v.collector().clearRows()
+			v.clearRows()
 		}
 	}
 }

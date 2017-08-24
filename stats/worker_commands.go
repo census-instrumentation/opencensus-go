@@ -192,7 +192,7 @@ func (cmd *unsubscribeFromViewReq) handleCommand(w *worker) {
 	if !cmd.v.isCollecting() {
 		// this was the last subscription and view is not collecting anymore.
 		// The collected data can be cleared.
-		cmd.v.collector().clearRows()
+		cmd.v.clearRows()
 	}
 
 	// we always return nil because this operation never fails. However we
@@ -234,7 +234,7 @@ func (cmd *stopCollectionForAdhocReq) handleCommand(w *worker) {
 	cmd.v.stopCollectingForAdhoc()
 
 	if !cmd.v.isCollecting() {
-		cmd.v.collector().clearRows()
+		cmd.v.clearRows()
 	}
 
 	// we always return nil because this operation never fails. However we
@@ -245,8 +245,9 @@ func (cmd *stopCollectionForAdhocReq) handleCommand(w *worker) {
 
 // retrieveDataReq is the command to retrieve data for a view.
 type retrieveDataReq struct {
-	v View
-	c chan *retrieveDataResp
+	now time.Time
+	v   View
+	c   chan *retrieveDataResp
 }
 
 type retrieveDataResp struct {
@@ -265,7 +266,7 @@ func (cmd *retrieveDataReq) handleCommand(w *worker) {
 
 	if cmd.v.isCollecting() {
 		cmd.c <- &retrieveDataResp{
-			cmd.v.collectedRows(),
+			cmd.v.collectedRows(cmd.now),
 			nil,
 		}
 		return
@@ -278,9 +279,10 @@ func (cmd *retrieveDataReq) handleCommand(w *worker) {
 
 // recordFloat64Req is the command to record data related to a measure.
 type recordFloat64Req struct {
-	ts *tags.TagSet
-	mf *MeasureFloat64
-	v  float64
+	now time.Time
+	ts  *tags.TagSet
+	mf  *MeasureFloat64
+	v   float64
 }
 
 func (cmd *recordFloat64Req) handleCommand(w *worker) {
@@ -288,15 +290,16 @@ func (cmd *recordFloat64Req) handleCommand(w *worker) {
 		return
 	}
 	for v := range cmd.mf.views {
-		v.addSample(cmd.ts, cmd.v)
+		v.addSample(cmd.ts, cmd.v, cmd.now)
 	}
 }
 
 // recordInt64Req is the command to record data related to a measure.
 type recordInt64Req struct {
-	ts *tags.TagSet
-	mi *MeasureInt64
-	v  int64
+	now time.Time
+	ts  *tags.TagSet
+	mi  *MeasureInt64
+	v   int64
 }
 
 func (cmd *recordInt64Req) handleCommand(w *worker) {
@@ -304,15 +307,16 @@ func (cmd *recordInt64Req) handleCommand(w *worker) {
 		return
 	}
 	for v := range cmd.mi.views {
-		v.addSample(cmd.ts, cmd.v)
+		v.addSample(cmd.ts, cmd.v, cmd.now)
 	}
 }
 
 // recordReq is the command to record data related to multiple measures
 // at once.
 type recordReq struct {
-	ts *tags.TagSet
-	ms []Measurement
+	now time.Time
+	ts  *tags.TagSet
+	ms  []Measurement
 }
 
 func (cmd *recordReq) handleCommand(w *worker) {
@@ -320,11 +324,11 @@ func (cmd *recordReq) handleCommand(w *worker) {
 		switch measurement := m.(type) {
 		case *measurementFloat64:
 			for v := range measurement.m.views {
-				v.addSample(cmd.ts, measurement.v)
+				v.addSample(cmd.ts, measurement.v, cmd.now)
 			}
 		case *measurementInt64:
 			for v := range measurement.m.views {
-				v.addSample(cmd.ts, measurement.v)
+				v.addSample(cmd.ts, measurement.v, cmd.now)
 			}
 		default:
 		}

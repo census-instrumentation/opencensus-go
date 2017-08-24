@@ -39,19 +39,19 @@ func (c *collector) addSample(s string, v interface{}, now time.Time) {
 	aggregator, ok := c.signatures[s]
 	if !ok {
 		var newAggregationValue func() AggregationValue
-		switch c.a.(type) {
+		switch agg := c.a.(type) {
 		case *AggregationCount:
 			newAggregationValue = func() AggregationValue { return newAggregationCountValue() }
 		case *AggregationDistribution:
-			newAggregationValue = func() AggregationValue { return newAggregationDistributionValue([]float64{}) }
+			newAggregationValue = func() AggregationValue { return newAggregationDistributionValue(agg.bounds) }
 		default:
 			// TODO: panic here. This should never be reached. If it is, then it is a bug.
 		}
 
 		switch w := c.w.(type) {
-		case WindowCumulative:
+		case *WindowCumulative:
 			aggregator = newAggregatorCumulative(now, newAggregationValue)
-		case WindowSlidingTime:
+		case *WindowSlidingTime:
 			aggregator = newAggregatorSlidingTime(now, w.duration, w.subIntervals, newAggregationValue)
 		default:
 			// TODO: panic here. This should never be reached. If it is, then it is a bug.
@@ -65,7 +65,7 @@ func (c *collector) collectedRows(keys []tags.Key, now time.Time) []*Row {
 	var rows []*Row
 
 	for sig, aggregator := range c.signatures {
-		ts := tags.ToTagSet(sig, keys)
+		ts := tags.ToOrderedTagsSlice(sig, keys)
 		rows = append(rows, &Row{
 			ts,
 			aggregator.retrieveCollected(now),

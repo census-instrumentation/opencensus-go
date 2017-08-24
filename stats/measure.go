@@ -17,8 +17,6 @@
 // implementation.
 package stats
 
-import "github.com/google/working-instrumentation-go/tags"
-
 // Measure is the interface for all measure types. A measure is required when
 // defining a view.
 type Measure interface {
@@ -31,5 +29,5 @@ type Measure interface {
 // Measurement is the interface for all measurement types. Measurements are
 // required when recording stats.
 type Measurement interface {
-	record(ts *tags.TagSet)
+	isMeasurement() bool
 }
