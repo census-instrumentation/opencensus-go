@@ -20,7 +20,7 @@ package stats
 import (
 	"time"
 
-	"github.com/google/instrumentation-go/tags"
+	"github.com/census-instrumentation/opencensus-go/tags"
 )
 
 // View is the generic interface defining the various type of views.

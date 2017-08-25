@@ -20,7 +20,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/instrumentation-go/tags"
+	"github.com/census-instrumentation/opencensus-go/tags"
 )
 
 func rowFoundInRows(row *Row, rows []*Row) bool {
