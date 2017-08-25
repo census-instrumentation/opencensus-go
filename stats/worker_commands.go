@@ -21,7 +21,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/google/working-instrumentation-go/tags"
+	"github.com/google/instrumentation-go/tags"
 )
 
 type command interface {

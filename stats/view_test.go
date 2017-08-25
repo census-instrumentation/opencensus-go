@@ -20,7 +20,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/working-instrumentation-go/tags"
+	"github.com/google/instrumentation-go/tags"
 )
 
 func rowFoundInRows(row *Row, rows []*Row) bool {
