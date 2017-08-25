@@ -55,9 +55,9 @@ func aggregationValueAreEqual(av1, av2 AggregationValue) bool {
 // AggregationCountValue is the aggregated data for an AggregationCountInt64.
 type AggregationCountValue int64
 
-func newAggregationCountValue() *AggregationCountValue {
-	tmp := new(AggregationCountValue)
-	return tmp
+func newAggregationCountValue(v int64) *AggregationCountValue {
+	tmp := AggregationCountValue(v)
+	return &tmp
 }
 
 func (a *AggregationCountValue) isAggregate() bool { return true }
@@ -67,9 +67,7 @@ func (a *AggregationCountValue) addSample(v interface{}) {
 }
 
 func (a *AggregationCountValue) multiplyByFraction(fraction float64) AggregationValue {
-	ret := newAggregationCountValue()
-	*ret = AggregationCountValue(float64(int64(*a))*fraction + 0.5) // adding 0.5 because go runtime will take floor instead of rounding
-	return ret
+	return newAggregationCountValue(int64(float64(int64(*a))*fraction + 0.5)) // adding 0.5 because go runtime will take floor instead of rounding
 }
 
 func (a *AggregationCountValue) addToIt(av AggregationValue) {

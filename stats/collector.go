@@ -41,7 +41,7 @@ func (c *collector) addSample(s string, v interface{}, now time.Time) {
 		var newAggregationValue func() AggregationValue
 		switch agg := c.a.(type) {
 		case *AggregationCount:
-			newAggregationValue = func() AggregationValue { return newAggregationCountValue() }
+			newAggregationValue = func() AggregationValue { return newAggregationCountValue(0) }
 		case *AggregationDistribution:
 			newAggregationValue = func() AggregationValue { return newAggregationDistributionValue(agg.bounds) }
 		default:

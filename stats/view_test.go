@@ -407,9 +407,210 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowSlidingTime(t *testi
 	}
 }
 
-func Test_View_MeasureFloat64_AggregationDistribution_WindowSlidingCount(t *testing.T) {}
+func Test_View_MeasureFloat64_AggregationCount_WindowSlidingTime(t *testing.T) {
+	startTime := time.Date(2010, 1, 1, 0, 0, 0, 0, time.UTC)
 
-func Test_View_MeasureFloat64_AggregationCount_WindowSlidingTime(t *testing.T) {}
+	k1, _ := tags.CreateKeyString("k1")
+	k2, _ := tags.CreateKeyString("k2")
+	agg1 := NewAggregationCount()
+	vw1 := NewViewFloat64("VF1", "desc VF1", []tags.Key{k1, k2}, nil, agg1, NewWindowSlidingTime(10*time.Second, 5))
+
+	type tagString struct {
+		k *tags.KeyString
+		v string
+	}
+	type record struct {
+		f    float64
+		tags []tagString
+		now  time.Time
+	}
+
+	type wantRows struct {
+		label        string
+		retrieveTime time.Time
+		rows         []*Row
+	}
+
+	type testCase struct {
+		label    string
+		records  []record
+		wantRows []wantRows
+	}
+
+	tcs := []testCase{
+		{
+			"1",
+			[]record{
+				{1, []tagString{{k1, "v1"}}, startTime.Add(1 * time.Second)},
+				{2, []tagString{{k1, "v1"}}, startTime.Add(6 * time.Second)},
+				{5, []tagString{{k1, "v1"}}, startTime.Add(6 * time.Second)},
+				{4, []tagString{{k1, "v1"}}, startTime.Add(10 * time.Second)},
+				{5, []tagString{{k1, "v1"}}, startTime.Add(10 * time.Second)},
+				{4, []tagString{{k1, "v1"}}, startTime.Add(14 * time.Second)},
+				{3, []tagString{{k1, "v1"}}, startTime.Add(14 * time.Second)},
+			},
+			[]wantRows{
+				{
+					"last 6 recorded",
+					startTime.Add(14 * time.Second),
+					[]*Row{
+						{
+							[]tags.Tag{{k1, []byte("v1")}},
+							newAggregationCountValue(6),
+						},
+					},
+				},
+				{
+					"last 4 recorded",
+					startTime.Add(18 * time.Second),
+					[]*Row{
+						{
+							[]tags.Tag{{k1, []byte("v1")}},
+							newAggregationCountValue(4),
+						},
+					},
+				},
+				{
+					"last 2 recorded",
+					startTime.Add(22 * time.Second),
+					[]*Row{
+						{
+							[]tags.Tag{{k1, []byte("v1")}},
+							newAggregationCountValue(2),
+						},
+					},
+				},
+			},
+		},
+		{
+			"2",
+			[]record{
+				{1, []tagString{{k1, "v1"}}, startTime.Add(3 * time.Second)},
+				{2, []tagString{{k1, "v1"}}, startTime.Add(5 * time.Second)},
+				{3, []tagString{{k1, "v1"}}, startTime.Add(5 * time.Second)},
+				{4, []tagString{{k1, "v1"}}, startTime.Add(8 * time.Second)},
+				{5, []tagString{{k1, "v1"}}, startTime.Add(8 * time.Second)},
+				{5, []tagString{{k1, "v1"}}, startTime.Add(8 * time.Second)},
+				{5, []tagString{{k1, "v1"}}, startTime.Add(9 * time.Second)},
+			},
+			[]wantRows{
+				{
+					"no partial bucket",
+					startTime.Add(10 * time.Second),
+					[]*Row{
+						{
+							[]tags.Tag{{k1, []byte("v1")}},
+							newAggregationCountValue(7),
+						},
+					},
+				},
+				{
+					"oldest partial bucket: (remaining time: 50%) (count: 0)",
+					startTime.Add(12 * time.Second),
+					[]*Row{
+						{
+							[]tags.Tag{{k1, []byte("v1")}},
+							newAggregationCountValue(7),
+						},
+					},
+				},
+				{
+					"oldest partial bucket: (remaining time: 50%) (count: 1)",
+					startTime.Add(12 * time.Second),
+					[]*Row{
+						{
+							[]tags.Tag{{k1, []byte("v1")}},
+							newAggregationCountValue(7),
+						},
+					},
+				},
+				{
+					"oldest partial bucket: (remaining time: 80%) (count: 2)",
+					startTime.Add(15*time.Second + 400*time.Millisecond),
+					[]*Row{
+						{
+							[]tags.Tag{{k1, []byte("v1")}},
+							newAggregationCountValue(6),
+						},
+					},
+				},
+				{
+					"oldest partial bucket: (remaining time: 50%) (count: 2)",
+					startTime.Add(16 * time.Second),
+					[]*Row{
+						{
+							[]tags.Tag{{k1, []byte("v1")}},
+							newAggregationCountValue(5),
+						},
+					},
+				},
+				{
+					"oldest partial bucket: (remaining time: 90%) (count: 3)",
+					startTime.Add(17*time.Second + 200*time.Millisecond),
+					[]*Row{
+						{
+							[]tags.Tag{{k1, []byte("v1")}},
+							newAggregationCountValue(4),
+						},
+					},
+				},
+				{
+					"oldest partial bucket: (remaining time: 50%) (count: 3)",
+					startTime.Add(18 * time.Second),
+					[]*Row{
+						{
+							[]tags.Tag{{k1, []byte("v1")}},
+							newAggregationCountValue(3),
+						},
+					},
+				},
+				{
+					"oldest partial bucket: (remaining time: 20%) (count: 3)",
+					startTime.Add(17*time.Second + 400*time.Millisecond),
+					[]*Row{
+						{
+							[]tags.Tag{{k1, []byte("v1")}},
+							newAggregationCountValue(2),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	tsb := &tags.TagSetBuilder{}
+	for _, tc := range tcs {
+		vw1.clearRows()
+		for _, r := range tc.records {
+			tsb.StartFromEmpty()
+			for _, t := range r.tags {
+				tsb.InsertString(t.k, t.v)
+			}
+			vw1.addSample(tsb.Build(), r.f, r.now)
+		}
+
+		for _, wantRows := range tc.wantRows {
+			gotRows := vw1.collectedRows(wantRows.retrieveTime)
+
+			for _, gotRow := range gotRows {
+				if !rowFoundInRows(gotRow, wantRows.rows) {
+					t.Errorf("got unexpected row '%v' for test case: '%v' with label '%v'", gotRow, tc.label, wantRows.label)
+					break
+				}
+			}
+
+			for _, wantRow := range wantRows.rows {
+				if !rowFoundInRows(wantRow, gotRows) {
+					t.Errorf("want row '%v' for test case: '%v' with time '%v'. Not received", wantRow, tc.label, wantRows.label)
+					break
+				}
+			}
+		}
+
+	}
+}
+
+func Test_View_MeasureFloat64_AggregationDistribution_WindowSlidingCount(t *testing.T) {}
 
 func Test_View_MeasureFloat64_AggregationCount_WindowSlidingCount(t *testing.T) {}
 
