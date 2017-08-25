@@ -503,3 +503,44 @@ func Test_Worker_RecordInt64(t *testing.T) {
 	restartDefaultWorker()
 }
 */
+
+/*
+		mf1 := NewMeasureFloat64("MF1", "desc MF1")
+	type record struct {
+		measurement measurementFloat64
+		tags        []tagString
+	}
+
+[]record{
+				{
+					measurementFloat64{mf1, 1},
+					[]tagString{{k1, "v1"}},
+				},
+				{
+					measurementFloat64{mf1, 5},
+					[]tagString{{k1, "v1"}},
+				},
+			},
+
+		defaultWorker.stop()
+		defaultWorker = newWorker()
+
+		go defaultWorker.start()
+		if err := RegisterMeasure(mf1); err != nil {
+			t.Errorf("RegisterMeasure. Got error '%v'", err)
+		}
+		if err := RegisterView(vw1); err != nil {
+			t.Errorf("RegisterView. Got error '%v'", err)
+		}
+		StartCollectionForAdhoc(vw1)
+		ctx := tags.ContextWithNewTagSet(context.Background(), tsb.Build())
+		RecordFloat64(ctx, r.measurement.m, r.measurement.v)
+
+			gotRows, err := RetrieveData(vw1)
+			if err != nil {
+				t.Errorf("RetrieveData. Got error '%v' for test case: '%v'", err, tc.label)
+			}
+				StopCollectionForAdhoc(vw1)
+
+		defaultWorker.stop()
+*/

@@ -25,9 +25,9 @@ type Aggregation interface {
 // AggregationCount indicates that the desired aggregation is count.
 type AggregationCount struct{}
 
+// NewAggregationCount creates a new aggregation of type count.
 func NewAggregationCount() *AggregationCount {
-	return &AggregationCount{
-	}
+	return &AggregationCount{}
 }
 
 func (a *AggregationCount) isAggregation() bool { return true }
@@ -53,9 +53,11 @@ type AggregationDistribution struct {
 	bounds []float64
 }
 
+// NewAggregationDistribution creates a new aggregation of type distribution
+// a.k.a histogram.
 func NewAggregationDistribution(bounds []float64) *AggregationDistribution {
 	var copyBounds []float64
-	for _,b:=range bounds {
+	for _, b := range bounds {
 		copyBounds = append(copyBounds, b)
 	}
 

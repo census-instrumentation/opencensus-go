@@ -398,7 +398,7 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowSlidingTime(t *testi
 
 			for _, wantRow := range wantRows.rows {
 				if !rowFoundInRows(wantRow, gotRows) {
-					t.Errorf("want row '%v' for test case: '%v' with time '%v'. Not received", wantRow, tc.label, wantRows.label)
+					t.Errorf("want row '%v' for test case: '%v' with label '%v'. Not received", wantRow, tc.label, wantRows.label)
 					break
 				}
 			}
@@ -566,7 +566,7 @@ func Test_View_MeasureFloat64_AggregationCount_WindowSlidingTime(t *testing.T) {
 				},
 				{
 					"oldest partial bucket: (remaining time: 20%) (count: 3)",
-					startTime.Add(17*time.Second + 400*time.Millisecond),
+					startTime.Add(18*time.Second + 600*time.Millisecond),
 					[]*Row{
 						{
 							[]tags.Tag{{k1, []byte("v1")}},
@@ -601,7 +601,7 @@ func Test_View_MeasureFloat64_AggregationCount_WindowSlidingTime(t *testing.T) {
 
 			for _, wantRow := range wantRows.rows {
 				if !rowFoundInRows(wantRow, gotRows) {
-					t.Errorf("want row '%v' for test case: '%v' with time '%v'. Not received", wantRow, tc.label, wantRows.label)
+					t.Errorf("want row '%v' for test case: '%v' with label '%v'. Not received", wantRow, tc.label, wantRows.label)
 					break
 				}
 			}
@@ -610,49 +610,109 @@ func Test_View_MeasureFloat64_AggregationCount_WindowSlidingTime(t *testing.T) {
 	}
 }
 
-func Test_View_MeasureFloat64_AggregationDistribution_WindowSlidingCount(t *testing.T) {}
+func Test_View_MeasureFloat64_AggregationDistribution_WindowSlidingCount(t *testing.T) {
+	k1, _ := tags.CreateKeyString("k1")
+	k2, _ := tags.CreateKeyString("k2")
+	agg1 := NewAggregationDistribution([]float64{2})
+	vw1 := NewViewFloat64("VF1", "desc VF1", []tags.Key{k1, k2}, nil, agg1, NewWindowSlidingCount(4, 2))
 
-func Test_View_MeasureFloat64_AggregationCount_WindowSlidingCount(t *testing.T) {}
-
-func Test_View_MeasureFloat64_AggregationCount_WindowCumulative(t *testing.T) {}
-
-/*
-		mf1 := NewMeasureFloat64("MF1", "desc MF1")
+	type tagString struct {
+		k *tags.KeyString
+		v string
+	}
 	type record struct {
-		measurement measurementFloat64
-		tags        []tagString
+		f    float64
+		tags []tagString
 	}
 
-[]record{
+	type testCase struct {
+		label   string
+		records []record
+		rows    []*Row
+	}
+
+	tcs := []testCase{
+		{
+			"1",
+			[]record{
+				{1, []tagString{{k1, "v1"}}},
+				{2, []tagString{{k1, "v1"}}},
+				{3, []tagString{{k1, "v1"}}},
+				{4, []tagString{{k1, "v1"}}},
+			},
+			[]*Row{
 				{
-					measurementFloat64{mf1, 1},
-					[]tagString{{k1, "v1"}},
-				},
-				{
-					measurementFloat64{mf1, 5},
-					[]tagString{{k1, "v1"}},
+					[]tags.Tag{{k1, []byte("v1")}},
+					&AggregationDistributionValue{
+						4, 1, 4, 10, []int64{1, 3}, agg1.bounds,
+					},
 				},
 			},
+		},
+		{
+			"2",
+			[]record{
+				{1, []tagString{{k1, "v1"}}},
+				{2, []tagString{{k1, "v1"}}},
+				{3, []tagString{{k1, "v1"}}},
+				{4, []tagString{{k1, "v1"}}},
+				{5, []tagString{{k1, "v1"}}},
+				{6, []tagString{{k1, "v1"}}},
+			},
+			[]*Row{
+				{
+					[]tags.Tag{{k1, []byte("v1")}},
+					&AggregationDistributionValue{
+						4, 3, 6, 18, []int64{0, 4}, agg1.bounds,
+					},
+				},
+			},
+		},
+		{
+			"3",
+			[]record{
+				{1, []tagString{{k1, "v1"}}},
+				{2, []tagString{{k1, "v1"}}},
+				{3, []tagString{{k1, "v1"}}},
+				{4, []tagString{{k1, "v1"}}},
+				{5, []tagString{{k1, "v1"}}},
+			},
+			[]*Row{
+				{
+					[]tags.Tag{{k1, []byte("v1")}},
+					&AggregationDistributionValue{
+						4, 1.5, 5, 13.5, []int64{1, 3}, agg1.bounds,
+					},
+				},
+			},
+		},
+	}
 
-		defaultWorker.stop()
-		defaultWorker = newWorker()
-
-		go defaultWorker.start()
-		if err := RegisterMeasure(mf1); err != nil {
-			t.Errorf("RegisterMeasure. Got error '%v'", err)
-		}
-		if err := RegisterView(vw1); err != nil {
-			t.Errorf("RegisterView. Got error '%v'", err)
-		}
-		StartCollectionForAdhoc(vw1)
-		ctx := tags.ContextWithNewTagSet(context.Background(), tsb.Build())
-		RecordFloat64(ctx, r.measurement.m, r.measurement.v)
-
-			gotRows, err := RetrieveData(vw1)
-			if err != nil {
-				t.Errorf("RetrieveData. Got error '%v' for test case: '%v'", err, tc.label)
+	tsb := &tags.TagSetBuilder{}
+	for _, tc := range tcs {
+		vw1.clearRows()
+		for _, r := range tc.records {
+			tsb.StartFromEmpty()
+			for _, t := range r.tags {
+				tsb.InsertString(t.k, t.v)
 			}
-				StopCollectionForAdhoc(vw1)
+			vw1.addSample(tsb.Build(), r.f, time.Now())
+		}
 
-		defaultWorker.stop()
-*/
+		gotRows := vw1.collectedRows(time.Now())
+
+		for _, gotRow := range gotRows {
+			if !rowFoundInRows(gotRow, tc.rows) {
+				t.Errorf("got unexpected row '%v' for test case: '%v'", gotRow, tc.label)
+				break
+			}
+		}
+
+		for _, wantRow := range tc.rows {
+			if !rowFoundInRows(wantRow, gotRows) {
+				t.Errorf("want row '%v' for test case: '%v'. Not received", wantRow, tc.label)
+				break
+			}
+		}
+	}
+}

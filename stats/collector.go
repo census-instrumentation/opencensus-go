@@ -46,6 +46,7 @@ func (c *collector) addSample(s string, v interface{}, now time.Time) {
 			newAggregationValue = func() AggregationValue { return newAggregationDistributionValue(agg.bounds) }
 		default:
 			// TODO: panic here. This should never be reached. If it is, then it is a bug.
+			return
 		}
 
 		switch w := c.w.(type) {
@@ -53,8 +54,11 @@ func (c *collector) addSample(s string, v interface{}, now time.Time) {
 			aggregator = newAggregatorCumulative(now, newAggregationValue)
 		case *WindowSlidingTime:
 			aggregator = newAggregatorSlidingTime(now, w.duration, w.subIntervals, newAggregationValue)
+		case *WindowSlidingCount:
+			aggregator = newAggregatorSlidingCount(now, w.n, w.subSets, newAggregationValue)
 		default:
 			// TODO: panic here. This should never be reached. If it is, then it is a bug.
+			return
 		}
 		c.signatures[s] = aggregator
 	}

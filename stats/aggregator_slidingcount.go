@@ -17,7 +17,10 @@
 // implementation.
 package stats
 
-import "time"
+import (	
+	"math"
+	"time"
+)
 
 // aggregatorSlidingTime indicates that the aggregation occurs over a sliding
 // window of time: i.e. last n seconds, minutes, hours...
@@ -28,9 +31,29 @@ type aggregatorSlidingCount struct {
 	// order to compute an approximation of the collected data without storing
 	// every instance.
 	desiredCount   uint64
-	subBucketCount uint64
+	itemsPerBucket uint64
 	entries        []*subBucketEntry
 	idx            int
+}
+
+// newAggregatorSlidingCount creates an aggregatorSlidingCount.
+func newAggregatorSlidingCount(now time.Time, desiredCount uint64, bucketsCount int, newAggregationValue func() AggregationValue) *aggregatorSlidingCount {
+	var entries []*subBucketEntry
+	// Keeps track of subSetsCount+1 entries in order to approximate the
+	// collected stats without storing every instance.
+	for i := 0; i <= bucketsCount; i++ {
+		entries = append(entries, &subBucketEntry{
+			count: 0,
+			av:    newAggregationValue(),
+		})
+	}
+
+	return &aggregatorSlidingCount{
+		desiredCount:   desiredCount,
+		itemsPerBucket: desiredCount / uint64(math.Min(float64(desiredCount), float64(bucketsCount))),
+		entries:        entries,
+		idx:            0,
+	}
 }
 
 func (a *aggregatorSlidingCount) isAggregator() bool {
@@ -39,17 +62,18 @@ func (a *aggregatorSlidingCount) isAggregator() bool {
 
 func (a *aggregatorSlidingCount) addSample(v interface{}, now time.Time) {
 	e := a.entries[a.idx]
-	if e.count == a.subBucketCount {
+	if e.count == a.itemsPerBucket {
 		a.idx = (a.idx + 1) % len(a.entries)
 		e = a.entries[a.idx]
 		e.av.clear()
 	}
+	e.count++
 	e.av.addSample(v)
 }
 
 func (a *aggregatorSlidingCount) retrieveCollected(now time.Time) AggregationValue {
 	e := a.entries[a.idx]
-	remaining := float64(a.subBucketCount-e.count) / float64(a.subBucketCount)
+	remaining := float64(a.itemsPerBucket-e.count) / float64(a.itemsPerBucket)
 	oldestIdx := (a.idx + 1) % len(a.entries)
 
 	e = a.entries[oldestIdx]

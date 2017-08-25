@@ -77,12 +77,12 @@ type view struct {
 }
 
 // NewViewInt64 creates a new *view.
-func NewViewInt64(name, description string, keys []tags.Key, measure *MeasureInt64, agg Aggregation, wnd Window) *view {
+func NewViewInt64(name, description string, keys []tags.Key, measure *MeasureInt64, agg Aggregation, wnd Window) View {
 	return newView(name, description, keys, measure, agg, wnd)
 }
 
 // NewViewFloat64 creates a new *view.
-func NewViewFloat64(name, description string, keys []tags.Key, measure *MeasureFloat64, agg Aggregation, wnd Window) *view {
+func NewViewFloat64(name, description string, keys []tags.Key, measure *MeasureFloat64, agg Aggregation, wnd Window) View {
 	return newView(name, description, keys, measure, agg, wnd)
 }
 
