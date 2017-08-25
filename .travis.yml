@@ -7,12 +7,20 @@ go:
 
 go_import_path: github.com/census-instrumentation/opencensus-go
 
+# Don't email me the results of the test runs.
+notifications:
+  email: false
+
 before_install:
   - if [[ $TRAVIS_GO_VERSION = 1.8* ]]; then go get -u github.com/golang/lint/golint honnef.co/go/tools/cmd/staticcheck; fi
   - go get -u golang.org/x/tools/cmd/goimports github.com/axw/gocov/gocov github.com/mattn/goveralls golang.org/x/tools/cmd/cover
 
+before_script:
+  - GO_FILES=$(find . -iname '*.go' | grep -v /vendor/)  # All the .go files, excluding vendor/ if any
+  - PKGS=$(go list ./... | grep -v /vendor/)             # All the import paths, excluding vendor/ if any
+
 script:
-  - '! gofmt -s -d -l . 2>&1 | read'
-  - '! goimports -l . | read'
+  - test -z $(gofmt -s -l $GO_FILES)  # Fail if a .go file hasn't been formatted with gofmt
+  - go test -v -race $PKGS            # Run all the tests with the race detector enabled
   - 'if [[ $TRAVIS_GO_VERSION = 1.8* ]]; then ! golint ./... | grep -vE "(_mock|_string|\.pb)\.go:"; fi'
   - 'if [[ $TRAVIS_GO_VERSION = 1.8* ]]; then ! go tool vet -all . 2>&1 | grep -vF .pb.go:; fi' # https://github.com/golang/protobuf/issues/214
