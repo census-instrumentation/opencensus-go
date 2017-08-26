@@ -213,10 +213,14 @@ func Record(ctx context.Context, ms []Measurement) {
 // the program. Calling SetReportingPeriod with duration argument less than or
 // equal to zero enables the default behavior.
 func SetReportingPeriod(d time.Duration) {
+	// TODO(acetechnologist): ensure that the duration d is more than a certain
+	// value. e.g. 1s
 	req := &setReportingPeriodReq{
 		d: d,
+		c: make(chan bool),
 	}
 	defaultWorker.c <- req
+	<-req.c // don't return until the timer is set to the new duration.
 }
 
 func init() {

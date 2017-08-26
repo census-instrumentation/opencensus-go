@@ -209,6 +209,11 @@ Unubscribe from a view:
     }    
     ...
 
+Configure/modify the default interval between reports of collected data. This is a system wide interval and impacts all views. The default interval duration is 10 seconds. Trying to set an interval with a duration less than a certain minimum (maybe 1s) should have no effect.
+
+    d := 20 * time.Second
+    stats.SetReportingPeriod(d)
+
 ### To collect data for on-demand retrieveal
 Even if a view is registered, if it has no subscriber no data for it is collected. In order to retrieve data on-demand for view, either the view needs to have at least 1 subscriber or the libray needs to be instructed explicitly to collect collect data for the desired view.
 
