@@ -339,6 +339,7 @@ func (cmd *recordReq) handleCommand(w *worker) {
 // reporting the collected data to the subscribed clients.
 type setReportingPeriodReq struct {
 	d time.Duration
+	c chan bool
 }
 
 func (cmd *setReportingPeriodReq) handleCommand(w *worker) {
@@ -348,4 +349,5 @@ func (cmd *setReportingPeriodReq) handleCommand(w *worker) {
 		return
 	}
 	w.timer = time.NewTicker(cmd.d)
+	cmd.c <- true
 }
