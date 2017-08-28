@@ -23,6 +23,7 @@ import "time"
 // occurs.
 type Window interface {
 	isWindow() bool
+	newAggregator(now time.Time, aggregationValueConstructor func() AggregationValue) aggregator
 }
 
 // WindowCumulative indicates that the aggregation occurs over the lifetime of
@@ -35,6 +36,10 @@ func NewWindowCumulative() *WindowCumulative {
 }
 
 func (w *WindowCumulative) isWindow() bool { return true }
+
+func (w *WindowCumulative) newAggregator(now time.Time, aggregationValueConstructor func() AggregationValue) aggregator {
+	return newAggregatorCumulative(now, aggregationValueConstructor)
+}
 
 // WindowSlidingTime indicates that the aggregation occurs over a sliding
 // window of time: i.e. last n seconds, minutes, hours...
@@ -54,6 +59,10 @@ func NewWindowSlidingTime(duration time.Duration, subIntervals int) *WindowSlidi
 
 func (w *WindowSlidingTime) isWindow() bool { return true }
 
+func (w *WindowSlidingTime) newAggregator(now time.Time, aggregationValueConstructor func() AggregationValue) aggregator {
+	return newAggregatorSlidingTime(now, w.duration, w.subIntervals, aggregationValueConstructor)
+}
+
 // WindowSlidingCount indicates that the aggregation occurs over a sliding
 // number of samples.
 type WindowSlidingCount struct {
@@ -71,3 +80,7 @@ func NewWindowSlidingCount(count uint64, subSets int) *WindowSlidingCount {
 }
 
 func (w *WindowSlidingCount) isWindow() bool { return true }
+
+func (w *WindowSlidingCount) newAggregator(now time.Time, aggregationValueConstructor func() AggregationValue) aggregator {
+	return newAggregatorSlidingCount(now, w.n, w.subSets, aggregationValueConstructor)
+}

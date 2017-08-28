@@ -38,28 +38,7 @@ type collector struct {
 func (c *collector) addSample(s string, v interface{}, now time.Time) {
 	aggregator, ok := c.signatures[s]
 	if !ok {
-		var newAggregationValue func() AggregationValue
-		switch agg := c.a.(type) {
-		case *AggregationCount:
-			newAggregationValue = func() AggregationValue { return newAggregationCountValue(0) }
-		case *AggregationDistribution:
-			newAggregationValue = func() AggregationValue { return newAggregationDistributionValue(agg.bounds) }
-		default:
-			// TODO: panic here. This should never be reached. If it is, then it is a bug.
-			return
-		}
-
-		switch w := c.w.(type) {
-		case *WindowCumulative:
-			aggregator = newAggregatorCumulative(now, newAggregationValue)
-		case *WindowSlidingTime:
-			aggregator = newAggregatorSlidingTime(now, w.duration, w.subIntervals, newAggregationValue)
-		case *WindowSlidingCount:
-			aggregator = newAggregatorSlidingCount(now, w.n, w.subSets, newAggregationValue)
-		default:
-			// TODO: panic here. This should never be reached. If it is, then it is a bug.
-			return
-		}
+		aggregator = c.w.newAggregator(now, c.a.aggregationValueConstructor())
 		c.signatures[s] = aggregator
 	}
 	aggregator.addSample(v, now)
