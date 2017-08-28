@@ -28,28 +28,8 @@ type AggregationValue interface {
 	addSample(v interface{})
 	multiplyByFraction(fraction float64) AggregationValue
 	addToIt(other AggregationValue)
+	equal(other AggregationValue) bool
 	clear()
-}
-
-func aggregationValueAreEqual(av1, av2 AggregationValue) bool {
-	switch v1 := av1.(type) {
-	case *AggregationCountValue:
-		switch v2 := av2.(type) {
-		case *AggregationCountValue:
-			return int64(*v1) == int64(*v2)
-		default:
-			return false
-		}
-	case *AggregationDistributionValue:
-		switch v2 := av2.(type) {
-		case *AggregationDistributionValue:
-			return aggregationDistributionValueAreEqual(v1, v2)
-		default:
-			return false
-		}
-	default:
-		return false
-	}
 }
 
 // AggregationCountValue is the aggregated data for an AggregationCountInt64.
@@ -81,6 +61,15 @@ func (a *AggregationCountValue) addToIt(av AggregationValue) {
 
 func (a *AggregationCountValue) clear() {
 	*a = 0
+}
+
+func (a *AggregationCountValue) equal(other AggregationValue) bool {
+	a2, ok := other.(*AggregationCountValue)
+	if !ok {
+		return false
+	}
+
+	return int64(*a) == int64(*a2)
 }
 
 func (a *AggregationCountValue) String() string {
@@ -274,11 +263,16 @@ func (a *AggregationDistributionValue) clear() {
 	}
 }
 
-func aggregationDistributionValueAreEqual(v1, v2 *AggregationDistributionValue) bool {
-	for i := range v1.countPerBucket {
-		if v1.countPerBucket[i] != v2.countPerBucket[i] {
+func (a *AggregationDistributionValue) equal(other AggregationValue) bool {
+	a2, ok := other.(*AggregationDistributionValue)
+	if !ok {
+		return false
+	}
+
+	for i := range a.countPerBucket {
+		if a.countPerBucket[i] != a2.countPerBucket[i] {
 			return false
 		}
 	}
-	return v1.Count() == v2.Count() && v1.Min() == v2.Min() && v1.Mean() == v2.Mean() && v1.Max() == v2.Max() && v1.Sum() == v2.Sum()
+	return a.Count() == a2.Count() && a.Min() == a2.Min() && a.Mean() == a2.Mean() && a.Max() == a2.Max() && a.Sum() == a2.Sum()
 }

@@ -20,6 +20,7 @@ package stats
 // Aggregation is the generic interface for all aggregtion types.
 type Aggregation interface {
 	isAggregation() bool
+	aggregationValueConstructor() func() AggregationValue
 }
 
 // AggregationCount indicates that the desired aggregation is count.
@@ -31,6 +32,10 @@ func NewAggregationCount() *AggregationCount {
 }
 
 func (a *AggregationCount) isAggregation() bool { return true }
+
+func (a *AggregationCount) aggregationValueConstructor() func() AggregationValue {
+	return func() AggregationValue { return newAggregationCountValue(0) }
+}
 
 // AggregationDistribution indicates that the desired aggregation is a histograms
 // distribution.
@@ -67,3 +72,7 @@ func NewAggregationDistribution(bounds []float64) *AggregationDistribution {
 }
 
 func (a *AggregationDistribution) isAggregation() bool { return true }
+
+func (a *AggregationDistribution) aggregationValueConstructor() func() AggregationValue {
+	return func() AggregationValue { return newAggregationDistributionValue(a.bounds) }
+}

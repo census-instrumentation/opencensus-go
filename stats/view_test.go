@@ -33,7 +33,7 @@ func rowFoundInRows(row *Row, rows []*Row) bool {
 }
 
 func rowsAreEqual(r1, r2 *Row) bool {
-	return reflect.DeepEqual(r1.Tags, r2.Tags) && aggregationValueAreEqual(r1.AggregationValue, r2.AggregationValue)
+	return reflect.DeepEqual(r1.Tags, r2.Tags) && r1.AggregationValue.equal(r2.AggregationValue)
 }
 
 func Test_View_MeasureFloat64_AggregationDistribution_WindowCumulative(t *testing.T) {
