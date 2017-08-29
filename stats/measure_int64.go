@@ -24,15 +24,6 @@ type MeasureInt64 struct {
 	views       map[View]bool
 }
 
-// NewMeasureInt64 creates a new measure of type MeasureInt64.
-func NewMeasureInt64(name string, description string) *MeasureInt64 {
-	return &MeasureInt64{
-		name:        name,
-		description: description,
-		views:       make(map[View]bool),
-	}
-}
-
 // Name returns the name of the measure.
 func (m *MeasureInt64) Name() string {
 	return m.name

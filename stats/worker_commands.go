@@ -63,13 +63,13 @@ func (cmd *registerMeasureReq) handleCommand(w *worker) {
 	cmd.err <- w.tryRegisterMeasure(cmd.m)
 }
 
-// unregisterMeasureReq is the command to unregister a measure from the library.
-type unregisterMeasureReq struct {
+// deleteMeasureReq is the command to delete a measure from the library.
+type deleteMeasureReq struct {
 	m   Measure
 	err chan error
 }
 
-func (cmd *unregisterMeasureReq) handleCommand(w *worker) {
+func (cmd *deleteMeasureReq) handleCommand(w *worker) {
 	m, ok := w.measuresByName[cmd.m.Name()]
 	if !ok {
 		cmd.err <- nil
@@ -82,7 +82,7 @@ func (cmd *unregisterMeasureReq) handleCommand(w *worker) {
 	}
 
 	if m.viewsCount() != 0 {
-		cmd.err <- fmt.Errorf("cannot unregister measure '%v'. All views referring to it must be unregistered first", cmd.m.Name())
+		cmd.err <- fmt.Errorf("cannot delete measure '%v'. All views referring to it must be unregistered first", cmd.m.Name())
 		return
 	}
 

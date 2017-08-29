@@ -269,6 +269,14 @@ func (a *AggregationDistributionValue) equal(other AggregationValue) bool {
 		return false
 	}
 
+	if a2 == nil {
+		return false
+	}
+
+	if len(a.countPerBucket) != len(a2.countPerBucket) {
+		return false
+	}
+
 	for i := range a.countPerBucket {
 		if a.countPerBucket[i] != a2.countPerBucket[i] {
 			return false

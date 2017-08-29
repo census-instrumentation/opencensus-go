@@ -40,6 +40,48 @@ var defaultWorker *worker
 
 var defaultReportingDuration = 10 * time.Second
 
+// NewMeasureFloat64 creates a new measure of type MeasureFloat64. It returns
+// an error if a measure with the same name already exists.
+func NewMeasureFloat64(name string, description string) (*MeasureFloat64, error) {
+	m := &MeasureFloat64{
+		name:        name,
+		description: description,
+		views:       make(map[View]bool),
+	}
+
+	req := &registerMeasureReq{
+		m:   m,
+		err: make(chan error),
+	}
+	defaultWorker.c <- req
+	if err := <-req.err; err != nil {
+		return nil, err
+	}
+
+	return m, nil
+}
+
+// NewMeasureInt64 creates a new measure of type MeasureInt64. It returns an
+// error if a measure with the same name already exists.
+func NewMeasureInt64(name string, description string) (*MeasureInt64, error) {
+	m := &MeasureInt64{
+		name:        name,
+		description: description,
+		views:       make(map[View]bool),
+	}
+
+	req := &registerMeasureReq{
+		m:   m,
+		err: make(chan error),
+	}
+	defaultWorker.c <- req
+	if err := <-req.err; err != nil {
+		return nil, err
+	}
+
+	return m, nil
+}
+
 // GetMeasureByName returns the registered measure associated with name.
 func GetMeasureByName(name string) (Measure, error) {
 	req := &getMeasureByNameReq{
@@ -51,21 +93,11 @@ func GetMeasureByName(name string) (Measure, error) {
 	return resp.m, resp.err
 }
 
-// RegisterMeasure registers a measure. It returns an error if a measure with
-// the same name is already registered.
-func RegisterMeasure(m Measure) error {
-	req := &registerMeasureReq{
-		m:   m,
-		err: make(chan error),
-	}
-	defaultWorker.c <- req
-	return <-req.err
-}
-
-// UnregisterMeasure de-registers a measure. It returns an error if the measure
-// is not already registered.
-func UnregisterMeasure(m Measure) error {
-	req := &unregisterMeasureReq{
+// DeleteMeasure deletes an existing measure to allow for creation of a new
+// measure with the same name. It returns an error if the measure cannot be
+// deleted (if one or multiple registered views refer to it).
+func DeleteMeasure(m Measure) error {
+	req := &deleteMeasureReq{
 		m:   m,
 		err: make(chan error),
 	}
@@ -120,7 +152,7 @@ func UnregisterView(v View) error {
 func SubscribeToView(v View, c chan *ViewData) error {
 	req := &subscribeToViewReq{
 		v:   v,
-		c:   make(chan *ViewData),
+		c:   c,
 		err: make(chan error),
 	}
 	defaultWorker.c <- req
@@ -134,7 +166,7 @@ func SubscribeToView(v View, c chan *ViewData) error {
 func UnsubscribeFromView(v View, c chan *ViewData) error {
 	req := &unsubscribeFromViewReq{
 		v:   v,
-		c:   make(chan *ViewData),
+		c:   c,
 		err: make(chan error),
 	}
 	defaultWorker.c <- req
@@ -200,7 +232,7 @@ func RecordInt64(ctx context.Context, mi *MeasureInt64, v int64) {
 }
 
 // Record records one or multiple measurements with the same tags at once.
-func Record(ctx context.Context, ms []Measurement) {
+func Record(ctx context.Context, ms ...Measurement) {
 	req := &recordReq{
 		now: time.Now(),
 		ts:  tags.FromContext(ctx),

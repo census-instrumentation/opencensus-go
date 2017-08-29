@@ -85,22 +85,18 @@ Create a new context keeping the old tag set and adding new tags to it, removing
 
 ## Registering views and retrieving their collected data.
 
-### To create/register a measure a.k.a resource
+### To create/retrieve/delete a measure a.k.a resource
 Create/load measures units:
 
     // returns a *MeasureFloat64
-    mf := stats.NewMeasureFloat64("/my/float64/measureName", "some measure")
-    mi := stats.NewMeasureInt64("/my/otherName", "some other measure")
-    ...
-
-Register measures:
-
-	if err := stats.RegisterMeasure(mf); err != nil {
+    mf, err := stats.NewMeasureFloat64("/my/float64/measureName", "some measure")
+    if err != nil {
         // handle error
     }
-    if err := stats.RegisterMeasure(mi); err != nil {
+    mi, err := stats.NewMeasureInt64("/my/otherName", "some other measure")
+    if err != nil {
         // handle error
-    }
+    }    
     ...
 
 Retrieve measure by name:
@@ -114,11 +110,11 @@ Retrieve measure by name:
     }
     ...
 
-Unregister measures:
-	if err := stats.UnregisterMeasure(mf); err != nil {
+Delete measure (this can be useful when replacing a measure by another measure with the same name):
+	if err := stats.DeleteMeasure(mf); err != nil {
         // handle error
     }
-    if err := stats.UnregisterMeasure(mi); err != nil {
+    if err := stats.DeleteMeasure(mi); err != nil {
         // handle error
     }
     ...

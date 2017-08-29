@@ -172,6 +172,9 @@ func (v *view) collectedRows(now time.Time) []*Row {
 }
 
 func (v *view) addSample(ts *tags.TagSet, val interface{}, now time.Time) {
+	if !v.isCollecting() {
+		return
+	}
 	sig := tags.ToValuesString(ts, v.tagKeys)
 	v.c.addSample(sig, val, now)
 }

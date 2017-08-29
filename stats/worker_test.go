@@ -16,222 +16,205 @@
 package stats
 
 import (
+	"context"
 	"errors"
+	"fmt"
 	"testing"
+
+	"github.com/census-instrumentation/opencensus-go/tags"
 )
 
-func Test_Worker_MeasureRegistration(t *testing.T) {
+func Test_Worker_MeasureCreation(t *testing.T) {
+	defaultWorker.stop()
+	defaultWorker = newWorker()
+	go defaultWorker.start()
+
+	if _, err := NewMeasureFloat64("MF1", "desc MF1"); err != nil {
+		t.Errorf("NewMeasureFloat64(\"MF1\", \"desc MF1\") got error %v, want no error", err)
+	}
+
+	if _, err := NewMeasureFloat64("MF1", "Duplicate measure with same name as MF1."); err == nil {
+		t.Error("NewMeasureFloat64(\"MF1\", \"Duplicate MeasureFloat64 with same name as MF1.\") got no error, want no error")
+	}
+
+	if _, err := NewMeasureInt64("MF1", "Duplicate measure with same name as MF1."); err == nil {
+		t.Error("NewMeasureInt64(\"MF1\", \"Duplicate MeasureInt64 with same name as MF1.\") got no error, want no error")
+	}
+
+	if _, err := NewMeasureFloat64("MF2", "desc MF2"); err != nil {
+		t.Errorf("NewMeasureFloat64(\"MF2\", \"desc MF2\") got error %v, want no error", err)
+	}
+
+	if _, err := NewMeasureInt64("MI1", "desc MI1"); err != nil {
+		t.Errorf("NewMeasureInt64(\"MI1\", \"desc MI1\") got error %v, want no error", err)
+	}
+
+	if _, err := NewMeasureInt64("MI1", "Duplicate measure with same name as MI1."); err == nil {
+		t.Error("NewMeasureInt64(\"MI1\", \"Duplicate NewMeasureInt64 with same name as MI1.\") got no error, want no error")
+	}
+
+	if _, err := NewMeasureFloat64("MI1", "Duplicate measure with same name as MI1."); err == nil {
+		t.Error("NewMeasureFloat64(\"MI1\", \"Duplicate NewMeasureFloat64 with same name as MI1.\") got no error, want no error")
+	}
+	defaultWorker.stop()
+}
+
+func Test_Worker_MeasureByName(t *testing.T) {
+	defaultWorker.stop()
+	defaultWorker = newWorker()
+	go defaultWorker.start()
+
 	someError := errors.New("some error")
-	mf1 := NewMeasureFloat64("MF1", "desc MF1")
-	mf2 := NewMeasureFloat64("MF2", "desc MF2")
-	mf1SameName := NewMeasureInt64("MF1", "desc MI1. Duplicate measure with same name as MF1.")
-	vw1 := NewViewFloat64("VF1", "desc VF1", nil, mf1, nil, nil)
-	type registerWant struct {
-		m   Measure
-		err error
+	mf1, err := NewMeasureFloat64("MF1", "desc MF1")
+	if err != nil {
+		t.Errorf("NewMeasureFloat64(\"MF1\", \"desc MF1\") got error %v, want no error", err)
 	}
-	type unregisterWant struct {
-		m   Measure
-		err error
+	mf2, err := NewMeasureFloat64("MF2", "desc MF2")
+	if err != nil {
+		t.Errorf("NewMeasureFloat64(\"MF2\", \"desc MF2\") got error %v, want no error", err)
 	}
-	type byNameWant struct {
-		name string
-		m    Measure
-		err  error
+	mi1, err := NewMeasureInt64("MI1", "desc MI1")
+	if err != nil {
+		t.Errorf("NewMeasureInt64(\"MI1\", \"desc MI1\") got error %v, want no error", err)
 	}
 
 	type testCase struct {
-		label   string
-		regs    []registerWant
-		views   []View
-		unregs  []unregisterWant
-		bynames []byNameWant
+		label string
+		name  string
+		m     Measure
+		err   error
 	}
+
 	tcs := []testCase{
 		{
 			"0",
-			[]registerWant{
-				{
-					mf1,
-					nil,
-				},
-			},
-			[]View{},
-			[]unregisterWant{},
-			[]byNameWant{
-				{
-					mf1.Name(),
-					mf1,
-					nil,
-				},
-				{
-					mf2.Name(),
-					nil,
-					someError,
-				},
+			mf1.Name(),
+			mf1,
+			nil,
+		},
+		{
+			"1",
+			"MF1",
+			mf1,
+			nil,
+		},
+		{
+			"2",
+			mf2.Name(),
+			mf2,
+			nil,
+		},
+		{
+			"3",
+			"MF2",
+			mf2,
+			nil,
+		},
+		{
+			"4",
+			mi1.Name(),
+			mi1,
+			nil,
+		},
+		{
+			"5",
+			"MI1",
+			mi1,
+			nil,
+		},
+		{
+			"6",
+			"other",
+			nil,
+			someError,
+		},
+	}
+
+	for _, tc := range tcs {
+		m, err := GetMeasureByName(tc.name)
+		if (err != nil) != (tc.err != nil) {
+			t.Errorf("GetMeasureByName. got error %v, want %v. Test case: %v", err, tc.err, tc.label)
+		}
+
+		if m != tc.m {
+			t.Errorf("GetMeasureByName. got measure %v, want measure %v. Test case: %v", m, tc.m, tc.label)
+		}
+	}
+
+	defaultWorker.stop()
+}
+
+func Test_Worker_MeasureDelete(t *testing.T) {
+	someError := errors.New("some error")
+
+	registerViewFunc := func(viewName string) func(m Measure) error {
+		return func(m Measure) error {
+			switch x := m.(type) {
+			case *MeasureInt64:
+				v := NewViewInt64(viewName, "", nil, x, nil, nil)
+				return RegisterView(v)
+			case *MeasureFloat64:
+				v := NewViewFloat64(viewName, "", nil, x, nil, nil)
+				return RegisterView(v)
+			default:
+				return fmt.Errorf("cannot create view '%v' with measure '%v'", viewName, m.Name())
+			}
+		}
+	}
+
+	type vRegistrations struct {
+		measureName string
+		regFunc     func(m Measure) error
+	}
+
+	type deletion struct {
+		name      string
+		getErr    error
+		deleteErr error
+	}
+
+	type testCase struct {
+		label         string
+		measureNames  []string
+		registrations []vRegistrations
+		deletions     []deletion
+	}
+
+	tcs := []testCase{
+		{
+			"0",
+			[]string{"mi1"},
+			[]vRegistrations{},
+			[]deletion{
+				{"mi1", nil, nil},
 			},
 		},
 		{
 			"1",
-			[]registerWant{
+			[]string{"mi1"},
+			[]vRegistrations{
 				{
-					mf1,
-					nil,
-				},
-				{
-					mf1,
-					nil,
+					"mi1",
+					registerViewFunc("vw1"),
 				},
 			},
-			[]View{},
-			[]unregisterWant{},
-			[]byNameWant{
-				{
-					mf1.Name(),
-					mf1,
-					nil,
-				},
-				{
-					mf2.Name(),
-					nil,
-					someError,
-				},
+			[]deletion{
+				{"mi1", nil, someError},
+				{"mi2", someError, nil},
 			},
 		},
 		{
 			"2",
-			[]registerWant{
+			[]string{"mi1", "mi2"},
+			[]vRegistrations{
 				{
-					mf1,
-					nil,
-				},
-				{
-					mf1,
-					nil,
+					"mi1",
+					registerViewFunc("vw1"),
 				},
 			},
-			[]View{},
-			[]unregisterWant{
-				{
-					mf1,
-					nil,
-				},
-			},
-			[]byNameWant{
-				{
-					mf1.Name(),
-					nil,
-					someError,
-				},
-				{
-					mf2.Name(),
-					nil,
-					someError,
-				},
-			},
-		},
-		{
-			"3",
-			[]registerWant{
-				{
-					mf1,
-					nil,
-				},
-			},
-			[]View{
-				vw1,
-			},
-			[]unregisterWant{
-				{
-					mf1,
-					someError,
-				},
-			},
-			[]byNameWant{
-				{
-					mf1.Name(),
-					mf1,
-					nil,
-				},
-				{
-					mf2.Name(),
-					nil,
-					someError,
-				},
-			},
-		},
-		{
-			"4",
-			[]registerWant{
-				{
-					mf1,
-					nil,
-				},
-				{
-					mf2,
-					nil,
-				},
-			},
-			[]View{
-				vw1,
-			},
-			[]unregisterWant{
-				{
-					mf1,
-					someError,
-				},
-				{
-					mf2,
-					nil,
-				},
-			},
-			[]byNameWant{
-				{
-					mf1.Name(),
-					mf1,
-					nil,
-				},
-				{
-					mf2.Name(),
-					nil,
-					someError,
-				},
-			},
-		},
-		{
-			"5",
-			[]registerWant{
-				{
-					mf1,
-					nil,
-				},
-				{
-					mf2,
-					nil,
-				},
-				{
-					mf1SameName,
-					someError,
-				},
-			},
-			[]View{},
-			[]unregisterWant{
-				{
-					mf1SameName,
-					nil,
-				},
-			},
-			[]byNameWant{
-				{
-					mf1.Name(),
-					mf1,
-					nil,
-				},
-				{
-					mf2.Name(),
-					mf2,
-					nil,
-				},
+			[]deletion{
+				{"mi1", nil, someError},
+				{"mi2", nil, nil},
 			},
 		},
 	}
@@ -241,69 +224,78 @@ func Test_Worker_MeasureRegistration(t *testing.T) {
 		defaultWorker = newWorker()
 		go defaultWorker.start()
 
-		for _, reg := range tc.regs {
-			err := RegisterMeasure(reg.m)
-			if (err != nil) != (reg.err != nil) {
-				t.Errorf("RegisterMeasure. got error %v, want %v. Test case: %v", err, reg.err, tc.label)
+		for _, n := range tc.measureNames {
+			if _, err := NewMeasureInt64(n, "some desc"); err != nil {
+				t.Errorf("Creating measure got error '%v'. test case: '%v'", err, tc.label)
 			}
 		}
 
-		for _, vw := range tc.views {
-			err := RegisterView(vw)
+		for _, r := range tc.registrations {
+			m, err := GetMeasureByName(r.measureName)
 			if err != nil {
-				t.Errorf("RegisterView. got error %v, want no error. Test case: %v", err, tc.label)
+				t.Errorf("Retrieving measure '%v' got '%v', want no error. test case: '%v'", r.measureName, err, tc.label)
+				continue
+			}
+			if err = r.regFunc(m); err != nil {
+				t.Errorf("Registring view got '%v', want no error. test case: '%v'", err, tc.label)
+				continue
 			}
 		}
 
-		for _, unreg := range tc.unregs {
-			err := UnregisterMeasure(unreg.m)
-			if (err != nil) != (unreg.err != nil) {
-				t.Errorf("UnregisterMeasure. got error %v, want %v. Test case: %v", err, unreg.err, tc.label)
-			}
-		}
-
-		for _, byname := range tc.bynames {
-			m, err := GetMeasureByName(byname.name)
-			if (err != nil) != (byname.err != nil) {
-				t.Errorf("GetMeasureByName. got error %v, want %v. Test case: %v", err, byname.err, tc.label)
+		for _, d := range tc.deletions {
+			m, err := GetMeasureByName(d.name)
+			if (err != nil) != (d.getErr != nil) {
+				t.Errorf("Retrieving measure got '%v', want '%v'. test case: '%v'", err, d.getErr, tc.label)
+				continue
 			}
 
-			if m != byname.m {
-				t.Errorf("GetMeasureByName. got measure %v, want measure %v. Test case: %v", m, byname.m, tc.label)
+			if err != nil {
+				// err was expected to be nil
+				continue
+			}
+
+			err = DeleteMeasure(m)
+			if (err != nil) != (d.deleteErr != nil) {
+				t.Errorf("Deleting measure got '%v', want '%v'. test case: '%v'", err, d.deleteErr, tc.label)
+			}
+
+			var deleted bool
+			if err == nil {
+				deleted = true
+			}
+
+			if _, err := GetMeasureByName(d.name); deleted && (err == nil) {
+				t.Errorf("Retrieving measure succedded after delete succeded. test case: '%v'", tc.label)
+				continue
 			}
 		}
-		defaultWorker.stop()
 	}
+	defaultWorker.stop()
 }
 
 func Test_Worker_ViewRegistration(t *testing.T) {
 	someError := errors.New("some error")
-	mf1 := NewMeasureFloat64("MF1", "desc MF1")
-	mf2 := NewMeasureFloat64("MF2", "desc MF2")
 
-	vw1 := NewViewFloat64("VF1", "desc VF1", nil, mf1, nil, nil)
-	vw1SameName := NewViewFloat64("VF1", "desc VF1.  Duplicate view with same name as VF1.", nil, mf1, nil, nil)
-	vw2 := NewViewFloat64("VF2", "desc VF2", nil, mf2, nil, nil)
 	sc1 := make(chan *ViewData)
 
 	type registerWant struct {
-		v        View
+		vID      string
 		err      error
 		forAdhoc bool
 	}
 	type unregisterWant struct {
-		v   View
+		vID string
 		err error
 	}
 	type byNameWant struct {
 		name string
-		v    View
+		vID  string
 		err  error
 	}
 
 	type subscription struct {
 		c   chan *ViewData
-		v   View
+		vID string
 		err error
 	}
 	type testCase struct {
@@ -318,7 +310,7 @@ func Test_Worker_ViewRegistration(t *testing.T) {
 			"0",
 			[]registerWant{
 				{
-					vw1,
+					"v1ID",
 					nil,
 					true,
 				},
@@ -326,25 +318,25 @@ func Test_Worker_ViewRegistration(t *testing.T) {
 			[]subscription{
 				{
 					sc1,
-					vw1,
+					"v1ID",
 					nil,
 				},
 			},
 			[]unregisterWant{
 				{
-					vw1,
+					"v1ID",
 					someError,
 				},
 			},
 			[]byNameWant{
 				{
-					vw1.Name(),
-					vw1,
+					"VF1",
+					"v1ID",
 					nil,
 				},
 				{
-					vw2.Name(),
-					nil,
+					"VF2",
+					"vNilID",
 					someError,
 				},
 			},
@@ -353,12 +345,12 @@ func Test_Worker_ViewRegistration(t *testing.T) {
 			"1",
 			[]registerWant{
 				{
-					vw1,
+					"v1ID",
 					nil,
 					false,
 				},
 				{
-					vw2,
+					"v2ID",
 					nil,
 					true,
 				},
@@ -366,29 +358,29 @@ func Test_Worker_ViewRegistration(t *testing.T) {
 			[]subscription{
 				{
 					sc1,
-					vw1,
+					"v1ID",
 					nil,
 				},
 			},
 			[]unregisterWant{
 				{
-					vw1,
+					"v1ID",
 					someError,
 				},
 				{
-					vw2,
+					"v2ID",
 					someError,
 				},
 			},
 			[]byNameWant{
 				{
-					vw1.Name(),
-					vw1,
+					"VF1",
+					"v1ID",
 					nil,
 				},
 				{
-					vw2.Name(),
-					vw2,
+					"VF2",
+					"v2ID",
 					nil,
 				},
 			},
@@ -397,7 +389,7 @@ func Test_Worker_ViewRegistration(t *testing.T) {
 			"2",
 			[]registerWant{
 				{
-					vw1,
+					"v1ID",
 					nil,
 					true,
 				},
@@ -405,29 +397,29 @@ func Test_Worker_ViewRegistration(t *testing.T) {
 			[]subscription{
 				{
 					sc1,
-					vw1,
+					"v1ID",
 					nil,
 				},
 				{
 					sc1,
-					vw1SameName,
+					"v1SameNameID",
 					someError,
 				},
 			},
 			[]unregisterWant{
 				{
-					vw1,
+					"v1ID",
 					someError,
 				},
 				{
-					vw1SameName,
+					"v1SameNameID",
 					nil,
 				},
 			},
 			[]byNameWant{
 				{
-					vw1.Name(),
-					vw1,
+					"VF1",
+					"v1ID",
 					nil,
 				},
 			},
@@ -439,26 +431,36 @@ func Test_Worker_ViewRegistration(t *testing.T) {
 		defaultWorker = newWorker()
 		go defaultWorker.start()
 
-		_ = RegisterMeasure(mf1)
-		_ = RegisterMeasure(mf2)
+		mf1, _ := NewMeasureFloat64("MF1", "desc MF1")
+		mf2, _ := NewMeasureFloat64("MF2", "desc MF2")
+
+		views := make(map[string]View)
+		views["v1ID"] = NewViewFloat64("VF1", "desc VF1", nil, mf1, nil, nil)
+		views["v1SameNameID"] = NewViewFloat64("VF1", "desc duplicate name VF1.", nil, mf1, nil, nil)
+		views["v2ID"] = NewViewFloat64("VF2", "desc VF2", nil, mf2, nil, nil)
+		views["vNilID"] = nil
 
 		for _, reg := range tc.regs {
-			err := RegisterView(reg.v)
+			v := views[reg.vID]
+
+			err := RegisterView(v)
 			if (err != nil) != (reg.err != nil) {
 				t.Errorf("RegisterView. got error %v, want %v. Test case: %v", err, reg.err, tc.label)
 			}
-			StartCollectionForAdhoc(reg.v)
+			StartCollectionForAdhoc(v)
 		}
 
 		for _, s := range tc.subscriptions {
-			err := SubscribeToView(s.v, s.c)
+			v := views[s.vID]
+			err := SubscribeToView(v, s.c)
 			if (err != nil) != (s.err != nil) {
 				t.Errorf("SubscribeToView. got error %v, want %v. Test case: %v", err, s.err, tc.label)
 			}
 		}
 
 		for _, unreg := range tc.unregs {
-			err := UnregisterView(unreg.v)
+			v := views[unreg.vID]
+			err := UnregisterView(v)
 			if (err != nil) != (unreg.err != nil) {
 				t.Errorf("UnregisterView. got error %v, want %v. Test case: %v", err, unreg.err, tc.label)
 			}
@@ -470,77 +472,255 @@ func Test_Worker_ViewRegistration(t *testing.T) {
 				t.Errorf("GetViewByName. got error %v, want %v. Test case: %v", err, byname.err, tc.label)
 			}
 
-			if v != byname.v {
-				t.Errorf("GetViewByName. got view '%v' '%v', want view %v. Test case: %v", v.Name(), v.Description(), byname.v, tc.label)
+			wantV := views[byname.vID]
+			if v != wantV {
+				t.Errorf("GetViewByName. got view '%v' '%v', want view %v. Test case: %v", v.Name(), v.Description(), wantV, tc.label)
 			}
 		}
 		defaultWorker.stop()
 	}
 }
-
-/*
-func Test_Worker_AdhocCollection(t *testing.T) {
-	restartDefaultWorker()
-}
-
-func Test_Worker_Subscription(t *testing.T) {
-	restartDefaultWorker()
-}
-*/
 
 func Test_Worker_RecordFloat64(t *testing.T) {
-	// register mf1, mf2 register vw1
-	// record(mf1) -> nothing
-	// record(mf2) -> nothing
-	// adhoc vw1
-	// record(mf1) -> 1
-	// record(mf1)*2 -> 2
-	// record(mf2) -> nothing
-}
+	defaultWorker.stop()
+	defaultWorker = newWorker()
+	go defaultWorker.start()
 
-/*
-func Test_Worker_RecordInt64(t *testing.T) {
-	restartDefaultWorker()
-}
-*/
-
-/*
-		mf1 := NewMeasureFloat64("MF1", "desc MF1")
-	type record struct {
-		measurement measurementFloat64
-		tags        []tagString
+	someError := errors.New("some error")
+	m, err := NewMeasureFloat64("MF1", "desc MF1")
+	if err != nil {
+		t.Errorf("NewMeasureFloat64(\"MF1\", \"desc MF1\") got error '%v', want no error", err)
 	}
 
-[]record{
+	k1, _ := tags.CreateKeyString("k1")
+	k2, _ := tags.CreateKeyString("k2")
+	tsb := &tags.TagSetBuilder{}
+	tagsSet := tsb.StartFromEmpty().InsertString(k1, "v1").InsertString(k2, "v2").Build()
+	ctx := tags.ContextWithNewTagSet(context.Background(), tagsSet)
+
+	v1 := NewViewFloat64("VF1", "desc VF1", []tags.Key{k1, k2}, m, NewAggregationCount(), NewWindowCumulative())
+	v2 := NewViewFloat64("VF2", "desc VF2", []tags.Key{k1, k2}, m, NewAggregationCount(), NewWindowCumulative())
+	//v3 := NewViewFloat64("VF3", "desc VF3", []tags.Key{k1, k2}, m, NewAggregationCount(), NewWindowCumulative())
+
+	c1 := make(chan *ViewData)
+	//c2 := make(chan *ViewData)
+	type subscription struct {
+		v View
+		c chan *ViewData
+	}
+	type want struct {
+		v    View
+		rows []*Row
+		err  error
+	}
+	type testCase struct {
+		label         string
+		registrations []View
+		subscriptions []subscription
+		adHocs        []View
+		records       []float64
+		wants         []want
+	}
+
+	tcs := []testCase{
+		{
+			"0",
+			[]View{v1, v2},
+			[]subscription{},
+			[]View{},
+			[]float64{1, 1},
+			[]want{{v1, nil, someError}, {v2, nil, someError}},
+		},
+		{
+			"1",
+			[]View{v1, v2},
+			[]subscription{},
+			[]View{v1},
+			[]float64{1, 1},
+			[]want{
 				{
-					measurementFloat64{mf1, 1},
-					[]tagString{{k1, "v1"}},
+					v1,
+					[]*Row{
+						{
+							[]tags.Tag{{k1, []byte("v1")}, {k2, []byte("v2")}},
+							newAggregationCountValue(2),
+						},
+					},
+					nil,
+				},
+				{v2, nil, someError},
+			},
+		},
+		{
+			"2",
+			[]View{v1, v2},
+			[]subscription{},
+			[]View{v1, v2},
+			[]float64{1, 1},
+			[]want{
+				{
+					v1,
+					[]*Row{
+						{
+							[]tags.Tag{{k1, []byte("v1")}, {k2, []byte("v2")}},
+							newAggregationCountValue(2),
+						},
+					},
+					nil,
 				},
 				{
-					measurementFloat64{mf1, 5},
-					[]tagString{{k1, "v1"}},
+					v2,
+					[]*Row{
+						{
+							[]tags.Tag{{k1, []byte("v1")}, {k2, []byte("v2")}},
+							newAggregationCountValue(2),
+						},
+					},
+					nil,
 				},
 			},
+		},
+		{
+			"3",
+			[]View{v1, v2},
+			[]subscription{{v1, c1}},
+			[]View{},
+			[]float64{1, 1},
+			[]want{
+				{
+					v1,
+					[]*Row{
+						{
+							[]tags.Tag{{k1, []byte("v1")}, {k2, []byte("v2")}},
+							newAggregationCountValue(2),
+						},
+					},
+					nil,
+				},
+				{v2, nil, someError},
+			},
+		},
+		{
+			"4",
+			[]View{v1, v2},
+			[]subscription{{v1, c1}, {v2, c1}},
+			[]View{},
+			[]float64{1, 1},
+			[]want{
+				{
+					v1,
+					[]*Row{
+						{
+							[]tags.Tag{{k1, []byte("v1")}, {k2, []byte("v2")}},
+							newAggregationCountValue(2),
+						},
+					},
+					nil,
+				},
+				{
+					v2,
+					[]*Row{
+						{
+							[]tags.Tag{{k1, []byte("v1")}, {k2, []byte("v2")}},
+							newAggregationCountValue(2),
+						},
+					},
+					nil,
+				},
+			},
+		},
+		{
+			"5",
+			[]View{v1, v2},
+			[]subscription{{v1, c1}},
+			[]View{v2},
+			[]float64{1, 1, 10},
+			[]want{
+				{
+					v1,
+					[]*Row{
+						{
+							[]tags.Tag{{k1, []byte("v1")}, {k2, []byte("v2")}},
+							newAggregationCountValue(3),
+						},
+					},
+					nil,
+				},
+				{
+					v2,
+					[]*Row{
+						{
+							[]tags.Tag{{k1, []byte("v1")}, {k2, []byte("v2")}},
+							newAggregationCountValue(3),
+						},
+					},
+					nil,
+				},
+			},
+		},
+	}
 
-		defaultWorker.stop()
-		defaultWorker = newWorker()
-
-		go defaultWorker.start()
-		if err := RegisterMeasure(mf1); err != nil {
-			t.Errorf("RegisterMeasure. Got error '%v'", err)
-		}
-		if err := RegisterView(vw1); err != nil {
-			t.Errorf("RegisterView. Got error '%v'", err)
-		}
-		StartCollectionForAdhoc(vw1)
-		ctx := tags.ContextWithNewTagSet(context.Background(), tsb.Build())
-		RecordFloat64(ctx, r.measurement.m, r.measurement.v)
-
-			gotRows, err := RetrieveData(vw1)
-			if err != nil {
-				t.Errorf("RetrieveData. Got error '%v' for test case: '%v'", err, tc.label)
+	for _, tc := range tcs {
+		for _, v := range tc.registrations {
+			if err := RegisterView(v); err != nil {
+				t.Fatalf("RegisterView '%v' got error '%v', want no error for test case: '%v'", v.Name(), err, tc.label)
 			}
-				StopCollectionForAdhoc(vw1)
+		}
 
-		defaultWorker.stop()
-*/
+		for _, s := range tc.subscriptions {
+			if err := SubscribeToView(s.v, s.c); err != nil {
+				t.Fatalf("SubscribeToView '%v' got error '%v', want no error for test case: '%v'", s.v.Name(), err, tc.label)
+			}
+		}
+
+		for _, v := range tc.adHocs {
+			if err := StartCollectionForAdhoc(v); err != nil {
+				t.Fatalf("StartCollectionForAdhoc '%v' got error '%v', want no error for test case: '%v'", v.Name(), err, tc.label)
+			}
+		}
+
+		for _, value := range tc.records {
+			RecordFloat64(ctx, m, value)
+		}
+
+		for _, w := range tc.wants {
+			gotRows, err := RetrieveData(w.v)
+			if (err != nil) != (w.err != nil) {
+				t.Fatalf("RetrieveData '%v' got error '%v', want no error for test case: '%v'", w.v.Name(), err, tc.label)
+			}
+			for _, gotRow := range gotRows {
+				if !rowFoundInRows(gotRow, w.rows) {
+					t.Errorf("got unexpected row '%v' for test case: '%v'", gotRow, tc.label)
+					break
+				}
+			}
+
+			for _, wantRow := range w.rows {
+				if !rowFoundInRows(wantRow, gotRows) {
+					t.Errorf("want row '%v' for test case: '%v'. Not received", wantRow, tc.label)
+					break
+				}
+			}
+		}
+
+		// cleaning up
+		for _, v := range tc.adHocs {
+			if err := StopCollectionForAdhoc(v); err != nil {
+				t.Fatalf("StopCollectionForAdhoc '%v' got error '%v', want no error for test case: '%v'", v.Name(), err, tc.label)
+			}
+		}
+
+		for _, s := range tc.subscriptions {
+			if err := UnsubscribeFromView(s.v, s.c); err != nil {
+				t.Fatalf("UnsubscribeFromView '%v' got error '%v', want no error for test case: '%v'", s.v.Name(), err, tc.label)
+			}
+		}
+
+		for _, v := range tc.registrations {
+			if err := UnregisterView(v); err != nil {
+				t.Fatalf("UnregisterView '%v' got error '%v', want no error for test case: '%v'", v.Name(), err, tc.label)
+			}
+		}
+	}
+	defaultWorker.stop()
+}
