@@ -24,15 +24,6 @@ type MeasureFloat64 struct {
 	views       map[View]bool
 }
 
-// NewMeasureFloat64 creates a new measure of type MeasureFloat64.
-func NewMeasureFloat64(name string, description string) *MeasureFloat64 {
-	return &MeasureFloat64{
-		name:        name,
-		description: description,
-		views:       make(map[View]bool),
-	}
-}
-
 // Name returns the name of the measure.
 func (m *MeasureFloat64) Name() string {
 	return m.name

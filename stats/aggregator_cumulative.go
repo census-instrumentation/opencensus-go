@@ -17,7 +17,9 @@
 // implementation.
 package stats
 
-import "time"
+import (
+	"time"
+)
 
 // aggregatorCumulative indicates that the aggregation occurs over all samples
 // seen since the view collection started.

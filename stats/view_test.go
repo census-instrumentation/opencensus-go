@@ -33,6 +33,10 @@ func rowFoundInRows(row *Row, rows []*Row) bool {
 }
 
 func rowsAreEqual(r1, r2 *Row) bool {
+	if r1 == r2 {
+		return true
+	}
+
 	return reflect.DeepEqual(r1.Tags, r2.Tags) && r1.AggregationValue.equal(r2.AggregationValue)
 }
 
@@ -168,6 +172,7 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowCumulative(t *testin
 	tsb := &tags.TagSetBuilder{}
 	for _, tc := range tcs {
 		vw1.clearRows()
+		vw1.startCollectingForAdhoc()
 		for _, r := range tc.records {
 			tsb.StartFromEmpty()
 			for _, t := range r.tags {
@@ -378,6 +383,7 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowSlidingTime(t *testi
 	tsb := &tags.TagSetBuilder{}
 	for _, tc := range tcs {
 		vw1.clearRows()
+		vw1.startCollectingForAdhoc()
 		for _, r := range tc.records {
 			tsb.StartFromEmpty()
 			for _, t := range r.tags {
@@ -581,6 +587,7 @@ func Test_View_MeasureFloat64_AggregationCount_WindowSlidingTime(t *testing.T) {
 	tsb := &tags.TagSetBuilder{}
 	for _, tc := range tcs {
 		vw1.clearRows()
+		vw1.startCollectingForAdhoc()
 		for _, r := range tc.records {
 			tsb.StartFromEmpty()
 			for _, t := range r.tags {
@@ -691,6 +698,7 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowSlidingCount(t *test
 	tsb := &tags.TagSetBuilder{}
 	for _, tc := range tcs {
 		vw1.clearRows()
+		vw1.startCollectingForAdhoc()
 		for _, r := range tc.records {
 			tsb.StartFromEmpty()
 			for _, t := range r.tags {
