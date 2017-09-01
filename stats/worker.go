@@ -42,10 +42,11 @@ var defaultReportingDuration = 10 * time.Second
 
 // NewMeasureFloat64 creates a new measure of type MeasureFloat64. It returns
 // an error if a measure with the same name already exists.
-func NewMeasureFloat64(name string, description string) (*MeasureFloat64, error) {
+func NewMeasureFloat64(name, description, unit string) (*MeasureFloat64, error) {
 	m := &MeasureFloat64{
 		name:        name,
 		description: description,
+		unit:        unit,
 		views:       make(map[View]bool),
 	}
 
@@ -63,10 +64,11 @@ func NewMeasureFloat64(name string, description string) (*MeasureFloat64, error)
 
 // NewMeasureInt64 creates a new measure of type MeasureInt64. It returns an
 // error if a measure with the same name already exists.
-func NewMeasureInt64(name string, description string) (*MeasureInt64, error) {
+func NewMeasureInt64(name, description, unit string) (*MeasureInt64, error) {
 	m := &MeasureInt64{
 		name:        name,
 		description: description,
+		unit:        unit,
 		views:       make(map[View]bool),
 	}
 

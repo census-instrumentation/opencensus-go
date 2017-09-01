@@ -20,6 +20,7 @@ package stats
 // MeasureFloat64 is a measure of type float64.
 type MeasureFloat64 struct {
 	name        string
+	unit        string
 	description string
 	views       map[View]bool
 }
@@ -27,6 +28,11 @@ type MeasureFloat64 struct {
 // Name returns the name of the measure.
 func (m *MeasureFloat64) Name() string {
 	return m.name
+}
+
+// Unit returns the unit of the measure.
+func (m *MeasureFloat64) Unit() string {
+	return m.unit
 }
 
 func (m *MeasureFloat64) addView(v View) {

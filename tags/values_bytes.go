@@ -99,7 +99,7 @@ func (vb *valuesBytes) toSlice(ks []Key) []Tag {
 	return tags
 }
 
-func (vb *valuesBytes) Bytes() []byte {
+func (vb *valuesBytes) bytes() []byte {
 	return vb.buf[:vb.wIdx]
 }
 
@@ -124,7 +124,7 @@ func ToValuesString(ts *TagSet, ks []Key) string {
 		v := ts.m[k]
 		vb.writeValue(v)
 	}
-	return string(vb.Bytes())
+	return string(vb.bytes())
 }
 
 // ToOrderedTagsSlice returns the extracted and ordered tags from the argument s.

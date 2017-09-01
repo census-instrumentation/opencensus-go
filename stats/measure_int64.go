@@ -20,6 +20,7 @@ package stats
 // MeasureInt64 is a measure of type int64.
 type MeasureInt64 struct {
 	name        string
+	unit        string
 	description string
 	views       map[View]bool
 }
@@ -27,6 +28,11 @@ type MeasureInt64 struct {
 // Name returns the name of the measure.
 func (m *MeasureInt64) Name() string {
 	return m.name
+}
+
+// Unit returns the unit of the measure.
+func (m *MeasureInt64) Unit() string {
+	return m.unit
 }
 
 func (m *MeasureInt64) addView(v View) {
