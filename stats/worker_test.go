@@ -29,31 +29,31 @@ func Test_Worker_MeasureCreation(t *testing.T) {
 	defaultWorker = newWorker()
 	go defaultWorker.start()
 
-	if _, err := NewMeasureFloat64("MF1", "desc MF1"); err != nil {
+	if _, err := NewMeasureFloat64("MF1", "desc MF1", "unit"); err != nil {
 		t.Errorf("NewMeasureFloat64(\"MF1\", \"desc MF1\") got error %v, want no error", err)
 	}
 
-	if _, err := NewMeasureFloat64("MF1", "Duplicate measure with same name as MF1."); err == nil {
+	if _, err := NewMeasureFloat64("MF1", "Duplicate measure with same name as MF1.", "unit"); err == nil {
 		t.Error("NewMeasureFloat64(\"MF1\", \"Duplicate MeasureFloat64 with same name as MF1.\") got no error, want no error")
 	}
 
-	if _, err := NewMeasureInt64("MF1", "Duplicate measure with same name as MF1."); err == nil {
+	if _, err := NewMeasureInt64("MF1", "Duplicate measure with same name as MF1.", "unit"); err == nil {
 		t.Error("NewMeasureInt64(\"MF1\", \"Duplicate MeasureInt64 with same name as MF1.\") got no error, want no error")
 	}
 
-	if _, err := NewMeasureFloat64("MF2", "desc MF2"); err != nil {
+	if _, err := NewMeasureFloat64("MF2", "desc MF2", "unit"); err != nil {
 		t.Errorf("NewMeasureFloat64(\"MF2\", \"desc MF2\") got error %v, want no error", err)
 	}
 
-	if _, err := NewMeasureInt64("MI1", "desc MI1"); err != nil {
+	if _, err := NewMeasureInt64("MI1", "desc MI1", "unit"); err != nil {
 		t.Errorf("NewMeasureInt64(\"MI1\", \"desc MI1\") got error %v, want no error", err)
 	}
 
-	if _, err := NewMeasureInt64("MI1", "Duplicate measure with same name as MI1."); err == nil {
+	if _, err := NewMeasureInt64("MI1", "Duplicate measure with same name as MI1.", "unit"); err == nil {
 		t.Error("NewMeasureInt64(\"MI1\", \"Duplicate NewMeasureInt64 with same name as MI1.\") got no error, want no error")
 	}
 
-	if _, err := NewMeasureFloat64("MI1", "Duplicate measure with same name as MI1."); err == nil {
+	if _, err := NewMeasureFloat64("MI1", "Duplicate measure with same name as MI1.", "unit"); err == nil {
 		t.Error("NewMeasureFloat64(\"MI1\", \"Duplicate NewMeasureFloat64 with same name as MI1.\") got no error, want no error")
 	}
 	defaultWorker.stop()
@@ -65,15 +65,15 @@ func Test_Worker_MeasureByName(t *testing.T) {
 	go defaultWorker.start()
 
 	someError := errors.New("some error")
-	mf1, err := NewMeasureFloat64("MF1", "desc MF1")
+	mf1, err := NewMeasureFloat64("MF1", "desc MF1", "unit")
 	if err != nil {
 		t.Errorf("NewMeasureFloat64(\"MF1\", \"desc MF1\") got error %v, want no error", err)
 	}
-	mf2, err := NewMeasureFloat64("MF2", "desc MF2")
+	mf2, err := NewMeasureFloat64("MF2", "desc MF2", "unit")
 	if err != nil {
 		t.Errorf("NewMeasureFloat64(\"MF2\", \"desc MF2\") got error %v, want no error", err)
 	}
-	mi1, err := NewMeasureInt64("MI1", "desc MI1")
+	mi1, err := NewMeasureInt64("MI1", "desc MI1", "unit")
 	if err != nil {
 		t.Errorf("NewMeasureInt64(\"MI1\", \"desc MI1\") got error %v, want no error", err)
 	}
@@ -225,7 +225,7 @@ func Test_Worker_MeasureDelete(t *testing.T) {
 		go defaultWorker.start()
 
 		for _, n := range tc.measureNames {
-			if _, err := NewMeasureInt64(n, "some desc"); err != nil {
+			if _, err := NewMeasureInt64(n, "some desc", "unit"); err != nil {
 				t.Errorf("Creating measure got error '%v'. test case: '%v'", err, tc.label)
 			}
 		}
@@ -431,8 +431,8 @@ func Test_Worker_ViewRegistration(t *testing.T) {
 		defaultWorker = newWorker()
 		go defaultWorker.start()
 
-		mf1, _ := NewMeasureFloat64("MF1", "desc MF1")
-		mf2, _ := NewMeasureFloat64("MF2", "desc MF2")
+		mf1, _ := NewMeasureFloat64("MF1", "desc MF1", "unit")
+		mf2, _ := NewMeasureFloat64("MF2", "desc MF2", "unit")
 
 		views := make(map[string]View)
 		views["v1ID"] = NewViewFloat64("VF1", "desc VF1", nil, mf1, nil, nil)
@@ -487,7 +487,7 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 	go defaultWorker.start()
 
 	someError := errors.New("some error")
-	m, err := NewMeasureFloat64("MF1", "desc MF1")
+	m, err := NewMeasureFloat64("MF1", "desc MF1", "unit")
 	if err != nil {
 		t.Errorf("NewMeasureFloat64(\"MF1\", \"desc MF1\") got error '%v', want no error", err)
 	}
