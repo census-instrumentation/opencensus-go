@@ -364,3 +364,12 @@ func (w *worker) reportUsage(now time.Time) {
 		}
 	}
 }
+
+// CreateWorker is used for testing only. It stopes the old worker and creates
+// a new worker. It should never be called by production code.
+func CreateWorker() {
+	defaultWorker.stop()
+
+	defaultWorker = newWorker()
+	go defaultWorker.start()
+}
