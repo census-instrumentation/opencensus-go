@@ -494,8 +494,10 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 
 	k1, _ := tags.CreateKeyString("k1")
 	k2, _ := tags.CreateKeyString("k2")
-	tsb := &tags.TagSetBuilder{}
-	tagsSet := tsb.StartFromEmpty().InsertString(k1, "v1").InsertString(k2, "v2").Build()
+	tagsSet := tags.EmptyTagSetBuilder().
+		InsertString(k1, "v1").
+		InsertString(k2, "v2").
+		Build()
 	ctx := tags.ContextWithNewTagSet(context.Background(), tagsSet)
 
 	v1 := NewViewFloat64("VF1", "desc VF1", []tags.Key{k1, k2}, m, NewAggregationCount(), NewWindowCumulative())

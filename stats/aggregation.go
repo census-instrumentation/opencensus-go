@@ -13,8 +13,7 @@
 // limitations under the License.
 //
 
-// Package stats defines the stats collection API and its native Go
-// implementation.
+// Package stats defines the stats collection API and its implementation.
 package stats
 
 // Aggregation is the generic interface for all aggregtion types.

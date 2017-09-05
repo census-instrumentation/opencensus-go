@@ -33,42 +33,38 @@ Create/retrieve key:
 ### Create a set of tags associated with keys
 To create a new tag set from scratch using changes:
 
-    tsb := &tags.TagSetBuilder{}
-    tsb..StartFromEmpty()
-    tsb.InsertString( key1, "foo value")
-    tsb.UpdateString( key1, "foo value2")
-    tsb.UpsertString( key2, "bar value")
+    tsb := EmptyTagSetBuilder()
+    tsb.InsertString(key1, "foo value")
+    tsb.UpdateString(key1, "foo value2")
+    tsb.UpsertString(key2, "bar value")
     tagsSet := tsb.Build()
 
     // A shorter way of achieving the same is:
-    tagsSet := &tags.TagSetBuilder{}.StartFromEmpty()
-                                    .InsertString( key1, "foo value")
-                                    .UpdateString( key1, "foo value2")
-                                    .UpsertString( key2, "bar value")
-                                    .Build()
+    tagsSet := EmptyTagSetBuilder().InsertString(key1, "foo value").
+                                    UpdateString(key1, "foo value2").
+                                    UpsertString(key2, "bar value").
+                                    Build()
 
 
 
 To create a new tagsSet from an existing tag set oldTagSet:
     oldTagSet := ...
-    tsb := &tags.TagSetBuilder{}
-    tsb.StartFromTagSet(oldTagSet)
-    tsb.InsertString( key1, "foo value")
-    tsb.UpdateString( key1, "foo value2")
-    tsb.UpsertString( key2, "bar value")
+    tsb := NewTagSetBuilderFromTagSet(oldTagSet)
+    tsb.InsertString(key1, "foo value")
+    tsb.UpdateString(key1, "foo value2")
+    tsb.UpsertString(key2, "bar value")
     newTagSet := tsb.Build()
 
     // A shorter way of achieving the same is:
     oldTagSet := ...
-    newTagSet := &tags.TagSetBuilder{}.StartFromTagSet(oldTagSet)
-                                      .InsertString( key1, "foo value")
-                                      .UpdateString( key1, "foo value2")
-                                      .UpsertString( key2, "bar value")
-                                      .Build()
+    newTagSet := NewTagSetBuilderFromTagSet(oldTagSet).InsertString(key1, "foo value").
+                                                       UpdateString(key1, "foo value2").
+                                                       UpsertString(key2, "bar value").
+                                                       Build()
 
 ### Add new tagSet to a context / Modify tagSet in a context 
 Add tags to a context for propagation to downstream methods and downstream rpcs:
-To create a new context with the tags. This will create a new context where all the existing tags in the current context are deleted and replaced with the tags passed as argument.    
+To create a new context with the tags. This will create a new context where all the existing tags in the current context are deleted and replaced with the tags passed as argument.
     
     newTagSet  := ...
     ctx2 := tags.ContextWithNewTags(ctx, newTagSet)
@@ -76,11 +72,10 @@ To create a new context with the tags. This will create a new context where all 
 Create a new context keeping the old tag set and adding new tags to it, removing specific tags from it, or modifying the values fo some tags.
     
     oldTagSet := tags.FromContext(ctx)
-    newTagSet := &tags.TagSetBuilder{}.StartFromTagSet(oldTagSet)
-                                      .InsertString( key1, "foo value")
-                                      .UpdateString( key1, "foo value2")
-                                      .UpsertString( key2, "bar value")
-                                      .Build()
+    newTagSet := NewTagSetBuilderFromTagSet(oldTagSet).InsertString(key1, "foo value").
+                                                       UpdateString(key1, "foo value2").
+                                                       UpsertString(key2, "bar value").
+                                                       Build()
     ctx2 := tags.ContextWithChanges(ctx, newTagSet)
 
 ## Registering views and retrieving their collected data.
@@ -145,36 +140,36 @@ Currently all aggregation types are compatible with all aggregation windows. Lat
 ### To creater/register a view
 Create a view:
 
-    vw1 = stats.NewViewInt64("my/int64/viewName", "some description", []Keys{key1, key2}, mf, agg1, wnd1)
-    vw2 := stats.NewViewFloat64("my/float64/viewName", "some other description", []Keys{key1}, mi, agg2, wnd3)
+    myView1 = stats.NewViewInt64("my/int64/viewName", "some description", []Keys{key1, key2}, mf, agg1, wnd1)
+    myView2 := stats.NewViewFloat64("my/float64/viewName", "some other description", []Keys{key1}, mi, agg2, wnd3)
 
 Register view:
 
-    if err := stats.RegisterView(vw1); err != nil {
+    if err := stats.RegisterView(myView1); err != nil {
         // handle error
     }
-    if err := stats.RegisterView(vw2); err != nil {
+    if err := stats.RegisterView(myView2); err != nil {
         // handle error
     }
 
 Retrieve view by name:
-    vw1, err := stats.GetViewByName("my/int64/viewName")
+    myView1, err := stats.GetViewByName("my/int64/viewName")
 	if err != nil {
         // handle error
     }
-    vw2, err := stats.GetViewByName("my/float64/viewName")
+    myView2, err := stats.GetViewByName("my/float64/viewName")
     if err != nil {
         // handle error
     }
     ...
-    
 
-UnRegister view:
 
-    if err := stats.UnregisterView(vw1); err != nil {
+Unregister view:
+
+    if err := stats.UnregisterView(myView1); err != nil {
         // handle error
     }
-    if err := stats.UnregisterView(vw2); err != nil {
+    if err := stats.UnregisterView(myView2); err != nil {
         // handle error
     }
     ... 
@@ -185,22 +180,22 @@ Once a subscriber subscribes to a view, its collected date is reported at a regu
 Subscribe to a view:
 
     c1 := make(c chan *ViewData)
-    if err := stats.SubscribeToView(vw1, c1); err != nil {
+    if err := stats.SubscribeToView(myView1, c1); err != nil {
         // handle error
     }
 
     c2 := make(c chan *ViewData)
-    if err := stats.SubscribeToView(vw2, c2); err != nil {
+    if err := stats.SubscribeToView(myView2, c2); err != nil {
         // handle error
     }
     ... 
 
-Unubscribe from a view:
+Unsubscribe from a view:
 
-    if err := stats.UnsubscribeFromView(vw1, c1); err != nil {
+    if err := stats.UnsubscribeFromView(myView1, c1); err != nil {
         // handle error
     }
-    if err := stats.UnsubscribeFromView(vw2, c2); err != nil {
+    if err := stats.UnsubscribeFromView(myView2, c2); err != nil {
         // handle error
     }    
     ...
@@ -214,7 +209,7 @@ Configure/modify the default interval between reports of collected data. This is
 Even if a view is registered, if it has no subscriber no data for it is collected. In order to retrieve data on-demand for view, either the view needs to have at least 1 subscriber or the libray needs to be instructed explicitly to collect collect data for the desired view.
 
     // explicitly instruct the library to collect the view data for an on-demand retrieval.
-    if err := stats.StartCollectionForAdhoc(vw1); err != nil {
+    if err := stats.StartCollectionForAdhoc(myView1); err != nil {
         // handle error
     }
     ...
@@ -234,7 +229,7 @@ Even if a view is registered, if it has no subscriber no data for it is collecte
     // on-demand retrieval. Has no impact on subscriptions, and if the view
     // still has subscribers, the data for the view will still keep being
     // collected.
-    if err := stats.StopCollectionForAdhoc(vw1); err != nil {
+    if err := stats.StopCollectionForAdhoc(myView1); err != nil {
         // handle error
     }
     ...

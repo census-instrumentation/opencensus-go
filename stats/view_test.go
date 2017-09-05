@@ -169,12 +169,11 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowCumulative(t *testin
 		},
 	}
 
-	tsb := &tags.TagSetBuilder{}
 	for _, tc := range tcs {
 		vw1.clearRows()
 		vw1.startCollectingForAdhoc()
 		for _, r := range tc.records {
-			tsb.StartFromEmpty()
+			tsb := tags.EmptyTagSetBuilder()
 			for _, t := range r.tags {
 				tsb.InsertString(t.k, t.v)
 			}
@@ -380,12 +379,11 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowSlidingTime(t *testi
 		},
 	}
 
-	tsb := &tags.TagSetBuilder{}
 	for _, tc := range tcs {
 		vw1.clearRows()
 		vw1.startCollectingForAdhoc()
 		for _, r := range tc.records {
-			tsb.StartFromEmpty()
+			tsb := tags.EmptyTagSetBuilder()
 			for _, t := range r.tags {
 				tsb.InsertString(t.k, t.v)
 			}
@@ -584,12 +582,11 @@ func Test_View_MeasureFloat64_AggregationCount_WindowSlidingTime(t *testing.T) {
 		},
 	}
 
-	tsb := &tags.TagSetBuilder{}
 	for _, tc := range tcs {
 		vw1.clearRows()
 		vw1.startCollectingForAdhoc()
 		for _, r := range tc.records {
-			tsb.StartFromEmpty()
+			tsb := tags.EmptyTagSetBuilder()
 			for _, t := range r.tags {
 				tsb.InsertString(t.k, t.v)
 			}
@@ -695,12 +692,11 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowSlidingCount(t *test
 		},
 	}
 
-	tsb := &tags.TagSetBuilder{}
 	for _, tc := range tcs {
 		vw1.clearRows()
 		vw1.startCollectingForAdhoc()
 		for _, r := range tc.records {
-			tsb.StartFromEmpty()
+			tsb := tags.EmptyTagSetBuilder()
 			for _, t := range r.tags {
 				tsb.InsertString(t.k, t.v)
 			}

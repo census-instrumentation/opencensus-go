@@ -109,9 +109,8 @@ func Test_EncodeDecode_ValuesBytes(t *testing.T) {
 		},
 	}
 
-	builder := &TagSetBuilder{}
 	for i, td := range testSet {
-		builder.StartFromTagSet(td.tagsSet)
+		builder := NewTagSetBuilderFromTagSet(td.tagsSet)
 		ts := builder.Build()
 
 		vb := toValuesBytes(ts, td.keys)
