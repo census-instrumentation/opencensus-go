@@ -3,8 +3,6 @@ language: go
 go:
   - 1.8.x
 
-go_import_path: github.com/census-instrumentation/opencensus-go
-
 # Don't email me the results of the test runs.
 notifications:
   email: false
