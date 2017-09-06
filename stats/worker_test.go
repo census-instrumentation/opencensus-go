@@ -25,9 +25,7 @@ import (
 )
 
 func Test_Worker_MeasureCreation(t *testing.T) {
-	defaultWorker.stop()
-	defaultWorker = newWorker()
-	go defaultWorker.start()
+	RestartWorker()
 
 	if _, err := NewMeasureFloat64("MF1", "desc MF1", "unit"); err != nil {
 		t.Errorf("NewMeasureFloat64(\"MF1\", \"desc MF1\") got error %v, want no error", err)
@@ -56,13 +54,10 @@ func Test_Worker_MeasureCreation(t *testing.T) {
 	if _, err := NewMeasureFloat64("MI1", "Duplicate measure with same name as MI1.", "unit"); err == nil {
 		t.Error("NewMeasureFloat64(\"MI1\", \"Duplicate NewMeasureFloat64 with same name as MI1.\") got no error, want no error")
 	}
-	defaultWorker.stop()
 }
 
 func Test_Worker_MeasureByName(t *testing.T) {
-	defaultWorker.stop()
-	defaultWorker = newWorker()
-	go defaultWorker.start()
+	RestartWorker()
 
 	someError := errors.New("some error")
 	mf1, err := NewMeasureFloat64("MF1", "desc MF1", "unit")
@@ -140,8 +135,6 @@ func Test_Worker_MeasureByName(t *testing.T) {
 			t.Errorf("GetMeasureByName. got measure %v, want measure %v. Test case: %v", m, tc.m, tc.label)
 		}
 	}
-
-	defaultWorker.stop()
 }
 
 func Test_Worker_MeasureDelete(t *testing.T) {
@@ -220,9 +213,7 @@ func Test_Worker_MeasureDelete(t *testing.T) {
 	}
 
 	for _, tc := range tcs {
-		defaultWorker.stop()
-		defaultWorker = newWorker()
-		go defaultWorker.start()
+		RestartWorker()
 
 		for _, n := range tc.measureNames {
 			if _, err := NewMeasureInt64(n, "some desc", "unit"); err != nil {
@@ -270,7 +261,6 @@ func Test_Worker_MeasureDelete(t *testing.T) {
 			}
 		}
 	}
-	defaultWorker.stop()
 }
 
 func Test_Worker_ViewRegistration(t *testing.T) {
@@ -279,9 +269,9 @@ func Test_Worker_ViewRegistration(t *testing.T) {
 	sc1 := make(chan *ViewData)
 
 	type registerWant struct {
-		vID      string
-		err      error
-		forAdhoc bool
+		vID                string
+		err                error
+		isForcedCollection bool
 	}
 	type unregisterWant struct {
 		vID string
@@ -427,9 +417,7 @@ func Test_Worker_ViewRegistration(t *testing.T) {
 	}
 
 	for _, tc := range tcs {
-		defaultWorker.stop()
-		defaultWorker = newWorker()
-		go defaultWorker.start()
+		RestartWorker()
 
 		mf1, _ := NewMeasureFloat64("MF1", "desc MF1", "unit")
 		mf2, _ := NewMeasureFloat64("MF2", "desc MF2", "unit")
@@ -447,7 +435,7 @@ func Test_Worker_ViewRegistration(t *testing.T) {
 			if (err != nil) != (reg.err != nil) {
 				t.Errorf("RegisterView. got error %v, want %v. Test case: %v", err, reg.err, tc.label)
 			}
-			StartCollectionForAdhoc(v)
+			ForceCollection(v)
 		}
 
 		for _, s := range tc.subscriptions {
@@ -477,14 +465,11 @@ func Test_Worker_ViewRegistration(t *testing.T) {
 				t.Errorf("GetViewByName. got view '%v' '%v', want view %v. Test case: %v", v.Name(), v.Description(), wantV, tc.label)
 			}
 		}
-		defaultWorker.stop()
 	}
 }
 
 func Test_Worker_RecordFloat64(t *testing.T) {
-	defaultWorker.stop()
-	defaultWorker = newWorker()
-	go defaultWorker.start()
+	RestartWorker()
 
 	someError := errors.New("some error")
 	m, err := NewMeasureFloat64("MF1", "desc MF1", "unit")
@@ -516,12 +501,12 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 		err  error
 	}
 	type testCase struct {
-		label         string
-		registrations []View
-		subscriptions []subscription
-		adHocs        []View
-		records       []float64
-		wants         []want
+		label           string
+		registrations   []View
+		subscriptions   []subscription
+		forcedCollected []View
+		records         []float64
+		wants           []want
 	}
 
 	tcs := []testCase{
@@ -675,9 +660,9 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 			}
 		}
 
-		for _, v := range tc.adHocs {
-			if err := StartCollectionForAdhoc(v); err != nil {
-				t.Fatalf("StartCollectionForAdhoc '%v' got error '%v', want no error for test case: '%v'", v.Name(), err, tc.label)
+		for _, v := range tc.forcedCollected {
+			if err := ForceCollection(v); err != nil {
+				t.Fatalf("ForceCollection '%v' got error '%v', want no error for test case: '%v'", v.Name(), err, tc.label)
 			}
 		}
 
@@ -691,14 +676,14 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 				t.Fatalf("RetrieveData '%v' got error '%v', want no error for test case: '%v'", w.v.Name(), err, tc.label)
 			}
 			for _, gotRow := range gotRows {
-				if !rowFoundInRows(gotRow, w.rows) {
+				if !RowsContain(w.rows, gotRow) {
 					t.Errorf("got unexpected row '%v' for test case: '%v'", gotRow, tc.label)
 					break
 				}
 			}
 
 			for _, wantRow := range w.rows {
-				if !rowFoundInRows(wantRow, gotRows) {
+				if !RowsContain(gotRows, wantRow) {
 					t.Errorf("want row '%v' for test case: '%v'. Not received", wantRow, tc.label)
 					break
 				}
@@ -706,9 +691,9 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 		}
 
 		// cleaning up
-		for _, v := range tc.adHocs {
-			if err := StopCollectionForAdhoc(v); err != nil {
-				t.Fatalf("StopCollectionForAdhoc '%v' got error '%v', want no error for test case: '%v'", v.Name(), err, tc.label)
+		for _, v := range tc.forcedCollected {
+			if err := StopForcedCollection(v); err != nil {
+				t.Fatalf("StopForcedCollection '%v' got error '%v', want no error for test case: '%v'", v.Name(), err, tc.label)
 			}
 		}
 
@@ -724,5 +709,4 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 			}
 		}
 	}
-	defaultWorker.stop()
 }

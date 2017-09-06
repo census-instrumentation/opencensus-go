@@ -16,7 +16,9 @@
 package tags
 
 import (
+	"bytes"
 	"fmt"
+	"sort"
 )
 
 // TagSet is the object holding the tags stored in context. It is not meant to
@@ -43,6 +45,22 @@ func newTagSet(sizeHint int) *TagSet {
 	return &TagSet{
 		m: make(map[Key][]byte, sizeHint),
 	}
+}
+
+func (ts *TagSet) String() string {
+	var keys []Key
+	for k := range ts.m {
+		keys = append(keys, k)
+	}
+	sort.Slice(keys, func(i, j int) bool { return keys[i].Name() < keys[j].Name() })
+
+	var buffer bytes.Buffer
+	buffer.WriteString("{ ")
+	for _, k := range keys {
+		buffer.WriteString(fmt.Sprintf("{%v %v}", k.Name(), k.ValueAsString(ts.m[k])))
+	}
+	buffer.WriteString(" }")
+	return buffer.String()
 }
 
 func (ts *TagSet) insertBytes(k Key, b []byte) bool {

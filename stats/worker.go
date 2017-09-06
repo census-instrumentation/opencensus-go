@@ -19,6 +19,7 @@ package stats
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -31,9 +32,9 @@ type worker struct {
 	viewsByName    map[string]View
 	views          map[View]bool
 
-	timer *time.Ticker
-	c     chan command
-	quit  chan bool
+	timer      *time.Ticker
+	c          chan command
+	quit, done chan bool
 }
 
 var defaultWorker *worker
@@ -121,8 +122,12 @@ func GetViewByName(name string) (View, error) {
 // RegisterView registers view. It returns an error if the view cannot be
 // registered. Subsequent calls to Record with the same measure as the one in
 // the view will NOT cause the usage to be recorded unless a consumer is
-// subscribed to the view or StartCollectionForAdhoc for this view is called.
+// subscribed to the view or ForceCollection for this view is called.
 func RegisterView(v View) error {
+	if v == nil {
+		return errors.New("cannot RegisterView for nil view")
+	}
+
 	req := &registerViewReq{
 		v:   v,
 		err: make(chan error),
@@ -136,6 +141,10 @@ func RegisterView(v View) error {
 // corresponding view will be lost. All clients subscribed to this view are
 // unsubscribed automatically and their subscriptions channels closed.
 func UnregisterView(v View) error {
+	if v == nil {
+		return errors.New("cannot UnregisterView for nil view")
+	}
+
 	req := &unregisterViewReq{
 		v:   v,
 		err: make(chan error),
@@ -152,6 +161,10 @@ func UnregisterView(v View) error {
 // proceed in a timely manner. The calling code is responsible for using a
 // buffered channel or blocking on the channel waiting for the collected data.
 func SubscribeToView(v View, c chan *ViewData) error {
+	if v == nil {
+		return errors.New("cannot SubscribeToView for nil view")
+	}
+
 	req := &subscribeToViewReq{
 		v:   v,
 		c:   c,
@@ -166,6 +179,10 @@ func SubscribeToView(v View, c chan *ViewData) error {
 // collection for this view isn't active, data stops being collected for this
 // view.
 func UnsubscribeFromView(v View, c chan *ViewData) error {
+	if v == nil {
+		return errors.New("cannot UnsubscribeFromView for nil view")
+	}
+
 	req := &unsubscribeFromViewReq{
 		v:   v,
 		c:   c,
@@ -175,10 +192,14 @@ func UnsubscribeFromView(v View, c chan *ViewData) error {
 	return <-req.err
 }
 
-// StartCollectionForAdhoc starts data collection for this view even if no
+// ForceCollection starts data collection for this view even if no
 // listeners are subscribed to it.
-func StartCollectionForAdhoc(v View) error {
-	req := &startCollectionForAdhocReq{
+func ForceCollection(v View) error {
+	if v == nil {
+		return errors.New("cannot ForceCollection for nil view")
+	}
+
+	req := &startForcedCollectionReq{
 		v:   v,
 		err: make(chan error),
 	}
@@ -186,10 +207,14 @@ func StartCollectionForAdhoc(v View) error {
 	return <-req.err
 }
 
-// StopCollectionForAdhoc stops data collection for this view unless at least
+// StopForcedCollection stops data collection for this view unless at least
 // 1 listener is subscribed to it.
-func StopCollectionForAdhoc(v View) error {
-	req := &stopCollectionForAdhocReq{
+func StopForcedCollection(v View) error {
+	if v == nil {
+		return errors.New("cannot StopForcedCollection for nil view")
+	}
+
+	req := &stopForcedCollectionReq{
 		v:   v,
 		err: make(chan error),
 	}
@@ -199,6 +224,9 @@ func StopCollectionForAdhoc(v View) error {
 
 // RetrieveData returns the current collected data for the view.
 func RetrieveData(v View) ([]*Row, error) {
+	if v == nil {
+		return nil, errors.New("cannot retrieve data for nil view")
+	}
 	req := &retrieveDataReq{
 		now: time.Now(),
 		v:   v,
@@ -271,6 +299,7 @@ func newWorker() *worker {
 		timer:          time.NewTicker(defaultReportingDuration),
 		c:              make(chan command),
 		quit:           make(chan bool),
+		done:           make(chan bool),
 	}
 }
 
@@ -286,18 +315,15 @@ func (w *worker) start() {
 		case <-w.quit:
 			w.timer.Stop()
 			close(w.c)
-			break
+			w.done <- true
+			return
 		}
 	}
 }
 
 func (w *worker) stop() {
-	select {
-	case w.quit <- true:
-		return
-	default:
-		return
-	}
+	w.quit <- true
+	_ = <-w.done
 }
 
 func (w *worker) tryRegisterMeasure(m Measure) error {
@@ -369,7 +395,6 @@ func (w *worker) reportUsage(now time.Time) {
 // a new worker. It should never be called by production code.
 func RestartWorker() {
 	defaultWorker.stop()
-
 	defaultWorker = newWorker()
 	go defaultWorker.start()
 }
