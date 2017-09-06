@@ -16,29 +16,11 @@
 package stats
 
 import (
-	"reflect"
 	"testing"
 	"time"
 
 	"github.com/census-instrumentation/opencensus-go/tags"
 )
-
-func rowFoundInRows(row *Row, rows []*Row) bool {
-	for _, x := range rows {
-		if rowsAreEqual(row, x) {
-			return true
-		}
-	}
-	return false
-}
-
-func rowsAreEqual(r1, r2 *Row) bool {
-	if r1 == r2 {
-		return true
-	}
-
-	return reflect.DeepEqual(r1.Tags, r2.Tags) && r1.AggregationValue.equal(r2.AggregationValue)
-}
 
 func Test_View_MeasureFloat64_AggregationDistribution_WindowCumulative(t *testing.T) {
 	k1, _ := tags.CreateKeyString("k1")
@@ -171,7 +153,7 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowCumulative(t *testin
 
 	for _, tc := range tcs {
 		vw1.clearRows()
-		vw1.startCollectingForAdhoc()
+		vw1.startForcedCollection()
 		for _, r := range tc.records {
 			tsb := tags.EmptyTagSetBuilder()
 			for _, t := range r.tags {
@@ -183,14 +165,14 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowCumulative(t *testin
 		gotRows := vw1.collectedRows(time.Now())
 
 		for _, gotRow := range gotRows {
-			if !rowFoundInRows(gotRow, tc.wantRows) {
+			if !RowsContain(tc.wantRows, gotRow) {
 				t.Errorf("got unexpected row '%v' for test case: '%v'", gotRow, tc.label)
 				break
 			}
 		}
 
 		for _, wantRow := range tc.wantRows {
-			if !rowFoundInRows(wantRow, gotRows) {
+			if !RowsContain(gotRows, wantRow) {
 				t.Errorf("want row '%v' for test case: '%v'. Not received", wantRow, tc.label)
 				break
 			}
@@ -381,7 +363,7 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowSlidingTime(t *testi
 
 	for _, tc := range tcs {
 		vw1.clearRows()
-		vw1.startCollectingForAdhoc()
+		vw1.startForcedCollection()
 		for _, r := range tc.records {
 			tsb := tags.EmptyTagSetBuilder()
 			for _, t := range r.tags {
@@ -394,14 +376,14 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowSlidingTime(t *testi
 			gotRows := vw1.collectedRows(wantRows.retrieveTime)
 
 			for _, gotRow := range gotRows {
-				if !rowFoundInRows(gotRow, wantRows.rows) {
+				if !RowsContain(wantRows.rows, gotRow) {
 					t.Errorf("got unexpected row '%v' for test case: '%v' with label '%v'", gotRow, tc.label, wantRows.label)
 					break
 				}
 			}
 
 			for _, wantRow := range wantRows.rows {
-				if !rowFoundInRows(wantRow, gotRows) {
+				if !RowsContain(gotRows, wantRow) {
 					t.Errorf("want row '%v' for test case: '%v' with label '%v'. Not received", wantRow, tc.label, wantRows.label)
 					break
 				}
@@ -584,7 +566,7 @@ func Test_View_MeasureFloat64_AggregationCount_WindowSlidingTime(t *testing.T) {
 
 	for _, tc := range tcs {
 		vw1.clearRows()
-		vw1.startCollectingForAdhoc()
+		vw1.startForcedCollection()
 		for _, r := range tc.records {
 			tsb := tags.EmptyTagSetBuilder()
 			for _, t := range r.tags {
@@ -597,14 +579,14 @@ func Test_View_MeasureFloat64_AggregationCount_WindowSlidingTime(t *testing.T) {
 			gotRows := vw1.collectedRows(wantRows.retrieveTime)
 
 			for _, gotRow := range gotRows {
-				if !rowFoundInRows(gotRow, wantRows.rows) {
+				if !RowsContain(wantRows.rows, gotRow) {
 					t.Errorf("got unexpected row '%v' for test case: '%v' with label '%v'", gotRow, tc.label, wantRows.label)
 					break
 				}
 			}
 
 			for _, wantRow := range wantRows.rows {
-				if !rowFoundInRows(wantRow, gotRows) {
+				if !RowsContain(gotRows, wantRow) {
 					t.Errorf("want row '%v' for test case: '%v' with label '%v'. Not received", wantRow, tc.label, wantRows.label)
 					break
 				}
@@ -694,7 +676,7 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowSlidingCount(t *test
 
 	for _, tc := range tcs {
 		vw1.clearRows()
-		vw1.startCollectingForAdhoc()
+		vw1.startForcedCollection()
 		for _, r := range tc.records {
 			tsb := tags.EmptyTagSetBuilder()
 			for _, t := range r.tags {
@@ -706,14 +688,14 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowSlidingCount(t *test
 		gotRows := vw1.collectedRows(time.Now())
 
 		for _, gotRow := range gotRows {
-			if !rowFoundInRows(gotRow, tc.rows) {
+			if !RowsContain(tc.rows, gotRow) {
 				t.Errorf("got unexpected row '%v' for test case: '%v'", gotRow, tc.label)
 				break
 			}
 		}
 
 		for _, wantRow := range tc.rows {
-			if !rowFoundInRows(wantRow, gotRows) {
+			if !RowsContain(gotRows, wantRow) {
 				t.Errorf("want row '%v' for test case: '%v'. Not received", wantRow, tc.label)
 				break
 			}

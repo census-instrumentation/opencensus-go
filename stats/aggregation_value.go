@@ -24,16 +24,23 @@ import (
 
 // AggregationValue is the interface for all types of aggregations values.
 type AggregationValue interface {
+	String() string
+	equal(other AggregationValue) bool
 	isAggregate() bool
 	addSample(v interface{})
 	multiplyByFraction(fraction float64) AggregationValue
 	addToIt(other AggregationValue)
-	equal(other AggregationValue) bool
 	clear()
 }
 
 // AggregationCountValue is the aggregated data for an AggregationCountInt64.
 type AggregationCountValue int64
+
+// NewTestingAggregationCountValue is used to facilitate testing only and
+// should not be invoked in production.
+func NewTestingAggregationCountValue(v int64) *AggregationCountValue {
+	return newAggregationCountValue(v)
+}
 
 func newAggregationCountValue(v int64) *AggregationCountValue {
 	tmp := AggregationCountValue(v)
@@ -87,6 +94,19 @@ type AggregationDistributionValue struct {
 	bounds         []float64
 }
 
+// NewTestingAggregationDistributionValue is used to facilitate testing only
+// and should not be invoked in production.
+func NewTestingAggregationDistributionValue(bounds []float64, countPerBucket []int64, count int64, min, max, sum float64) *AggregationDistributionValue {
+	return &AggregationDistributionValue{
+		countPerBucket: countPerBucket,
+		bounds:         bounds,
+		count:          count,
+		min:            min,
+		max:            max,
+		sum:            sum,
+	}
+}
+
 func newAggregationDistributionValue(bounds []float64) *AggregationDistributionValue {
 	return &AggregationDistributionValue{
 		countPerBucket: make([]int64, len(bounds)+1),
@@ -130,7 +150,7 @@ func (a *AggregationDistributionValue) isAggregate() bool { return true }
 func (a *AggregationDistributionValue) addSample(v interface{}) {
 	var f float64
 	switch x := v.(type) {
-	case int:
+	case int64:
 		f = float64(x)
 		break
 	case float64:

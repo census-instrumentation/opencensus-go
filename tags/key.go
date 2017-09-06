@@ -23,6 +23,7 @@ var keys []Key
 type Key interface {
 	Name() string
 	ID() uint16
+	ValueAsString(b []byte) string
 }
 
 // KeyString implements the Key interface and is used to represent keys for
@@ -40,6 +41,11 @@ func (k *KeyString) Name() string {
 // ID returns the id of a key inside hte process.
 func (k *KeyString) ID() uint16 {
 	return k.id
+}
+
+// ValueAsString returns the value of the key as a string.
+func (k *KeyString) ValueAsString(b []byte) string {
+	return string(b)
 }
 
 func (k *KeyString) String() string {

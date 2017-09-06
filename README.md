@@ -95,7 +95,7 @@ Create/load measures units:
     ...
 
 Retrieve measure by name:
-    mf, err := stats.GetMeasureByName("my/float64/measureName")
+    mf, err := stats.GetMeasureByName("/my/float64/measureName")
 	if err != nil {
         // handle error
     }
@@ -140,8 +140,8 @@ Currently all aggregation types are compatible with all aggregation windows. Lat
 ### To creater/register a view
 Create a view:
 
-    myView1 = stats.NewViewInt64("my/int64/viewName", "some description", []Keys{key1, key2}, mf, agg1, wnd1)
-    myView2 := stats.NewViewFloat64("my/float64/viewName", "some other description", []Keys{key1}, mi, agg2, wnd3)
+    myView1 = stats.NewViewInt64("/my/int64/viewName", "some description", []Keys{key1, key2}, mf, agg1, wnd1)
+    myView2 := stats.NewViewFloat64("/my/float64/viewName", "some other description", []Keys{key1}, mi, agg2, wnd3)
 
 Register view:
 
@@ -153,11 +153,11 @@ Register view:
     }
 
 Retrieve view by name:
-    myView1, err := stats.GetViewByName("my/int64/viewName")
+    myView1, err := stats.GetViewByName("/my/int64/viewName")
 	if err != nil {
         // handle error
     }
-    myView2, err := stats.GetViewByName("my/float64/viewName")
+    myView2, err := stats.GetViewByName("/my/float64/viewName")
     if err != nil {
         // handle error
     }
@@ -209,7 +209,7 @@ Configure/modify the default interval between reports of collected data. This is
 Even if a view is registered, if it has no subscriber no data for it is collected. In order to retrieve data on-demand for view, either the view needs to have at least 1 subscriber or the libray needs to be instructed explicitly to collect collect data for the desired view.
 
     // explicitly instruct the library to collect the view data for an on-demand retrieval.
-    if err := stats.StartCollectionForAdhoc(myView1); err != nil {
+    if err := stats.ForceCollection(myView1); err != nil {
         // handle error
     }
     ...
@@ -229,7 +229,7 @@ Even if a view is registered, if it has no subscriber no data for it is collecte
     // on-demand retrieval. Has no impact on subscriptions, and if the view
     // still has subscribers, the data for the view will still keep being
     // collected.
-    if err := stats.StopCollectionForAdhoc(myView1); err != nil {
+    if err := stats.StopForcedCollection(myView1); err != nil {
         // handle error
     }
     ...

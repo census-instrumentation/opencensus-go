@@ -145,7 +145,7 @@ func (cmd *unregisterViewReq) handleCommand(w *worker) {
 	}
 
 	if v.isCollecting() {
-		cmd.err <- fmt.Errorf("cannot unregister view '%v'. All subscriptions to it must be unsubscribed and its adhoc collection must be stopped first", cmd.v.Name())
+		cmd.err <- fmt.Errorf("cannot unregister view '%v'. All subscriptions to it must be unsubscribed and its forced collection must be stopped first", cmd.v.Name())
 		return
 	}
 
@@ -201,20 +201,20 @@ func (cmd *unsubscribeFromViewReq) handleCommand(w *worker) {
 	cmd.err <- nil
 }
 
-// startCollectionForAdhocReq is the command to start collecting data for a
-// view without subscribing to it.
-type startCollectionForAdhocReq struct {
+// startForcedCollection is the command to start collecting data for a view
+// without subscribing to it.
+type startForcedCollectionReq struct {
 	v   View
 	err chan error
 }
 
-func (cmd *startCollectionForAdhocReq) handleCommand(w *worker) {
+func (cmd *startForcedCollectionReq) handleCommand(w *worker) {
 	if err := w.tryRegisterView(cmd.v); err != nil {
-		cmd.err <- fmt.Errorf("%v. Hence cannot start collection for adhoc", err)
+		cmd.err <- fmt.Errorf("%v. Hence cannot start forced collection", err)
 		return
 	}
 
-	cmd.v.startCollectingForAdhoc()
+	cmd.v.startForcedCollection()
 
 	// we always return nil because this operation never fails. However we
 	// still need to return something on the channel to signal to the waiting
@@ -222,16 +222,16 @@ func (cmd *startCollectionForAdhocReq) handleCommand(w *worker) {
 	cmd.err <- nil
 }
 
-// stopCollectionForAdhocReq is the command to signal to the library that no
-// more clients will be requesting data for a view. Has no impact on the
+// stopForcedCollectionReq is the command to signal to the library that no more
+// clients will be requesting data for a view. Has no impact on the
 // subscriptions.
-type stopCollectionForAdhocReq struct {
+type stopForcedCollectionReq struct {
 	v   View
 	err chan error
 }
 
-func (cmd *stopCollectionForAdhocReq) handleCommand(w *worker) {
-	cmd.v.stopCollectingForAdhoc()
+func (cmd *stopForcedCollectionReq) handleCommand(w *worker) {
+	cmd.v.stopForcedCollection()
 
 	if !cmd.v.isCollecting() {
 		cmd.v.clearRows()
@@ -264,16 +264,16 @@ func (cmd *retrieveDataReq) handleCommand(w *worker) {
 		return
 	}
 
-	if cmd.v.isCollecting() {
+	if !cmd.v.isCollecting() {
 		cmd.c <- &retrieveDataResp{
-			cmd.v.collectedRows(cmd.now),
 			nil,
+			fmt.Errorf("cannot retrieve data for view with name '%v' because no client is subscribed to it and its collection was not forcibly started", cmd.v.Name()),
 		}
 		return
 	}
 	cmd.c <- &retrieveDataResp{
+		cmd.v.collectedRows(cmd.now),
 		nil,
-		fmt.Errorf("cannot retrieve data for view with name '%v' because no client is subscribed to it and adhoc collection was not started for it explicitly", cmd.v.Name()),
 	}
 }
 

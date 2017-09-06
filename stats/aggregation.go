@@ -58,7 +58,20 @@ type AggregationDistribution struct {
 }
 
 // NewAggregationDistribution creates a new aggregation of type distribution
-// a.k.a histogram.
+// a.k.a histogram. The buckets boundaries for that histogram are defined by
+// bounds. It defines len(Bounds)+1 buckets.
+//
+// if len(Bounds) == 0 then there is no histogram associated with the
+// distribution. There will be a single bucket with boundaries
+// (-infinity, +infinity).
+//
+// if len(Bounds) == 1 then there is no finite buckets, and that single
+// element is the common boundary of the overflow and underflow buckets.
+//
+// if len(Bounds) >= 2 then the boundaries for bucket index i are:
+// [-infinity, bounds[i]) for i = 0
+// [bounds[i-1], bounds[i]) for 0 < i < len(Bounds)
+// [bounds[i-1], +infinity) for i = len(Bounds)
 func NewAggregationDistribution(bounds []float64) *AggregationDistribution {
 	var copyBounds []float64
 	for _, b := range bounds {

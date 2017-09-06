@@ -18,6 +18,9 @@
 package stats
 
 import (
+	"bytes"
+	"fmt"
+	"reflect"
 	"time"
 
 	"github.com/census-instrumentation/opencensus-go/tags"
@@ -33,8 +36,8 @@ type View interface {
 	subscriptionsCount() int
 	subscriptions() map[chan *ViewData]subscription
 
-	startCollectingForAdhoc()
-	stopCollectingForAdhoc()
+	startForcedCollection()
+	stopForcedCollection()
 
 	isCollecting() bool
 
@@ -71,7 +74,7 @@ type view struct {
 	// boolean to indicate if the the view should be collecting data even if no
 	// client is subscribed to it. This is necessary for supporting a pull
 	// model.
-	collectingForAdhoc bool
+	isForcedCollection bool
 
 	c *collector
 }
@@ -139,16 +142,16 @@ func (v *view) subscriptions() map[chan *ViewData]subscription {
 	return v.ss
 }
 
-func (v *view) startCollectingForAdhoc() {
-	v.collectingForAdhoc = true
+func (v *view) startForcedCollection() {
+	v.isForcedCollection = true
 }
 
-func (v *view) stopCollectingForAdhoc() {
-	v.collectingForAdhoc = false
+func (v *view) stopForcedCollection() {
+	v.isForcedCollection = false
 }
 
 func (v *view) isCollecting() bool {
-	return v.subscriptionsCount() > 0 || v.collectingForAdhoc
+	return v.subscriptionsCount() > 0 || v.isForcedCollection
 }
 
 func (v *view) clearRows() {
@@ -191,4 +194,54 @@ type ViewData struct {
 type Row struct {
 	Tags             []tags.Tag
 	AggregationValue AggregationValue
+}
+
+func (r *Row) String() string {
+	var buffer bytes.Buffer
+	buffer.WriteString("{ ")
+	buffer.WriteString("{ ")
+	for _, t := range r.Tags {
+		buffer.WriteString(fmt.Sprintf("{%v %v}", t.K.Name(), t.K.ValueAsString(t.V)))
+	}
+	buffer.WriteString(" }")
+	buffer.WriteString(r.AggregationValue.String())
+	buffer.WriteString(" }")
+	return buffer.String()
+}
+
+// Equal returns true if both Rows are equal. Tags are expected to be ordered
+// by the key name. Even both rows have the same tags but the tags appear in
+// different orders it will return false.
+func (r *Row) Equal(other *Row) bool {
+	if r == other {
+		return true
+	}
+
+	return reflect.DeepEqual(r.Tags, other.Tags) && r.AggregationValue.equal(other.AggregationValue)
+}
+
+// RowsContain returns true if rows contain r.
+func RowsContain(rows []*Row, r *Row) bool {
+	for _, x := range rows {
+		if r.Equal(x) {
+			return true
+		}
+	}
+	return false
+}
+
+// RowsAreEqual returns true if rows1, rows2 are equivalent. The rows position
+// into the slice is taken into account.
+func RowsAreEqual(rows1, rows2 []*Row) (bool, string) {
+	if len(rows1) != len(rows2) {
+		return false, fmt.Sprintf("len(rows1)=%v and len(rows2)=%v", len(rows1), len(rows2))
+	}
+
+	for _, r1 := range rows1 {
+		if !RowsContain(rows2, r1) {
+			return false, fmt.Sprintf("got unexpected row '%v' in rows1", r1)
+		}
+	}
+
+	return true, ""
 }
