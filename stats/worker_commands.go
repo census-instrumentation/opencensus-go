@@ -151,7 +151,7 @@ func (cmd *unregisterViewReq) handleCommand(w *worker) {
 
 	delete(w.viewsByName, cmd.v.Name())
 	delete(w.views, cmd.v)
-	cmd.v.measure().removeView(v)
+	cmd.v.Measure().removeView(v)
 	cmd.err <- nil
 }
 

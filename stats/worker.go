@@ -355,13 +355,13 @@ func (w *worker) tryRegisterView(v View) error {
 
 	// view is not registered and needs to be registered, but first its measure
 	// needs to be registered.
-	if err := w.tryRegisterMeasure(v.measure()); err != nil {
+	if err := w.tryRegisterMeasure(v.Measure()); err != nil {
 		return fmt.Errorf("%v. Hence cannot register view '%v,", err, v.Name())
 	}
 
 	w.viewsByName[v.Name()] = v
 	w.views[v] = true
-	v.measure().addView(v)
+	v.Measure().addView(v)
 	return nil
 }
 
@@ -372,8 +372,8 @@ func (w *worker) reportUsage(now time.Time) {
 		}
 
 		viewData := &ViewData{
-			v:    v,
-			rows: v.collectedRows(now),
+			V:    v,
+			Rows: v.collectedRows(now),
 		}
 
 		for c, s := range v.subscriptions() {
@@ -385,7 +385,7 @@ func (w *worker) reportUsage(now time.Time) {
 			}
 		}
 
-		if _, ok := v.window().(*WindowCumulative); !ok {
+		if _, ok := v.Window().(*WindowCumulative); !ok {
 			v.clearRows()
 		}
 	}
