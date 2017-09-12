@@ -30,6 +30,10 @@ import (
 type View interface {
 	Name() string        // Name returns the name of a View.
 	Description() string // Description returns the description of a View.
+	Window() Window
+	Aggregation() Aggregation
+	Measure() Measure
+
 	addSubscription(c chan *ViewData)
 	deleteSubscription(c chan *ViewData)
 	subscriptionExists(c chan *ViewData) bool
@@ -44,8 +48,6 @@ type View interface {
 	clearRows()
 
 	collector() *collector
-	window() Window
-	measure() Measure
 	collectedRows(now time.Time) []*Row
 
 	addSample(ts *tags.TagSet, val interface{}, now time.Time)
@@ -162,11 +164,15 @@ func (v *view) collector() *collector {
 	return v.c
 }
 
-func (v *view) window() Window {
+func (v *view) Window() Window {
 	return v.c.w
 }
 
-func (v *view) measure() Measure {
+func (v *view) Aggregation() Aggregation {
+	return v.c.a
+}
+
+func (v *view) Measure() Measure {
 	return v.m
 }
 
@@ -186,8 +192,9 @@ func (v *view) addSample(ts *tags.TagSet, val interface{}, now time.Time) {
 // with the given view during a particular window. Each row is specific to a
 // unique set of tags.
 type ViewData struct {
-	v    View
-	rows []*Row
+	V          View
+	Start, End time.Time
+	Rows       []*Row
 }
 
 // Row is the collected value for a specific set of key value pairs a.k.a tags.
