@@ -81,17 +81,8 @@ type view struct {
 	c *collector
 }
 
-// NewViewInt64 creates a new *view.
-func NewViewInt64(name, description string, keys []tags.Key, measure *MeasureInt64, agg Aggregation, wnd Window) View {
-	return newView(name, description, keys, measure, agg, wnd)
-}
-
-// NewViewFloat64 creates a new *view.
-func NewViewFloat64(name, description string, keys []tags.Key, measure *MeasureFloat64, agg Aggregation, wnd Window) View {
-	return newView(name, description, keys, measure, agg, wnd)
-}
-
-func newView(name, description string, keys []tags.Key, measure Measure, agg Aggregation, wnd Window) *view {
+// NewView creates a new View.
+func NewView(name, description string, keys []tags.Key, measure Measure, agg Aggregation, wnd Window) View {
 	var keysCopy []tags.Key
 	for _, k := range keys {
 		keysCopy = append(keysCopy, k)

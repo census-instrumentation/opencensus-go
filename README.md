@@ -12,7 +12,7 @@ are in the process of being changed and will certainly break your code.
 
 # Go stats core library
 
-## Keys and tagging
+## Tags
 
 ### To create/retrieve a key
 A key is defined by its name. To use a key a user needs to know its name and type (currently only keys of type string are supported. Later support for keys of type int64 and bool will be supported). Calling CreateKeyString(...) multiple times with the same name returns the same key.
@@ -33,23 +33,23 @@ Create/retrieve key:
 ### Create a set of tags associated with keys
 To create a new tag set from scratch using changes:
 
-    tsb := EmptyTagSetBuilder()
+    tsb := NewTagSetBuilder(nil)
     tsb.InsertString(key1, "foo value")
     tsb.UpdateString(key1, "foo value2")
     tsb.UpsertString(key2, "bar value")
     tagsSet := tsb.Build()
 
     // A shorter way of achieving the same is:
-    tagsSet := EmptyTagSetBuilder().InsertString(key1, "foo value").
-                                    UpdateString(key1, "foo value2").
-                                    UpsertString(key2, "bar value").
-                                    Build()
+    tagsSet := NewTagSetBuilder().InsertString(key1, "foo value").
+                                  UpdateString(key1, "foo value2").
+                                  UpsertString(key2, "bar value").
+                                  Build()
 
 
 
 To create a new tagsSet from an existing tag set oldTagSet:
     oldTagSet := ...
-    tsb := NewTagSetBuilderFromTagSet(oldTagSet)
+    tsb := NewTagSetBuilder(oldTagSet)
     tsb.InsertString(key1, "foo value")
     tsb.UpdateString(key1, "foo value2")
     tsb.UpsertString(key2, "bar value")
@@ -57,28 +57,29 @@ To create a new tagsSet from an existing tag set oldTagSet:
 
     // A shorter way of achieving the same is:
     oldTagSet := ...
-    newTagSet := NewTagSetBuilderFromTagSet(oldTagSet).InsertString(key1, "foo value").
-                                                       UpdateString(key1, "foo value2").
-                                                       UpsertString(key2, "bar value").
-                                                       Build()
+	newTagSet := NewTagSetBuilder(oldTagSet).InsertString(key1, "foo value").
+		UpdateString(key1, "foo value2").
+		UpsertString(key2, "bar value").
+		Build()    
 
 ### Add new tagSet to a context / Modify tagSet in a context 
 Add tags to a context for propagation to downstream methods and downstream rpcs:
 To create a new context with the tags. This will create a new context where all the existing tags in the current context are deleted and replaced with the tags passed as argument.
     
     newTagSet  := ...
-    ctx2 := tags.ContextWithNewTags(ctx, newTagSet)
+    ctx2 := tags.NewContext(ctx, newTagSet)
 
-Create a new context keeping the old tag set and adding new tags to it, removing specific tags from it, or modifying the values fo some tags.
+Create a new context keeping the old tag set and adding new tags to it, removing specific tags from it, or modifying the values fo some tags. This is just a matter of getting the oldTagSet from the context, apply changes to it, then create a new  context with the newTagSet.
     
     oldTagSet := tags.FromContext(ctx)
-    newTagSet := NewTagSetBuilderFromTagSet(oldTagSet).InsertString(key1, "foo value").
-                                                       UpdateString(key1, "foo value2").
-                                                       UpsertString(key2, "bar value").
-                                                       Build()
-    ctx2 := tags.ContextWithChanges(ctx, newTagSet)
+    newTagSet := NewTagSetBuilder(oldTagSet).InsertString(key1, "foo value").
+        UpdateString(key1, "foo value2").
+        UpsertString(key2, "bar value").
+        Build()
 
-## Registering views and retrieving their collected data.
+    ctx2 := tags.NewContext(ctx, newTagSet)
+
+## Stats
 
 ### To create/retrieve/delete a measure a.k.a resource
 Create/load measures units:
@@ -95,6 +96,7 @@ Create/load measures units:
     ...
 
 Retrieve measure by name:
+
     mf, err := stats.GetMeasureByName("/my/float64/measureName")
 	if err != nil {
         // handle error
@@ -106,6 +108,7 @@ Retrieve measure by name:
     ...
 
 Delete measure (this can be useful when replacing a measure by another measure with the same name):
+
 	if err := stats.DeleteMeasure(mf); err != nil {
         // handle error
     }
@@ -140,19 +143,20 @@ Currently all aggregation types are compatible with all aggregation windows. Lat
 ### To creater/register a view
 Create a view:
 
-    myView1 = stats.NewViewInt64("/my/int64/viewName", "some description", []Keys{key1, key2}, mf, agg1, wnd1)
-    myView2 := stats.NewViewFloat64("/my/float64/viewName", "some other description", []Keys{key1}, mi, agg2, wnd3)
+    myView1 = stats.NewView("/my/int64/viewName", "some description", []Keys{key1, key2}, mf, agg1, wnd1)
+    myView2 := stats.NewView("/my/float64/viewName", "some other description", []Keys{key1}, mi, agg2, wnd3)
 
 Register view:
 
     if err := stats.RegisterView(myView1); err != nil {
-        // handle error
+      // handle error
     }
     if err := stats.RegisterView(myView2); err != nil {
-        // handle error
+      // handle error
     }
 
 Retrieve view by name:
+    
     myView1, err := stats.GetViewByName("/my/int64/viewName")
 	if err != nil {
         // handle error

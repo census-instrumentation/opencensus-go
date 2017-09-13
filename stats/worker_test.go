@@ -144,10 +144,10 @@ func Test_Worker_MeasureDelete(t *testing.T) {
 		return func(m Measure) error {
 			switch x := m.(type) {
 			case *MeasureInt64:
-				v := NewViewInt64(viewName, "", nil, x, nil, nil)
+				v := NewView(viewName, "", nil, x, nil, nil)
 				return RegisterView(v)
 			case *MeasureFloat64:
-				v := NewViewFloat64(viewName, "", nil, x, nil, nil)
+				v := NewView(viewName, "", nil, x, nil, nil)
 				return RegisterView(v)
 			default:
 				return fmt.Errorf("cannot create view '%v' with measure '%v'", viewName, m.Name())
@@ -423,9 +423,9 @@ func Test_Worker_ViewRegistration(t *testing.T) {
 		mf2, _ := NewMeasureFloat64("MF2", "desc MF2", "unit")
 
 		views := make(map[string]View)
-		views["v1ID"] = NewViewFloat64("VF1", "desc VF1", nil, mf1, nil, nil)
-		views["v1SameNameID"] = NewViewFloat64("VF1", "desc duplicate name VF1.", nil, mf1, nil, nil)
-		views["v2ID"] = NewViewFloat64("VF2", "desc VF2", nil, mf2, nil, nil)
+		views["v1ID"] = NewView("VF1", "desc VF1", nil, mf1, nil, nil)
+		views["v1SameNameID"] = NewView("VF1", "desc duplicate name VF1.", nil, mf1, nil, nil)
+		views["v2ID"] = NewView("VF2", "desc VF2", nil, mf2, nil, nil)
 		views["vNilID"] = nil
 
 		for _, reg := range tc.regs {
@@ -479,18 +479,16 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 
 	k1, _ := tags.CreateKeyString("k1")
 	k2, _ := tags.CreateKeyString("k2")
-	tagsSet := tags.EmptyTagSetBuilder().
+	tagsSet := tags.NewTagSetBuilder(nil).
 		InsertString(k1, "v1").
 		InsertString(k2, "v2").
 		Build()
-	ctx := tags.ContextWithNewTagSet(context.Background(), tagsSet)
+	ctx := tags.NewContext(context.Background(), tagsSet)
 
-	v1 := NewViewFloat64("VF1", "desc VF1", []tags.Key{k1, k2}, m, NewAggregationCount(), NewWindowCumulative())
-	v2 := NewViewFloat64("VF2", "desc VF2", []tags.Key{k1, k2}, m, NewAggregationCount(), NewWindowCumulative())
-	//v3 := NewViewFloat64("VF3", "desc VF3", []tags.Key{k1, k2}, m, NewAggregationCount(), NewWindowCumulative())
+	v1 := NewView("VF1", "desc VF1", []tags.Key{k1, k2}, m, NewAggregationCount(), NewWindowCumulative())
+	v2 := NewView("VF2", "desc VF2", []tags.Key{k1, k2}, m, NewAggregationCount(), NewWindowCumulative())
 
 	c1 := make(chan *ViewData)
-	//c2 := make(chan *ViewData)
 	type subscription struct {
 		v View
 		c chan *ViewData
