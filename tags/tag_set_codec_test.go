@@ -76,7 +76,7 @@ func Test_EncodeDecode_TagSet(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		tsb := EmptyTagSetBuilder()
+		tsb := NewTagSetBuilder(nil)
 		for _, pair := range tc.pairs {
 			tsb.UpsertString(pair.k, pair.v)
 		}

@@ -31,8 +31,8 @@ func FromContext(ctx context.Context) *TagSet {
 	return ts
 }
 
-// ContextWithNewTagSet creates a new context from the old one replacing any
-// existing TagSet with the new parameter TagSet ts.
-func ContextWithNewTagSet(ctx context.Context, ts *TagSet) context.Context {
+// NewContext creates a new context from the old one replacing any existing
+// TagSet with the new parameter TagSet ts.
+func NewContext(ctx context.Context, ts *TagSet) context.Context {
 	return context.WithValue(ctx, ctxKey{}, ts)
 }

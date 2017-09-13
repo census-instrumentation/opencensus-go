@@ -30,15 +30,8 @@ type tagSetBuilder struct {
 	ts *TagSet
 }
 
-// EmptyTagSetBuilder starts building a new TagSet.
-func EmptyTagSetBuilder() TagSetBuilder {
-	tb := &tagSetBuilder{}
-	tb.ts = newTagSet(0)
-	return tb
-}
-
-// NewTagSetBuilderFromTagSet starts building a new TagSet from an existing TagSet.
-func NewTagSetBuilderFromTagSet(ts *TagSet) TagSetBuilder {
+// NewTagSetBuilder starts building a new TagSet from an existing TagSet.
+func NewTagSetBuilder(ts *TagSet) TagSetBuilder {
 	tb := &tagSetBuilder{}
 
 	if ts == nil {

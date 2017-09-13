@@ -25,7 +25,7 @@ func Test_ContextWithNewTagSet_Add_Retrieve(t *testing.T) {
 	ts1 := newTagSet(2)
 	ts1.upsertBytes(&KeyString{"k1", 1}, []byte("v1"))
 	ts1.upsertBytes(&KeyString{"k2", 1}, []byte("v2"))
-	ctx := ContextWithNewTagSet(context.Background(), ts1)
+	ctx := NewContext(context.Background(), ts1)
 	got := FromContext(ctx)
 
 	if !reflect.DeepEqual(got, ts1) {
@@ -36,11 +36,11 @@ func Test_ContextWithNewTagSet_Add_Retrieve(t *testing.T) {
 func Test_ContextWithNewTagSet_Add_Replace_Retrieve(t *testing.T) {
 	ts1 := newTagSet(1)
 	ts1.upsertBytes(&KeyString{"k1", 1}, []byte("v1"))
-	ctx1 := ContextWithNewTagSet(context.Background(), ts1)
+	ctx1 := NewContext(context.Background(), ts1)
 
 	ts2 := newTagSet(1)
 	ts2.upsertBytes(&KeyString{"k2", 1}, []byte("v2"))
-	ctx2 := ContextWithNewTagSet(ctx1, ts2)
+	ctx2 := NewContext(ctx1, ts2)
 
 	got1 := FromContext(ctx1)
 	got2 := FromContext(ctx2)
