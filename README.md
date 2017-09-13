@@ -3,7 +3,7 @@
 [![Build Status][travis-image]][travis-url] [![GoDoc][godoc-image]][godoc-url]
 
 This is still at a very early stage of development and a lot of the API calls
-are in the process of being changed and will certainly break your code.
+are in the process of being changed and might break your code in hte future.
 
 [travis-image]: https://travis-ci.org/census-instrumentation/opencensus-go.svg?branch=master
 [travis-url]: https://travis-ci.org/census-instrumentation/opencensus-go
@@ -11,6 +11,16 @@ are in the process of being changed and will certainly break your code.
 [godoc-url]: https://godoc.org/github.com/census-instrumentation/opencensus-go
 
 # Go stats core library
+The Go implementation of opencensus.
+TODO: add a link to the language independent opencensus doc when it is available.
+
+## Installation
+To install this package, you need to install Go and setup your Go workspace on your computer. The simplest way to install the library is to run:
+
+$ go get -u github.com/census-instrumentation/opencensus-go
+
+## Prerequisites
+This requires Go 1.8 or later as it uses the convenience function sort.Slice(...) in few places.
 
 ## Tags
 

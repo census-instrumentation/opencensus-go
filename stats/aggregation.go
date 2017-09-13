@@ -14,8 +14,8 @@
 //
 
 // Package stats defines the stats collection API and its implementation.
-// TODO(acetechnologist): Add a linnk to the language independent census
-// instrumentation when it is available.
+// TODO(acetechnologist): Add a linnk to the language independent opencensus
+// doc when it is available.
 package stats
 
 // Aggregation is the generic interface for all aggregtion types.
