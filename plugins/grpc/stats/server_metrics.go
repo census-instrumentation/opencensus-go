@@ -24,58 +24,46 @@ import (
 )
 
 // The following variables define the default hard-coded metrics to collect for
-// a GRPC server. These are Go objects instances mirroring the proto
-// definitions found at "github.com/google/instrumentation-proto/census.proto".
-// A complete description of each can be found there.
+// a GRPC server.
 // TODO(acetechnologist): This is temporary and will need to be replaced by a
 // mechanism to load these defaults from a common repository/config shared by
 // all supported languages. Likely a serialized protobuf of these defaults.
 var (
-	RPCServerErrorCount *istats.MeasureInt64
-	// RPCServerServerLatency *istats.MeasureFloat64
+	// Default server measures
+	RPCServerErrorCount        *istats.MeasureInt64
 	RPCServerServerElapsedTime *istats.MeasureFloat64
 	RPCServerRequestBytes      *istats.MeasureInt64
 	RPCServerResponseBytes     *istats.MeasureInt64
-	// RPCServerUncompressedRequestBytes  *istats.MeasureInt64
-	// RPCServerUncompressedResponseBytes *istats.MeasureInt64
-	RPCServerStartedCount  *istats.MeasureInt64
-	RPCServerFinishedCount *istats.MeasureInt64
-	RPCServerRequestCount  *istats.MeasureInt64
-	RPCServerResponseCount *istats.MeasureInt64
+	RPCServerStartedCount      *istats.MeasureInt64
+	RPCServerFinishedCount     *istats.MeasureInt64
+	RPCServerRequestCount      *istats.MeasureInt64
+	RPCServerResponseCount     *istats.MeasureInt64
 
-	RPCServerErrorCountView istats.View
-	// RPCServerServerLatencyView istats.View
+	// Default server views
+	RPCServerErrorCountView        istats.View
 	RPCServerServerElapsedTimeView istats.View
 	RPCServerRequestBytesView      istats.View
 	RPCServerResponseBytesView     istats.View
-	// RPCServerRequestUncompressedBytesView  istats.View
-	// RPCServerResponseUncompressedBytesView istats.View
-	RPCServerRequestCountView  istats.View
-	RPCServerResponseCountView istats.View
+	RPCServerRequestCountView      istats.View
+	RPCServerResponseCountView     istats.View
 
-	// RPCServerServerServerLatencyMinuteView istats.View
-	RPCServerRequestBytesMinuteView  istats.View
-	RPCServerResponseBytesMinuteView istats.View
-	RPCServerErrorCountMinuteView    istats.View
-	// RPCServerRequestUncompressedBytesMinuteView  istats.View
-	// RPCServerResponseUncompressedBytesMinuteView istats.View
-	RPCServerServerElapsedTimeMinuteView   istats.View
-	RPCServerStartedCountMinuteMinuteView  istats.View
-	RPCServerFinishedCountMinuteMinuteView istats.View
-	RPCServerRequestCountMinuteView        istats.View
-	RPCServerResponseCountMinuteView       istats.View
+	RPCServerServerElapsedTimeMinuteView istats.View
+	RPCServerRequestBytesMinuteView      istats.View
+	RPCServerResponseBytesMinuteView     istats.View
+	RPCServerErrorCountMinuteView        istats.View
+	RPCServerStartedCountMinuteView      istats.View
+	RPCServerFinishedCountMinuteView     istats.View
+	RPCServerRequestCountMinuteView      istats.View
+	RPCServerResponseCountMinuteView     istats.View
 
-	// RPCServerServerServerLatencyHourView istats.View
-	RPCServerRequestBytesHourView  istats.View
-	RPCServerResponseBytesHourView istats.View
-	RPCServerErrorCountHourView    istats.View
-	// RPCServerRequestUncompressedBytesHourView  istats.View
-	// RPCServerResponseUncompressedBytesHourView istats.View
-	RPCServerServerElapsedTimeHourView   istats.View
-	RPCServerStartedCountMinuteHourView  istats.View
-	RPCServerFinishedCountMinuteHourView istats.View
-	RPCServerRequestCountHourView        istats.View
-	RPCServerResponseCountHourView       istats.View
+	RPCServerServerElapsedTimeHourView istats.View
+	RPCServerRequestBytesHourView      istats.View
+	RPCServerResponseBytesHourView     istats.View
+	RPCServerErrorCountHourView        istats.View
+	RPCServerStartedCountHourView      istats.View
+	RPCServerFinishedCountHourView     istats.View
+	RPCServerRequestCountHourView      istats.View
+	RPCServerResponseCountHourView     istats.View
 )
 
 func createDefaultMeasuresServer() {
@@ -85,9 +73,6 @@ func createDefaultMeasuresServer() {
 	if RPCServerErrorCount, err = istats.NewMeasureInt64("/grpc.io/server/error_count", "RPC Errors", unitCount); err != nil {
 		panic(fmt.Sprintf("createDefaultMeasuresServer failed for measure /grpc.io/server/error_count. %v", err))
 	}
-	// if RPCServerServerLatency, err = istats.NewMeasureFloat64("/grpc.io/server/server_latency", "Latency in msecs", unitMillisecond); err != nil {
-	// 	panic(fmt.Sprintf("createDefaultMeasuresServer failed for measure /grpc.io/server/server_latency. %v", err))
-	// }
 	if RPCServerServerElapsedTime, err = istats.NewMeasureFloat64("/grpc.io/server/server_elapsed_time", "Server elapsed time in msecs", unitMillisecond); err != nil {
 		panic(fmt.Sprintf("createDefaultMeasuresServer failed for measure /grpc.io/server/server_elapsed_time. %v", err))
 	}
@@ -97,12 +82,6 @@ func createDefaultMeasuresServer() {
 	if RPCServerResponseBytes, err = istats.NewMeasureInt64("/grpc.io/server/response_bytes", "Response bytes", unitByte); err != nil {
 		panic(fmt.Sprintf("createDefaultMeasuresServer failed for measure /grpc.io/server/response_bytes. %v", err))
 	}
-	// if RPCServerUncompressedRequestBytes, err = istats.NewMeasureInt64("/grpc.io/server/uncompressed_request_bytes", "Uncompressed Request bytes",unitByte); err != nil {
-	// 	panic(fmt.Sprintf("createDefaultMeasuresServer failed for measure /grpc.io/server/uncompressed_request_bytes. %v", err))
-	// }
-	// if RPCServerUncompressedResponseBytes, err = istats.NewMeasureInt64("/grpc.io/server/uncompressed_response_bytes", "Uncompressed Response bytes",unitByte); err != nil {
-	// 	panic(fmt.Sprintf("createDefaultMeasuresServer failed for measure /grpc.io/server/uncompressed_response_bytes. %v", err))
-	// }
 	if RPCServerStartedCount, err = istats.NewMeasureInt64("/grpc.io/server/started_count", "Number of server RPCs (streams) started", unitCount); err != nil {
 		panic(fmt.Sprintf("createDefaultMeasuresServer failed for measure rpc/server/started_count. %v", err))
 	}
@@ -123,68 +102,50 @@ func registerDefaultViewsServer() {
 
 	RPCServerErrorCountView = istats.NewView("grpc.io/server/error_count/distribution_cumulative", "RPC Errors", []tags.Key{keyMethod, keyOpStatus, keyService}, RPCServerErrorCount, aggCount, windowCumulative)
 	views = append(views, RPCServerErrorCountView)
-	// RPCServerServerLatencyView = istats.NewView("grpc.io/server/serverserver_latency/distribution_cumulative", "Latency in msecs", []tags.Key{keyService, keyMethod}, RPCServerRoundTripLatency, aggDistMillis, windowCumulative)
-	// views = append(views, RPCServerServerLatencyView)
 	RPCServerServerElapsedTimeView = istats.NewView("grpc.io/server/server_elapsed_time/distribution_cumulative", "Server elapsed time in msecs", []tags.Key{keyService, keyMethod}, RPCServerServerElapsedTime, aggDistMillis, windowCumulative)
 	views = append(views, RPCServerServerElapsedTimeView)
 	RPCServerRequestBytesView = istats.NewView("grpc.io/server/request_bytes/distribution_cumulative", "Request bytes", []tags.Key{keyService, keyMethod}, RPCServerRequestBytes, aggDistBytes, windowCumulative)
 	views = append(views, RPCServerRequestBytesView)
 	RPCServerResponseBytesView = istats.NewView("grpc.io/server/response_bytes/distribution_cumulative", "Response bytes", []tags.Key{keyService, keyMethod}, RPCServerResponseBytes, aggDistBytes, windowCumulative)
 	views = append(views, RPCServerResponseBytesView)
-	// RPCServerRequestUncompressedBytesView
-	// views = append(views, RPCServerRequestUncompressedBytesView)
-	// RPCServerResponseUncompressedBytesView
-	// views = append(views, RPCServerResponseUncompressedBytesView)
 	RPCServerRequestCountView = istats.NewView("grpc.io/server/request_count/distribution_cumulative", "Count of request messages per server RPC", []tags.Key{keyService, keyMethod}, RPCServerRequestCount, aggDistCounts, windowCumulative)
 	views = append(views, RPCServerRequestCountView)
 	RPCServerResponseCountView = istats.NewView("grpc.io/server/response_count/distribution_cumulative", "Count of response messages per server RPC", []tags.Key{keyService, keyMethod}, RPCServerResponseCount, aggDistCounts, windowCumulative)
 	views = append(views, RPCServerResponseCountView)
 
-	// RPCServerRoundTripLatencyMinuteView
-	// views = append(views, RPCServerRoundTripLatencyMinuteView)
-	// RPCServerRequestBytesMinuteView
-	// views = append(views, RPCServerRequestBytesMinuteView)
-	// RPCServerResponseBytesMinuteView
-	// views = append(views, RPCServerResponseBytesMinuteView)
-	// RPCServerErrorCountMinuteView
-	// views = append(views, RPCServerErrorCountMinuteView)
-	// // RPCServerRequestUncompressedBytesMinuteView
-	// // views = append(views, RPCServerRequestUncompressedBytesMinuteView)
-	// // RPCServerResponseUncompressedBytesMinuteView
-	// // views = append(views, RPCServerResponseUncompressedBytesMinuteView)
-	// RPCServerServerElapsedTimeMinuteView
-	// views = append(views, RPCServerServerElapsedTimeMinuteView)
-	// RPCServerStartedCountMinuteView
-	// views = append(views, RPCServerStartedCountMinuteView)
-	// RPCServerFinishedCountMinuteView
-	// views = append(views, RPCServerFinishedCountMinuteView)
-	// RPCServerRequestCountMinuteView
-	// views = append(views, RPCServerRequestCountMinuteView)
-	// RPCServerResponseCountMinuteView
-	// views = append(views, RPCServerResponseCountMinuteView)
+	RPCServerServerElapsedTimeMinuteView = istats.NewView("grpc.io/server/server_elapsed_time/minute_interval", "Minute stats for server elapsed time in msecs", []tags.Key{keyService, keyMethod}, RPCServerServerElapsedTime, aggDistMillis, windowSlidingMinute)
+	views = append(views, RPCServerServerElapsedTimeMinuteView)
+	RPCServerRequestBytesMinuteView = istats.NewView("grpc.io/server/request_bytes/minute_interval", "Minute stats for request size in bytes", []tags.Key{keyService, keyMethod}, RPCServerRequestBytes, aggCount, windowSlidingMinute)
+	views = append(views, RPCServerRequestBytesMinuteView)
+	RPCServerResponseBytesMinuteView = istats.NewView("grpc.io/server/response_bytes/minute_interval", "Minute stats for response size in bytes", []tags.Key{keyService, keyMethod}, RPCServerResponseBytes, aggCount, windowSlidingMinute)
+	views = append(views, RPCServerResponseBytesMinuteView)
+	RPCServerErrorCountMinuteView = istats.NewView("grpc.io/server/error_count/minute_interval", "Minute stats for rpc errors", []tags.Key{keyService, keyMethod}, RPCServerErrorCount, aggCount, windowSlidingMinute)
+	views = append(views, RPCServerErrorCountMinuteView)
+	RPCServerStartedCountMinuteView = istats.NewView("grpc.io/server/started_count/minute_interval", "Minute stats on the number of server RPCs started", []tags.Key{keyService, keyMethod}, RPCServerStartedCount, aggCount, windowSlidingMinute)
+	views = append(views, RPCServerStartedCountMinuteView)
+	RPCServerFinishedCountMinuteView = istats.NewView("grpc.io/server/finished_count/minute_interval", "Minute stats on the number of server RPCs finished", []tags.Key{keyService, keyMethod}, RPCServerFinishedCount, aggCount, windowSlidingMinute)
+	views = append(views, RPCServerFinishedCountMinuteView)
+	RPCServerRequestCountMinuteView = istats.NewView("grpc.io/server/request_count/minute_interval", "Minute stats on the count of request messages per server RPC", []tags.Key{keyService, keyMethod}, RPCServerRequestCount, aggCount, windowSlidingMinute)
+	views = append(views, RPCServerRequestCountMinuteView)
+	RPCServerResponseCountMinuteView = istats.NewView("grpc.io/server/response_count/minute_interval", "Minute stats on the count of response messages per server RPC", []tags.Key{keyService, keyMethod}, RPCServerResponseCount, aggCount, windowSlidingMinute)
+	views = append(views, RPCServerResponseCountMinuteView)
 
-	// RPCServerRoundTripLatencyHourView
-	// views = append(views, RPCServerRoundTripLatencyHourView)
-	// RPCServerRequestBytesHourView
-	// views = append(views, RPCServerRequestBytesHourView)
-	// RPCServerResponseBytesHourView
-	// views = append(views, RPCServerResponseBytesHourView)
-	// RPCServerErrorCountHourView
-	// views = append(views, RPCServerErrorCountHourView)
-	// // RPCServerRequestUncompressedBytesHourView
-	// // views = append(views, RPCServerRequestUncompressedBytesHourView)
-	// // RPCServerResponseUncompressedBytesHourView
-	// // views = append(views, RPCServerResponseUncompressedBytesHourView)
-	// RPCServerServerElapsedTimeHourView
-	// views = append(views, RPCServerServerElapsedTimeHourView)
-	// RPCServerStartedCountHourView
-	// views = append(views, RPCServerStartedCountHourView)
-	// RPCServerFinishedCountHourView
-	// views = append(views, RPCServerFinishedCountHourView)
-	// RPCServerRequestCountHourView
-	// views = append(views, RPCServerRequestCountHourView)
-	// RPCServerResponseCountHourView
-	// views = append(views, RPCServerResponseCountHourView)
+	RPCServerServerElapsedTimeHourView = istats.NewView("grpc.io/server/server_elapsed_time/hour_interval", "Hour stats for server elapsed time in msecs", []tags.Key{keyService, keyMethod}, RPCServerServerElapsedTime, aggDistMillis, windowSlidingHour)
+	views = append(views, RPCServerServerElapsedTimeHourView)
+	RPCServerRequestBytesHourView = istats.NewView("grpc.io/server/request_bytes/hour_interval", "Hour stats for request size in bytes", []tags.Key{keyService, keyMethod}, RPCServerRequestBytes, aggCount, windowSlidingHour)
+	views = append(views, RPCServerRequestBytesHourView)
+	RPCServerResponseBytesHourView = istats.NewView("grpc.io/server/response_bytes/hour_interval", "Hour stats for response size in bytes", []tags.Key{keyService, keyMethod}, RPCServerResponseBytes, aggCount, windowSlidingHour)
+	views = append(views, RPCServerResponseBytesHourView)
+	RPCServerErrorCountHourView = istats.NewView("grpc.io/server/error_count/hour_interval", "Hour stats for rpc errors", []tags.Key{keyService, keyMethod}, RPCServerErrorCount, aggCount, windowSlidingHour)
+	views = append(views, RPCServerErrorCountHourView)
+	RPCServerStartedCountHourView = istats.NewView("grpc.io/server/started_count/hour_interval", "Hour stats on the number of server RPCs started", []tags.Key{keyService, keyMethod}, RPCServerStartedCount, aggCount, windowSlidingHour)
+	views = append(views, RPCServerStartedCountHourView)
+	RPCServerFinishedCountHourView = istats.NewView("grpc.io/server/finished_count/hour_interval", "Hour stats on the number of server RPCs finished", []tags.Key{keyService, keyMethod}, RPCServerFinishedCount, aggCount, windowSlidingHour)
+	views = append(views, RPCServerFinishedCountHourView)
+	RPCServerRequestCountHourView = istats.NewView("grpc.io/server/request_count/hour_interval", "Hour stats on the count of request messages per server RPC", []tags.Key{keyService, keyMethod}, RPCServerRequestCount, aggCount, windowSlidingHour)
+	views = append(views, RPCServerRequestCountHourView)
+	RPCServerResponseCountHourView = istats.NewView("grpc.io/server/response_count/hour_interval", "Hour stats on the count of response messages per server RPC", []tags.Key{keyService, keyMethod}, RPCServerResponseCount, aggCount, windowSlidingHour)
+	views = append(views, RPCServerResponseCountHourView)
 
 	// Registering views
 	for _, v := range views {
@@ -195,7 +156,6 @@ func registerDefaultViewsServer() {
 			log.Fatalf("init() failed to ForceCollection %v.%v\n", v, err)
 		}
 	}
-	//c = make(chan *istats.View, 1024)
 }
 
 // registerDefaultsServer registers the default metrics (measures and views)
