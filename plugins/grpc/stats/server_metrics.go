@@ -1,4 +1,4 @@
-// Copyright 2017 Google Inc.
+// Copyright 2017, OpenCensus Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -23,8 +23,8 @@ import (
 	"github.com/census-instrumentation/opencensus-go/tags"
 )
 
-// The following variables define the default hard-coded metrics to collect for
-// a GRPC server.
+// These variables define the default hard-coded metrics to collect for a GRPC
+// server.
 // TODO(acetechnologist): This is temporary and will need to be replaced by a
 // mechanism to load these defaults from a common repository/config shared by
 // all supported languages. Likely a serialized protobuf of these defaults.

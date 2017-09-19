@@ -1,4 +1,4 @@
-// Copyright 2017 Google Inc.
+// Copyright 2017, OpenCensus Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import (
 	istats "github.com/census-instrumentation/opencensus-go/stats"
 	"github.com/census-instrumentation/opencensus-go/tags"
 
-	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/stats"
 )
 
@@ -319,9 +318,7 @@ func TestClientDefaultCollections(t *testing.T) {
 			}
 			ts := tsb.Build()
 			encoded := tags.EncodeToFullSignature(ts)
-
-			md := metadata.Pairs(tagsKey, string(encoded))
-			ctx := metadata.NewIncomingContext(context.Background(), md)
+			ctx := stats.SetTags(context.Background(), encoded)
 
 			ctx = h.TagRPC(ctx, rpc.tagInfo)
 

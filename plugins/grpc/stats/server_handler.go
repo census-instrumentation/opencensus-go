@@ -1,4 +1,4 @@
-// Copyright 2017 Google Inc.
+// Copyright 2017, OpenCensus Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package stats
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 	"sync/atomic"
@@ -28,14 +27,7 @@ import (
 	"github.com/golang/glog"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/stats"
-	/*
-		"errors"
-		"fmt"
-
-		"github.com/golang/protobuf/proto"
-		"google.golang.org/grpc/peer"
-
-		pb "github.com/google/instrumentation-proto/stats" */)
+)
 
 var (
 	// grpcServerConnKey is the key used to store client instrumentation
@@ -94,14 +86,7 @@ func (sh ServerHandler) TagRPC(ctx context.Context, info *stats.RPCTagInfo) cont
 		startTime: startTime,
 	}
 
-	md, ok := metadata.FromIncomingContext(ctx)
-	if !ok {
-		if glog.V(2) {
-			glog.Infoln("ServerHandler.TagRPC failed to retrieve metadata from context")
-		}
-		return ctx
-	}
-	ts, err := sh.createTagSet(md, serviceName, methodName)
+	ts, err := sh.createTagSet(ctx, serviceName, methodName)
 	if err != nil {
 		return ctx
 	}
@@ -193,19 +178,15 @@ func (sh ServerHandler) handleRPCEnd(ctx context.Context, s *stats.End) {
 
 // createTagSet creates a new tagSet containing the tags extracted from the
 // gRPC metadata.
-func (sh ServerHandler) createTagSet(md metadata.MD, serviceName, methodName string) (*tags.TagSet, error) {
+func (sh ServerHandler) createTagSet(ctx context.Context, serviceName, methodName string) (*tags.TagSet, error) {
 	var tsb tags.TagSetBuilder
 
-	if tagsBin, ok := md[tagsKey]; !ok {
+	if tagsBin := stats.Tags(ctx); tagsBin == nil {
 		tsb = tags.NewTagSetBuilder(nil)
 	} else {
-		if len(tagsBin) != 1 {
-			return nil, errors.New("ServerHandler.createTagSet failed to retrieve statsBin from metadata. Have a length different than 1 in the metadata received")
-		}
-
-		ts, err := tags.DecodeFromFullSignature([]byte(tagsBin[0]))
+		ts, err := tags.DecodeFromFullSignature([]byte(tagsBin))
 		if err != nil {
-			return nil, fmt.Errorf("ServerHandler.createTagSet failed to decode tagsBin[0]: %v. %v", tagsBin[0], err)
+			return nil, fmt.Errorf("ServerHandler.createTagSet failed to decode tagsBin: %v. %v", tagsBin, err)
 		}
 		tsb = tags.NewTagSetBuilder(ts)
 	}

@@ -89,20 +89,20 @@ type AggregationDistributionValue struct {
 	count    int64
 	min, max float64
 
-	// mean and sumOfSquaredDeviation are the Knuth's algorithm variables to
-	// compute the online average and variance for streaming values in a stable
-	// manner. When the first sample x arrives:
+	// mean and sumOfSquaredDev are the Knuth's algorithm variables to compute
+	// the online average and variance for streaming values in a stable manner.
+	// When the first sample x arrives:
 	//
 	// mean =  x
-	// sumOfSquaredDeviation = 0
+	// sumOfSquaredDev = 0
 	//
 	// For each subsequent sample x:
 	//
 	// count++
 	// oldMean = mean
 	// mean = mean + (x-mean) / count
-	// sumOfSquaredDeviation = sumOfSquaredDeviation+(x-oldMean)(x-mean)
-	mean, sumOfSquaredDeviation float64
+	// sumOfSquaredDev = sumOfSquaredDev+(x-oldMean)(x-mean)
+	mean, sumOfSquaredDev float64
 
 	// countPerBucket is the set of occurrences count per bucket. The buckets
 	// bounds are the same as the ones setup in AggregationDistribution.
@@ -112,15 +112,15 @@ type AggregationDistributionValue struct {
 
 // NewTestingAggregationDistributionValue is used to facilitate testing only
 // and should not be invoked in production.
-func NewTestingAggregationDistributionValue(bounds []float64, countPerBucket []int64, count int64, min, max, mean, sumOfSquaredDeviation float64) *AggregationDistributionValue {
+func NewTestingAggregationDistributionValue(bounds []float64, countPerBucket []int64, count int64, min, max, mean, sumOfSquaredDev float64) *AggregationDistributionValue {
 	return &AggregationDistributionValue{
-		countPerBucket: countPerBucket,
-		bounds:         bounds,
-		count:          count,
-		min:            min,
-		max:            max,
-		mean:           mean,
-		sumOfSquaredDeviation: sumOfSquaredDeviation,
+		countPerBucket:  countPerBucket,
+		bounds:          bounds,
+		count:           count,
+		min:             min,
+		max:             max,
+		mean:            mean,
+		sumOfSquaredDev: sumOfSquaredDev,
 	}
 }
 
@@ -158,7 +158,7 @@ func (a *AggregationDistributionValue) variance() float64 {
 // SumOfSquaredDeviation returns the sum of all samples deviations from the
 // mean squared. This the M2 variable in Knuth's online algorithm for variance
 // calculation. https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance
-func (a *AggregationDistributionValue) SumOfSquaredDeviation() float64 { return a.sumOfSquaredDeviation }
+func (a *AggregationDistributionValue) SumOfSquaredDeviation() float64 { return a.sumOfSquaredDev }
 
 func (a *AggregationDistributionValue) String() string {
 	return fmt.Sprintf("{%v %v %v %v %v %v %v}", a.Count(), a.Min(), a.Max(), a.Mean(), a.variance(), a.countPerBucket, a.bounds)
@@ -205,7 +205,7 @@ func (a *AggregationDistributionValue) addSample(v interface{}) {
 
 	oldMean := a.mean
 	a.mean = a.mean + (f-a.mean)/float64(a.count)
-	a.sumOfSquaredDeviation = a.sumOfSquaredDeviation + (f-oldMean)*(f-a.mean)
+	a.sumOfSquaredDev = a.sumOfSquaredDev + (f-oldMean)*(f-a.mean)
 }
 
 func (a *AggregationDistributionValue) incrementBucketCount(f float64) {
@@ -223,10 +223,14 @@ func (a *AggregationDistributionValue) incrementBucketCount(f float64) {
 	a.countPerBucket[len(a.bounds)]++
 }
 
+// AggregationDistributionValue will not multiply by the fraction for this type
+// of aggregation. The 'fraction' argument is there just to satisfy the
+// interface 'AggregationValue'. For simplicity, we include the oldest partial
+// bucket in its entirety when the aggregation is a distribution. We do not try
+//  to multiply it by the fraction as it would make the calculation too complex
+// and will create inconsistencies between sumOfSquaredDev, min, max and the
+// various buckets of the histogram.
 func (a *AggregationDistributionValue) multiplyByFraction(fraction float64) AggregationValue {
-	// for simplicity, we include the oldest partial bucket when the aggregation
-	// is a distribution. We do not try to have a partial fraction.
-
 	ret := newAggregationDistributionValue(a.bounds)
 	for i, c := range a.countPerBucket {
 		ret.countPerBucket[i] = c
@@ -235,7 +239,7 @@ func (a *AggregationDistributionValue) multiplyByFraction(fraction float64) Aggr
 	ret.min = a.min
 	ret.max = a.max
 	ret.mean = a.mean
-	ret.sumOfSquaredDeviation = a.sumOfSquaredDeviation
+	ret.sumOfSquaredDev = a.sumOfSquaredDev
 
 	return ret
 
@@ -259,7 +263,7 @@ func (a *AggregationDistributionValue) addToIt(av AggregationValue) {
 	}
 
 	delta := other.mean - a.mean
-	a.sumOfSquaredDeviation = a.sumOfSquaredDeviation + other.sumOfSquaredDeviation + math.Pow(delta, 2)*float64(a.count*other.count)/(float64(a.count+other.count))
+	a.sumOfSquaredDev = a.sumOfSquaredDev + other.sumOfSquaredDev + math.Pow(delta, 2)*float64(a.count*other.count)/(float64(a.count+other.count))
 
 	a.mean = (a.Sum() + other.Sum()) / float64(a.count+other.count)
 	a.count = a.count + other.count
@@ -273,7 +277,7 @@ func (a *AggregationDistributionValue) clear() {
 	a.min = math.MaxFloat64
 	a.max = math.SmallestNonzeroFloat64
 	a.mean = 0
-	a.sumOfSquaredDeviation = 0
+	a.sumOfSquaredDev = 0
 	for i := range a.countPerBucket {
 		a.countPerBucket[i] = 0
 	}

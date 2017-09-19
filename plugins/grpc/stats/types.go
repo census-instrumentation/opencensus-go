@@ -1,4 +1,4 @@
-// Copyright 2017 Google Inc.
+// Copyright 2017, OpenCensus Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,6 +13,8 @@
 // limitations under the License.
 //
 
+// Package stats defines the handlers to collect grpc statistics using the
+// opencensus library.
 package stats
 
 import (
@@ -22,11 +24,6 @@ import (
 	istats "github.com/census-instrumentation/opencensus-go/stats"
 	"github.com/census-instrumentation/opencensus-go/tags"
 )
-
-// tagsKey is the metadata key used to identify both the stats tags in the GRPC
-// context metadata, as well as the RpcServerStats info sent back from the
-// server to the client in the GRPC context metadata.
-const tagsKey = "grpc-tags-bin"
 
 type grpcInstrumentationKey struct{}
 
