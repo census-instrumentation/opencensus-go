@@ -110,8 +110,9 @@ type AggregationDistributionValue struct {
 	bounds         []float64
 }
 
-// NewTestingAggregationDistributionValue is used to facilitate testing only
-// and should not be invoked in production.
+// NewTestingAggregationDistributionValue allows to initialize a new
+// AggregationDistributionValue to some desired values. It is expected to be
+// used to facilitate testing only. It should not be invoked in production.
 func NewTestingAggregationDistributionValue(bounds []float64, countPerBucket []int64, count int64, min, max, mean, sumOfSquaredDev float64) *AggregationDistributionValue {
 	return &AggregationDistributionValue{
 		countPerBucket:  countPerBucket,
