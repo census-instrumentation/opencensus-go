@@ -16,9 +16,10 @@
 package stats
 
 import (
-	"golang.org/x/net/context"
 	"errors"
 	"testing"
+
+	"golang.org/x/net/context"
 
 	istats "github.com/census-instrumentation/opencensus-go/stats"
 	"github.com/census-instrumentation/opencensus-go/tags"
@@ -77,7 +78,7 @@ func TestClientDefaultCollections(t *testing.T) {
 								{keyMethod, []byte("method")},
 								{keyService, []byte("package.service")},
 							},
-							istats.NewTestingAggregationDistributionValue(rpcCountBucketBoundaries, []int64{0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 1, 1, 1, 1, 0),
+							istats.NewDoNotUseTestingAggregationDistributionValue(rpcCountBucketBoundaries, []int64{0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 1, 1, 1, 1, 0),
 						},
 					},
 				},
@@ -89,7 +90,7 @@ func TestClientDefaultCollections(t *testing.T) {
 								{keyMethod, []byte("method")},
 								{keyService, []byte("package.service")},
 							},
-							istats.NewTestingAggregationDistributionValue(rpcCountBucketBoundaries, []int64{0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 1, 1, 1, 1, 0),
+							istats.NewDoNotUseTestingAggregationDistributionValue(rpcCountBucketBoundaries, []int64{0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 1, 1, 1, 1, 0),
 						},
 					},
 				},
@@ -101,7 +102,7 @@ func TestClientDefaultCollections(t *testing.T) {
 								{keyMethod, []byte("method")},
 								{keyService, []byte("package.service")},
 							},
-							istats.NewTestingAggregationDistributionValue(rpcBytesBucketBoundaries, []int64{0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 1, 10, 10, 10, 0),
+							istats.NewDoNotUseTestingAggregationDistributionValue(rpcBytesBucketBoundaries, []int64{0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 1, 10, 10, 10, 0),
 						},
 					},
 				},
@@ -113,7 +114,7 @@ func TestClientDefaultCollections(t *testing.T) {
 								{keyMethod, []byte("method")},
 								{keyService, []byte("package.service")},
 							},
-							istats.NewTestingAggregationDistributionValue(rpcBytesBucketBoundaries, []int64{0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 1, 10, 10, 10, 0),
+							istats.NewDoNotUseTestingAggregationDistributionValue(rpcBytesBucketBoundaries, []int64{0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 1, 10, 10, 10, 0),
 						},
 					},
 				},
@@ -171,7 +172,7 @@ func TestClientDefaultCollections(t *testing.T) {
 								{keyMethod, []byte("method")},
 								{keyService, []byte("package.service")},
 							},
-							istats.NewTestingAggregationDistributionValue(rpcCountBucketBoundaries, []int64{0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 2, 2, 3, 2.5, 0.5),
+							istats.NewDoNotUseTestingAggregationDistributionValue(rpcCountBucketBoundaries, []int64{0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 2, 2, 3, 2.5, 0.5),
 						},
 					},
 				},
@@ -183,7 +184,7 @@ func TestClientDefaultCollections(t *testing.T) {
 								{keyMethod, []byte("method")},
 								{keyService, []byte("package.service")},
 							},
-							istats.NewTestingAggregationDistributionValue(rpcCountBucketBoundaries, []int64{0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 2, 1, 2, 1.5, 0.5),
+							istats.NewDoNotUseTestingAggregationDistributionValue(rpcCountBucketBoundaries, []int64{0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 2, 1, 2, 1.5, 0.5),
 						},
 					},
 				},
@@ -262,7 +263,7 @@ func TestClientDefaultCollections(t *testing.T) {
 								{keyMethod, []byte("method")},
 								{keyService, []byte("package.service")},
 							},
-							istats.NewTestingAggregationDistributionValue(rpcCountBucketBoundaries, []int64{0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 3, 2, 3, 2.666666666, 0.333333333*2),
+							istats.NewDoNotUseTestingAggregationDistributionValue(rpcCountBucketBoundaries, []int64{0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 3, 2, 3, 2.666666666, 0.333333333*2),
 						},
 					},
 				},
@@ -274,7 +275,7 @@ func TestClientDefaultCollections(t *testing.T) {
 								{keyMethod, []byte("method")},
 								{keyService, []byte("package.service")},
 							},
-							istats.NewTestingAggregationDistributionValue(rpcCountBucketBoundaries, []int64{0, 0, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 3, 1, 2, 1.333333333, 0.333333333*2),
+							istats.NewDoNotUseTestingAggregationDistributionValue(rpcCountBucketBoundaries, []int64{0, 0, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 3, 1, 2, 1.333333333, 0.333333333*2),
 						},
 					},
 				},
@@ -286,7 +287,7 @@ func TestClientDefaultCollections(t *testing.T) {
 								{keyMethod, []byte("method")},
 								{keyService, []byte("package.service")},
 							},
-							istats.NewTestingAggregationDistributionValue(rpcBytesBucketBoundaries, []int64{0, 1, 1, 1, 2, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0}, 8, 1, 65536, 13696.125, 481423542.982143*7),
+							istats.NewDoNotUseTestingAggregationDistributionValue(rpcBytesBucketBoundaries, []int64{0, 1, 1, 1, 2, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0}, 8, 1, 65536, 13696.125, 481423542.982143*7),
 						},
 					},
 				},
@@ -298,7 +299,7 @@ func TestClientDefaultCollections(t *testing.T) {
 								{keyMethod, []byte("method")},
 								{keyService, []byte("package.service")},
 							},
-							istats.NewTestingAggregationDistributionValue(rpcBytesBucketBoundaries, []int64{0, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 4, 1, 16384, 4864.25, 59678208.25*3),
+							istats.NewDoNotUseTestingAggregationDistributionValue(rpcBytesBucketBoundaries, []int64{0, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 4, 1, 16384, 4864.25, 59678208.25*3),
 						},
 					},
 				},
