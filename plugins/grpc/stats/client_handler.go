@@ -16,7 +16,7 @@
 package stats
 
 import (
-	"context"
+	"golang.org/x/net/context"
 	"strings"
 	"sync/atomic"
 	"time"
