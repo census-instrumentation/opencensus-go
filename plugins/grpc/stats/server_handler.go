@@ -38,19 +38,25 @@ var (
 	grpcServerRPCKey *grpcInstrumentationKey
 )
 
-// ServerHandler is the type implementing the "google.golang.org/grpc/stats.Handler"
+// serverHandler is the type implementing the "google.golang.org/grpc/stats.Handler"
 // interface to process lifecycle events from the GRPC server.
-type ServerHandler struct{}
+type serverHandler struct{}
+
+// NewServerHandler returns the "google.golang.org/grpc/stats.Handler"
+// implementation for the grpc server.
+func NewServerHandler() stats.Handler {
+	return serverHandler{}
+}
 
 // TagConn adds connection related data to the given context and returns the
 // new context.
-func (sh ServerHandler) TagConn(ctx context.Context, info *stats.ConnTagInfo) context.Context {
+func (sh serverHandler) TagConn(ctx context.Context, info *stats.ConnTagInfo) context.Context {
 	// Do nothing. This is here to satisfy the interface "google.golang.org/grpc/stats.Handler"
 	return ctx
 }
 
 // HandleConn processes the connection events.
-func (sh ServerHandler) HandleConn(ctx context.Context, s stats.ConnStats) {
+func (sh serverHandler) HandleConn(ctx context.Context, s stats.ConnStats) {
 	// Do nothing. This is here to satisfy the interface "google.golang.org/grpc/stats.Handler"
 }
 
@@ -58,24 +64,24 @@ func (sh ServerHandler) HandleConn(ctx context.Context, s stats.ConnStats) {
 // it, creates a new github.com/census-instrumentation/opencensus-go/tags.TagsSet,
 // adds it to the local context using tagging.NewContextWithTagsSet and finally
 // returns the new ctx.
-func (sh ServerHandler) TagRPC(ctx context.Context, info *stats.RPCTagInfo) context.Context {
+func (sh serverHandler) TagRPC(ctx context.Context, info *stats.RPCTagInfo) context.Context {
 	startTime := time.Now()
 	if ctx == nil {
 		if glog.V(2) {
-			glog.Infoln("ServerHandler.TagRPC called with nil context")
+			glog.Infoln("serverHandler.TagRPC called with nil context")
 		}
 		return ctx
 	}
 	if info == nil {
 		if glog.V(2) {
-			glog.Infof("ServerHandler.TagRPC called with nil info.", info.FullMethodName)
+			glog.Infof("serverHandler.TagRPC called with nil info.", info.FullMethodName)
 		}
 		return ctx
 	}
 	names := strings.Split(info.FullMethodName, "/")
 	if len(names) != 3 {
 		if glog.V(2) {
-			glog.Infof("ServerHandler.TagRPC called with info.FullMethodName bad format. got %v, want '/$service/$method/'", info.FullMethodName)
+			glog.Infof("serverHandler.TagRPC called with info.FullMethodName bad format. got %v, want '/$service/$method/'", info.FullMethodName)
 		}
 		return ctx
 	}
@@ -97,7 +103,7 @@ func (sh ServerHandler) TagRPC(ctx context.Context, info *stats.RPCTagInfo) cont
 }
 
 // HandleRPC processes the RPC events.
-func (sh ServerHandler) HandleRPC(ctx context.Context, s stats.RPCStats) {
+func (sh serverHandler) HandleRPC(ctx context.Context, s stats.RPCStats) {
 	switch st := s.(type) {
 	case *stats.Begin, *stats.InHeader, *stats.InTrailer, *stats.OutHeader, *stats.OutTrailer:
 		// Do nothing for server
@@ -117,15 +123,15 @@ func (sh ServerHandler) HandleRPC(ctx context.Context, s stats.RPCStats) {
 // TODO(acetechnologist): could eventually be used to record the elapsed time
 // of the RPC on the server side and generate the server trailer metadata that
 // needs to be sent to the client.
-func (sh ServerHandler) GenerateServerTrailer(ctx context.Context) (metadata.MD, error) {
+func (sh serverHandler) GenerateServerTrailer(ctx context.Context) (metadata.MD, error) {
 	return nil, nil
 }
 
-func (sh ServerHandler) handleRPCInPayload(ctx context.Context, s *stats.InPayload) {
+func (sh serverHandler) handleRPCInPayload(ctx context.Context, s *stats.InPayload) {
 	d, ok := ctx.Value(grpcServerRPCKey).(*rpcData)
 	if !ok {
 		if glog.V(2) {
-			glog.Infoln("ServerHandler.handleRPCInPayload failed to retrieve *rpcData from context")
+			glog.Infoln("serverHandler.handleRPCInPayload failed to retrieve *rpcData from context")
 		}
 		return
 	}
@@ -134,11 +140,11 @@ func (sh ServerHandler) handleRPCInPayload(ctx context.Context, s *stats.InPaylo
 	atomic.AddUint64(&d.reqCount, 1)
 }
 
-func (sh ServerHandler) handleRPCOutPayload(ctx context.Context, s *stats.OutPayload) {
+func (sh serverHandler) handleRPCOutPayload(ctx context.Context, s *stats.OutPayload) {
 	d, ok := ctx.Value(grpcServerRPCKey).(*rpcData)
 	if !ok {
 		if glog.V(2) {
-			glog.Infoln("ServerHandler.handleRPCOutPayload failed to retrieve *rpcData from context")
+			glog.Infoln("serverHandler.handleRPCOutPayload failed to retrieve *rpcData from context")
 		}
 		return
 	}
@@ -147,11 +153,11 @@ func (sh ServerHandler) handleRPCOutPayload(ctx context.Context, s *stats.OutPay
 	atomic.AddUint64(&d.respCount, 1)
 }
 
-func (sh ServerHandler) handleRPCEnd(ctx context.Context, s *stats.End) {
+func (sh serverHandler) handleRPCEnd(ctx context.Context, s *stats.End) {
 	d, ok := ctx.Value(grpcServerRPCKey).(*rpcData)
 	if !ok {
 		if glog.V(2) {
-			glog.Infoln("ServerHandler.handleRPCEnd failed to retrieve *rpcData from context")
+			glog.Infoln("serverHandler.handleRPCEnd failed to retrieve *rpcData from context")
 		}
 		return
 	}
@@ -178,7 +184,7 @@ func (sh ServerHandler) handleRPCEnd(ctx context.Context, s *stats.End) {
 
 // createTagSet creates a new tagSet containing the tags extracted from the
 // gRPC metadata.
-func (sh ServerHandler) createTagSet(ctx context.Context, serviceName, methodName string) (*tags.TagSet, error) {
+func (sh serverHandler) createTagSet(ctx context.Context, serviceName, methodName string) (*tags.TagSet, error) {
 	var tsb tags.TagSetBuilder
 
 	if tagsBin := stats.Tags(ctx); tagsBin == nil {
@@ -186,7 +192,7 @@ func (sh ServerHandler) createTagSet(ctx context.Context, serviceName, methodNam
 	} else {
 		ts, err := tags.DecodeFromFullSignature([]byte(tagsBin))
 		if err != nil {
-			return nil, fmt.Errorf("ServerHandler.createTagSet failed to decode tagsBin: %v. %v", tagsBin, err)
+			return nil, fmt.Errorf("serverHandler.createTagSet failed to decode tagsBin: %v. %v", tagsBin, err)
 		}
 		tsb = tags.NewTagSetBuilder(ts)
 	}

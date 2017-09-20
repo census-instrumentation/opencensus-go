@@ -310,7 +310,7 @@ func TestServerDefaultCollections(t *testing.T) {
 		istats.RestartWorker()
 		registerDefaultsServer()
 
-		h := ServerHandler{}
+		h := NewServerHandler()
 		for _, rpc := range tc.rpcs {
 			tsb := tags.NewTagSetBuilder(nil)
 			for _, t := range rpc.tags {

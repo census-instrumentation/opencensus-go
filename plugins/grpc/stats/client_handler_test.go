@@ -310,7 +310,7 @@ func TestClientDefaultCollections(t *testing.T) {
 		istats.RestartWorker()
 		registerDefaultsClient()
 
-		h := ClientHandler{}
+		h := NewClientHandler()
 		for _, rpc := range tc.rpcs {
 			tsb := tags.NewTagSetBuilder(nil)
 			for _, t := range rpc.tags {

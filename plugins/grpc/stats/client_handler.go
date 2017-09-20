@@ -36,44 +36,50 @@ var (
 	grpcClientRPCKey *grpcInstrumentationKey
 )
 
-// ClientHandler is the type implementing the "google.golang.org/grpc/stats.Handler"
+// clientHandler is the type implementing the "google.golang.org/grpc/stats.Handler"
 // interface to process lifecycle events from the GRPC client.
-type ClientHandler struct{}
+type clientHandler struct{}
+
+// NewClientHandler returns the "google.golang.org/grpc/stats.Handler"
+// implementation for the grpc client.
+func NewClientHandler() stats.Handler {
+	return clientHandler{}
+}
 
 // TagConn adds connection related data to the given context and returns the
 // new context.
-func (ch ClientHandler) TagConn(ctx context.Context, info *stats.ConnTagInfo) context.Context {
+func (ch clientHandler) TagConn(ctx context.Context, info *stats.ConnTagInfo) context.Context {
 	// Do nothing. This is here to satisfy the interface "google.golang.org/grpc/stats.Handler"
 	return ctx
 }
 
 // HandleConn processes the connection events.
-func (ch ClientHandler) HandleConn(ctx context.Context, s stats.ConnStats) {
+func (ch clientHandler) HandleConn(ctx context.Context, s stats.ConnStats) {
 	// Do nothing. This is here to satisfy the interface "google.golang.org/grpc/stats.Handler"
 }
 
 // TagRPC gets the github.com/census-instrumentation/opencensus-go/tags.TagsSet
 // populated by the application code, serializes its tags into the GRPC
 // metadata in order to be sent to the server.
-func (ch ClientHandler) TagRPC(ctx context.Context, info *stats.RPCTagInfo) context.Context {
+func (ch clientHandler) TagRPC(ctx context.Context, info *stats.RPCTagInfo) context.Context {
 	startTime := time.Now()
 	if ctx == nil {
 		if glog.V(2) {
-			glog.Infoln("ClientHandler.TagRPC called with nil context")
+			glog.Infoln("clientHandler.TagRPC called with nil context")
 		}
 		return ctx
 	}
 
 	if info == nil {
 		if glog.V(2) {
-			glog.Infof("ClientHandler.TagRPC called with nil info.", info.FullMethodName)
+			glog.Infof("clientHandler.TagRPC called with nil info.", info.FullMethodName)
 		}
 		return ctx
 	}
 	names := strings.Split(info.FullMethodName, "/")
 	if len(names) != 3 {
 		if glog.V(2) {
-			glog.Infof("ClientHandler.TagRPC called with info.FullMethodName bad format. got %v, want '/$service/$method/'", info.FullMethodName)
+			glog.Infof("clientHandler.TagRPC called with info.FullMethodName bad format. got %v, want '/$service/$method/'", info.FullMethodName)
 		}
 		return ctx
 	}
@@ -101,7 +107,7 @@ func (ch ClientHandler) TagRPC(ctx context.Context, info *stats.RPCTagInfo) cont
 }
 
 // HandleRPC processes the RPC events.
-func (ch ClientHandler) HandleRPC(ctx context.Context, s stats.RPCStats) {
+func (ch clientHandler) HandleRPC(ctx context.Context, s stats.RPCStats) {
 	switch st := s.(type) {
 	case *stats.Begin, *stats.OutHeader, *stats.InHeader, *stats.InTrailer, *stats.OutTrailer:
 		// do nothing for client
@@ -116,11 +122,11 @@ func (ch ClientHandler) HandleRPC(ctx context.Context, s stats.RPCStats) {
 	}
 }
 
-func (ch ClientHandler) handleRPCOutPayload(ctx context.Context, s *stats.OutPayload) {
+func (ch clientHandler) handleRPCOutPayload(ctx context.Context, s *stats.OutPayload) {
 	d, ok := ctx.Value(grpcClientRPCKey).(*rpcData)
 	if !ok {
 		if glog.V(2) {
-			glog.Infoln("ClientHandler.handleRPCOutPayload failed to retrieve *rpcData from context")
+			glog.Infoln("clientHandler.handleRPCOutPayload failed to retrieve *rpcData from context")
 		}
 		return
 	}
@@ -129,11 +135,11 @@ func (ch ClientHandler) handleRPCOutPayload(ctx context.Context, s *stats.OutPay
 	atomic.AddUint64(&d.reqCount, 1)
 }
 
-func (ch ClientHandler) handleRPCInPayload(ctx context.Context, s *stats.InPayload) {
+func (ch clientHandler) handleRPCInPayload(ctx context.Context, s *stats.InPayload) {
 	d, ok := ctx.Value(grpcClientRPCKey).(*rpcData)
 	if !ok {
 		if glog.V(2) {
-			glog.Infoln("ClientHandler.handleRPCInPayload failed to retrieve *rpcData from context")
+			glog.Infoln("clientHandler.handleRPCInPayload failed to retrieve *rpcData from context")
 		}
 		return
 	}
@@ -142,11 +148,11 @@ func (ch ClientHandler) handleRPCInPayload(ctx context.Context, s *stats.InPaylo
 	atomic.AddUint64(&d.respCount, 1)
 }
 
-func (ch ClientHandler) handleRPCEnd(ctx context.Context, s *stats.End) {
+func (ch clientHandler) handleRPCEnd(ctx context.Context, s *stats.End) {
 	d, ok := ctx.Value(grpcClientRPCKey).(*rpcData)
 	if !ok {
 		if glog.V(2) {
-			glog.Infoln("ClientHandler.handleRPCEnd failed to retrieve *rpcData from context")
+			glog.Infoln("clientHandler.handleRPCEnd failed to retrieve *rpcData from context")
 		}
 		return
 	}
