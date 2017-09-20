@@ -1,14 +1,14 @@
 language: go
 
 go:
-  - 1.8.x
+  - 1.9.x
 
 # Don't email me the results of the test runs.
 notifications:
   email: false
 
 before_install:
-  - if [[ $TRAVIS_GO_VERSION = 1.8* ]]; then go get -u github.com/golang/lint/golint honnef.co/go/tools/cmd/staticcheck; fi
+  - if [[ $TRAVIS_GO_VERSION = 1.9* ]]; then go get -u github.com/golang/lint/golint honnef.co/go/tools/cmd/staticcheck; fi
   - go get -u golang.org/x/tools/cmd/goimports github.com/axw/gocov/gocov github.com/mattn/goveralls golang.org/x/tools/cmd/cover
 
 before_script:
@@ -17,4 +17,4 @@ before_script:
 
 script:
   - go test -v -race $PKGS            # Run all the tests with the race detector enabled
-  - 'if [[ $TRAVIS_GO_VERSION = 1.8* ]]; then ! golint ./... | grep -vE "(_mock|_string|\.pb)\.go:"; fi'
+  - 'if [[ $TRAVIS_GO_VERSION = 1.9* ]]; then ! golint ./... | grep -vE "(_mock|_string|\.pb)\.go:"; fi'
