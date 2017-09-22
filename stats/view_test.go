@@ -55,7 +55,7 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowCumulative(t *testin
 				{
 					[]tags.Tag{{k1, []byte("v1")}},
 					&AggregationDistributionValue{
-						2, 1, 5, 6, []int64{1, 1}, agg1.bounds,
+						2, 1, 5, 3, 8, []int64{1, 1}, agg1.bounds,
 					},
 				},
 			},
@@ -70,13 +70,13 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowCumulative(t *testin
 				{
 					[]tags.Tag{{k1, []byte("v1")}},
 					&AggregationDistributionValue{
-						1, 1, 1, 1, []int64{1, 0}, agg1.bounds,
+						1, 1, 1, 1, 0, []int64{1, 0}, agg1.bounds,
 					},
 				},
 				{
 					[]tags.Tag{{k2, []byte("v2")}},
 					&AggregationDistributionValue{
-						1, 5, 5, 5, []int64{0, 1}, agg1.bounds,
+						1, 5, 5, 5, 0, []int64{0, 1}, agg1.bounds,
 					},
 				},
 			},
@@ -94,25 +94,25 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowCumulative(t *testin
 				{
 					[]tags.Tag{{k1, []byte("v1")}},
 					&AggregationDistributionValue{
-						2, 1, 5, 6, []int64{1, 1}, agg1.bounds,
+						2, 1, 5, 3, 8, []int64{1, 1}, agg1.bounds,
 					},
 				},
 				{
 					[]tags.Tag{{k1, []byte("v1 other")}},
 					&AggregationDistributionValue{
-						1, 1, 1, 1, []int64{1, 0}, agg1.bounds,
+						1, 1, 1, 1, 0, []int64{1, 0}, agg1.bounds,
 					},
 				},
 				{
 					[]tags.Tag{{k2, []byte("v2")}},
 					&AggregationDistributionValue{
-						1, 5, 5, 5, []int64{0, 1}, agg1.bounds,
+						1, 5, 5, 5, 0, []int64{0, 1}, agg1.bounds,
 					},
 				},
 				{
 					[]tags.Tag{{k1, []byte("v1")}, {k2, []byte("v2")}},
 					&AggregationDistributionValue{
-						1, 5, 5, 5, []int64{0, 1}, agg1.bounds,
+						1, 5, 5, 5, 0, []int64{0, 1}, agg1.bounds,
 					},
 				},
 			},
@@ -132,19 +132,19 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowCumulative(t *testin
 				{
 					[]tags.Tag{{k1, []byte("v1 is a very long value key")}},
 					&AggregationDistributionValue{
-						2, 1, 5, 6, []int64{1, 1}, agg1.bounds,
+						2, 1, 5, 3, 8, []int64{1, 1}, agg1.bounds,
 					},
 				},
 				{
 					[]tags.Tag{{k1, []byte("v1 is another very long value key")}},
 					&AggregationDistributionValue{
-						1, 1, 1, 1, []int64{1, 0}, agg1.bounds,
+						1, 1, 1, 1, 0, []int64{1, 0}, agg1.bounds,
 					},
 				},
 				{
 					[]tags.Tag{{k1, []byte("v1 is a very long value key")}, {k2, []byte("v2 is a very long value key")}},
 					&AggregationDistributionValue{
-						4, 1, 5, 12, []int64{1, 3}, agg1.bounds,
+						4, 1, 5, 3, 2.66666666666667 * 3, []int64{1, 3}, agg1.bounds,
 					},
 				},
 			},
@@ -230,7 +230,7 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowSlidingTime(t *testi
 						{
 							[]tags.Tag{{k1, []byte("v1")}},
 							&AggregationDistributionValue{
-								6, 2, 5, 23, []int64{0, 6}, agg1.bounds,
+								6, 2, 5, 3.8333333333, 1.3666666667 * 5, []int64{0, 6}, agg1.bounds,
 							},
 						},
 					},
@@ -242,7 +242,7 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowSlidingTime(t *testi
 						{
 							[]tags.Tag{{k1, []byte("v1")}},
 							&AggregationDistributionValue{
-								4, 3, 5, 16, []int64{0, 4}, agg1.bounds,
+								4, 3, 5, 4, 0.6666666667 * 3, []int64{0, 4}, agg1.bounds,
 							},
 						},
 					},
@@ -254,7 +254,7 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowSlidingTime(t *testi
 						{
 							[]tags.Tag{{k1, []byte("v1")}},
 							&AggregationDistributionValue{
-								2, 3, 4, 7, []int64{0, 2}, agg1.bounds,
+								2, 3, 4, 3.5, 0.5, []int64{0, 2}, agg1.bounds,
 							},
 						},
 					},
@@ -280,79 +280,55 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowSlidingTime(t *testi
 						{
 							[]tags.Tag{{k1, []byte("v1")}},
 							&AggregationDistributionValue{
-								7, 1, 5, 25, []int64{1, 6}, agg1.bounds,
+								7, 1, 5, 3.57142857142857, 2.61904761904762 * 6, []int64{1, 6}, agg1.bounds,
 							},
 						},
 					},
 				},
 				{
-					"oldest partial bucket: (remaining time: 50%) (count: 0)",
+					"oldest partial bucket: (remaining time: 50%)",
 					startTime.Add(12 * time.Second),
 					[]*Row{
 						{
 							[]tags.Tag{{k1, []byte("v1")}},
 							&AggregationDistributionValue{
-								7, 1, 5, 25, []int64{1, 6}, agg1.bounds,
+								7, 1, 5, 3.57142857142857, 2.61904761904762 * 6, []int64{1, 6}, agg1.bounds,
 							},
 						},
 					},
 				},
 				{
-					"oldest partial bucket: (remaining time: 50%) (count: 1)",
-					startTime.Add(12 * time.Second),
+					"oldest partial bucket: (remaining time: 99.99%)",
+					startTime.Add(15 * time.Second),
 					[]*Row{
 						{
 							[]tags.Tag{{k1, []byte("v1")}},
 							&AggregationDistributionValue{
-								7, 1, 5, 25, []int64{1, 6}, agg1.bounds,
+								6, 2, 5, 4, 1.6 * 5, []int64{0, 6}, agg1.bounds,
 							},
 						},
 					},
 				},
 				{
-					"oldest partial bucket: (remaining time: 80%) (count: 2)",
-					startTime.Add(15*time.Second + 400*time.Millisecond),
+					"oldest partial bucket: (remaining time: 0.001%)",
+					startTime.Add(17*time.Second - 1*time.Millisecond),
 					[]*Row{
 						{
 							[]tags.Tag{{k1, []byte("v1")}},
 							&AggregationDistributionValue{
-								6, 2, 5, 24, []int64{0, 6}, agg1.bounds,
+								6, 2, 5, 4, 1.6 * 5, []int64{0, 6}, agg1.bounds,
 							},
 						},
 					},
 				},
 				{
-					"oldest partial bucket: (remaining time: 50%) (count: 2)",
-					startTime.Add(16 * time.Second),
-					[]*Row{
-						{
-							[]tags.Tag{{k1, []byte("v1")}},
-							&AggregationDistributionValue{
-								5, 2.5, 5, 21.5, []int64{0, 5}, agg1.bounds,
-							},
-						},
-					},
-				},
-				{
-					"oldest partial bucket: (remaining time: 90%) (count: 3)",
-					startTime.Add(17*time.Second + 200*time.Millisecond),
-					[]*Row{
-						{
-							[]tags.Tag{{k1, []byte("v1")}},
-							&AggregationDistributionValue{
-								4, 4, 5, 18.5, []int64{0, 4}, agg1.bounds,
-							},
-						},
-					},
-				},
-				{
-					"oldest partial bucket: (remaining time: 50%) (count: 3)",
+					"oldest partial bucket: (remaining time: 50%)",
 					startTime.Add(18 * time.Second),
 					[]*Row{
 						{
 							[]tags.Tag{{k1, []byte("v1")}},
 							&AggregationDistributionValue{
-								3, 4, 5, 14, []int64{0, 3}, agg1.bounds,
+								4, 4, 5, 4.75, 0.25 * 3, []int64{0, 4}, agg1.bounds,
 							},
 						},
 					},
@@ -600,7 +576,7 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowSlidingCount(t *test
 	k1, _ := tags.CreateKeyString("k1")
 	k2, _ := tags.CreateKeyString("k2")
 	agg1 := NewAggregationDistribution([]float64{2})
-	vw1 := NewView("VF1", "desc VF1", []tags.Key{k1, k2}, nil, agg1, NewWindowSlidingCount(4, 2))
+	vw1 := NewView("VF1", "desc VF1", []tags.Key{k1, k2}, nil, agg1, NewWindowSlidingCount(12, 4))
 
 	type tagString struct {
 		k *tags.KeyString
@@ -619,7 +595,7 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowSlidingCount(t *test
 
 	tcs := []testCase{
 		{
-			"1",
+			"1: no partial bucket",
 			[]record{
 				{1, []tagString{{k1, "v1"}}},
 				{2, []tagString{{k1, "v1"}}},
@@ -630,13 +606,13 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowSlidingCount(t *test
 				{
 					[]tags.Tag{{k1, []byte("v1")}},
 					&AggregationDistributionValue{
-						4, 1, 4, 10, []int64{1, 3}, agg1.bounds,
+						4, 1, 4, 2.5, 1.6666666667 * 3, []int64{1, 3}, agg1.bounds,
 					},
 				},
 			},
 		},
 		{
-			"2",
+			"2: last bucket full. Includes oldest bucket",
 			[]record{
 				{1, []tagString{{k1, "v1"}}},
 				{2, []tagString{{k1, "v1"}}},
@@ -644,30 +620,47 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowSlidingCount(t *test
 				{4, []tagString{{k1, "v1"}}},
 				{5, []tagString{{k1, "v1"}}},
 				{6, []tagString{{k1, "v1"}}},
+				{7, []tagString{{k1, "v1"}}},
+				{8, []tagString{{k1, "v1"}}},
+				{9, []tagString{{k1, "v1"}}},
+				{10, []tagString{{k1, "v1"}}},
+				{11, []tagString{{k1, "v1"}}},
+				{12, []tagString{{k1, "v1"}}},
+				{13, []tagString{{k1, "v1"}}},
+				{14, []tagString{{k1, "v1"}}},
+				{15, []tagString{{k1, "v1"}}},
 			},
 			[]*Row{
 				{
 					[]tags.Tag{{k1, []byte("v1")}},
 					&AggregationDistributionValue{
-						4, 3, 6, 18, []int64{0, 4}, agg1.bounds,
+						15, 1, 15, 8, 20 * 14, []int64{1, 14}, agg1.bounds,
 					},
 				},
 			},
 		},
 		{
-			"3",
+			"3: last bucket almost empty. Includes oldest bucket",
 			[]record{
 				{1, []tagString{{k1, "v1"}}},
 				{2, []tagString{{k1, "v1"}}},
 				{3, []tagString{{k1, "v1"}}},
 				{4, []tagString{{k1, "v1"}}},
 				{5, []tagString{{k1, "v1"}}},
+				{6, []tagString{{k1, "v1"}}},
+				{7, []tagString{{k1, "v1"}}},
+				{8, []tagString{{k1, "v1"}}},
+				{9, []tagString{{k1, "v1"}}},
+				{10, []tagString{{k1, "v1"}}},
+				{11, []tagString{{k1, "v1"}}},
+				{12, []tagString{{k1, "v1"}}},
+				{13, []tagString{{k1, "v1"}}}, // this will be ignored
 			},
 			[]*Row{
 				{
 					[]tags.Tag{{k1, []byte("v1")}},
 					&AggregationDistributionValue{
-						4, 1.5, 5, 13.5, []int64{1, 3}, agg1.bounds,
+						13, 1, 13, 7, 15.1666666667 * 12, []int64{1, 12}, agg1.bounds,
 					},
 				},
 			},

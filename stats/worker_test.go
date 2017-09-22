@@ -16,12 +16,12 @@
 package stats
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"testing"
 
 	"github.com/census-instrumentation/opencensus-go/tags"
+	"golang.org/x/net/context"
 )
 
 func Test_Worker_MeasureCreation(t *testing.T) {

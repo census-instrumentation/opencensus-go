@@ -20,7 +20,7 @@ To install this package, you need to install Go and setup your Go workspace on y
 $ go get -u github.com/census-instrumentation/opencensus-go
 
 ## Prerequisites
-This requires Go 1.8 or later as it uses the convenience function sort.Slice(...) in few places.
+This requires Go 1.8 or later as it uses the convenience function sort.Slice(...) introduced in Go 1.8.
 
 ## Tags
 
