@@ -21,7 +21,6 @@ $ go get -u github.com/census-instrumentation/opencensus-go
 
 ## Prerequisites
 This requires Go 1.8 or later as it uses the convenience function sort.Slice(...) introduced in Go 1.8.
-It also uses "golang.org/x/net/context".Context introduced in Go 1.7 heavily. Therefore, in order to integrate with any library still using "golang.org/x/net/context".Context, Go 1.9 or higher is required to take advantage of type aliasing. 
 
 ## Tags
 

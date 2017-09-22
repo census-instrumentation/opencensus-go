@@ -18,12 +18,12 @@
 package stats
 
 import (
-	"golang.org/x/net/context"
 	"errors"
 	"fmt"
 	"time"
 
 	"github.com/census-instrumentation/opencensus-go/tags"
+	"golang.org/x/net/context"
 )
 
 type worker struct {

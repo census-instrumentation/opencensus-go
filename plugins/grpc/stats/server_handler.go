@@ -16,7 +16,6 @@
 package stats
 
 import (
-	"golang.org/x/net/context"
 	"fmt"
 	"strings"
 	"sync/atomic"
@@ -25,6 +24,7 @@ import (
 	istats "github.com/census-instrumentation/opencensus-go/stats"
 	"github.com/census-instrumentation/opencensus-go/tags"
 	"github.com/golang/glog"
+	"golang.org/x/net/context"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/stats"
 )

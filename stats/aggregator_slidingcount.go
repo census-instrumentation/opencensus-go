@@ -17,7 +17,7 @@
 // implementation.
 package stats
 
-import (	
+import (
 	"math"
 	"time"
 )
