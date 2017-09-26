@@ -17,6 +17,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/census-instrumentation/opencensus-go/stats"
@@ -32,21 +33,21 @@ func main() {
 	// Creates keys
 	key1, err := tags.CreateKeyString("keyNameID1")
 	if err != nil {
-		panic(fmt.Sprintf("Key 'keyNameID1' not created %v", err))
+		log.Fatalf("Key 'keyNameID1' not created %v", err)
 	}
 	key2, err := tags.CreateKeyString("keyNameID2")
 	if err != nil {
-		panic(fmt.Sprintf("Key 'keyNameID2' not created %v", err))
+		log.Fatalf("Key 'keyNameID2' not created %v", err)
 	}
 
 	// Create measures
 	mf, err := stats.NewMeasureFloat64("/my/float64/measureName", "some measure", "ms")
 	if err != nil {
-		panic(fmt.Sprintf("Measure '/my/float64/measureName' not created %v", err))
+		log.Fatalf("Measure '/my/float64/measureName' not created %v", err)
 	}
 	mi, err := stats.NewMeasureInt64("/my/int64/otherName", "some other measure", "By")
 	if err != nil {
-		panic(fmt.Sprintf("Measure '/my/int64/otherName' not created %v", err))
+		log.Fatalf("Measure '/my/int64/otherName' not created %v", err)
 	}
 
 	// Create aggregations
@@ -63,13 +64,11 @@ func main() {
 	myView2 := stats.NewView("/my/float64/viewName", "some other description", []tags.Key{key1}, mi, agg2, wnd1)
 
 	// Register views
-	err = stats.RegisterView(myView1)
-	if err != nil {
-		panic(fmt.Sprintf("View %v not registered. %v", myView1, err))
+	if err = stats.RegisterView(myView1); err != nil {
+		log.Fatalf("View %v not registered. %v", myView1, err)
 	}
-	err = stats.RegisterView(myView2)
-	if err != nil {
-		panic(fmt.Sprintf("View %v not registered. %v", myView2, err))
+	if err = stats.RegisterView(myView2); err != nil {
+		log.Fatalf("View %v not registered. %v", myView2, err)
 	}
 
 	// set the reporting period to 1 second instead of the 10 seconds default
@@ -80,7 +79,7 @@ func main() {
 	c1 := make(chan *stats.ViewData, 4)
 
 	// Process collected data asynchronously
-	go func(c1 chan *stats.ViewData) {
+	go func(c chan *stats.ViewData) {
 		for vd := range c1 {
 			fmt.Printf("\nViewData collected for view %v received after default duration elapsed. %v row(s) received\n", vd.V.Name(), len(vd.Rows))
 			for _, r := range vd.Rows {
@@ -89,15 +88,14 @@ func main() {
 		}
 	}(c1)
 
-	err = stats.SubscribeToView(myView1, c1)
-	if err != nil {
-		panic(fmt.Sprintf("Subscription to view %v failed. %v", myView1, err))
+	if err = stats.SubscribeToView(myView1, c1); err != nil {
+		log.Fatalf("Subscription to view %v failed. %v", myView1, err)
 	}
 
 	// Explicitly instruct the library to collect the view data for on-demand
 	// retrieval
 	if err := stats.ForceCollection(myView2); err != nil {
-		panic(fmt.Sprintf("Forced collection of view %v failed. %v", myView2, err))
+		log.Fatalf("Forced collection of view %v failed. %v", myView2, err)
 	}
 
 	// ---------------
@@ -124,7 +122,7 @@ func main() {
 	// Pull collected data synchronously from the library
 	rows, err := stats.RetrieveData(myView2)
 	if err != nil {
-		panic(fmt.Sprintf("Retrieving data from view %v failed. %v", myView2, err))
+		log.Fatalf("Retrieving data from view %v failed. %v", myView2, err)
 	}
 
 	// Process collected data on-demand
