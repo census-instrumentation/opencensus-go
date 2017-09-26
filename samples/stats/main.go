@@ -60,8 +60,8 @@ func main() {
 	wnd1 := stats.NewWindowSlidingTime(duration, precisionIntervals)
 
 	// Create views
-	myView1 := stats.NewView("/my/int64/viewName", "some description", []tags.Key{key1, key2}, mf, agg1, wnd1)
-	myView2 := stats.NewView("/my/float64/viewName", "some other description", []tags.Key{key1}, mi, agg2, wnd1)
+	myView1 := stats.NewView("/my/int64/viewName", "some description", []tags.Key{key1, key2}, mi, agg1, wnd1)
+	myView2 := stats.NewView("/my/float64/viewName", "some other description", []tags.Key{key1}, mf, agg2, wnd1)
 
 	// Register views
 	if err = stats.RegisterView(myView1); err != nil {
@@ -81,9 +81,9 @@ func main() {
 	// Process collected data asynchronously
 	go func(c chan *stats.ViewData) {
 		for vd := range c1 {
-			fmt.Printf("\nViewData collected for view %v received after default duration elapsed. %v row(s) received\n", vd.V.Name(), len(vd.Rows))
+			log.Printf("ViewData collected for view %v received after default duration elapsed. %v row(s) received", vd.V.Name(), len(vd.Rows))
 			for _, r := range vd.Rows {
-				fmt.Printf("row received with len(tags): %v\n", len(r.Tags))
+				log.Printf("row received with len(tags): %v", len(r.Tags))
 			}
 		}
 	}(c1)
@@ -116,9 +116,10 @@ func main() {
 
 	// Wait for a duration longer than reporting duration to ensure the census
 	// library reports the collected data
-	fmt.Printf("\nWait %v for default reporting duration to kick in\n", reporitngDuration+1*time.Second)
-	time.Sleep(reporitngDuration + 1*time.Second)
+	fmt.Printf("\nWait %v for default reporting duration to kick in\n", reporitngDuration+100*time.Millisecond)
+	time.Sleep(reporitngDuration + 100*time.Millisecond)
 
+	fmt.Print("\nRetrieve data on demand\n")
 	// Pull collected data synchronously from the library
 	rows, err := stats.RetrieveData(myView2)
 	if err != nil {
@@ -126,10 +127,10 @@ func main() {
 	}
 
 	// Process collected data on-demand
-	fmt.Printf("\nViewData collected for view %v received on demand. %v row(s) received\n", myView2.Name(), len(rows))
+	log.Printf("ViewData collected for view %v received on demand. %v row(s) received", myView2.Name(), len(rows))
 	for _, r := range rows {
-		fmt.Printf("row received with len(tags): %v\n", len(r.Tags))
+		log.Printf("row received with len(tags): %v", len(r.Tags))
 	}
 
-	fmt.Printf("\n")
+	fmt.Println()
 }
