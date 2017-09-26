@@ -30,12 +30,12 @@ To create/retrieve a key the user calls:
 
 Create/retrieve key:
 
-    if err, key1 := tags.CreateKeyString("keyNameID1"); err != nil {
+    if key1, err := tags.CreateKeyString("keyNameID1"); err != nil {
         // handle error
     }
     ...
 
-    if err, key2 := tags.CreateKeyString("keyNameID2"); err != nil {
+    if key2, err := tags.CreateKeyString("keyNameID2"); err != nil {
         // handle error
     }
     ...
@@ -82,7 +82,7 @@ To create a new context with the tags. This will create a new context where all 
 Create a new context keeping the old tag set and adding new tags to it, removing specific tags from it, or modifying the values fo some tags. This is just a matter of getting the oldTagSet from the context, apply changes to it, then create a new  context with the newTagSet.
     
     oldTagSet := tags.FromContext(ctx)
-    newTagSet := NewTagSetBuilder(oldTagSet).InsertString(key1, "foo value").
+    newTagSet := tags.NewTagSetBuilder(oldTagSet).InsertString(key1, "foo value").
         UpdateString(key1, "foo value2").
         UpsertString(key2, "bar value").
         Build()
@@ -153,8 +153,8 @@ Currently all aggregation types are compatible with all aggregation windows. Lat
 ### To creater/register a view
 Create a view:
 
-    myView1 = stats.NewView("/my/int64/viewName", "some description", []Keys{key1, key2}, mf, agg1, wnd1)
-    myView2 := stats.NewView("/my/float64/viewName", "some other description", []Keys{key1}, mi, agg2, wnd3)
+    myView1 := stats.NewView("/my/int64/viewName", "some description", []tags.Key{key1, key2}, mf, agg1, wnd1)
+    myView2 := stats.NewView("/my/float64/viewName", "some other description", []tags.Key{key1}, mi, agg2, wnd3)
 
 Register view:
 
@@ -193,12 +193,12 @@ Once a subscriber subscribes to a view, its collected date is reported at a regu
 
 Subscribe to a view:
 
-    c1 := make(c chan *ViewData)
+    c1 := make(c chan *stats.ViewData)
     if err := stats.SubscribeToView(myView1, c1); err != nil {
         // handle error
     }
 
-    c2 := make(c chan *ViewData)
+    c2 := make(c chan *stats.ViewData)
     if err := stats.SubscribeToView(myView2, c2); err != nil {
         // handle error
     }
@@ -248,7 +248,7 @@ Even if a view is registered, if it has no subscriber no data for it is collecte
     }
     ...
 
-## Recording usage/measurements
+### To record usage/measurements
 Recording usage can only be performed against already registered measure and and their registered views. Measurements are implicitly tagged with the tags in the context:
     
     // mi is a *MeasureInt64 and v is an int64 .
@@ -259,3 +259,23 @@ Recording usage can only be performed against already registered measure and and
 
     // multiple measurements can be performed at once.
     stats.Record(ctx, mi.Is(4), mf.Is(10.5))
+
+### To retrieve collected data for a View
+    // assuming c1 is the channel that was used to subscribe to myView1
+    go func(c1 chan *stats.ViewData) {
+        for vd := range c1 {
+            // process collected stats received. The type of vd is
+            // *stats.ViewData
+        }
+    }(c1)
+
+    // to pull collected data synchronously from the library. This assuming
+    // that at least 1 subscriber to myView1 exists or that
+    // stats.ForceCollection(myView1) was called before
+    rows, err := stats.RetrieveData(myView1)
+    if err != nil {
+        // handle error
+    }
+    for _, r := range rows {
+        // process a single row of type *stats.Row
+    }
