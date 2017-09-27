@@ -31,23 +31,23 @@ func main() {
 	// ---------------------------------------------
 
 	// Creates keys
-	key1, err := tags.CreateKeyString("keyNameID1")
+	key1, err := tags.CreateKeyString("/widget.com/key/deviceTypeID")
 	if err != nil {
-		log.Fatalf("Key 'keyNameID1' not created %v", err)
+		log.Fatalf("Key '/widget.com/key/deviceTypeID' not created %v", err)
 	}
-	key2, err := tags.CreateKeyString("keyNameID2")
+	key2, err := tags.CreateKeyString("/widget.com/key/osVersionID")
 	if err != nil {
-		log.Fatalf("Key 'keyNameID2' not created %v", err)
+		log.Fatalf("Key '/widget.com/key/osVersionID' not created %v", err)
 	}
 
 	// Create measures
-	mf, err := stats.NewMeasureFloat64("/my/float64/measureName", "some measure", "ms")
+	mf, err := stats.NewMeasureFloat64("/widget.com/measure/float64/video_size", "size of video document processed in megabytes (10**6)", "MBy")
 	if err != nil {
-		log.Fatalf("Measure '/my/float64/measureName' not created %v", err)
+		log.Fatalf("Measure '/widget.com/measure/float64/video_size' not created %v", err)
 	}
-	mi, err := stats.NewMeasureInt64("/my/int64/otherName", "some other measure", "By")
+	mi, err := stats.NewMeasureInt64("/widget.com/measure/int64/video_spam_count", "count of videos marked as spam/inappropriate", "1")
 	if err != nil {
-		log.Fatalf("Measure '/my/int64/otherName' not created %v", err)
+		log.Fatalf("Measure '/widget.com/measure/int64/video_spam_count' not created %v", err)
 	}
 
 	// Create aggregations
@@ -60,8 +60,8 @@ func main() {
 	wnd1 := stats.NewWindowSlidingTime(duration, precisionIntervals)
 
 	// Create views
-	myView1 := stats.NewView("/my/int64/viewName", "some description", []tags.Key{key1, key2}, mi, agg1, wnd1)
-	myView2 := stats.NewView("/my/float64/viewName", "some other description", []tags.Key{key1}, mf, agg2, wnd1)
+	myView1 := stats.NewView("/widget.com/view/video_size/distribution", "a distribution of video sizes processed tagged by device and os", []tags.Key{key1, key2}, mf, agg1, wnd1)
+	myView2 := stats.NewView("/widget.com/view/video_spam_count/count", "a count of video marked as spam tagged by device", []tags.Key{key1}, mi, agg2, wnd1)
 
 	// Register views
 	if err = stats.RegisterView(myView1); err != nil {
@@ -112,7 +112,7 @@ func main() {
 	stats.RecordFloat64(ctx, mf, 10.0)
 
 	// Recording multiple datapoints at once
-	stats.Record(ctx, mi.Is(4), mf.Is(10.0))
+	stats.Record(ctx, mi.Is(2), mf.Is(100.0))
 
 	// Wait for a duration longer than reporting duration to ensure the census
 	// library reports the collected data
