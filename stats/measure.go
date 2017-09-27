@@ -13,8 +13,6 @@
 // limitations under the License.
 //
 
-// Package stats defines the stats collection API and its native Go
-// implementation.
 package stats
 
 // Measure is the interface for all measure types. A measure is required when
