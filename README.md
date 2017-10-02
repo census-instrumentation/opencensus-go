@@ -283,8 +283,8 @@ stats.Record(ctx, mi.Is(4), mf.Is(10.5))
 
 ```go
 // assuming c1 is the channel that was used to subscribe to myView1
-go func(c1 chan *stats.ViewData) {
-    for vd := range c1 {
+go func(c chan *stats.ViewData) {
+    for vd := range c {
         // process collected stats received. The type of vd is
         // *stats.ViewData
     }

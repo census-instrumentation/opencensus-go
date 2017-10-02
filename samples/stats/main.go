@@ -80,7 +80,7 @@ func main() {
 
 	// Process collected data asynchronously
 	go func(c chan *stats.ViewData) {
-		for vd := range c1 {
+		for vd := range c {
 			log.Printf("ViewData collected for view %v received after default duration elapsed. %v row(s) received", vd.V.Name(), len(vd.Rows))
 			for _, r := range vd.Rows {
 				log.Printf("row received with len(tags): %v", len(r.Tags))
