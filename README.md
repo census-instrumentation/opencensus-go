@@ -8,7 +8,7 @@ Currently it consists of three major APIs: tags, stats, and tracing.
 
 This project is still at a very early stage of development and
 a lot of the API calls are in the process of being changed and
-might break your code in hte future.
+might break your code in the future.
 
 [travis-image]: https://travis-ci.org/census-instrumentation/opencensus-go.svg?branch=master
 [travis-url]: https://travis-ci.org/census-instrumentation/opencensus-go
@@ -53,13 +53,7 @@ The following code demonstrates how to create a new tag set from scratch:
     tsb.UpsertString(key2, "bar value")
     tagsSet := tsb.Build()
 
-The methods on builders can be chained and the following is a shorter version of achieving the same:
-
-    tagsSet := NewTagSetBuilder().InsertString(key1, "foo value").
-                                  UpdateString(key1, "foo value2").
-                                  UpsertString(key2, "bar value").
-                                  Build()
-
+The methods on builders can be chained.
 
 To create a new tagsSet from an existing tag set oldTagSet:
 
@@ -70,15 +64,7 @@ To create a new tagsSet from an existing tag set oldTagSet:
     tsb.UpsertString(key2, "bar value")
     newTagSet := tsb.Build()
 
-The following is a shorter way of achieving the same:
-
-    oldTagSet := ...
-    newTagSet := NewTagSetBuilder(oldTagSet).InsertString(key1, "foo value").
-                 UpdateString(key1, "foo value2").
-                 UpsertString(key2, "bar value").
-                 Build()
-
-### To add or modify tagSet in a context
+### To add or modify TagSet in a context
 
 A tag set can be added to a context so the tags are propagated to downstream
 methods and remote procedure calls with the context.
@@ -105,24 +91,20 @@ with the newly created tag set.
 
 ## Stats API
 
-### To create/retrieve/delete a measure a.k.a resource
+### To create/retrieve/delete a measure
 
 Create and load measures with unit:
 
     // returns a *MeasureFloat64
-    mf, err := stats.NewMeasureFloat64("/my/float64/measureName", "some measure")
+    mf, err := stats.NewMeasureFloat64("/my/float64/measureName", "some measure", "MBy")
     if err != nil {
         // handle error
     }
-    mi, err := stats.NewMeasureInt64("/my/otherName", "some other measure")
+    mi, err := stats.NewMeasureInt64("/my/otherName", "some other measure", "1")
     if err != nil {
         // handle error
     }
     ...
-
-TODO: where to specify "unit"? Shouldn't it be consistent with
-opencensus-proto/stats/stats.prot in terms of terminoloty? (e.g. measure vs
-measurement)
 
 
 Retrieve measure by name:
@@ -169,7 +151,7 @@ Currently all aggregation types are compatible with all aggregation windows. Lat
     wn3 := stats.NewWindowCumulative()
 
 
-### To creater/register a view
+### To create/register a view
 
 TODO: define "view" (link to the spec).
 
@@ -286,5 +268,6 @@ Recording usage can only be performed against already registered measure and and
     stats.Record(ctx, mi.Is(4), mf.Is(10.5))
 
 
-TODO: explain how to access collected data and view.
+## Tracing API
 
+TODO: update the doc once tracing API is ready.
