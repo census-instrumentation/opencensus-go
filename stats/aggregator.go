@@ -13,8 +13,6 @@
 // limitations under the License.
 //
 
-// Package stats defines the stats collection API and its native Go
-// implementation.
 package stats
 
 import "time"

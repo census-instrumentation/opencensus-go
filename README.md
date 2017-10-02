@@ -1,17 +1,21 @@
-# Go stats collection libraries
+# OpenCensus Libraries for Go
 
 [![Build Status][travis-image]][travis-url] [![GoDoc][godoc-image]][godoc-url]
 
-This is still at a very early stage of development and a lot of the API calls
-are in the process of being changed and might break your code in hte future.
+Opencensus-go is a Go implementation of OpenCensus, a toolkit for
+collecting application performance and behavior monitoring data.
+Currently it consists of three major APIs: tags, stats, and tracing.
+
+This project is still at a very early stage of development and
+a lot of the API calls are in the process of being changed and
+might break your code in hte future.
 
 [travis-image]: https://travis-ci.org/census-instrumentation/opencensus-go.svg?branch=master
 [travis-url]: https://travis-ci.org/census-instrumentation/opencensus-go
 [godoc-image]: https://godoc.org/github.com/census-instrumentation/opencensus-go?status.svg
 [godoc-url]: https://godoc.org/github.com/census-instrumentation/opencensus-go
 
-# Go stats core library
-The Go implementation of opencensus.
+
 TODO: add a link to the language independent opencensus doc when it is available.
 
 ## Installation
@@ -19,13 +23,17 @@ To install this package, you need to install Go and setup your Go workspace on y
 
 $ go get -u github.com/census-instrumentation/opencensus-go
 
+TODO: convert this to godoc so the above go get command doesn't complain and
+godoc can present this nicely.
+
 ## Prerequisites
 This requires Go 1.8 or later as it uses the convenience function sort.Slice(...) introduced in Go 1.8.
 
-## Tags
+## Tags API
 
 ### To create/retrieve a key
-A key is defined by its name. To use a key a user needs to know its name and type (currently only keys of type string are supported. Later support for keys of type int64 and bool will be supported). Calling CreateKeyString(...) multiple times with the same name returns the same key.
+A key is defined by its name. To use a key a user needs to know its name and type (currently only keys of type string are supported. Later keys of type int64 and bool will be supported). Calling CreateKeyString(...) multiple times with the same name returns the same key.
+
 To create/retrieve a key the user calls:
 
 Create/retrieve key:
@@ -35,13 +43,9 @@ Create/retrieve key:
     }
     ...
 
-    if err, key2 := tags.CreateKeyString("keyNameID2"); err != nil {
-        // handle error
-    }
-    ...
 
-### Create a set of tags associated with keys
-To create a new tag set from scratch using changes:
+### To create a set of tags associated with keys
+The following code demonstrates how to create a new tag set from scratch:
 
     tsb := NewTagSetBuilder(nil)
     tsb.InsertString(key1, "foo value")
@@ -49,15 +53,16 @@ To create a new tag set from scratch using changes:
     tsb.UpsertString(key2, "bar value")
     tagsSet := tsb.Build()
 
-    // A shorter way of achieving the same is:
+The methods on builders can be chained and the following is a shorter version of achieving the same:
+
     tagsSet := NewTagSetBuilder().InsertString(key1, "foo value").
                                   UpdateString(key1, "foo value2").
                                   UpsertString(key2, "bar value").
                                   Build()
 
 
-
 To create a new tagsSet from an existing tag set oldTagSet:
+
     oldTagSet := ...
     tsb := NewTagSetBuilder(oldTagSet)
     tsb.InsertString(key1, "foo value")
@@ -65,34 +70,44 @@ To create a new tagsSet from an existing tag set oldTagSet:
     tsb.UpsertString(key2, "bar value")
     newTagSet := tsb.Build()
 
-    // A shorter way of achieving the same is:
-    oldTagSet := ...
-	newTagSet := NewTagSetBuilder(oldTagSet).InsertString(key1, "foo value").
-		UpdateString(key1, "foo value2").
-		UpsertString(key2, "bar value").
-		Build()    
+The following is a shorter way of achieving the same:
 
-### Add new tagSet to a context / Modify tagSet in a context 
-Add tags to a context for propagation to downstream methods and downstream rpcs:
-To create a new context with the tags. This will create a new context where all the existing tags in the current context are deleted and replaced with the tags passed as argument.
-    
+    oldTagSet := ...
+    newTagSet := NewTagSetBuilder(oldTagSet).InsertString(key1, "foo value").
+                 UpdateString(key1, "foo value2").
+                 UpsertString(key2, "bar value").
+                 Build()
+
+### To add or modify tagSet in a context
+
+A tag set can be added to a context so the tags are propagated to downstream
+methods and remote procedure calls with the context.
+
+To create a new context with the tags,
+
     newTagSet  := ...
     ctx2 := tags.NewContext(ctx, newTagSet)
 
-Create a new context keeping the old tag set and adding new tags to it, removing specific tags from it, or modifying the values fo some tags. This is just a matter of getting the oldTagSet from the context, apply changes to it, then create a new  context with the newTagSet.
-    
+The above code will create a new context where all the existing tags in the current context are deleted and replaced with the tags passed as argument.
+If a new context should be created by modifying the existing tag set in the
+context, rather than creating one from scratch
+(for example, adding new tags, removing some tags, or changing the
+values of some tags), we can retrieve the old tag set from the context,
+create a TagSetBuilder based on the old tag set, and create a new context
+with the newly created tag set.
+
     oldTagSet := tags.FromContext(ctx)
     newTagSet := NewTagSetBuilder(oldTagSet).InsertString(key1, "foo value").
         UpdateString(key1, "foo value2").
         UpsertString(key2, "bar value").
         Build()
-
     ctx2 := tags.NewContext(ctx, newTagSet)
 
-## Stats
+## Stats API
 
 ### To create/retrieve/delete a measure a.k.a resource
-Create/load measures units:
+
+Create and load measures with unit:
 
     // returns a *MeasureFloat64
     mf, err := stats.NewMeasureFloat64("/my/float64/measureName", "some measure")
@@ -102,14 +117,19 @@ Create/load measures units:
     mi, err := stats.NewMeasureInt64("/my/otherName", "some other measure")
     if err != nil {
         // handle error
-    }    
+    }
     ...
+
+TODO: where to specify "unit"? Shouldn't it be consistent with
+opencensus-proto/stats/stats.prot in terms of terminoloty? (e.g. measure vs
+measurement)
+
 
 Retrieve measure by name:
 
     mf, err := stats.GetMeasureByName("/my/float64/measureName")
-	if err != nil {
-        // handle error
+    if err != nil {
+      // handle error
     }
     mi, err := stats.GetMeasureByName("/my/otherName")
     if err != nil {
@@ -119,7 +139,7 @@ Retrieve measure by name:
 
 Delete measure (this can be useful when replacing a measure by another measure with the same name):
 
-	if err := stats.DeleteMeasure(mf); err != nil {
+    if err := stats.DeleteMeasure(mf); err != nil {
         // handle error
     }
     if err := stats.DeleteMeasure(mi); err != nil {
@@ -146,15 +166,17 @@ Currently all aggregation types are compatible with all aggregation windows. Lat
     lastNSamples := 100
     precisionSubsets := 10
     wnd2 := stats.NewWindowSlidingCount(lastNSamples, precisionSubsets)
-    
     wn3 := stats.NewWindowCumulative()
 
 
 ### To creater/register a view
+
+TODO: define "view" (link to the spec).
+
 Create a view:
 
-    myView1 = stats.NewView("/my/int64/viewName", "some description", []Keys{key1, key2}, mf, agg1, wnd1)
-    myView2 := stats.NewView("/my/float64/viewName", "some other description", []Keys{key1}, mi, agg2, wnd3)
+    myView1 := stats.NewView("/my/int64/viewName", "some description", []tags.Key{key1, key2}, mf, agg1, wnd1)
+    myView2 := stats.NewView("/my/float64/viewName", "some other description", []tags.Key{key1}, mi, agg2, wnd3)
 
 Register view:
 
@@ -165,10 +187,12 @@ Register view:
       // handle error
     }
 
+TODO: distinguish "create" and "register". Why do they need to be separate?
+
 Retrieve view by name:
-    
+
     myView1, err := stats.GetViewByName("/my/int64/viewName")
-	if err != nil {
+    if err != nil {
         // handle error
     }
     myView2, err := stats.GetViewByName("/my/float64/viewName")
@@ -230,8 +254,8 @@ Even if a view is registered, if it has no subscriber no data for it is collecte
 
     // Retrieve data. The returned rows are a []stats.Row. Each row is a struct:
     //  {
-	//      Tags             []tags.Tag
-	//      AggregationValue AggregationValue
+    //      Tags             []tags.Tag
+    //      AggregationValue AggregationValue
     //  }
     rows, err := stats.RetrieveData(v View)
     if err != nil {
@@ -248,9 +272,10 @@ Even if a view is registered, if it has no subscriber no data for it is collecte
     }
     ...
 
-## Recording usage/measurements
+## To record usage/measurements
+
 Recording usage can only be performed against already registered measure and and their registered views. Measurements are implicitly tagged with the tags in the context:
-    
+
     // mi is a *MeasureInt64 and v is an int64 .
     stats.RecordInt64(ctx, mi, v)
 
@@ -259,3 +284,7 @@ Recording usage can only be performed against already registered measure and and
 
     // multiple measurements can be performed at once.
     stats.Record(ctx, mi.Is(4), mf.Is(10.5))
+
+
+TODO: explain how to access collected data and view.
+
