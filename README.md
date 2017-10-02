@@ -22,7 +22,7 @@ $ go get -u github.com/census-instrumentation/opencensus-go
 ## Prerequisites
 This requires Go 1.8 or later as it uses the convenience function sort.Slice(...) introduced in Go 1.8.
 
-## Tags
+## Tags API
 
 ### To create/retrieve a key
 A key is defined by its name. To use a key a user needs to know its name and type (currently only keys of type string are supported. Later support for keys of type int64 and bool will be supported). Calling CreateKeyString(...) multiple times with the same name returns the same key.
@@ -96,7 +96,7 @@ newTagSet := tags.NewTagSetBuilder(oldTagSet).InsertString(key1, "foo value").
 ctx2 := tags.NewContext(ctx, newTagSet)
 ```
 
-## Stats
+## Stats API
 
 ### To create/retrieve/delete a measure a.k.a resource
 Create/load measures units:
