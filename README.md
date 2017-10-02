@@ -301,3 +301,7 @@ for _, r := range rows {
     // process a single row of type *stats.Row
 }
 ```
+
+## Tracing API
+ 		  
+TODO: update the doc once tracing API is ready.
