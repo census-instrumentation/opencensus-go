@@ -34,8 +34,6 @@ This requires Go 1.8 or later as it uses the convenience function sort.Slice(...
 ### To create/retrieve a key
 A key is defined by its name. To use a key a user needs to know its name and type (currently only keys of type string are supported. Later keys of type int64 and bool will be supported). Calling CreateKeyString(...) multiple times with the same name returns the same key.
 
-To create/retrieve a key the user calls:
-
 Create/retrieve key:
 
 ```go
@@ -71,14 +69,11 @@ newTagSet := tsb.Build()
 ### To add or modify a TagSet in a context
 Add tags to a context for propagation to downstream methods and downstream rpcs:
 To create a new context with the tags. This will create a new context where all the existing tags in the current context are deleted and replaced with the tags passed as argument.
-
 ```go
 newTagSet  := ...
 ctx2 := tags.NewContext(ctx, newTagSet)
 ```
-
 Create a new context keeping the old tag set and adding new tags to it, removing specific tags from it, or modifying the values fo some tags. This is just a matter of getting the oldTagSet from the context, apply changes to it, then create a new  context with the newTagSet.
-
 ```go
 oldTagSet := tags.FromContext(ctx)
 newTagSet := tags.NewTagSetBuilder(oldTagSet).InsertString(key1, "foo value").
@@ -291,5 +286,4 @@ for _, r := range rows {
 ```
 
 ## Tracing API
-
 TODO: update the doc once tracing API is ready.
