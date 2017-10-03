@@ -26,7 +26,7 @@ type Key interface {
 	ValueAsString(b []byte) string
 }
 
-// KeyString is a Key with a name.
+// KeyString is a Key and represents string keys.
 type KeyString struct {
 	name string
 	id   uint16
@@ -53,3 +53,5 @@ func (k *KeyString) String() string {
 
 // CreateKeyString creates or retrieves a *KeyString identified by name.
 var CreateKeyString func(name string) (*KeyString, error)
+
+// TODO(jbd): Find a better name for CreateKeyString.
