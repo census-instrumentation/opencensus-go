@@ -31,6 +31,7 @@ type tagSetBuilder struct {
 }
 
 // NewTagSetBuilder starts building a new TagSet from an existing TagSet.
+// If the given TagSet is nil, it starts with an empty set.
 func NewTagSetBuilder(ts *TagSet) TagSetBuilder {
 	tb := &tagSetBuilder{}
 

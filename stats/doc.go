@@ -13,8 +13,7 @@
 // limitations under the License.
 //
 
-// Package stats defines the stats collection API and its native Go
-// implementation.
+// Package stats contains the OpenCensus stats collection APIs.
 package stats
 
 // TODO(acetechnologist): Add a linnk to the language independent opencensus
