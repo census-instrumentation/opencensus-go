@@ -216,8 +216,8 @@ func (r *Row) Equal(other *Row) bool {
 	return reflect.DeepEqual(r.Tags, other.Tags) && r.AggregationValue.equal(other.AggregationValue)
 }
 
-// RowsContain returns true if rows contain r.
-func RowsContain(rows []*Row, r *Row) bool {
+// ContainsRow returns true if rows contain r.
+func ContainsRow(rows []*Row, r *Row) bool {
 	for _, x := range rows {
 		if r.Equal(x) {
 			return true
@@ -226,15 +226,15 @@ func RowsContain(rows []*Row, r *Row) bool {
 	return false
 }
 
-// RowsAreEqual returns true if rows1, rows2 are equivalent. The rows position
+// EqualRows returns true if rows1, rows2 are equivalent. The rows position
 // into the slice is taken into account.
-func RowsAreEqual(rows1, rows2 []*Row) (bool, string) {
+func EqualRows(rows1, rows2 []*Row) (bool, string) {
 	if len(rows1) != len(rows2) {
 		return false, fmt.Sprintf("len(rows1)=%v and len(rows2)=%v", len(rows1), len(rows2))
 	}
 
 	for _, r1 := range rows1 {
-		if !RowsContain(rows2, r1) {
+		if !ContainsRow(rows2, r1) {
 			return false, fmt.Sprintf("got unexpected row '%v' in rows1", r1)
 		}
 	}

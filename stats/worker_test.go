@@ -674,14 +674,14 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 				t.Fatalf("RetrieveData '%v' got error '%v', want no error for test case: '%v'", w.v.Name(), err, tc.label)
 			}
 			for _, gotRow := range gotRows {
-				if !RowsContain(w.rows, gotRow) {
+				if !ContainsRow(w.rows, gotRow) {
 					t.Errorf("got unexpected row '%v' for test case: '%v'", gotRow, tc.label)
 					break
 				}
 			}
 
 			for _, wantRow := range w.rows {
-				if !RowsContain(gotRows, wantRow) {
+				if !ContainsRow(gotRows, wantRow) {
 					t.Errorf("want row '%v' for test case: '%v'. Not received", wantRow, tc.label)
 					break
 				}
