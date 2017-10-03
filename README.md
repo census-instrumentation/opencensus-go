@@ -45,7 +45,7 @@ if key1, err := tags.CreateKeyString("keyNameID1"); err != nil {
 ```
 
 ### To create a set of tags associated with keys
-The following code demonstrates how to create a new tag set from scratch:
+TagSet is a set of tags. The following code demonstrates how to create a new TagSet from scratch:
 
 ```go
 tsb := NewTagSetBuilder(nil)
@@ -57,7 +57,7 @@ tagsSet := tsb.Build()
 
 The methods on Builder can be chained.
 
-To create a new tagsSet from an existing tag set oldTagSet:
+To create a new TagSet from an existing tag set oldTagSet:
 
 ```go
 oldTagSet := ...
@@ -68,7 +68,7 @@ tsb.UpsertString(key2, "bar value")
 newTagSet := tsb.Build()
 ```
 
-### Add new tagSet to a context / Modify tagSet in a context
+### To add or modify a TagSet in a context
 Add tags to a context for propagation to downstream methods and downstream rpcs:
 To create a new context with the tags. This will create a new context where all the existing tags in the current context are deleted and replaced with the tags passed as argument.
 
@@ -90,11 +90,13 @@ ctx2 := tags.NewContext(ctx, newTagSet)
 
 ## Stats API
 
-Create and load measures with unit:
+### To create/retrieve/delete a measure
+
+Create and load measures with units:
+
 ```go
 // returns a *MeasureFloat64
-mf, err := stats.NewMeasureFloat64("/my/float64/measureName", "some measure",
-"MBy")
+mf, err := stats.NewMeasureFloat64("/my/float64/measureName", "some measure", "MBy")
 if err != nil {
     // handle error
 }
