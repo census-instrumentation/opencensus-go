@@ -342,14 +342,14 @@ func TestClientDefaultCollections(t *testing.T) {
 			}
 
 			for _, gotRow := range gotRows {
-				if !istats.RowsContain(wantData.rows, gotRow) {
+				if !istats.ContainsRow(wantData.rows, gotRow) {
 					t.Errorf("Test case '%v'. View '%v' got unexpected row '%v'", tc.label, wantData.v().Name(), gotRow)
 					break
 				}
 			}
 
 			for _, wantRow := range wantData.rows {
-				if !istats.RowsContain(gotRows, wantRow) {
+				if !istats.ContainsRow(gotRows, wantRow) {
 					t.Errorf("Test case '%v'. View '%v' want row '%v'. Not received", tc.label, wantData.v().Name(), wantRow)
 					break
 				}

@@ -165,14 +165,14 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowCumulative(t *testin
 		gotRows := vw1.collectedRows(time.Now())
 
 		for _, gotRow := range gotRows {
-			if !RowsContain(tc.wantRows, gotRow) {
+			if !ContainsRow(tc.wantRows, gotRow) {
 				t.Errorf("got unexpected row '%v' for test case: '%v'", gotRow, tc.label)
 				break
 			}
 		}
 
 		for _, wantRow := range tc.wantRows {
-			if !RowsContain(gotRows, wantRow) {
+			if !ContainsRow(gotRows, wantRow) {
 				t.Errorf("want row '%v' for test case: '%v'. Not received", wantRow, tc.label)
 				break
 			}
@@ -352,14 +352,14 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowSlidingTime(t *testi
 			gotRows := vw1.collectedRows(wantRows.retrieveTime)
 
 			for _, gotRow := range gotRows {
-				if !RowsContain(wantRows.rows, gotRow) {
+				if !ContainsRow(wantRows.rows, gotRow) {
 					t.Errorf("got unexpected row '%v' for test case: '%v' with label '%v'", gotRow, tc.label, wantRows.label)
 					break
 				}
 			}
 
 			for _, wantRow := range wantRows.rows {
-				if !RowsContain(gotRows, wantRow) {
+				if !ContainsRow(gotRows, wantRow) {
 					t.Errorf("want row '%v' for test case: '%v' with label '%v'. Not received", wantRow, tc.label, wantRows.label)
 					break
 				}
@@ -555,14 +555,14 @@ func Test_View_MeasureFloat64_AggregationCount_WindowSlidingTime(t *testing.T) {
 			gotRows := vw1.collectedRows(wantRows.retrieveTime)
 
 			for _, gotRow := range gotRows {
-				if !RowsContain(wantRows.rows, gotRow) {
+				if !ContainsRow(wantRows.rows, gotRow) {
 					t.Errorf("got unexpected row '%v' for test case: '%v' with label '%v'", gotRow, tc.label, wantRows.label)
 					break
 				}
 			}
 
 			for _, wantRow := range wantRows.rows {
-				if !RowsContain(gotRows, wantRow) {
+				if !ContainsRow(gotRows, wantRow) {
 					t.Errorf("want row '%v' for test case: '%v' with label '%v'. Not received", wantRow, tc.label, wantRows.label)
 					break
 				}
@@ -681,14 +681,14 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowSlidingCount(t *test
 		gotRows := vw1.collectedRows(time.Now())
 
 		for _, gotRow := range gotRows {
-			if !RowsContain(tc.rows, gotRow) {
+			if !ContainsRow(tc.rows, gotRow) {
 				t.Errorf("got unexpected row '%v' for test case: '%v'", gotRow, tc.label)
 				break
 			}
 		}
 
 		for _, wantRow := range tc.rows {
-			if !RowsContain(gotRows, wantRow) {
+			if !ContainsRow(gotRows, wantRow) {
 				t.Errorf("want row '%v' for test case: '%v'. Not received", wantRow, tc.label)
 				break
 			}
