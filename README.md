@@ -239,29 +239,20 @@ d := 20 * time.Second
 stats.SetReportingPeriod(d)
 ```
 
-### To collect data for on-demand retrieveal
+### To force/stop data collection for on-demand retrieveal
 Even if a view is registered, if it has no subscriber no data for it is collected. In order to retrieve data on-demand for view, either the view needs to have at least 1 subscriber or the libray needs to be instructed explicitly to collect collect data for the desired view.
 
 ```go
-// explicitly instruct the library to collect the view data for an on-demand retrieval.
+// To explicitly instruct the library to collect the view data for an on-demand
+// retrieval, StopForcedCollection should be used.
 if err := stats.ForceCollection(myView1); err != nil {
     // handle error
 }
 
-// Retrieve data. The returned rows are a []stats.Row. Each row is a struct:
-//  {
-//      Tags             []tags.Tag
-//      AggregationValue AggregationValue
-//  }
-rows, err := stats.RetrieveData(v View)
-if err != nil {
-    // handle error
-}
-
-// explicitly instruct the library to stop collecting the view data for the
-// on-demand retrieval. Has no impact on subscriptions, and if the view
-// still has subscribers, the data for the view will still keep being
-// collected.
+// To explicitly instruct the library to stop collecting the view data for the
+// on-demand retrieval StopForcedCollection should be used. This call has no
+// impact on subscriptions, and if the view still has subscribers, the data for
+//  the view will still keep being collected.
 if err := stats.StopForcedCollection(myView1); err != nil {
     // handle error
 }
@@ -285,14 +276,13 @@ stats.Record(ctx, mi.Is(4), mf.Is(10.5))
 // assuming c1 is the channel that was used to subscribe to myView1
 go func(c chan *stats.ViewData) {
     for vd := range c {
-        // process collected stats received. The type of vd is
-        // *stats.ViewData
+        // process collected stats received.
     }
 }(c1)
 
-// to pull collected data synchronously from the library. This assuming
-// that at least 1 subscriber to myView1 exists or that
-// stats.ForceCollection(myView1) was called before
+// Use RetrieveData to pull collected data synchronously from the library. This
+// assumes that at least 1 subscriber to myView1 exists or that
+// stats.ForceCollection(myView1) was called before.
 rows, err := stats.RetrieveData(myView1)
 if err != nil {
     // handle error

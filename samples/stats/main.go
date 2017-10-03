@@ -31,23 +31,23 @@ func main() {
 	// ---------------------------------------------
 
 	// Creates keys
-	key1, err := tags.CreateKeyString("/widget.com/key/deviceTypeID")
+	key1, err := tags.CreateKeyString("/mycompany.com/key/deviceIDKey")
 	if err != nil {
-		log.Fatalf("Key '/widget.com/key/deviceTypeID' not created %v", err)
+		log.Fatalf("Key '/mycompany.com/key/deviceIDKey' not created %v", err)
 	}
-	key2, err := tags.CreateKeyString("/widget.com/key/osVersionID")
+	key2, err := tags.CreateKeyString("/mycompany.com/key/osVersionKey")
 	if err != nil {
-		log.Fatalf("Key '/widget.com/key/osVersionID' not created %v", err)
+		log.Fatalf("Key '/mycompany.com/key/osVersionKey' not created %v", err)
 	}
 
 	// Create measures
-	mf, err := stats.NewMeasureFloat64("/widget.com/measure/float64/video_size", "size of video document processed in megabytes (10**6)", "MBy")
+	mf, err := stats.NewMeasureFloat64("/mycompany.com/measure/float64/video_size", "size of video document processed in megabytes (10**6)", "MBy")
 	if err != nil {
-		log.Fatalf("Measure '/widget.com/measure/float64/video_size' not created %v", err)
+		log.Fatalf("Measure '/mycompany.com/measure/float64/video_size' not created %v", err)
 	}
-	mi, err := stats.NewMeasureInt64("/widget.com/measure/int64/video_spam_count", "count of videos marked as spam/inappropriate", "1")
+	mi, err := stats.NewMeasureInt64("/mycompany.com/measure/int64/video_spam_count", "count of videos marked as spam/inappropriate", "1")
 	if err != nil {
-		log.Fatalf("Measure '/widget.com/measure/int64/video_spam_count' not created %v", err)
+		log.Fatalf("Measure '/mycompany.com/measure/int64/video_spam_count' not created %v", err)
 	}
 
 	// Create aggregations
@@ -60,23 +60,23 @@ func main() {
 	wnd1 := stats.NewWindowSlidingTime(duration, precisionIntervals)
 
 	// Create views
-	myView1 := stats.NewView("/widget.com/view/video_size/distribution", "a distribution of video sizes processed tagged by device and os", []tags.Key{key1, key2}, mf, agg1, wnd1)
-	myView2 := stats.NewView("/widget.com/view/video_spam_count/count", "a count of video marked as spam tagged by device", []tags.Key{key1}, mi, agg2, wnd1)
+	videoSizeView := stats.NewView("/mycompany.com/view/video_size/distribution", "a distribution of video sizes processed tagged by device and os", []tags.Key{key1, key2}, mf, agg1, wnd1)
+	videoSpamCountView := stats.NewView("/mycompany.com/view/video_spam_count/count", "a count of video marked as spam tagged by device", []tags.Key{key1}, mi, agg2, wnd1)
 
 	// Register views
-	if err = stats.RegisterView(myView1); err != nil {
-		log.Fatalf("View %v not registered. %v", myView1, err)
+	if err = stats.RegisterView(videoSizeView); err != nil {
+		log.Fatalf("View %v not registered. %v", videoSizeView, err)
 	}
-	if err = stats.RegisterView(myView2); err != nil {
-		log.Fatalf("View %v not registered. %v", myView2, err)
+	if err = stats.RegisterView(videoSpamCountView); err != nil {
+		log.Fatalf("View %v not registered. %v", videoSpamCountView, err)
 	}
 
-	// set the reporting period to 1 second instead of the 10 seconds default
+	// sets the reporting period to 1 second instead of the 10 seconds default
 	reporitngDuration := 1 * time.Second
 	stats.SetReportingPeriod(reporitngDuration)
 
 	// Subscribe to view
-	c1 := make(chan *stats.ViewData, 4)
+	subCh := make(chan *stats.ViewData, 4)
 
 	// Process collected data asynchronously
 	go func(c chan *stats.ViewData) {
@@ -86,16 +86,16 @@ func main() {
 				log.Printf("row received with len(tags): %v", len(r.Tags))
 			}
 		}
-	}(c1)
+	}(subCh)
 
-	if err = stats.SubscribeToView(myView1, c1); err != nil {
-		log.Fatalf("Subscription to view %v failed. %v", myView1, err)
+	if err = stats.SubscribeToView(videoSizeView, subCh); err != nil {
+		log.Fatalf("Subscription to view %v failed. %v", videoSizeView, err)
 	}
 
-	// Explicitly instruct the library to collect the view data for on-demand
-	// retrieval
-	if err := stats.ForceCollection(myView2); err != nil {
-		log.Fatalf("Forced collection of view %v failed. %v", myView2, err)
+	// stats.ForceCollection explicitly instructs the library to collect the
+	// view data for on-demand retrieval.
+	if err := stats.ForceCollection(videoSpamCountView); err != nil {
+		log.Fatalf("Forced collection of view %v failed. %v", videoSpamCountView, err)
 	}
 
 	// ---------------
@@ -121,13 +121,13 @@ func main() {
 
 	fmt.Print("\nRetrieve data on demand\n")
 	// Pull collected data synchronously from the library
-	rows, err := stats.RetrieveData(myView2)
+	rows, err := stats.RetrieveData(videoSpamCountView)
 	if err != nil {
-		log.Fatalf("Retrieving data from view %v failed. %v", myView2, err)
+		log.Fatalf("Retrieving data from view %v failed. %v", videoSpamCountView, err)
 	}
 
 	// Process collected data on-demand
-	log.Printf("ViewData collected for view %v received on demand. %v row(s) received", myView2.Name(), len(rows))
+	log.Printf("ViewData collected for view %v received on demand. %v row(s) received", videoSpamCountView.Name(), len(rows))
 	for _, r := range rows {
 		log.Printf("row received with len(tags): %v", len(r.Tags))
 	}
