@@ -13,6 +13,7 @@
 // limitations under the License.
 //
 
+// Package tags contains the OpenCensus tags APIs.
 package tags
 
 // Tag is the tuple (key, value) used only when extracting []Tag from a TagSet.

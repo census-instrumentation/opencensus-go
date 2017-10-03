@@ -19,26 +19,25 @@ import "fmt"
 
 var keys []Key
 
-// Key is the interface for all key types.
+// Key represents a tag key.
 type Key interface {
 	Name() string
 	ID() uint16
 	ValueAsString(b []byte) string
 }
 
-// KeyString implements the Key interface and is used to represent keys for
-// which the value type is a string.
+// KeyString is a Key and represents string keys.
 type KeyString struct {
 	name string
 	id   uint16
 }
 
-// Name returns the unique name of a key.
+// Name returns the name of the key.
 func (k *KeyString) Name() string {
 	return k.name
 }
 
-// ID returns the id of a key inside hte process.
+// ID returns the ID of the key.
 func (k *KeyString) ID() uint16 {
 	return k.id
 }
@@ -52,5 +51,7 @@ func (k *KeyString) String() string {
 	return fmt.Sprintf("%v", k.Name())
 }
 
-// CreateKeyString creates/retrieves the *KeyString identified by name.
+// CreateKeyString creates or retrieves a *KeyString identified by name.
 var CreateKeyString func(name string) (*KeyString, error)
+
+// TODO(jbd): Find a better name for CreateKeyString.
