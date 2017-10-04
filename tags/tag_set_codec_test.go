@@ -82,18 +82,18 @@ func Test_EncodeDecode_TagSet(t *testing.T) {
 		}
 		ts := tsb.Build()
 
-		encoded := EncodeToFullSignature(ts)
-		decoded, err := DecodeFromFullSignature(encoded)
+		encoded := Encode(ts)
+		decoded, err := Decode(encoded)
 
 		if err != nil {
-			t.Errorf("Test case '%v'. Decoding encoded tagSet failed. %v", tc.label, err)
+			t.Errorf("%q: Decoding encoded tagSet failed: %v", tc.label, err)
 		}
 
 		got := make([]pair, 0)
 		for k, v := range decoded.m {
 			ks, ok := k.(*KeyString)
 			if !ok {
-				t.Errorf("Test case '%v'. Wrong key type. got %T, want *KeyString", tc.label, k)
+				t.Errorf("%q: Wrong key type; got %T, want *KeyString", tc.label, k)
 			}
 			got = append(got, pair{ks, string(v)})
 		}
@@ -103,7 +103,7 @@ func Test_EncodeDecode_TagSet(t *testing.T) {
 		sort.Slice(want, func(i, j int) bool { return uintptr(unsafe.Pointer(want[i].k)) < uintptr(unsafe.Pointer(want[j].k)) })
 
 		if !reflect.DeepEqual(got, tc.pairs) {
-			t.Errorf("Test case '%v'. Decoded tagSet is wrong. Got %v, want %v", tc.label, got, tc.pairs)
+			t.Errorf("%q: Got pairs %v, want %v", tc.label, got, tc.pairs)
 		}
 
 	}

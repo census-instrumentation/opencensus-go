@@ -318,7 +318,7 @@ func TestClientDefaultCollections(t *testing.T) {
 				tsb.UpsertString(t.k, t.v)
 			}
 			ts := tsb.Build()
-			encoded := tags.EncodeToFullSignature(ts)
+			encoded := tags.Encode(ts)
 			ctx := stats.SetTags(context.Background(), encoded)
 
 			ctx = h.TagRPC(ctx, rpc.tagInfo)

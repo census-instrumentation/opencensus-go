@@ -190,7 +190,7 @@ func (sh serverHandler) createTagSet(ctx context.Context, serviceName, methodNam
 	if tagsBin := stats.Tags(ctx); tagsBin == nil {
 		tsb = tags.NewTagSetBuilder(nil)
 	} else {
-		ts, err := tags.DecodeFromFullSignature([]byte(tagsBin))
+		ts, err := tags.Decode([]byte(tagsBin))
 		if err != nil {
 			return nil, fmt.Errorf("serverHandler.createTagSet failed to decode tagsBin: %v. %v", tagsBin, err)
 		}

@@ -159,8 +159,9 @@ func (eg *encoderGRPC) bytes() []byte {
 	return eg.buf[:eg.writeIdx]
 }
 
-// EncodeToFullSignature will encode the tagSet to []byte.
-func EncodeToFullSignature(ts *TagSet) []byte {
+// Encode encodes the tag set into a []byte. It is useful to propagate
+// the tag sets on wire in binary format.
+func Encode(ts *TagSet) []byte {
 	eg := &encoderGRPC{
 		buf: make([]byte, len(ts.m)),
 	}
@@ -175,8 +176,8 @@ func EncodeToFullSignature(ts *TagSet) []byte {
 	return eg.bytes()
 }
 
-// DecodeFromFullSignature will decode the []byte encoded tagSet.
-func DecodeFromFullSignature(bytes []byte) (*TagSet, error) {
+// Decode will decode the given []byte into a tag set.
+func Decode(bytes []byte) (*TagSet, error) {
 	ts := newTagSet(0)
 
 	eg := &encoderGRPC{
@@ -188,7 +189,7 @@ func DecodeFromFullSignature(bytes []byte) (*TagSet, error) {
 
 	version := eg.readByte()
 	if version > tagsVersionID {
-		return nil, fmt.Errorf("DecodeFromFullSignature doesn't support version %v. Supports only up to: %v", version, tagsVersionID)
+		return nil, fmt.Errorf("unsupported version: %q; supports only up to: %q", version, tagsVersionID)
 	}
 
 	for !eg.readEnded() {
@@ -198,7 +199,7 @@ func DecodeFromFullSignature(bytes []byte) (*TagSet, error) {
 		case keyTypeString:
 			break
 		default:
-			return nil, fmt.Errorf("DecodeFromFullSignature failed. Key type invalid %v", typ)
+			return nil, fmt.Errorf("invalid key type: %q", typ)
 		}
 
 		k, err := eg.readBytesWithVarintLen()
