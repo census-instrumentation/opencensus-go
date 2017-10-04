@@ -159,7 +159,8 @@ func (eg *encoderGRPC) bytes() []byte {
 	return eg.buf[:eg.writeIdx]
 }
 
-// Encode will encode the tag set into a []byte.
+// Encode encodes the tag set into a []byte. It is useful to propagate
+// the tag sets on wire in binary format.
 func Encode(ts *TagSet) []byte {
 	eg := &encoderGRPC{
 		buf: make([]byte, len(ts.m)),
