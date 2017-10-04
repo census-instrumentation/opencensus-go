@@ -198,7 +198,7 @@ func Decode(bytes []byte) (*TagSet, error) {
 		case keyTypeString:
 			break
 		default:
-			return nil, fmt.Errorf("key type invalid: %q", typ)
+			return nil, fmt.Errorf("invalid key type: %q", typ)
 		}
 
 		k, err := eg.readBytesWithVarintLen()
