@@ -1,17 +1,21 @@
-# Go stats collection libraries
+# OpenCensus Libraries for Go
 
 [![Build Status][travis-image]][travis-url] [![GoDoc][godoc-image]][godoc-url]
 
-This is still at a very early stage of development and a lot of the API calls
-are in the process of being changed and might break your code in hte future.
+Opencensus-go is a Go implementation of OpenCensus, a toolkit for
+collecting application performance and behavior monitoring data.
+Currently it consists of three major APIs: tags, stats, and tracing.
+
+This project is still at a very early stage of development and
+a lot of the API calls are in the process of being changed and
+might break your code in the future.
 
 [travis-image]: https://travis-ci.org/census-instrumentation/opencensus-go.svg?branch=master
 [travis-url]: https://travis-ci.org/census-instrumentation/opencensus-go
 [godoc-image]: https://godoc.org/github.com/census-instrumentation/opencensus-go?status.svg
 [godoc-url]: https://godoc.org/github.com/census-instrumentation/opencensus-go
 
-# Go stats core library
-The Go implementation of opencensus.
+
 TODO: add a link to the language independent opencensus doc when it is available.
 
 ## Installation
@@ -19,14 +23,16 @@ To install this package, you need to install Go and setup your Go workspace on y
 
 $ go get -u github.com/census-instrumentation/opencensus-go
 
+TODO: convert this to godoc so the above go get command doesn't complain and
+godoc can present this nicely.
+
 ## Prerequisites
 This requires Go 1.8 or later as it uses the convenience function sort.Slice(...) introduced in Go 1.8.
 
 ## Tags API
 
 ### To create/retrieve a key
-A key is defined by its name. To use a key a user needs to know its name and type (currently only keys of type string are supported. Later support for keys of type int64 and bool will be supported). Calling CreateKeyString(...) multiple times with the same name returns the same key.
-To create/retrieve a key the user calls:
+A key is defined by its name. To use a key a user needs to know its name and type (currently only keys of type string are supported. Later keys of type int64 and bool will be supported). Calling CreateKeyString(...) multiple times with the same name returns the same key.
 
 Create/retrieve key:
 
@@ -34,13 +40,10 @@ Create/retrieve key:
 if key1, err := tags.CreateKeyString("keyNameID1"); err != nil {
     // handle error
 }
-if key2, err := tags.CreateKeyString("keyNameID2"); err != nil {
-    // handle error
-}
-```    
+```
 
-### Create a set of tags associated with keys
-To create a new tag set from scratch using changes:
+### To create a set of tags associated with keys
+TagSet is a set of tags. The following code demonstrates how to create a new TagSet from scratch:
 
 ```go
 tsb := NewTagSetBuilder(nil)
@@ -48,17 +51,11 @@ tsb.InsertString(key1, "foo value")
 tsb.UpdateString(key1, "foo value2")
 tsb.UpsertString(key2, "bar value")
 tagsSet := tsb.Build()
-
-// A shorter way of achieving the same is:
-tagsSet := NewTagSetBuilder().InsertString(key1, "foo value").
-                              UpdateString(key1, "foo value2").
-                              UpsertString(key2, "bar value").
-                              Build()
 ```
 
+The methods on Builder can be chained.
 
-
-To create a new tagsSet from an existing tag set oldTagSet:
+To create a new TagSet from an existing tag set oldTagSet:
 
 ```go
 oldTagSet := ...
@@ -67,26 +64,16 @@ tsb.InsertString(key1, "foo value")
 tsb.UpdateString(key1, "foo value2")
 tsb.UpsertString(key2, "bar value")
 newTagSet := tsb.Build()
-
-// A shorter way of achieving the same is:
-oldTagSet := ...
-newTagSet := NewTagSetBuilder(oldTagSet).InsertString(key1, "foo value").
-	UpdateString(key1, "foo value2").
-	UpsertString(key2, "bar value").
-	Build()
 ```
 
-### Add new tagSet to a context / Modify tagSet in a context 
+### To add or modify a TagSet in a context
 Add tags to a context for propagation to downstream methods and downstream rpcs:
 To create a new context with the tags. This will create a new context where all the existing tags in the current context are deleted and replaced with the tags passed as argument.
-    
 ```go
 newTagSet  := ...
 ctx2 := tags.NewContext(ctx, newTagSet)
 ```
-
 Create a new context keeping the old tag set and adding new tags to it, removing specific tags from it, or modifying the values fo some tags. This is just a matter of getting the oldTagSet from the context, apply changes to it, then create a new  context with the newTagSet.
-    
 ```go
 oldTagSet := tags.FromContext(ctx)
 newTagSet := tags.NewTagSetBuilder(oldTagSet).InsertString(key1, "foo value").
@@ -98,19 +85,20 @@ ctx2 := tags.NewContext(ctx, newTagSet)
 
 ## Stats API
 
-### To create/retrieve/delete a measure a.k.a resource
-Create/load measures units:
+### To create/retrieve/delete a measure
+
+Create and load measures with units:
 
 ```go
 // returns a *MeasureFloat64
-mf, err := stats.NewMeasureFloat64("/my/float64/measureName", "some measure")
+mf, err := stats.NewMeasureFloat64("/my/float64/measureName", "some measure", "MBy")
 if err != nil {
     // handle error
 }
-mi, err := stats.NewMeasureInt64("/my/otherName", "some other measure")
+mi, err := stats.NewMeasureInt64("/my/otherName", "some other measure", "1")
 if err != nil {
     // handle error
-}    
+}
 ```
 
 Retrieve measure by name:
@@ -162,7 +150,10 @@ wnd2 := stats.NewWindowSlidingCount(lastNSamples, precisionSubsets)
 wn3 := stats.NewWindowCumulative()
 ```
 
-### To creater/register a view
+### To create/register a view
+
+TODO: define "view" (link to the spec).
+
 Create a view:
 
 ```go
@@ -180,6 +171,8 @@ if err := stats.RegisterView(myView2); err != nil {
   // handle error
 }
 ```
+
+TODO: distinguish "create" and "register". Why do they need to be separate?
 
 Retrieve view by name:
 
@@ -229,7 +222,7 @@ if err := stats.UnsubscribeFromView(myView1, c1); err != nil {
 }
 if err := stats.UnsubscribeFromView(myView2, c2); err != nil {
     // handle error
-}    
+}
 ```
 
 Configure/modify the default interval between reports of collected data. This is a system wide interval and impacts all views. The default interval duration is 10 seconds. Trying to set an interval with a duration less than a certain minimum (maybe 1s) should have no effect.
@@ -293,5 +286,4 @@ for _, r := range rows {
 ```
 
 ## Tracing API
- 		  
 TODO: update the doc once tracing API is ready.
