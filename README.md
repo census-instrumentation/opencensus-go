@@ -1,6 +1,6 @@
 # OpenCensus Libraries for Go
 
-[![Build Status][travis-image]][travis-url] [![GoDoc][godoc-image]][godoc-url]
+[[![Gitter chat][gitter-image]][gitter-url] ![Build Status][travis-image]][travis-url] [![GoDoc][godoc-image]][godoc-url]
 
 OpenCensus Go is a Go implementation of OpenCensus, a toolkit for
 collecting application performance and behavior monitoring data.
@@ -9,11 +9,6 @@ Currently it consists of three major APIs: tags, stats, and tracing.
 This project is still at a very early stage of development and
 a lot of the API calls are in the process of being changed and
 might break your code in the future.
-
-[travis-image]: https://travis-ci.org/census-instrumentation/opencensus-go.svg?branch=master
-[travis-url]: https://travis-ci.org/census-instrumentation/opencensus-go
-[godoc-image]: https://godoc.org/github.com/census-instrumentation/opencensus-go?status.svg
-[godoc-url]: https://godoc.org/github.com/census-instrumentation/opencensus-go
 
 
 TODO: Add a link to the language independent OpenCensus doc when it is available.
@@ -286,3 +281,11 @@ for _, r := range rows {
 
 ## Tracing API
 TODO: update the doc once tracing API is ready.
+
+
+[travis-image]: https://travis-ci.org/census-instrumentation/opencensus-go.svg?branch=master
+[travis-url]: https://travis-ci.org/census-instrumentation/opencensus-go
+[godoc-image]: https://godoc.org/github.com/census-instrumentation/opencensus-go?status.svg
+[godoc-url]: https://godoc.org/github.com/census-instrumentation/opencensus-go
+[gitter-image]: https://badges.gitter.im/census-instrumentation/lobby.svg
+[gitter-url]: https://gitter.im/census-instrumentation/lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
