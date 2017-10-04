@@ -2,7 +2,7 @@
 
 [![Build Status][travis-image]][travis-url] [![GoDoc][godoc-image]][godoc-url]
 
-Opencensus-go is a Go implementation of OpenCensus, a toolkit for
+OpenCensus Go is a Go implementation of OpenCensus, a toolkit for
 collecting application performance and behavior monitoring data.
 Currently it consists of three major APIs: tags, stats, and tracing.
 
@@ -16,18 +16,17 @@ might break your code in the future.
 [godoc-url]: https://godoc.org/github.com/census-instrumentation/opencensus-go
 
 
-TODO: add a link to the language independent opencensus doc when it is available.
+TODO: Add a link to the language independent OpenCensus doc when it is available.
 
 ## Installation
 To install this package, you need to install Go and setup your Go workspace on your computer. The simplest way to install the library is to run:
 
-$ go get -u github.com/census-instrumentation/opencensus-go
-
-TODO: convert this to godoc so the above go get command doesn't complain and
-godoc can present this nicely.
+```
+$ go get -u github.com/census-instrumentation/opencensus-go/...
+```
 
 ## Prerequisites
-This requires Go 1.8 or later as it uses the convenience function sort.Slice(...) introduced in Go 1.8.
+OpenCensus libraries require Go 1.8 or later as it uses the convenience function sort.Slice(...) introduced in Go 1.8.
 
 ## Tags API
 
