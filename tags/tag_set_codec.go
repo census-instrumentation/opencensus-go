@@ -188,7 +188,7 @@ func Decode(bytes []byte) (*TagSet, error) {
 
 	version := eg.readByte()
 	if version > tagsVersionID {
-		return nil, fmt.Errorf("not supported version: %q; supports only up to: %q", version, tagsVersionID)
+		return nil, fmt.Errorf("unsupported version: %q; supports only up to: %q", version, tagsVersionID)
 	}
 
 	for !eg.readEnded() {
