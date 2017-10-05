@@ -1,0 +1,21 @@
+version: "{build}"
+
+platform: x64
+
+clone_folder: c:\gopath\src\github.com\census-instrumentation\opencensus-go
+
+environment:
+  GOPATH: c:\gopath
+  GOVERSION: 1.8
+
+install:
+  - set PATH=%GOPATH%\bin;c:\go\bin;%PATH%
+  - go version
+  - go env
+
+build: false
+deploy: false
+
+test_script:
+  - go test -v github.com\census-instrumentation\opencensus-go\...
+  - go vet github.com\census-instrumentation\opencensus-go\...
