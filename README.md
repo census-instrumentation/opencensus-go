@@ -1,6 +1,9 @@
 # OpenCensus Libraries for Go
 
-[[![Gitter chat][gitter-image]][gitter-url] ![Build Status][travis-image]][travis-url] [![GoDoc][godoc-image]][godoc-url]
+[![Build Status][travis-image]][travis-url]
+[![Windows Build Status][appveyor-image]][appveyor-url]
+[![GoDoc][godoc-image]][godoc-url]
+[![Gitter chat][gitter-image]][gitter-url]
 
 OpenCensus Go is a Go implementation of OpenCensus, a toolkit for
 collecting application performance and behavior monitoring data.
@@ -285,6 +288,8 @@ TODO: update the doc once tracing API is ready.
 
 [travis-image]: https://travis-ci.org/census-instrumentation/opencensus-go.svg?branch=master
 [travis-url]: https://travis-ci.org/census-instrumentation/opencensus-go
+[appveyor-image]: https://ci.appveyor.com/api/projects/status/vgtt29ps1783ig38?svg=true
+[appveyor-url]: https://ci.appveyor.com/project/opencensusgoteam/opencensus-go/branch/master
 [godoc-image]: https://godoc.org/github.com/census-instrumentation/opencensus-go?status.svg
 [godoc-url]: https://godoc.org/github.com/census-instrumentation/opencensus-go
 [gitter-image]: https://badges.gitter.im/census-instrumentation/lobby.svg
