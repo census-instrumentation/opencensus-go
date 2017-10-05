@@ -32,6 +32,9 @@ type KeyString struct {
 	id   uint16
 }
 
+// TODO(jbd): Raname KeyString to StringKey?
+// TODO(jbd): What is ID? Should we export an accessor for it?
+
 // Name returns the name of the key.
 func (k *KeyString) Name() string {
 	return k.name
@@ -42,16 +45,18 @@ func (k *KeyString) ID() uint16 {
 	return k.id
 }
 
-// ValueAsString returns the value of the key as a string.
-func (k *KeyString) ValueAsString(b []byte) string {
-	return string(b)
+// ValueAsString encodes the given values represented in binary to string.
+func (k *KeyString) ValueAsString(v []byte) string {
+	return string(v)
 }
 
 func (k *KeyString) String() string {
 	return fmt.Sprintf("%v", k.Name())
 }
 
-// CreateKeyString creates or retrieves a *KeyString identified by name.
-var CreateKeyString func(name string) (*KeyString, error)
+// KeyStringByName creates or retrieves a *KeyString identified by name.
+func KeyStringByName(name string) (*KeyString, error) {
+	return createKeyString(name)
+}
 
-// TODO(jbd): Find a better name for CreateKeyString.
+var createKeyString func(name string) (*KeyString, error)

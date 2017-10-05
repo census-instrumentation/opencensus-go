@@ -23,10 +23,10 @@ import (
 )
 
 func Test_EncodeDecode_TagSet(t *testing.T) {
-	k1, _ := CreateKeyString("k1")
-	k2, _ := CreateKeyString("k2")
-	k3, _ := CreateKeyString("k3 is very weird <>.,?/'\";:`~!@#$%^&*()_-+={[}]|\\")
-	k4, _ := CreateKeyString("k4")
+	k1, _ := KeyStringByName("k1")
+	k2, _ := KeyStringByName("k2")
+	k3, _ := KeyStringByName("k3 is very weird <>.,?/'\";:`~!@#$%^&*()_-+={[}]|\\")
+	k4, _ := KeyStringByName("k4")
 
 	type pair struct {
 		k *KeyString
@@ -82,8 +82,8 @@ func Test_EncodeDecode_TagSet(t *testing.T) {
 		}
 		ts := tsb.Build()
 
-		encoded := EncodeToFullSignature(ts)
-		decoded, err := DecodeFromFullSignature(encoded)
+		encoded := Encode(ts)
+		decoded, err := Decode(encoded)
 
 		if err != nil {
 			t.Errorf("Test case '%v'. Decoding encoded tagSet failed. %v", tc.label, err)

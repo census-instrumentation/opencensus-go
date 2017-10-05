@@ -477,8 +477,8 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 		t.Errorf("NewMeasureFloat64(\"MF1\", \"desc MF1\") got error '%v', want no error", err)
 	}
 
-	k1, _ := tags.CreateKeyString("k1")
-	k2, _ := tags.CreateKeyString("k2")
+	k1, _ := tags.KeyStringByName("k1")
+	k2, _ := tags.KeyStringByName("k2")
 	tagsSet := tags.NewTagSetBuilder(nil).
 		InsertString(k1, "v1").
 		InsertString(k2, "v2").

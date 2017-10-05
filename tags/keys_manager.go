@@ -98,5 +98,5 @@ func validateKeyName(name string) bool {
 
 func init() {
 	km := newKeysManager()
-	CreateKeyString = km.createKeyString
+	createKeyString = km.createKeyString
 }

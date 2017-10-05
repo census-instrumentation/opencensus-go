@@ -91,7 +91,7 @@ func (ch clientHandler) TagRPC(ctx context.Context, info *stats.RPCTagInfo) cont
 	}
 
 	ts := tags.FromContext(ctx)
-	encoded := tags.EncodeToFullSignature(ts)
+	encoded := tags.Encode(ts)
 	ctx = stats.SetTags(ctx, encoded)
 
 	tsb := tags.NewTagSetBuilder(ts)
