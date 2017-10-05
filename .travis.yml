@@ -13,6 +13,6 @@ before_script:
 
 script:
   - gofmt -w ./
-  - go vet .
+  - go vet ./...
   - go test -v -race $PKGS            # Run all the tests with the race detector enabled
   - 'if [[ $TRAVIS_GO_VERSION = 1.8* ]]; then ! golint ./... | grep -vE "(_mock|_string|\.pb)\.go:"; fi'
