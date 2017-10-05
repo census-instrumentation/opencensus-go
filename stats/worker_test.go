@@ -527,7 +527,7 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 					v1,
 					[]*Row{
 						{
-							[]tags.Tag{{k1, []byte("v1")}, {k2, []byte("v2")}},
+							[]tags.Tag{{K: k1, V: []byte("v1")}, {K: k2, V: []byte("v2")}},
 							newAggregationCountValue(2),
 						},
 					},
@@ -547,7 +547,7 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 					v1,
 					[]*Row{
 						{
-							[]tags.Tag{{k1, []byte("v1")}, {k2, []byte("v2")}},
+							[]tags.Tag{{K: k1, V: []byte("v1")}, {K: k2, V: []byte("v2")}},
 							newAggregationCountValue(2),
 						},
 					},
@@ -557,7 +557,7 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 					v2,
 					[]*Row{
 						{
-							[]tags.Tag{{k1, []byte("v1")}, {k2, []byte("v2")}},
+							[]tags.Tag{{K: k1, V: []byte("v1")}, {K: k2, V: []byte("v2")}},
 							newAggregationCountValue(2),
 						},
 					},
@@ -576,7 +576,7 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 					v1,
 					[]*Row{
 						{
-							[]tags.Tag{{k1, []byte("v1")}, {k2, []byte("v2")}},
+							[]tags.Tag{{K: k1, V: []byte("v1")}, {K: k2, V: []byte("v2")}},
 							newAggregationCountValue(2),
 						},
 					},
@@ -596,7 +596,7 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 					v1,
 					[]*Row{
 						{
-							[]tags.Tag{{k1, []byte("v1")}, {k2, []byte("v2")}},
+							[]tags.Tag{{K: k1, V: []byte("v1")}, {K: k2, V: []byte("v2")}},
 							newAggregationCountValue(2),
 						},
 					},
@@ -606,7 +606,7 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 					v2,
 					[]*Row{
 						{
-							[]tags.Tag{{k1, []byte("v1")}, {k2, []byte("v2")}},
+							[]tags.Tag{{K: k1, V: []byte("v1")}, {K: k2, V: []byte("v2")}},
 							newAggregationCountValue(2),
 						},
 					},
@@ -625,7 +625,7 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 					v1,
 					[]*Row{
 						{
-							[]tags.Tag{{k1, []byte("v1")}, {k2, []byte("v2")}},
+							[]tags.Tag{{K: k1, V: []byte("v1")}, {K: k2, V: []byte("v2")}},
 							newAggregationCountValue(3),
 						},
 					},
@@ -635,7 +635,7 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 					v2,
 					[]*Row{
 						{
-							[]tags.Tag{{k1, []byte("v1")}, {k2, []byte("v2")}},
+							[]tags.Tag{{K: k1, V: []byte("v1")}, {K: k2, V: []byte("v2")}},
 							newAggregationCountValue(3),
 						},
 					},
