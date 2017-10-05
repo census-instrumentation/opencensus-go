@@ -18,7 +18,7 @@ build: false
 deploy: false
 
 test_script:
-  - go fmt -w %PKG%
+  - gofmt -w %PKG%
   - go get -v -t %PKG%
   - go test -v %PKG%
   - go vet %PKG%
