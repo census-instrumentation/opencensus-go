@@ -15,389 +15,124 @@
 
 package tags
 
-import "testing"
+import (
+	"fmt"
+	"reflect"
+	"testing"
 
-func Test_Tagset_Insert(t *testing.T) {
-	type want struct {
-		k Key
-		v string
-	}
-	type testCase struct {
-		insert []Tag
-		want   []*want
-	}
+	"golang.org/x/net/context"
+)
 
-	km := newKeysManager()
-	k1, _ := km.createKeyString("k1")
-	k2, _ := km.createKeyString("k2")
-	testCases := []testCase{
+func TestContext(t *testing.T) {
+	k1, _ := KeyStringByName("k1")
+	k2, _ := KeyStringByName("k2")
+
+	tsb := NewTagSetBuilder(nil)
+	tsb.InsertString(k1, "v1")
+	tsb.InsertString(k2, "v2")
+	want := tsb.Build()
+
+	ctx := NewContext(context.Background(), want)
+	got := FromContext(ctx)
+
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("TagSet = %#v; want %#v", got, want)
+	}
+}
+
+func TestTagSetBuilder(t *testing.T) {
+	k1, _ := KeyStringByName("k1")
+	k2, _ := KeyStringByName("k2")
+	k3, _ := KeyStringByName("k3")
+	k4, _ := KeyStringByName("k4")
+	k5, _ := KeyStringByName("k5")
+
+	initial := makeTestTagSet(5)
+
+	tests := []struct {
+		name     string
+		initial  *TagSet
+		modifier func(tbs *TagSetBuilder) *TagSetBuilder
+		want     *TagSet
+	}{
 		{
-			[]Tag{
-				Tag{
-					k1,
-					[]byte("v1"),
-				},
+			name:    "from empty; insert",
+			initial: nil,
+			modifier: func(tbs *TagSetBuilder) *TagSetBuilder {
+				tbs.InsertString(k5, "v5")
+				return tbs
 			},
-			[]*want{
-				&want{
-					k1,
-					"v1",
-				},
-				&want{
-					k2,
-					"",
-				},
-			},
+			want: makeTestTagSet(2, 4, 5),
 		},
 		{
-			[]Tag{
-				Tag{
-					k1,
-					[]byte("v1"),
-				},
-				Tag{
-					k1,
-					[]byte("v1new"),
-				},
+			name:    "from empty; insert existing",
+			initial: nil,
+			modifier: func(tbs *TagSetBuilder) *TagSetBuilder {
+				tbs.InsertString(k1, "v1")
+				return tbs
 			},
-			[]*want{
-				&want{
-					k1,
-					"v1",
-				},
-				&want{
-					k2,
-					"",
-				},
+			want: makeTestTagSet(1, 2, 4),
+		},
+		{
+			name:    "from empty; update",
+			initial: nil,
+			modifier: func(tbs *TagSetBuilder) *TagSetBuilder {
+				tbs.UpdateString(k1, "v1")
+				return tbs
 			},
+			want: makeTestTagSet(2, 4),
+		},
+		{
+			name:    "from empty; update unexisting",
+			initial: nil,
+			modifier: func(tbs *TagSetBuilder) *TagSetBuilder {
+				tbs.UpdateString(k5, "v5")
+				return tbs
+			},
+			want: makeTestTagSet(2, 4),
+		},
+		{
+			name:    "from existing; upsert",
+			initial: initial,
+			modifier: func(tbs *TagSetBuilder) *TagSetBuilder {
+				tbs.UpsertString(k5, "v5")
+				return tbs
+			},
+			want: makeTestTagSet(2, 4, 5),
+		},
+		{
+			name:    "from existing; delete",
+			initial: initial,
+			modifier: func(tbs *TagSetBuilder) *TagSetBuilder {
+				tbs.Delete(k2)
+				return tbs
+			},
+			want: makeTestTagSet(4, 5),
 		},
 	}
 
-	for i, tc := range testCases {
-		ts := newTagSet(0)
-		for _, insertPair := range tc.insert {
-			_ = ts.insertBytes(insertPair.K, insertPair.V)
-		}
+	for _, tt := range tests {
+		tsb := NewTagSetBuilder(tt.initial)
+		tsb.InsertString(k1, "v1")
+		tsb.InsertString(k2, "v2")
+		tsb.UpdateString(k3, "v3")
+		tsb.UpsertString(k4, "v4")
+		tsb.InsertString(k2, "v2")
+		tsb.Delete(k1)
+		tsb = tt.modifier(tsb)
 
-		for _, wantPair := range tc.want {
-			got, _ := ts.ValueAsString(wantPair.k)
-			if got != wantPair.v {
-				t.Errorf("Test case '%v' key '%v': got string %v, want string %v", i, wantPair.k, got, wantPair.v)
-			}
+		got := tsb.Build()
+		if !reflect.DeepEqual(got, tt.want) {
+			t.Errorf("%v: got %v; want %v", tt.name, got, tt.want)
 		}
 	}
 }
 
-func Test_Tagset_Upsert(t *testing.T) {
-	type want struct {
-		k Key
-		v string
+func makeTestTagSet(ids ...int) *TagSet {
+	ts := newTagSet(len(ids))
+	for _, v := range ids {
+		k, _ := KeyStringByName(fmt.Sprintf("k%d", v))
+		ts.m[k] = []byte(fmt.Sprintf("v%d", v))
 	}
-	type testCase struct {
-		upsert []Tag
-		want   []*want
-	}
-
-	km := newKeysManager()
-	k1, _ := km.createKeyString("k1")
-	k2, _ := km.createKeyString("k2")
-	testCases := []testCase{
-		{
-			[]Tag{
-				Tag{
-					k1,
-					[]byte("v1"),
-				},
-			},
-			[]*want{
-				&want{
-					k1,
-					"v1",
-				},
-				&want{
-					k2,
-					"",
-				},
-			},
-		},
-		{
-			[]Tag{
-				Tag{
-					k1,
-					[]byte("v1"),
-				},
-				Tag{
-					k1,
-					[]byte("v1new"),
-				},
-			},
-			[]*want{
-				&want{
-					k1,
-					"v1new",
-				},
-				&want{
-					k2,
-					"",
-				},
-			},
-		},
-	}
-
-	for i, tc := range testCases {
-		ts := newTagSet(0)
-		for _, upsertPair := range tc.upsert {
-			ts.upsertBytes(upsertPair.K, upsertPair.V)
-		}
-
-		for _, wantPair := range tc.want {
-			got, _ := ts.ValueAsString(wantPair.k)
-			if got != wantPair.v {
-				t.Errorf("Test case '%v' key '%v': got string %v, want string %v", i, wantPair.k, got, wantPair.v)
-			}
-		}
-	}
-}
-
-func Test_Tagset_Update(t *testing.T) {
-	type want struct {
-		k Key
-		v string
-	}
-	type testCase struct {
-		insert []Tag
-		update []Tag
-		want   []*want
-	}
-
-	km := newKeysManager()
-	k1, _ := km.createKeyString("k1")
-	k2, _ := km.createKeyString("k2")
-	testCases := []testCase{
-		{
-			[]Tag{
-				Tag{
-					k1,
-					[]byte("v1"),
-				},
-			},
-			[]Tag{
-				Tag{
-					k1,
-					[]byte("v1"),
-				},
-			},
-			[]*want{
-				&want{
-					k1,
-					"v1",
-				},
-				&want{
-					k2,
-					"",
-				},
-			},
-		},
-		{
-			[]Tag{
-				Tag{
-					k1,
-					[]byte("v1"),
-				},
-			},
-			[]Tag{
-				Tag{
-					k1,
-					[]byte("v1"),
-				},
-				Tag{
-					k2,
-					[]byte("v2"),
-				},
-			},
-			[]*want{
-				&want{
-					k1,
-					"v1",
-				},
-				&want{
-					k2,
-					"",
-				},
-			},
-		},
-		{
-			[]Tag{
-				Tag{
-					k1,
-					[]byte("v1"),
-				},
-			},
-			[]Tag{
-				Tag{
-					k1,
-					[]byte("v1new"),
-				},
-			},
-			[]*want{
-				&want{
-					k1,
-					"v1new",
-				},
-				&want{
-					k2,
-					"",
-				},
-			},
-		},
-		{
-			[]Tag{
-				Tag{
-					k1,
-					[]byte("v1"),
-				},
-			},
-			[]Tag{
-				Tag{
-					k1,
-					[]byte("v1new"),
-				},
-				Tag{
-					k1,
-					[]byte("v1latest"),
-				},
-			},
-			[]*want{
-				&want{
-					k1,
-					"v1latest",
-				},
-				&want{
-					k2,
-					"",
-				},
-			},
-		},
-	}
-
-	for i, tc := range testCases {
-		ts := newTagSet(0)
-		for _, insertPair := range tc.insert {
-			_ = ts.insertBytes(insertPair.K, insertPair.V)
-		}
-
-		for _, updatePair := range tc.update {
-			_ = ts.updateBytes(updatePair.K, updatePair.V)
-		}
-
-		for _, wantPair := range tc.want {
-			got, _ := ts.ValueAsString(wantPair.k)
-			if got != wantPair.v {
-				t.Errorf("Test case '%v' key '%v': got string %v, want string %v", i, wantPair.k, got, wantPair.v)
-			}
-		}
-	}
-}
-
-func Test_Tagset_Delete(t *testing.T) {
-	type want struct {
-		k Key
-		v string
-	}
-	type testCase struct {
-		insert []Tag
-		delete []Key
-		want   []*want
-	}
-
-	km := newKeysManager()
-	k1, _ := km.createKeyString("k1")
-	k2, _ := km.createKeyString("k2")
-	testCases := []testCase{
-		{
-			[]Tag{
-				Tag{
-					k1,
-					[]byte("v1"),
-				},
-			},
-			[]Key{
-				k2,
-			},
-			[]*want{
-				&want{
-					k1,
-					"v1",
-				},
-				&want{
-					k2,
-					"",
-				},
-			},
-		},
-		{
-			[]Tag{
-				Tag{
-					k1,
-					[]byte("v1"),
-				},
-			},
-			[]Key{
-				k1,
-			},
-			[]*want{
-				&want{
-					k1,
-					"",
-				},
-				&want{
-					k2,
-					"",
-				},
-			},
-		},
-		{
-			[]Tag{
-				Tag{
-					k1,
-					[]byte("v1"),
-				},
-				Tag{
-					k1,
-					[]byte("v1new"),
-				},
-			},
-			[]Key{
-				k1,
-			},
-			[]*want{
-				&want{
-					k1,
-					"",
-				},
-				&want{
-					k2,
-					"",
-				},
-			},
-		},
-	}
-
-	for i, tc := range testCases {
-		ts := newTagSet(0)
-		for _, insertPair := range tc.insert {
-			ts.upsertBytes(insertPair.K, insertPair.V)
-		}
-
-		for _, deleteK := range tc.delete {
-			ts.delete(deleteK)
-		}
-
-		for _, wantPair := range tc.want {
-			got, _ := ts.ValueAsString(wantPair.k)
-			if got != wantPair.v {
-				t.Errorf("Test case '%v' key '%v': got string %v, want string %v", i, wantPair.k, got, wantPair.v)
-			}
-		}
-	}
+	return ts
 }

@@ -15,25 +15,17 @@
 
 package tags
 
-// TagSetBuilder is the interface for the tagSet builder. Its purpose to ensure
-// a TagSet can be built from multiple pieces over time but that it is
-// immutable once built.
-type TagSetBuilder interface {
-	InsertString(k *KeyString, s string) TagSetBuilder
-	UpdateString(k *KeyString, s string) TagSetBuilder
-	UpsertString(k *KeyString, s string) TagSetBuilder
-	Delete(k Key) TagSetBuilder
-	Build() *TagSet
-}
-
-type tagSetBuilder struct {
+// TagSetBuilder builds tag sets. It allows
+// a TagSet to be be built from multiple pieces
+// over time but is immutable once built.
+type TagSetBuilder struct {
 	ts *TagSet
 }
 
-// NewTagSetBuilder starts building a new TagSet from an existing TagSet.
+// NewTagSetBuilder starts building a new builder from an existing TagSet.
 // If the given TagSet is nil, it starts with an empty set.
-func NewTagSetBuilder(ts *TagSet) TagSetBuilder {
-	tb := &tagSetBuilder{}
+func NewTagSetBuilder(ts *TagSet) *TagSetBuilder {
+	tb := &TagSetBuilder{}
 
 	if ts == nil {
 		tb.ts = newTagSet(0)
@@ -42,60 +34,41 @@ func NewTagSetBuilder(ts *TagSet) TagSetBuilder {
 
 	tb.ts = newTagSet(len(ts.m))
 	for k, b := range ts.m {
-		tb.ts.upsertBytes(k, b)
+		tb.ts.insert(k, b)
 	}
 	return tb
 }
 
-// InsertString inserts a string value 's' associated with the the key 'k' in
-// the tags set being built. If a tag with the same key already exists in the
-// tags set being built then this is a no-op.
-func (tb *tagSetBuilder) InsertString(k *KeyString, s string) TagSetBuilder {
-	tb.insertBytes(k, []byte(s))
+// InsertString inserts a string value associated with the the key.
+// If there is already a value exists with the given key, it doesn't
+// update the existing value.
+func (tb *TagSetBuilder) InsertString(k *KeyString, s string) *TagSetBuilder {
+	tb.ts.insert(k, []byte(s))
 	return tb
 }
 
-// UpdateString updates a string value 's' associated with the the key 'k' in
-// the tags set being built. If a no tag with the same key is already present
-// in the tags set being built then this is a no-op.
-func (tb *tagSetBuilder) UpdateString(k *KeyString, s string) TagSetBuilder {
-	tb.updateBytes(k, []byte(s))
+// UpdateString updates a string value associated with the the key.
+// If the given key doesn't already exist in the tag set, it does nothing.
+func (tb *TagSetBuilder) UpdateString(k *KeyString, s string) *TagSetBuilder {
+	tb.ts.update(k, []byte(s))
 	return tb
 }
 
-// UpsertString updates or insert a string value 's' associated with the key
-// 'k' in the tags set being built.
-func (tb *tagSetBuilder) UpsertString(k *KeyString, s string) TagSetBuilder {
-	tb.upsertBytes(k, []byte(s))
+// UpsertString updates or insert a string value associated with the key.
+func (tb *TagSetBuilder) UpsertString(k *KeyString, s string) *TagSetBuilder {
+	tb.ts.upsert(k, []byte(s))
 	return tb
 }
 
-// Delete deletes the tag associated with the the key 'k' in the tags set being
-// built. If a no tag with the same key exists in the tags set being built then
-// this is a no-op.
-func (tb *tagSetBuilder) Delete(k Key) TagSetBuilder {
+// Delete deletes the tag associated with the the key.
+func (tb *TagSetBuilder) Delete(k Key) *TagSetBuilder {
 	tb.ts.delete(k)
 	return tb
 }
 
 // Build returns the built TagSet and clears the builder.
-func (tb *tagSetBuilder) Build() *TagSet {
+func (tb *TagSetBuilder) Build() *TagSet {
 	ts := tb.ts
 	tb.ts = nil
 	return ts
-}
-
-func (tb *tagSetBuilder) insertBytes(k Key, bs []byte) *tagSetBuilder {
-	tb.ts.insertBytes(k, bs)
-	return tb
-}
-
-func (tb *tagSetBuilder) updateBytes(k Key, bs []byte) *tagSetBuilder {
-	tb.ts.updateBytes(k, bs)
-	return tb
-}
-
-func (tb *tagSetBuilder) upsertBytes(k Key, bs []byte) *tagSetBuilder {
-	tb.ts.upsertBytes(k, bs)
-	return tb
 }

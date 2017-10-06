@@ -23,9 +23,9 @@ import (
 )
 
 func Test_View_MeasureFloat64_AggregationDistribution_WindowCumulative(t *testing.T) {
-	k1, _ := tags.CreateKeyString("k1")
-	k2, _ := tags.CreateKeyString("k2")
-	k3, _ := tags.CreateKeyString("k3")
+	k1, _ := tags.KeyStringByName("k1")
+	k2, _ := tags.KeyStringByName("k2")
+	k3, _ := tags.KeyStringByName("k3")
 	agg1 := NewAggregationDistribution([]float64{2})
 	vw1 := NewView("VF1", "desc VF1", []tags.Key{k1, k2}, nil, agg1, NewWindowCumulative())
 
@@ -183,8 +183,8 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowCumulative(t *testin
 func Test_View_MeasureFloat64_AggregationDistribution_WindowSlidingTime(t *testing.T) {
 	startTime := time.Date(2010, 1, 1, 0, 0, 0, 0, time.UTC)
 
-	k1, _ := tags.CreateKeyString("k1")
-	k2, _ := tags.CreateKeyString("k2")
+	k1, _ := tags.KeyStringByName("k1")
+	k2, _ := tags.KeyStringByName("k2")
 	agg1 := NewAggregationDistribution([]float64{2})
 	vw1 := NewView("VF1", "desc VF1", []tags.Key{k1, k2}, nil, agg1, NewWindowSlidingTime(10*time.Second, 5))
 
@@ -372,8 +372,8 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowSlidingTime(t *testi
 func Test_View_MeasureFloat64_AggregationCount_WindowSlidingTime(t *testing.T) {
 	startTime := time.Date(2010, 1, 1, 0, 0, 0, 0, time.UTC)
 
-	k1, _ := tags.CreateKeyString("k1")
-	k2, _ := tags.CreateKeyString("k2")
+	k1, _ := tags.KeyStringByName("k1")
+	k2, _ := tags.KeyStringByName("k2")
 	agg1 := NewAggregationCount()
 	vw1 := NewView("VF1", "desc VF1", []tags.Key{k1, k2}, nil, agg1, NewWindowSlidingTime(10*time.Second, 5))
 
@@ -573,8 +573,8 @@ func Test_View_MeasureFloat64_AggregationCount_WindowSlidingTime(t *testing.T) {
 }
 
 func Test_View_MeasureFloat64_AggregationDistribution_WindowSlidingCount(t *testing.T) {
-	k1, _ := tags.CreateKeyString("k1")
-	k2, _ := tags.CreateKeyString("k2")
+	k1, _ := tags.KeyStringByName("k1")
+	k2, _ := tags.KeyStringByName("k2")
 	agg1 := NewAggregationDistribution([]float64{2})
 	vw1 := NewView("VF1", "desc VF1", []tags.Key{k1, k2}, nil, agg1, NewWindowSlidingCount(12, 4))
 

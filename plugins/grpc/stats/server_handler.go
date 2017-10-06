@@ -185,12 +185,12 @@ func (sh serverHandler) handleRPCEnd(ctx context.Context, s *stats.End) {
 // createTagSet creates a new tagSet containing the tags extracted from the
 // gRPC metadata.
 func (sh serverHandler) createTagSet(ctx context.Context, serviceName, methodName string) (*tags.TagSet, error) {
-	var tsb tags.TagSetBuilder
+	var tsb *tags.TagSetBuilder
 
 	if tagsBin := stats.Tags(ctx); tagsBin == nil {
 		tsb = tags.NewTagSetBuilder(nil)
 	} else {
-		ts, err := tags.DecodeFromFullSignature([]byte(tagsBin))
+		ts, err := tags.Decode([]byte(tagsBin))
 		if err != nil {
 			return nil, fmt.Errorf("serverHandler.createTagSet failed to decode tagsBin: %v. %v", tagsBin, err)
 		}

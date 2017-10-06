@@ -19,32 +19,41 @@ import (
 	"bytes"
 	"fmt"
 	"sort"
+
+	"golang.org/x/net/context"
 )
 
-// TagSet is the object holding the tags stored in context. It is not meant to
-// be created manually by code outside the library. It should only be created
-// using the TagSetBuilder class.
+// Tag is a key value pair that can be propagated on wire.
+type Tag struct {
+	K Key
+	V []byte
+}
+
+// ErrKeyNotFound is returned when a key is not found in a tag set.
+type ErrKeyNotFound struct {
+	Key string
+}
+
+func (e ErrKeyNotFound) Error() string {
+	return fmt.Sprintf("key %q not found", e.Key)
+}
+
+// TagSet contains a set of tags. Use TagSetBuilder to build tag sets.
 type TagSet struct {
 	m map[Key][]byte
 }
 
-// ValueAsString returns the string associated with a specified key.
+// ValueAsString returns value associated with the specified key
+// encoded as a string. If key is not found, it returns ErrValueNotFound.
 func (ts *TagSet) ValueAsString(k Key) (string, error) {
 	if _, ok := k.(*KeyString); !ok {
-		return "", fmt.Errorf("values of key '%v' are not of type string", k.Name())
+		return "", fmt.Errorf("key %q is not a *KeyString", k.Name())
 	}
-
 	b, ok := ts.m[k]
 	if !ok {
-		return "", fmt.Errorf("no value assigned to tag key '%v'", k.Name())
+		return "", ErrKeyNotFound{Key: k.Name()}
 	}
-	return string(b), nil
-}
-
-func newTagSet(sizeHint int) *TagSet {
-	return &TagSet{
-		m: make(map[Key][]byte, sizeHint),
-	}
+	return k.ValueAsString(b), nil
 }
 
 func (ts *TagSet) String() string {
@@ -63,26 +72,52 @@ func (ts *TagSet) String() string {
 	return buffer.String()
 }
 
-func (ts *TagSet) insertBytes(k Key, b []byte) bool {
+func (ts *TagSet) insert(k Key, v []byte) {
 	if _, ok := ts.m[k]; ok {
-		return false
+		return
 	}
-	ts.m[k] = b
-	return true
+	ts.m[k] = v
 }
 
-func (ts *TagSet) updateBytes(k Key, b []byte) bool {
-	if _, ok := ts.m[k]; !ok {
-		return false
+func (ts *TagSet) update(k Key, v []byte) {
+	if _, ok := ts.m[k]; ok {
+		ts.m[k] = v
 	}
-	ts.m[k] = b
-	return true
 }
 
-func (ts *TagSet) upsertBytes(k Key, b []byte) {
-	ts.m[k] = b
+func (ts *TagSet) upsert(k Key, v []byte) {
+	ts.m[k] = v
 }
 
 func (ts *TagSet) delete(k Key) {
 	delete(ts.m, k)
 }
+
+// FromContext returns the TagSet stored in the context.
+func FromContext(ctx context.Context) *TagSet {
+	// The returned TagSet shouldn't be mutated.
+	ts := ctx.Value(tagSetCtxKey)
+	if ts == nil {
+		return newTagSet(0)
+	}
+	return ts.(*TagSet)
+}
+
+// TODO(jbd): It says "The returned TagSet shouldn't be mutated.",
+// but tag set cannot be mutated. Remove the comment.
+
+// NewContext creates a new context from the old one replacing any existing
+// TagSet with the new parameter TagSet ts.
+func NewContext(ctx context.Context, ts *TagSet) context.Context {
+	return context.WithValue(ctx, tagSetCtxKey, ts)
+}
+
+func newTagSet(sizeHint int) *TagSet {
+	return &TagSet{
+		m: make(map[Key][]byte, sizeHint),
+	}
+}
+
+type ctxKey struct{}
+
+var tagSetCtxKey = ctxKey{}

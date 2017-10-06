@@ -28,8 +28,8 @@ import (
 )
 
 func TestServerDefaultCollections(t *testing.T) {
-	k1, _ := tags.CreateKeyString("k1")
-	k2, _ := tags.CreateKeyString("k2")
+	k1, _ := tags.KeyStringByName("k1")
+	k2, _ := tags.KeyStringByName("k2")
 
 	type tagPair struct {
 		k *tags.KeyString
@@ -318,7 +318,7 @@ func TestServerDefaultCollections(t *testing.T) {
 				tsb.UpsertString(t.k, t.v)
 			}
 			ts := tsb.Build()
-			encoded := tags.EncodeToFullSignature(ts)
+			encoded := tags.Encode(ts)
 			ctx := stats.SetTags(context.Background(), encoded)
 
 			ctx = h.TagRPC(ctx, rpc.tagInfo)

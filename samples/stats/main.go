@@ -31,11 +31,11 @@ func main() {
 	// ---------------------------------------------
 
 	// Creates keys
-	key1, err := tags.CreateKeyString("/mycompany.com/key/deviceIDKey")
+	key1, err := tags.KeyStringByName("/mycompany.com/key/deviceIDKey")
 	if err != nil {
 		log.Fatalf("Key '/mycompany.com/key/deviceIDKey' not created %v", err)
 	}
-	key2, err := tags.CreateKeyString("/mycompany.com/key/osVersionKey")
+	key2, err := tags.KeyStringByName("/mycompany.com/key/osVersionKey")
 	if err != nil {
 		log.Fatalf("Key '/mycompany.com/key/osVersionKey' not created %v", err)
 	}

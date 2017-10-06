@@ -76,16 +76,16 @@ var (
 func createDefaultKeys() {
 	// Initializing keys
 	var err error
-	if keyService, err = tags.CreateKeyString("grpc.service"); err != nil {
-		log.Fatalf("tags.CreateKeyString(\"grpc.service\") failed to create/retrieve keyService. %v", err)
+	if keyService, err = tags.KeyStringByName("grpc.service"); err != nil {
+		log.Fatalf("tags.KeyStringByName(\"grpc.service\") failed to create/retrieve keyService. %v", err)
 	}
 
-	if keyMethod, err = tags.CreateKeyString("grpc.method"); err != nil {
-		log.Fatalf("tags.CreateKeyString(\"grpc.method\") failed to create/retrieve keyMethod. %v", err)
+	if keyMethod, err = tags.KeyStringByName("grpc.method"); err != nil {
+		log.Fatalf("tags.KeyStringByName(\"grpc.method\") failed to create/retrieve keyMethod. %v", err)
 	}
 
-	if keyOpStatus, err = tags.CreateKeyString("grpc.opstatus"); err != nil {
-		log.Fatalf("tags.CreateKeyString(\"grpc.opstatus\") failed to create/retrieve keyOpStatus. %v", err)
+	if keyOpStatus, err = tags.KeyStringByName("grpc.opstatus"); err != nil {
+		log.Fatalf("tags.KeyStringByName(\"grpc.opstatus\") failed to create/retrieve keyOpStatus. %v", err)
 	}
 }
 
