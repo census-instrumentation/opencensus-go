@@ -17,7 +17,6 @@ package tags
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"sort"
 
@@ -30,29 +29,31 @@ type Tag struct {
 	V []byte
 }
 
+// ErrKeyNotFound is returned when a key is not found in a tag set.
+type ErrKeyNotFound struct {
+	Key string
+}
+
+func (e ErrKeyNotFound) Error() string {
+	return fmt.Sprintf("key %q not found", e.Key)
+}
+
 // TagSet contains a set of tags. Use TagSetBuilder to build tag sets.
 type TagSet struct {
 	m map[Key][]byte
 }
 
-// ErrValueNotFound is returned when value is not found in a tag set.
-var ErrValueNotFound = errors.New("no value found")
-
 // ValueAsString returns value associated with the specified key
 // encoded as a string. If key is not found, it returns ErrValueNotFound.
 func (ts *TagSet) ValueAsString(k Key) (string, error) {
 	if _, ok := k.(*KeyString); !ok {
-		return "", errors.New("key is not a *KeyString")
+		return "", fmt.Errorf("key %q is not a *KeyString", k.Name())
 	}
 	b, ok := ts.m[k]
 	if !ok {
-		return "", ErrValueNotFound
+		return "", ErrKeyNotFound{Key: k.Name()}
 	}
 	return k.ValueAsString(b), nil
-}
-
-func (ts *TagSet) setKeyValue(k Key, v []byte) {
-	ts.m[k] = v
 }
 
 func (ts *TagSet) String() string {
@@ -71,9 +72,30 @@ func (ts *TagSet) String() string {
 	return buffer.String()
 }
 
-// FromContext returns the TagSet stored in the context. The returned TagSet
-// shouldn't be mutated.
+func (ts *TagSet) insert(k Key, v []byte) {
+	if _, ok := ts.m[k]; ok {
+		return
+	}
+	ts.m[k] = v
+}
+
+func (ts *TagSet) update(k Key, v []byte) {
+	if _, ok := ts.m[k]; ok {
+		ts.m[k] = v
+	}
+}
+
+func (ts *TagSet) upsert(k Key, v []byte) {
+	ts.m[k] = v
+}
+
+func (ts *TagSet) delete(k Key) {
+	delete(ts.m, k)
+}
+
+// FromContext returns the TagSet stored in the context.
 func FromContext(ctx context.Context) *TagSet {
+	// The returned TagSet shouldn't be mutated.
 	ts := ctx.Value(tagSetCtxKey)
 	if ts == nil {
 		return newTagSet(0)

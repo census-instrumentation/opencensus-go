@@ -34,7 +34,7 @@ func NewTagSetBuilder(ts *TagSet) *TagSetBuilder {
 
 	tb.ts = newTagSet(len(ts.m))
 	for k, b := range ts.m {
-		tb.ts.setKeyValue(k, b)
+		tb.ts.insert(k, b)
 	}
 	return tb
 }
@@ -43,30 +43,26 @@ func NewTagSetBuilder(ts *TagSet) *TagSetBuilder {
 // If there is already a value exists with the given key, it doesn't
 // update the existing value.
 func (tb *TagSetBuilder) InsertString(k *KeyString, s string) *TagSetBuilder {
-	if _, ok := tb.ts.m[k]; !ok {
-		tb.ts.setKeyValue(k, []byte(s))
-	}
+	tb.ts.insert(k, []byte(s))
 	return tb
 }
 
 // UpdateString updates a string value associated with the the key.
 // If the given key doesn't already exist in the tag set, it does nothing.
 func (tb *TagSetBuilder) UpdateString(k *KeyString, s string) *TagSetBuilder {
-	if _, ok := tb.ts.m[k]; ok {
-		tb.ts.setKeyValue(k, []byte(s))
-	}
+	tb.ts.update(k, []byte(s))
 	return tb
 }
 
 // UpsertString updates or insert a string value associated with the key.
 func (tb *TagSetBuilder) UpsertString(k *KeyString, s string) *TagSetBuilder {
-	tb.ts.setKeyValue(k, []byte(s))
+	tb.ts.upsert(k, []byte(s))
 	return tb
 }
 
 // Delete deletes the tag associated with the the key.
 func (tb *TagSetBuilder) Delete(k Key) *TagSetBuilder {
-	delete(tb.ts.m, k)
+	tb.ts.delete(k)
 	return tb
 }
 
