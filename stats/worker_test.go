@@ -126,13 +126,12 @@ func Test_Worker_MeasureByName(t *testing.T) {
 	}
 
 	for _, tc := range tcs {
-		m, err := GetMeasureByName(tc.name)
+		m, err := MeasureByName(tc.name)
 		if (err != nil) != (tc.err != nil) {
-			t.Errorf("GetMeasureByName. got error %v, want %v. Test case: %v", err, tc.err, tc.label)
+			t.Errorf("MeasureByName(%q) = %v, want %v", tc.label, err, tc.err)
 		}
-
 		if m != tc.m {
-			t.Errorf("GetMeasureByName. got measure %v, want measure %v. Test case: %v", m, tc.m, tc.label)
+			t.Errorf("MeasureByName(%q) got measure %v; want %v", tc.label, m, tc.m)
 		}
 	}
 }
@@ -217,26 +216,26 @@ func Test_Worker_MeasureDelete(t *testing.T) {
 
 		for _, n := range tc.measureNames {
 			if _, err := NewMeasureInt64(n, "some desc", "unit"); err != nil {
-				t.Errorf("Creating measure got error '%v'. test case: '%v'", err, tc.label)
+				t.Errorf("%v: Cannot create measure: %v'", tc.label, err)
 			}
 		}
 
 		for _, r := range tc.registrations {
-			m, err := GetMeasureByName(r.measureName)
+			m, err := MeasureByName(r.measureName)
 			if err != nil {
-				t.Errorf("Retrieving measure '%v' got '%v', want no error. test case: '%v'", r.measureName, err, tc.label)
+				t.Errorf("%v: MeasureByName(%q) = %v; want no error", tc.label, r.measureName, err)
 				continue
 			}
 			if err = r.regFunc(m); err != nil {
-				t.Errorf("Registring view got '%v', want no error. test case: '%v'", err, tc.label)
+				t.Errorf("%v: Cannot register view: %v", tc.label, err)
 				continue
 			}
 		}
 
 		for _, d := range tc.deletions {
-			m, err := GetMeasureByName(d.name)
+			m, err := MeasureByName(d.name)
 			if (err != nil) != (d.getErr != nil) {
-				t.Errorf("Retrieving measure got '%v', want '%v'. test case: '%v'", err, d.getErr, tc.label)
+				t.Errorf("%v: MeasureByName = %v; want %v", tc.label, d.getErr, err)
 				continue
 			}
 
@@ -247,7 +246,7 @@ func Test_Worker_MeasureDelete(t *testing.T) {
 
 			err = DeleteMeasure(m)
 			if (err != nil) != (d.deleteErr != nil) {
-				t.Errorf("Deleting measure got '%v', want '%v'. test case: '%v'", err, d.deleteErr, tc.label)
+				t.Errorf("%v: Cannot delete measure: got %v as error; want %v", tc.label, err, d.deleteErr)
 			}
 
 			var deleted bool
@@ -255,8 +254,9 @@ func Test_Worker_MeasureDelete(t *testing.T) {
 				deleted = true
 			}
 
-			if _, err := GetMeasureByName(d.name); deleted && (err == nil) {
-				t.Errorf("Retrieving measure succedded after delete succeded. test case: '%v'", tc.label)
+			if _, err := MeasureByName(d.name); deleted && err == nil {
+				// TODO(jbd): Look for ErrNotExists instead.
+				t.Errorf("%v: Measure %q shouldn't exist after deletion but exists", tc.label, d.name)
 				continue
 			}
 		}
@@ -455,14 +455,14 @@ func Test_Worker_ViewRegistration(t *testing.T) {
 		}
 
 		for _, byname := range tc.bynames {
-			v, err := GetViewByName(byname.name)
+			v, err := ViewByName(byname.name)
 			if (err != nil) != (byname.err != nil) {
-				t.Errorf("GetViewByName. got error %v, want %v. Test case: %v", err, byname.err, tc.label)
+				t.Errorf("%v: ViewByName errored with %v, want %v", tc.label, err, byname.err)
 			}
 
 			wantV := views[byname.vID]
 			if v != wantV {
-				t.Errorf("GetViewByName. got view '%v' '%v', want view %v. Test case: %v", v.Name(), v.Description(), wantV, tc.label)
+				t.Errorf("%v: ViewByName = %v; want %v", tc.label, v, wantV)
 			}
 		}
 	}

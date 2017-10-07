@@ -23,6 +23,26 @@ type MeasureFloat64 struct {
 	views       map[View]bool
 }
 
+// NewMeasureFloat64 creates a new measure of type MeasureFloat64. It returns
+// an error if a measure with the same name already exists.
+func NewMeasureFloat64(name, description, unit string) (*MeasureFloat64, error) {
+	m := &MeasureFloat64{
+		name:        name,
+		description: description,
+		unit:        unit,
+		views:       make(map[View]bool),
+	}
+	req := &registerMeasureReq{
+		m:   m,
+		err: make(chan error),
+	}
+	defaultWorker.c <- req
+	if err := <-req.err; err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // Name returns the name of the measure.
 func (m *MeasureFloat64) Name() string {
 	return m.name

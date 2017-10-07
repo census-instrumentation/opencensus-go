@@ -15,15 +15,15 @@
 
 package tags
 
-import "fmt"
-
 var keys []Key
 
 // Key represents a tag key.
 type Key interface {
+	// Name returns the name of the key.
 	Name() string
-	ID() uint16
-	ValueAsString(b []byte) string
+
+	//StringValue encodes the given values represented in binary to string.
+	StringValue(v []byte) string
 }
 
 // KeyString is a Key and represents string keys.
@@ -33,25 +33,15 @@ type KeyString struct {
 }
 
 // TODO(jbd): Raname KeyString to StringKey?
-// TODO(jbd): What is ID? Should we export an accessor for it?
 
 // Name returns the name of the key.
 func (k *KeyString) Name() string {
 	return k.name
 }
 
-// ID returns the ID of the key.
-func (k *KeyString) ID() uint16 {
-	return k.id
-}
-
-// ValueAsString encodes the given values represented in binary to string.
-func (k *KeyString) ValueAsString(v []byte) string {
+// StringValue encodes the given value represented in binary to string.
+func (k *KeyString) StringValue(v []byte) string {
 	return string(v)
-}
-
-func (k *KeyString) String() string {
-	return fmt.Sprintf("%v", k.Name())
 }
 
 // KeyStringByName creates or retrieves a *KeyString identified by name.

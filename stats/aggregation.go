@@ -72,11 +72,8 @@ type AggregationDistribution struct {
 // [bounds[i-1], bounds[i]) for 0 < i < len(Bounds)
 // [bounds[i-1], +infinity) for i = len(Bounds)
 func NewAggregationDistribution(bounds []float64) *AggregationDistribution {
-	var copyBounds []float64
-	for _, b := range bounds {
-		copyBounds = append(copyBounds, b)
-	}
-
+	copyBounds := make([]float64, len(bounds))
+	copy(copyBounds, bounds)
 	return &AggregationDistribution{
 		bounds: copyBounds,
 	}
