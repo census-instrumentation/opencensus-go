@@ -99,7 +99,7 @@ func (sh serverHandler) TagRPC(ctx context.Context, info *stats.RPCTagInfo) cont
 	}
 	ctx = tags.NewContext(ctx, ts)
 
-	istats.RecordInt64(ctx, RPCServerStartedCount, 1)
+	RPCServerStartedCount.Record(ctx, 1)
 	return context.WithValue(ctx, grpcServerRPCKey, d)
 }
 
@@ -137,7 +137,7 @@ func (sh serverHandler) handleRPCInPayload(ctx context.Context, s *stats.InPaylo
 		return
 	}
 
-	istats.RecordInt64(ctx, RPCServerRequestBytes, int64(s.Length))
+	RPCServerRequestBytes.Record(ctx, int64(s.Length))
 	atomic.AddUint64(&d.reqCount, 1)
 }
 
@@ -150,7 +150,7 @@ func (sh serverHandler) handleRPCOutPayload(ctx context.Context, s *stats.OutPay
 		return
 	}
 
-	istats.RecordInt64(ctx, RPCServerResponseBytes, int64(s.Length))
+	RPCServerResponseBytes.Record(ctx, int64(s.Length))
 	atomic.AddUint64(&d.respCount, 1)
 }
 
@@ -165,10 +165,10 @@ func (sh serverHandler) handleRPCEnd(ctx context.Context, s *stats.End) {
 	elapsedTime := time.Since(d.startTime)
 
 	var measurements []istats.Measurement
-	measurements = append(measurements, RPCServerRequestCount.Is(int64(d.reqCount)))
-	measurements = append(measurements, RPCServerResponseCount.Is(int64(d.respCount)))
-	measurements = append(measurements, RPCServerFinishedCount.Is(1))
-	measurements = append(measurements, RPCServerServerElapsedTime.Is(float64(elapsedTime)/float64(time.Millisecond)))
+	measurements = append(measurements, RPCServerRequestCount.M(int64(d.reqCount)))
+	measurements = append(measurements, RPCServerResponseCount.M(int64(d.respCount)))
+	measurements = append(measurements, RPCServerFinishedCount.M(1))
+	measurements = append(measurements, RPCServerServerElapsedTime.M(float64(elapsedTime)/float64(time.Millisecond)))
 	if s.Error != nil {
 		errorCode := s.Error.Error()
 		ts := tags.FromContext(ctx)
@@ -177,7 +177,7 @@ func (sh serverHandler) handleRPCEnd(ctx context.Context, s *stats.End) {
 
 		ts = tsb.Build()
 		ctx = tags.NewContext(ctx, ts)
-		measurements = append(measurements, RPCServerErrorCount.Is(1))
+		measurements = append(measurements, RPCServerErrorCount.M(1))
 	}
 
 	istats.Record(ctx, measurements...)

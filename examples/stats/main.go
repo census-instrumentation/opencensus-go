@@ -117,11 +117,11 @@ func main() {
 	ctx := tags.NewContext(context.Background(), tsb.Build())
 
 	// Recording single datapoint at a time.
-	stats.RecordFloat64(ctx, videoSize, 10.0)
-	stats.RecordInt64(ctx, videoSpamCount, 1)
+	videoSize.Record(ctx, 10.0)
+	videoSpamCount.Record(ctx, 1)
 
 	// Recording multiple datapoints at once.
-	stats.Record(ctx, videoSpamCount.Is(2), videoSize.Is(100.0))
+	stats.Record(ctx, videoSpamCount.M(2), videoSize.M(100.0))
 
 	// Wait for a duration longer than reporting duration to ensure the stats
 	// library reports the collected data.

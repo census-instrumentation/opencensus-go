@@ -82,11 +82,11 @@ if err != nil {
 Retrieve measure by name:
 
 ```go
-mf, err := stats.GetMeasureByName("/my/float64/measureName")
+mf, err := stats.FindMeasure("/my/float64/measureName")
 if err != nil {
     // handle error
 }
-mi, err := stats.GetMeasureByName("/my/otherName")
+mi, err := stats.FindMeasure("/my/otherName")
 if err != nil {
     // handle error
 }
@@ -230,15 +230,14 @@ if err := stats.StopForcedCollection(myView1); err != nil {
 ```
 
 ### Recording measurements
-Recording usage can only be performed against already registered measure and and their registered views. Measurements are implicitly tagged with the tags in the context:
+Recording usage can only be performed against already registered measure
+and their registered views. Measurements are implicitly tagged with the
+tags in the context:
 
 ```go
-// mi is a *MeasureInt64 and v is an int64 .
-stats.RecordInt64(ctx, mi, v)
-// mf is a *RecordFloat64 and v is an float64 .
-stats.RecordFloat64(ctx, mf, v)
-// multiple measurements can be performed at once.
-stats.Record(ctx, mi.Is(4), mf.Is(10.5))
+mi.Record(ctx, 1)
+mf.Record(ctx, 5.6)
+stats.Record(ctx, mi.M(4), mf.M(10.5))
 ```
 
 ### Retrieving collected data for a View
