@@ -37,7 +37,7 @@ func TestClientDefaultCollections(t *testing.T) {
 	}
 
 	type wantData struct {
-		v    func() istats.View
+		v    func() *istats.View
 		rows []*istats.Row
 	}
 	type rpc struct {
@@ -71,7 +71,7 @@ func TestClientDefaultCollections(t *testing.T) {
 			},
 			[]*wantData{
 				{
-					func() istats.View { return RPCClientRequestCountView },
+					func() *istats.View { return RPCClientRequestCountView },
 					[]*istats.Row{
 						{
 							[]tags.Tag{
@@ -83,7 +83,7 @@ func TestClientDefaultCollections(t *testing.T) {
 					},
 				},
 				{
-					func() istats.View { return RPCClientResponseCountView },
+					func() *istats.View { return RPCClientResponseCountView },
 					[]*istats.Row{
 						{
 							[]tags.Tag{
@@ -95,7 +95,7 @@ func TestClientDefaultCollections(t *testing.T) {
 					},
 				},
 				{
-					func() istats.View { return RPCClientRequestBytesView },
+					func() *istats.View { return RPCClientRequestBytesView },
 					[]*istats.Row{
 						{
 							[]tags.Tag{
@@ -107,7 +107,7 @@ func TestClientDefaultCollections(t *testing.T) {
 					},
 				},
 				{
-					func() istats.View { return RPCClientResponseBytesView },
+					func() *istats.View { return RPCClientResponseBytesView },
 					[]*istats.Row{
 						{
 							[]tags.Tag{
@@ -152,7 +152,7 @@ func TestClientDefaultCollections(t *testing.T) {
 			},
 			[]*wantData{
 				{
-					func() istats.View { return RPCClientErrorCountView },
+					func() *istats.View { return RPCClientErrorCountView },
 					[]*istats.Row{
 						{
 							[]tags.Tag{
@@ -165,7 +165,7 @@ func TestClientDefaultCollections(t *testing.T) {
 					},
 				},
 				{
-					func() istats.View { return RPCClientRequestCountView },
+					func() *istats.View { return RPCClientRequestCountView },
 					[]*istats.Row{
 						{
 							[]tags.Tag{
@@ -177,7 +177,7 @@ func TestClientDefaultCollections(t *testing.T) {
 					},
 				},
 				{
-					func() istats.View { return RPCClientResponseCountView },
+					func() *istats.View { return RPCClientResponseCountView },
 					[]*istats.Row{
 						{
 							[]tags.Tag{
@@ -235,7 +235,7 @@ func TestClientDefaultCollections(t *testing.T) {
 			},
 			[]*wantData{
 				{
-					func() istats.View { return RPCClientErrorCountView },
+					func() *istats.View { return RPCClientErrorCountView },
 					[]*istats.Row{
 						{
 							[]tags.Tag{
@@ -256,7 +256,7 @@ func TestClientDefaultCollections(t *testing.T) {
 					},
 				},
 				{
-					func() istats.View { return RPCClientRequestCountView },
+					func() *istats.View { return RPCClientRequestCountView },
 					[]*istats.Row{
 						{
 							[]tags.Tag{
@@ -268,7 +268,7 @@ func TestClientDefaultCollections(t *testing.T) {
 					},
 				},
 				{
-					func() istats.View { return RPCClientResponseCountView },
+					func() *istats.View { return RPCClientResponseCountView },
 					[]*istats.Row{
 						{
 							[]tags.Tag{
@@ -280,7 +280,7 @@ func TestClientDefaultCollections(t *testing.T) {
 					},
 				},
 				{
-					func() istats.View { return RPCClientRequestBytesView },
+					func() *istats.View { return RPCClientRequestBytesView },
 					[]*istats.Row{
 						{
 							[]tags.Tag{
@@ -292,7 +292,7 @@ func TestClientDefaultCollections(t *testing.T) {
 					},
 				},
 				{
-					func() istats.View { return RPCClientResponseBytesView },
+					func() *istats.View { return RPCClientResponseBytesView },
 					[]*istats.Row{
 						{
 							[]tags.Tag{
@@ -335,7 +335,7 @@ func TestClientDefaultCollections(t *testing.T) {
 		}
 
 		for _, wantData := range tc.wants {
-			gotRows, err := istats.RetrieveData(wantData.v())
+			gotRows, err := wantData.v().RetrieveData()
 			if err != nil {
 				t.Errorf("Test case '%v'. RetrieveData for %v failed. %v", tc.label, wantData.v().Name(), err)
 				continue

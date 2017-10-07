@@ -27,8 +27,8 @@ import (
 type worker struct {
 	measuresByName map[string]Measure
 	measures       map[Measure]bool
-	viewsByName    map[string]View
-	views          map[View]bool
+	viewsByName    map[string]*View
+	views          map[*View]bool
 
 	timer      *time.Ticker
 	c          chan command
@@ -46,7 +46,7 @@ func NewMeasureFloat64(name, description, unit string) (*MeasureFloat64, error) 
 		name:        name,
 		description: description,
 		unit:        unit,
-		views:       make(map[View]bool),
+		views:       make(map[*View]bool),
 	}
 
 	req := &registerMeasureReq{
@@ -68,7 +68,7 @@ func NewMeasureInt64(name, description, unit string) (*MeasureInt64, error) {
 		name:        name,
 		description: description,
 		unit:        unit,
-		views:       make(map[View]bool),
+		views:       make(map[*View]bool),
 	}
 
 	req := &registerMeasureReq{
@@ -106,8 +106,8 @@ func DeleteMeasure(m Measure) error {
 	return <-req.err
 }
 
-// GetViewByName returns the registered view associated with this name.
-func GetViewByName(name string) (View, error) {
+// FindView returns a registered view associated with this name.
+func FindView(name string) (*View, error) {
 	req := &getViewByNameReq{
 		name: name,
 		c:    make(chan *getViewByNameResp),
@@ -120,8 +120,8 @@ func GetViewByName(name string) (View, error) {
 // RegisterView registers view. It returns an error if the view cannot be
 // registered. Subsequent calls to Record with the same measure as the one in
 // the view will NOT cause the usage to be recorded unless a consumer is
-// subscribed to the view or ForceCollection for this view is called.
-func RegisterView(v View) error {
+// subscribed to the view or ForceCollect for this view is called.
+func RegisterView(v *View) error {
 	if v == nil {
 		return errors.New("cannot RegisterView for nil view")
 	}
@@ -134,15 +134,14 @@ func RegisterView(v View) error {
 	return <-req.err
 }
 
-// UnregisterView deletes the previously registered view. It returns an error
+// Unregister removes the previously registered view. It returns an error
 // if the view wasn't registered. All data collected and not reported for the
 // corresponding view will be lost. All clients subscribed to this view are
 // unsubscribed automatically and their subscriptions channels closed.
-func UnregisterView(v View) error {
+func (v *View) Unregister() error {
 	if v == nil {
 		return errors.New("cannot UnregisterView for nil view")
 	}
-
 	req := &unregisterViewReq{
 		v:   v,
 		err: make(chan error),
@@ -151,18 +150,17 @@ func UnregisterView(v View) error {
 	return <-req.err
 }
 
-// SubscribeToView subscribes a client to a View. If the view wasn't already
+// Subscribe subscribes a channel to a View. If the view wasn't already
 // registered, it will be automatically registered. It allows for many clients
 // to consume the same ViewData with a single registration. -i.e. the aggregate
 // of the collected measurements will be reported to the calling code through
 // channel c. To avoid data loss, clients must ensure that channel sends
 // proceed in a timely manner. The calling code is responsible for using a
 // buffered channel or blocking on the channel waiting for the collected data.
-func SubscribeToView(v View, c chan *ViewData) error {
+func (v *View) Subscribe(c chan *ViewData) error {
 	if v == nil {
-		return errors.New("cannot SubscribeToView for nil view")
+		return errors.New("cannot subscribe to a nil view")
 	}
-
 	req := &subscribeToViewReq{
 		v:   v,
 		c:   c,
@@ -172,15 +170,14 @@ func SubscribeToView(v View, c chan *ViewData) error {
 	return <-req.err
 }
 
-// UnsubscribeFromView unsubscribes a previously subscribed channel from the
+// Unsubscribe unsubscribes a previously subscribed channel from the
 // View subscriptions. If no more subscriber for v exists and the the ad hoc
 // collection for this view isn't active, data stops being collected for this
 // view.
-func UnsubscribeFromView(v View, c chan *ViewData) error {
+func (v *View) Unsubscribe(c chan *ViewData) error {
 	if v == nil {
-		return errors.New("cannot UnsubscribeFromView for nil view")
+		return errors.New("cannot unsubscribe from a nil view")
 	}
-
 	req := &unsubscribeFromViewReq{
 		v:   v,
 		c:   c,
@@ -190,11 +187,11 @@ func UnsubscribeFromView(v View, c chan *ViewData) error {
 	return <-req.err
 }
 
-// ForceCollection starts data collection for this view even if no
+// ForceCollect starts data collection for this view even if no
 // listeners are subscribed to it.
-func ForceCollection(v View) error {
+func (v *View) ForceCollect() error {
 	if v == nil {
-		return errors.New("cannot ForceCollection for nil view")
+		return errors.New("cannot force collect from a nil view")
 	}
 
 	req := &startForcedCollectionReq{
@@ -205,13 +202,12 @@ func ForceCollection(v View) error {
 	return <-req.err
 }
 
-// StopForcedCollection stops data collection for this view unless at least
-// 1 listener is subscribed to it.
-func StopForcedCollection(v View) error {
+// StopForceCollection stops data collection for this
+// view unless at least 1 listener is subscribed to it.
+func (v *View) StopForceCollection() error {
 	if v == nil {
-		return errors.New("cannot StopForcedCollection for nil view")
+		return errors.New("cannot stop force collection for nil view")
 	}
-
 	req := &stopForcedCollectionReq{
 		v:   v,
 		err: make(chan error),
@@ -221,7 +217,7 @@ func StopForcedCollection(v View) error {
 }
 
 // RetrieveData returns the current collected data for the view.
-func RetrieveData(v View) ([]*Row, error) {
+func (v *View) RetrieveData() ([]*Row, error) {
 	if v == nil {
 		return nil, errors.New("cannot retrieve data for nil view")
 	}
@@ -292,8 +288,8 @@ func newWorker() *worker {
 	return &worker{
 		measuresByName: make(map[string]Measure),
 		measures:       make(map[Measure]bool),
-		viewsByName:    make(map[string]View),
-		views:          make(map[View]bool),
+		viewsByName:    make(map[string]*View),
+		views:          make(map[*View]bool),
 		timer:          time.NewTicker(defaultReportingDuration),
 		c:              make(chan command),
 		quit:           make(chan bool),
@@ -340,7 +336,7 @@ func (w *worker) tryRegisterMeasure(m Measure) error {
 	return nil
 }
 
-func (w *worker) tryRegisterView(v View) error {
+func (w *worker) tryRegisterView(v *View) error {
 	if x, ok := w.viewsByName[v.Name()]; ok {
 		if x != v {
 			return fmt.Errorf("cannot register the view with name '%v' because a different view with the same name is already registered", v.Name())

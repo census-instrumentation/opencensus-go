@@ -40,30 +40,30 @@ var (
 	RPCClientResponseCount    *istats.MeasureInt64
 
 	// Default client views
-	RPCClientErrorCountView       istats.View
-	RPCClientRoundTripLatencyView istats.View
-	RPCClientRequestBytesView     istats.View
-	RPCClientResponseBytesView    istats.View
-	RPCClientRequestCountView     istats.View
-	RPCClientResponseCountView    istats.View
+	RPCClientErrorCountView       *istats.View
+	RPCClientRoundTripLatencyView *istats.View
+	RPCClientRequestBytesView     *istats.View
+	RPCClientResponseBytesView    *istats.View
+	RPCClientRequestCountView     *istats.View
+	RPCClientResponseCountView    *istats.View
 
-	RPCClientRoundTripLatencyMinuteView istats.View
-	RPCClientRequestBytesMinuteView     istats.View
-	RPCClientResponseBytesMinuteView    istats.View
-	RPCClientErrorCountMinuteView       istats.View
-	RPCClientStartedCountMinuteView     istats.View
-	RPCClientFinishedCountMinuteView    istats.View
-	RPCClientRequestCountMinuteView     istats.View
-	RPCClientResponseCountMinuteView    istats.View
+	RPCClientRoundTripLatencyMinuteView *istats.View
+	RPCClientRequestBytesMinuteView     *istats.View
+	RPCClientResponseBytesMinuteView    *istats.View
+	RPCClientErrorCountMinuteView       *istats.View
+	RPCClientStartedCountMinuteView     *istats.View
+	RPCClientFinishedCountMinuteView    *istats.View
+	RPCClientRequestCountMinuteView     *istats.View
+	RPCClientResponseCountMinuteView    *istats.View
 
-	RPCClientRoundTripLatencyHourView istats.View
-	RPCClientRequestBytesHourView     istats.View
-	RPCClientResponseBytesHourView    istats.View
-	RPCClientErrorCountHourView       istats.View
-	RPCClientStartedCountHourView     istats.View
-	RPCClientFinishedCountHourView    istats.View
-	RPCClientRequestCountHourView     istats.View
-	RPCClientResponseCountHourView    istats.View
+	RPCClientRoundTripLatencyHourView *istats.View
+	RPCClientRequestBytesHourView     *istats.View
+	RPCClientResponseBytesHourView    *istats.View
+	RPCClientErrorCountHourView       *istats.View
+	RPCClientStartedCountHourView     *istats.View
+	RPCClientFinishedCountHourView    *istats.View
+	RPCClientRequestCountHourView     *istats.View
+	RPCClientResponseCountHourView    *istats.View
 )
 
 func createDefaultMeasuresClient() {
@@ -98,7 +98,7 @@ func createDefaultMeasuresClient() {
 }
 
 func registerDefaultViewsClient() {
-	var views []istats.View
+	var views []*istats.View
 
 	RPCClientErrorCountView = istats.NewView("grpc.io/client/error_count/distribution_cumulative", "RPC Errors", []tags.Key{keyOpStatus, keyService, keyMethod}, RPCClientErrorCount, aggCount, windowCumulative)
 	views = append(views, RPCClientErrorCountView)
@@ -150,10 +150,10 @@ func registerDefaultViewsClient() {
 	// Registering views
 	for _, v := range views {
 		if err := istats.RegisterView(v); err != nil {
-			log.Fatalf("init() failed to register %v.%v\n", v, err)
+			log.Fatalf("init() failed to register %v: %v.\n", v, err)
 		}
-		if err := istats.ForceCollection(v); err != nil {
-			log.Fatalf("init() failed to ForceCollection %v.%v\n", v, err)
+		if err := v.ForceCollect(); err != nil {
+			log.Fatalf("init() failed to ForceCollect %v: %v.\n", v, err)
 		}
 	}
 }

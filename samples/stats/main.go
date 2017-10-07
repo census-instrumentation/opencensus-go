@@ -88,13 +88,13 @@ func main() {
 		}
 	}(subCh)
 
-	if err = stats.SubscribeToView(videoSizeView, subCh); err != nil {
+	if err = videoSizeView.Subscribe(subCh); err != nil {
 		log.Fatalf("Subscription to view %v failed. %v", videoSizeView, err)
 	}
 
 	// stats.ForceCollection explicitly instructs the library to collect the
 	// view data for on-demand retrieval.
-	if err := stats.ForceCollection(videoSpamCountView); err != nil {
+	if err := videoSpamCountView.ForceCollect(); err != nil {
 		log.Fatalf("Forced collection of view %v failed. %v", videoSpamCountView, err)
 	}
 
@@ -121,7 +121,7 @@ func main() {
 
 	fmt.Print("\nRetrieve data on demand\n")
 	// Pull collected data synchronously from the library
-	rows, err := stats.RetrieveData(videoSpamCountView)
+	rows, err := videoSpamCountView.RetrieveData()
 	if err != nil {
 		log.Fatalf("Retrieving data from view %v failed. %v", videoSpamCountView, err)
 	}
