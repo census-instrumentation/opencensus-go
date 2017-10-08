@@ -23,6 +23,28 @@ type MeasureInt64 struct {
 	views       map[View]bool
 }
 
+// NewMeasureInt64 creates a new measure of type MeasureInt64. It returns an
+// error if a measure with the same name already exists.
+func NewMeasureInt64(name, description, unit string) (*MeasureInt64, error) {
+	m := &MeasureInt64{
+		name:        name,
+		description: description,
+		unit:        unit,
+		views:       make(map[View]bool),
+	}
+
+	req := &registerMeasureReq{
+		m:   m,
+		err: make(chan error),
+	}
+	defaultWorker.c <- req
+	if err := <-req.err; err != nil {
+		return nil, err
+	}
+
+	return m, nil
+}
+
 // Name returns the name of the measure.
 func (m *MeasureInt64) Name() string {
 	return m.name

@@ -54,7 +54,7 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowCumulative(t *testin
 			[]*Row{
 				{
 					[]tags.Tag{{K: k1, V: []byte("v1")}},
-					&AggregationDistributionValue{
+					&TestingAggregationDistributionValue{
 						2, 1, 5, 3, 8, []int64{1, 1}, agg1.bounds,
 					},
 				},
@@ -69,13 +69,13 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowCumulative(t *testin
 			[]*Row{
 				{
 					[]tags.Tag{{K: k1, V: []byte("v1")}},
-					&AggregationDistributionValue{
+					&TestingAggregationDistributionValue{
 						1, 1, 1, 1, 0, []int64{1, 0}, agg1.bounds,
 					},
 				},
 				{
 					[]tags.Tag{{K: k2, V: []byte("v2")}},
-					&AggregationDistributionValue{
+					&TestingAggregationDistributionValue{
 						1, 5, 5, 5, 0, []int64{0, 1}, agg1.bounds,
 					},
 				},
@@ -93,25 +93,25 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowCumulative(t *testin
 			[]*Row{
 				{
 					[]tags.Tag{{K: k1, V: []byte("v1")}},
-					&AggregationDistributionValue{
+					&TestingAggregationDistributionValue{
 						2, 1, 5, 3, 8, []int64{1, 1}, agg1.bounds,
 					},
 				},
 				{
 					[]tags.Tag{{K: k1, V: []byte("v1 other")}},
-					&AggregationDistributionValue{
+					&TestingAggregationDistributionValue{
 						1, 1, 1, 1, 0, []int64{1, 0}, agg1.bounds,
 					},
 				},
 				{
 					[]tags.Tag{{K: k2, V: []byte("v2")}},
-					&AggregationDistributionValue{
+					&TestingAggregationDistributionValue{
 						1, 5, 5, 5, 0, []int64{0, 1}, agg1.bounds,
 					},
 				},
 				{
 					[]tags.Tag{{K: k1, V: []byte("v1")}, {K: k2, V: []byte("v2")}},
-					&AggregationDistributionValue{
+					&TestingAggregationDistributionValue{
 						1, 5, 5, 5, 0, []int64{0, 1}, agg1.bounds,
 					},
 				},
@@ -131,19 +131,19 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowCumulative(t *testin
 			[]*Row{
 				{
 					[]tags.Tag{{K: k1, V: []byte("v1 is a very long value key")}},
-					&AggregationDistributionValue{
+					&TestingAggregationDistributionValue{
 						2, 1, 5, 3, 8, []int64{1, 1}, agg1.bounds,
 					},
 				},
 				{
 					[]tags.Tag{{K: k1, V: []byte("v1 is another very long value key")}},
-					&AggregationDistributionValue{
+					&TestingAggregationDistributionValue{
 						1, 1, 1, 1, 0, []int64{1, 0}, agg1.bounds,
 					},
 				},
 				{
 					[]tags.Tag{{K: k1, V: []byte("v1 is a very long value key")}, {K: k2, V: []byte("v2 is a very long value key")}},
-					&AggregationDistributionValue{
+					&TestingAggregationDistributionValue{
 						4, 1, 5, 3, 2.66666666666667 * 3, []int64{1, 3}, agg1.bounds,
 					},
 				},
@@ -229,7 +229,7 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowSlidingTime(t *testi
 					[]*Row{
 						{
 							[]tags.Tag{{K: k1, V: []byte("v1")}},
-							&AggregationDistributionValue{
+							&TestingAggregationDistributionValue{
 								6, 2, 5, 3.8333333333, 1.3666666667 * 5, []int64{0, 6}, agg1.bounds,
 							},
 						},
@@ -241,7 +241,7 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowSlidingTime(t *testi
 					[]*Row{
 						{
 							[]tags.Tag{{K: k1, V: []byte("v1")}},
-							&AggregationDistributionValue{
+							&TestingAggregationDistributionValue{
 								4, 3, 5, 4, 0.6666666667 * 3, []int64{0, 4}, agg1.bounds,
 							},
 						},
@@ -253,7 +253,7 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowSlidingTime(t *testi
 					[]*Row{
 						{
 							[]tags.Tag{{K: k1, V: []byte("v1")}},
-							&AggregationDistributionValue{
+							&TestingAggregationDistributionValue{
 								2, 3, 4, 3.5, 0.5, []int64{0, 2}, agg1.bounds,
 							},
 						},
@@ -279,7 +279,7 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowSlidingTime(t *testi
 					[]*Row{
 						{
 							[]tags.Tag{{K: k1, V: []byte("v1")}},
-							&AggregationDistributionValue{
+							&TestingAggregationDistributionValue{
 								7, 1, 5, 3.57142857142857, 2.61904761904762 * 6, []int64{1, 6}, agg1.bounds,
 							},
 						},
@@ -291,7 +291,7 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowSlidingTime(t *testi
 					[]*Row{
 						{
 							[]tags.Tag{{K: k1, V: []byte("v1")}},
-							&AggregationDistributionValue{
+							&TestingAggregationDistributionValue{
 								7, 1, 5, 3.57142857142857, 2.61904761904762 * 6, []int64{1, 6}, agg1.bounds,
 							},
 						},
@@ -303,7 +303,7 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowSlidingTime(t *testi
 					[]*Row{
 						{
 							[]tags.Tag{{K: k1, V: []byte("v1")}},
-							&AggregationDistributionValue{
+							&TestingAggregationDistributionValue{
 								6, 2, 5, 4, 1.6 * 5, []int64{0, 6}, agg1.bounds,
 							},
 						},
@@ -315,7 +315,7 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowSlidingTime(t *testi
 					[]*Row{
 						{
 							[]tags.Tag{{K: k1, V: []byte("v1")}},
-							&AggregationDistributionValue{
+							&TestingAggregationDistributionValue{
 								6, 2, 5, 4, 1.6 * 5, []int64{0, 6}, agg1.bounds,
 							},
 						},
@@ -327,7 +327,7 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowSlidingTime(t *testi
 					[]*Row{
 						{
 							[]tags.Tag{{K: k1, V: []byte("v1")}},
-							&AggregationDistributionValue{
+							&TestingAggregationDistributionValue{
 								4, 4, 5, 4.75, 0.25 * 3, []int64{0, 4}, agg1.bounds,
 							},
 						},
@@ -605,7 +605,7 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowSlidingCount(t *test
 			[]*Row{
 				{
 					[]tags.Tag{{K: k1, V: []byte("v1")}},
-					&AggregationDistributionValue{
+					&TestingAggregationDistributionValue{
 						4, 1, 4, 2.5, 1.6666666667 * 3, []int64{1, 3}, agg1.bounds,
 					},
 				},
@@ -633,7 +633,7 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowSlidingCount(t *test
 			[]*Row{
 				{
 					[]tags.Tag{{K: k1, V: []byte("v1")}},
-					&AggregationDistributionValue{
+					&TestingAggregationDistributionValue{
 						15, 1, 15, 8, 20 * 14, []int64{1, 14}, agg1.bounds,
 					},
 				},
@@ -659,7 +659,7 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowSlidingCount(t *test
 			[]*Row{
 				{
 					[]tags.Tag{{K: k1, V: []byte("v1")}},
-					&AggregationDistributionValue{
+					&TestingAggregationDistributionValue{
 						13, 1, 13, 7, 15.1666666667 * 12, []int64{1, 12}, agg1.bounds,
 					},
 				},

@@ -49,6 +49,7 @@ type View interface {
 	collectedRows(now time.Time) []*Row
 
 	addSample(ts *tags.TagSet, val interface{}, now time.Time)
+	// TODO(jbd): Remove View interface? Are we expecting custom interface types?
 }
 
 // view is the data structure that holds the info describing the view as well
@@ -79,6 +80,10 @@ type view struct {
 	c *collector
 }
 
+type subscription struct {
+	droppedViewData uint64
+}
+
 // NewView creates a new View.
 func NewView(name, description string, keys []tags.Key, measure Measure, agg Aggregation, wnd Window) View {
 	var keysCopy []tags.Key
@@ -100,6 +105,7 @@ func NewView(name, description string, keys []tags.Key, measure Measure, agg Agg
 			wnd,
 		},
 	}
+	// TODO(jbd): Document which arguments cannot be nil.
 }
 
 // Name returns the name of view.
@@ -192,19 +198,6 @@ type Row struct {
 	AggregationValue AggregationValue
 }
 
-func (r *Row) String() string {
-	var buffer bytes.Buffer
-	buffer.WriteString("{ ")
-	buffer.WriteString("{ ")
-	for _, t := range r.Tags {
-		buffer.WriteString(fmt.Sprintf("{%v %v}", t.K.Name(), t.K.ValueAsString(t.V)))
-	}
-	buffer.WriteString(" }")
-	buffer.WriteString(r.AggregationValue.String())
-	buffer.WriteString(" }")
-	return buffer.String()
-}
-
 // Equal returns true if both Rows are equal. Tags are expected to be ordered
 // by the key name. Even both rows have the same tags but the tags appear in
 // different orders it will return false.
@@ -214,6 +207,19 @@ func (r *Row) Equal(other *Row) bool {
 	}
 
 	return reflect.DeepEqual(r.Tags, other.Tags) && r.AggregationValue.equal(other.AggregationValue)
+}
+
+func (r *Row) String() string {
+	var buffer bytes.Buffer
+	buffer.WriteString("{ ")
+	buffer.WriteString("{ ")
+	for _, t := range r.Tags {
+		buffer.WriteString(fmt.Sprintf("{%v %v}", t.K.Name(), t.K.StringValue(t.V)))
+	}
+	buffer.WriteString(" }")
+	buffer.WriteString(r.AggregationValue.String())
+	buffer.WriteString(" }")
+	return buffer.String()
 }
 
 // ContainsRow returns true if rows contain r.

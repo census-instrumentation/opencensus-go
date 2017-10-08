@@ -16,9 +16,7 @@
 package tags
 
 import (
-	"bytes"
 	"fmt"
-	"sort"
 
 	"golang.org/x/net/context"
 )
@@ -43,33 +41,19 @@ type TagSet struct {
 	m map[Key][]byte
 }
 
-// ValueAsString returns value associated with the specified key
+// StringValue returns value associated with the specified key
 // encoded as a string. If key is not found, it returns ErrValueNotFound.
-func (ts *TagSet) ValueAsString(k Key) (string, error) {
-	if _, ok := k.(*KeyString); !ok {
+func (ts *TagSet) StringValue(k Key) (string, error) {
+	ks, ok := k.(*KeyString)
+	if !ok {
 		return "", fmt.Errorf("key %q is not a *KeyString", k.Name())
 	}
 	b, ok := ts.m[k]
 	if !ok {
 		return "", ErrKeyNotFound{Key: k.Name()}
 	}
-	return k.ValueAsString(b), nil
-}
-
-func (ts *TagSet) String() string {
-	var keys []Key
-	for k := range ts.m {
-		keys = append(keys, k)
-	}
-	sort.Slice(keys, func(i, j int) bool { return keys[i].Name() < keys[j].Name() })
-
-	var buffer bytes.Buffer
-	buffer.WriteString("{ ")
-	for _, k := range keys {
-		buffer.WriteString(fmt.Sprintf("{%v %v}", k.Name(), k.ValueAsString(ts.m[k])))
-	}
-	buffer.WriteString(" }")
-	return buffer.String()
+	return ks.StringValue(b), nil
+	// TODO(jbd): Do all key types can provide string values?
 }
 
 func (ts *TagSet) insert(k Key, v []byte) {

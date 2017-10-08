@@ -16,5 +16,5 @@
 // Package stats contains the OpenCensus stats collection APIs.
 package stats
 
-// TODO(acetechnologist): Add a linnk to the language independent opencensus
-// doc when it is available.
+// TODO(acetechnologist): Add a link to the language independent OpenCensus
+// spec when it is available.
