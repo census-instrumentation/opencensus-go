@@ -24,6 +24,11 @@ import (
 	"golang.org/x/net/context"
 )
 
+func init() {
+	defaultWorker = newWorker()
+	go defaultWorker.start()
+}
+
 type worker struct {
 	measuresByName map[string]Measure
 	measures       map[Measure]bool
@@ -281,11 +286,6 @@ func SetReportingPeriod(d time.Duration) {
 	}
 	defaultWorker.c <- req
 	<-req.c // don't return until the timer is set to the new duration.
-}
-
-func init() {
-	defaultWorker = newWorker()
-	go defaultWorker.start()
 }
 
 func newWorker() *worker {
