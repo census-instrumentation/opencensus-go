@@ -28,61 +28,42 @@ OpenCensus libraries require Go 1.8 or later as it uses the convenience function
 
 ## Tags API
 
-### To create/retrieve a key
-A key is defined by its name. To use a key a user needs to know its name and type (currently only keys of type string are supported. Later keys of type int64 and bool will be supported). Calling CreateKeyString(...) multiple times with the same name returns the same key.
+Tags represent propagated key values. They can propagated using context.Context
+in the same process or can be encoded to be transmitted on wire and decoded back
+to a TagSet at the destination.
 
-Create/retrieve key:
+### Getting a key by a name
+A key is defined by its name. To use a key a user needs to know its name and type.
+Currently, only keys of type string are supported.
+Other types will be supported in the future.
 
-```go
-if key1, err := tags.CreateKeyString("keyNameID1"); err != nil {
-    // handle error
-}
-```
+See the [KeyStringByName][keystringbyname-ex] example.
 
-### To create a set of tags associated with keys
-TagSet is a set of tags. The following code demonstrates how to create a new TagSet from scratch:
+### Creating a set of tags associated with keys
+TagSet is a set of tags. Package tags provide a builder to create tag sets.
 
-```go
-tsb := NewTagSetBuilder(nil)
-tsb.InsertString(key1, "foo value")
-tsb.UpdateString(key1, "foo value2")
-tsb.UpsertString(key2, "bar value")
-tagsSet := tsb.Build()
-```
+See the [NewTagSetBuilder][newtagsetbuilder-ex] example.
 
-The methods on Builder can be chained.
+### Propagating a TagSet in a context
+To propagate a tag set to downstream methods and downstream RPCs, add a tag set
+to the current context. NewContext will return a copy of the current context,
+and put the tag set into the returned one.
+If there is already a tag set in the current context, it will be replaced.
 
-To create a new TagSet from an existing tag set oldTagSet:
-
-```go
-oldTagSet := ...
-tsb := NewTagSetBuilder(oldTagSet)
-tsb.InsertString(key1, "foo value")
-tsb.UpdateString(key1, "foo value2")
-tsb.UpsertString(key2, "bar value")
-newTagSet := tsb.Build()
-```
-
-### To add or modify a TagSet in a context
-Add tags to a context for propagation to downstream methods and downstream rpcs:
-To create a new context with the tags. This will create a new context where all the existing tags in the current context are deleted and replaced with the tags passed as argument.
 ```go
 newTagSet  := ...
-ctx2 := tags.NewContext(ctx, newTagSet)
+ctx = tags.NewContext(ctx, newTagSet)
 ```
-Create a new context keeping the old tag set and adding new tags to it, removing specific tags from it, or modifying the values fo some tags. This is just a matter of getting the oldTagSet from the context, apply changes to it, then create a new  context with the newTagSet.
-```go
-oldTagSet := tags.FromContext(ctx)
-newTagSet := tags.NewTagSetBuilder(oldTagSet).InsertString(key1, "foo value").
-    UpdateString(key1, "foo value2").
-    UpsertString(key2, "bar value").
-    Build()
-ctx2 := tags.NewContext(ctx, newTagSet)
-```
+
+In order to update an existing tag set, get the tag set from the current context,
+use TagSetBuilder to mutate and put it back to the context.
+
+See the [NewTagSetBuilder (Replace)][newtagsetbuilderreplace-ex] example.
+
 
 ## Stats API
 
-### To create/retrieve/delete a measure
+### Creating, retrieving and deleting a measure
 
 Create and load measures with units:
 
@@ -122,7 +103,7 @@ if err := stats.DeleteMeasure(mi); err != nil {
 }
 ```
 
-### To create an aggregation type
+### Creating an aggregation
 Currently only 2 types of aggregations are supported. The AggregationCount is used to count the number of times a sample was recorded. The AggregationDistribution is used to provide a histogram of the values of the samples.
 
 ```go
@@ -131,7 +112,7 @@ agg1 := stats.NewAggregationDistribution(histogramBounds)
 agg2 := stats.NewAggregationCount()
 ```
 
-### To create an aggregation window
+### Create an aggregation window
 Currently only 3 types of aggregation windows are supported. The WindowCumulative is used to continuously aggregate the data received. The WindowSlidingTime to aggregate the data received over the last specified time interval. The NewWindowSlidingCount to aggregate the data received over the last specified sample count.
 Currently all aggregation types are compatible with all aggregation windows. Later we might provide aggregation types that are incompatible with some windows.
 
@@ -147,7 +128,7 @@ wnd2 := stats.NewWindowSlidingCount(lastNSamples, precisionSubsets)
 wn3 := stats.NewWindowCumulative()
 ```
 
-### To create/register a view
+### Creating, registering and unregistering a view
 
 TODO: define "view" (link to the spec).
 
@@ -195,7 +176,7 @@ if err := stats.UnregisterView(myView2); err != nil {
 }
 ```
 
-### To subscribe/unsubscribe to a view's collected data
+### Subscribing to a view's collected data and unsubscribing
 Once a subscriber subscribes to a view, its collected date is reported at a regular interval. This interval is configured system wide.
 
 Subscribe to a view:
@@ -229,7 +210,7 @@ d := 20 * time.Second
 stats.SetReportingPeriod(d)
 ```
 
-### To force/stop data collection for on-demand retrieveal
+### Force collecting data on-demand
 Even if a view is registered, if it has no subscriber no data for it is collected. In order to retrieve data on-demand for view, either the view needs to have at least 1 subscriber or the libray needs to be instructed explicitly to collect collect data for the desired view.
 
 ```go
@@ -248,7 +229,7 @@ if err := stats.StopForcedCollection(myView1); err != nil {
 }
 ```
 
-### To record usage/measurements
+### Recording measurements
 Recording usage can only be performed against already registered measure and and their registered views. Measurements are implicitly tagged with the tags in the context:
 
 ```go
@@ -260,7 +241,7 @@ stats.RecordFloat64(ctx, mf, v)
 stats.Record(ctx, mi.Is(4), mf.Is(10.5))
 ```
 
-### To retrieve collected data for a View
+### Retrieving collected data for a View
 
 ```go
 // assuming c1 is the channel that was used to subscribe to myView1
@@ -294,3 +275,8 @@ TODO: update the doc once tracing API is ready.
 [godoc-url]: https://godoc.org/github.com/census-instrumentation/opencensus-go
 [gitter-image]: https://badges.gitter.im/census-instrumentation/lobby.svg
 [gitter-url]: https://gitter.im/census-instrumentation/lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
+
+
+[keystringbyname-ex]: https://godoc.org/github.com/census-instrumentation/opencensus-go/tags/#example_KeyStringByName
+[newtagsetbuilder-ex]: https://godoc.org/github.com/census-instrumentation/opencensus-go/tags#example_NewTagSetBuilder
+[newtagsetbuilderreplace-ex]: https://godoc.org/github.com/census-instrumentation/opencensus-go/tags#example_NewTagSetBuilder_replace

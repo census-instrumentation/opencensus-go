@@ -55,6 +55,7 @@ func (k *KeyString) String() string {
 }
 
 // KeyStringByName creates or retrieves a *KeyString identified by name.
+// Calling KeyStringByName consequently with the same name returns the same key.
 func KeyStringByName(name string) (*KeyString, error) {
 	return createKeyString(name)
 }

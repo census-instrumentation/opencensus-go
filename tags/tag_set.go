@@ -106,8 +106,11 @@ func FromContext(ctx context.Context) *TagSet {
 // TODO(jbd): It says "The returned TagSet shouldn't be mutated.",
 // but tag set cannot be mutated. Remove the comment.
 
-// NewContext creates a new context from the old one replacing any existing
-// TagSet with the new parameter TagSet ts.
+// NewContext creates a new context with the given tag set.
+// To propagate a tag set to downstream methods and downstream RPCs, add a tag set
+// to the current context. NewContext will return a copy of the current context,
+// and put the tag set into the returned one.
+// If there is already a tag set in the current context, it will be replaced with ts.
 func NewContext(ctx context.Context, ts *TagSet) context.Context {
 	return context.WithValue(ctx, tagSetCtxKey, ts)
 }
