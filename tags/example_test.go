@@ -26,6 +26,7 @@ import (
 var (
 	tagSet *tags.TagSet
 	ctx    context.Context
+	key    *tags.KeyString
 )
 
 func ExampleKeyStringByName() {
@@ -53,6 +54,17 @@ func ExampleNewTagSetBuilder() {
 	tagSet := tsb.Build()
 
 	_ = tagSet // use tag set
+}
+
+func ExampleNewTagSetBuilder_replace() {
+	oldTagSet := tags.FromContext(ctx)
+	tsb := tags.NewTagSetBuilder(oldTagSet)
+	tsb.InsertString(key, "odin")
+	tsb.UpdateString(key, "thor")
+	tsb.UpsertString(key, "loki")
+	ctx = tags.NewContext(ctx, tsb.Build())
+
+	_ = ctx // use context
 }
 
 func ExampleNewContext() {

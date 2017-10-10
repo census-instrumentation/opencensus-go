@@ -28,12 +28,12 @@ OpenCensus libraries require Go 1.8 or later as it uses the convenience function
 
 ## Tags API
 
-Tags represent propagated key values. They can propagated context.Context in the same process or can be encoded
+Tags represent propagated key values. They can propagated using context.Context in the same process or can be encoded
 to be transmitted on wire and decoded back to a TagSet at the destination.
 
 ### Getting a key by a name
 A key is defined by its name. To use a key a user needs to know its name and type. Currently, only keys of type string are supported.
-The library will support int64 and bool keys in the future.
+Other types will be supported in the future.
 
 See the [KeyStringByName][keystringbyname-ex] example.
 
@@ -46,24 +46,18 @@ See the [NewTagSetBuilder][newtagsetbuilder-ex] example.
 To propagate a tag set to downstream methods and downstream RPCs, add a tag set
 to the current context. NewContext will return a copy of the current context,
 and put the tag set into the returned one.
-If there is already a tag set in the current context, it will be deleted and replaced.
+If there is already a tag set in the current context, it will be replaced.
 
 ```go
 newTagSet  := ...
-ctx2 := tags.NewContext(ctx, newTagSet)
+ctx = tags.NewContext(ctx, newTagSet)
 ```
 
 In order to update an existing tag set, get the tag set from the current context,
 use TagSetBuilder to mutate and put it back to the context.
 
-```go
-oldTagSet := tags.FromContext(ctx)
-newTagSet := tags.NewTagSetBuilder(oldTagSet).InsertString(key1, "foo").
-    UpdateString(key1, "foo").
-    UpsertString(key3, "zar").
-    Build()
-ctx := tags.NewContext(ctx, newTagSet)
-```
+See the [NewTagSetBuilder (Replace)][newtagsetbuilderreplace-ex] example.
+
 
 ## Stats API
 
@@ -283,3 +277,4 @@ TODO: update the doc once tracing API is ready.
 
 [keystringbyname-ex]: https://godoc.org/github.com/census-instrumentation/opencensus-go/tags/#example_KeyStringByName
 [newtagsetbuilder-ex]: https://godoc.org/github.com/census-instrumentation/opencensus-go/tags#example_NewTagSetBuilder
+[newtagsetbuilderreplace-ex]: https://godoc.org/github.com/census-instrumentation/opencensus-go/tags#example_NewTagSetBuilder_replace
