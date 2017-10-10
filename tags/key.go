@@ -15,49 +15,113 @@
 
 package tags
 
-import "fmt"
+// Mutator modifies a tag set.
+type Mutator interface {
+	Mutate(t *TagSet) *TagSet
+}
 
-var keys []Key
-
-// Key represents a tag key.
+// Key represents a tag key. Keys with the same name will return
+// true when compared with the == operator.
 type Key interface {
+	// Name returns the name of the key.
 	Name() string
-	ID() uint16
-	ValueAsString(b []byte) string
+
+	// StringValue encodes the given value represented in binary to string.
+	StringValue(b []byte) string
 }
 
-// KeyString is a Key and represents string keys.
-type KeyString struct {
-	name string
+// StringKey is a Key and represents string keys.
+type StringKey struct {
 	id   uint16
+	name string
 }
 
-// TODO(jbd): Raname KeyString to StringKey?
-// TODO(jbd): What is ID? Should we export an accessor for it?
+// NewStringKey creates or retrieves a string key identified by name.
+// Calling NewStringKey consequently with the same name returns the same key.
+func NewStringKey(name string) (StringKey, error) {
+	return km.newStringKey(name)
+}
 
 // Name returns the name of the key.
-func (k *KeyString) Name() string {
+func (k StringKey) Name() string {
 	return k.name
 }
 
-// ID returns the ID of the key.
-func (k *KeyString) ID() uint16 {
-	return k.id
-}
-
-// ValueAsString encodes the given values represented in binary to string.
-func (k *KeyString) ValueAsString(v []byte) string {
+// StringValue encodes the given value represented in binary to string.
+func (k StringKey) StringValue(v []byte) string {
 	return string(v)
 }
 
-func (k *KeyString) String() string {
-	return fmt.Sprintf("%v", k.Name())
+type mutator struct {
+	fn func(t *TagSet) *TagSet
 }
 
-// KeyStringByName creates or retrieves a *KeyString identified by name.
-// Calling KeyStringByName consequently with the same name returns the same key.
-func KeyStringByName(name string) (*KeyString, error) {
-	return createKeyString(name)
+func (m *mutator) Mutate(t *TagSet) *TagSet {
+	return m.fn(t)
 }
 
-var createKeyString func(name string) (*KeyString, error)
+// InsertString returns a mutator that inserts a
+// value assiciated with k. If k already exists in the tag set,
+// mutator doesn't update the value.
+func InsertString(k StringKey, v string) Mutator {
+	return &mutator{
+		fn: func(ts *TagSet) *TagSet {
+			ts.insert(k, []byte(v))
+			return ts
+		},
+	}
+}
+
+// UpdateString returns a mutator that updates the
+// value of the tag assiciated with k with v. If k doesn't
+// exists in the tag set, the mutator doesn't insert the value.
+func UpdateString(k StringKey, v string) Mutator {
+	return &mutator{
+		fn: func(ts *TagSet) *TagSet {
+			ts.update(k, []byte(v))
+			return ts
+		},
+	}
+}
+
+// UpsertString returns a mutator that upserts the
+// value of the tag assiciated with k with v. It inserts the
+// value if k doesn't exist already. It mutates the value
+// if k already exists.
+func UpsertString(k StringKey, v string) Mutator {
+	return &mutator{
+		fn: func(ts *TagSet) *TagSet {
+			ts.upsert(k, []byte(v))
+			return ts
+		},
+	}
+}
+
+// Delete returns a mutator that deletes
+// the value assiciated with k.
+func Delete(k Key) Mutator {
+	return &mutator{
+		fn: func(ts *TagSet) *TagSet {
+			ts.delete(k)
+			return ts
+		},
+	}
+}
+
+// NewTagSet returns a new tag set originated from orig,
+// modified with the provided mutators.
+func NewTagSet(orig *TagSet, m ...Mutator) *TagSet {
+	var ts *TagSet
+	if orig == nil {
+		ts = newTagSet(0)
+	} else {
+		ts = newTagSet(len(orig.m))
+		for k, v := range orig.m {
+			ts.insert(k, v)
+		}
+	}
+	for _, mod := range m {
+		ts = mod.Mutate(ts)
+	}
+	return ts
+}

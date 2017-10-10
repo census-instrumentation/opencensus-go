@@ -26,43 +26,42 @@ import (
 var (
 	tagSet *tags.TagSet
 	ctx    context.Context
-	key    *tags.KeyString
+	key    tags.StringKey
 )
 
-func ExampleKeyStringByName() {
+func ExampleNewStringKey() {
 	// Get a key to represent user OS.
-	key, err := tags.KeyStringByName("/my/namespace/user-os")
+	key, err := tags.NewStringKey("/my/namespace/user-os")
 	if err != nil {
 		log.Fatal(err)
 	}
 	_ = key // use key
 }
 
-func ExampleNewTagSetBuilder() {
-	osKey, err := tags.KeyStringByName("/my/namespace/user-os")
+func ExampleNewTagSet() {
+	osKey, err := tags.NewStringKey("/my/namespace/user-os")
 	if err != nil {
 		log.Fatal(err)
 	}
-	userIDKey, err := tags.KeyStringByName("/my/namespace/user-id")
+	userIDKey, err := tags.NewStringKey("/my/namespace/user-id")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	tsb := tags.NewTagSetBuilder(nil)
-	tsb.InsertString(osKey, "macOS-10.12.5")
-	tsb.UpsertString(userIDKey, "cde36753ed")
-	tagSet := tsb.Build()
-
-	_ = tagSet // use tag set
+	tagSet := tags.NewTagSet(nil,
+		tags.InsertString(osKey, "macOS-10.12.5"),
+		tags.UpsertString(userIDKey, "cde36753ed"),
+	)
+	_ = tagSet // use the tag set
 }
 
-func ExampleNewTagSetBuilder_replace() {
+func ExampleNewTagSet_replace() {
 	oldTagSet := tags.FromContext(ctx)
-	tsb := tags.NewTagSetBuilder(oldTagSet)
-	tsb.InsertString(key, "odin")
-	tsb.UpdateString(key, "thor")
-	tsb.UpsertString(key, "loki")
-	ctx = tags.NewContext(ctx, tsb.Build())
+	tagSet := tags.NewTagSet(oldTagSet,
+		tags.InsertString(key, "macOS-10.12.5"),
+		tags.UpsertString(key, "macOS-10.12.7"),
+	)
+	ctx = tags.NewContext(ctx, tagSet)
 
 	_ = ctx // use context
 }

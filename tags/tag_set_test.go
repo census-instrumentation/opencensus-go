@@ -23,13 +23,13 @@ import (
 )
 
 func TestContext(t *testing.T) {
-	k1, _ := KeyStringByName("k1")
-	k2, _ := KeyStringByName("k2")
+	k1, _ := NewStringKey("k1")
+	k2, _ := NewStringKey("k2")
 
-	tsb := NewTagSetBuilder(nil)
-	tsb.InsertString(k1, "v1")
-	tsb.InsertString(k2, "v2")
-	want := tsb.Build()
+	want := NewTagSet(nil,
+		InsertString(k1, "v1"),
+		InsertString(k2, "v2"),
+	)
 
 	ctx := NewContext(context.Background(), want)
 	got := FromContext(ctx)
@@ -39,88 +39,83 @@ func TestContext(t *testing.T) {
 	}
 }
 
-func TestTagSetBuilder(t *testing.T) {
-	k1, _ := KeyStringByName("k1")
-	k2, _ := KeyStringByName("k2")
-	k3, _ := KeyStringByName("k3")
-	k4, _ := KeyStringByName("k4")
-	k5, _ := KeyStringByName("k5")
+func TestNewTagSet(t *testing.T) {
+	k1, _ := NewStringKey("k1")
+	k2, _ := NewStringKey("k2")
+	k3, _ := NewStringKey("k3")
+	k4, _ := NewStringKey("k4")
+	k5, _ := NewStringKey("k5")
 
 	initial := makeTestTagSet(5)
 
 	tests := []struct {
-		name     string
-		initial  *TagSet
-		modifier func(tbs *TagSetBuilder) *TagSetBuilder
-		want     *TagSet
+		name    string
+		initial *TagSet
+		mods    []Mutator
+		want    *TagSet
 	}{
 		{
 			name:    "from empty; insert",
 			initial: nil,
-			modifier: func(tbs *TagSetBuilder) *TagSetBuilder {
-				tbs.InsertString(k5, "v5")
-				return tbs
+			mods: []Mutator{
+				InsertString(k5, "v5"),
 			},
 			want: makeTestTagSet(2, 4, 5),
 		},
 		{
 			name:    "from empty; insert existing",
 			initial: nil,
-			modifier: func(tbs *TagSetBuilder) *TagSetBuilder {
-				tbs.InsertString(k1, "v1")
-				return tbs
+			mods: []Mutator{
+				InsertString(k1, "v1"),
 			},
 			want: makeTestTagSet(1, 2, 4),
 		},
 		{
 			name:    "from empty; update",
 			initial: nil,
-			modifier: func(tbs *TagSetBuilder) *TagSetBuilder {
-				tbs.UpdateString(k1, "v1")
-				return tbs
+			mods: []Mutator{
+				UpdateString(k1, "v1"),
 			},
 			want: makeTestTagSet(2, 4),
 		},
 		{
 			name:    "from empty; update unexisting",
 			initial: nil,
-			modifier: func(tbs *TagSetBuilder) *TagSetBuilder {
-				tbs.UpdateString(k5, "v5")
-				return tbs
+			mods: []Mutator{
+				UpdateString(k5, "v5"),
 			},
 			want: makeTestTagSet(2, 4),
 		},
 		{
 			name:    "from existing; upsert",
 			initial: initial,
-			modifier: func(tbs *TagSetBuilder) *TagSetBuilder {
-				tbs.UpsertString(k5, "v5")
-				return tbs
+			mods: []Mutator{
+				UpsertString(k5, "v5"),
 			},
 			want: makeTestTagSet(2, 4, 5),
 		},
 		{
 			name:    "from existing; delete",
 			initial: initial,
-			modifier: func(tbs *TagSetBuilder) *TagSetBuilder {
-				tbs.Delete(k2)
-				return tbs
+			mods: []Mutator{
+				Delete(k2),
 			},
 			want: makeTestTagSet(4, 5),
 		},
 	}
 
 	for _, tt := range tests {
-		tsb := NewTagSetBuilder(tt.initial)
-		tsb.InsertString(k1, "v1")
-		tsb.InsertString(k2, "v2")
-		tsb.UpdateString(k3, "v3")
-		tsb.UpsertString(k4, "v4")
-		tsb.InsertString(k2, "v2")
-		tsb.Delete(k1)
-		tsb = tt.modifier(tsb)
+		mods := []Mutator{
+			InsertString(k1, "v1"),
+			InsertString(k2, "v2"),
+			UpdateString(k3, "v3"),
+			UpsertString(k4, "v4"),
+			InsertString(k2, "v2"),
+			Delete(k1),
+		}
+		mods = append(mods, tt.mods...)
+		got := NewTagSet(tt.initial, mods...)
 
-		got := tsb.Build()
 		if !reflect.DeepEqual(got, tt.want) {
 			t.Errorf("%v: got %v; want %v", tt.name, got, tt.want)
 		}
@@ -130,7 +125,7 @@ func TestTagSetBuilder(t *testing.T) {
 func makeTestTagSet(ids ...int) *TagSet {
 	ts := newTagSet(len(ids))
 	for _, v := range ids {
-		k, _ := KeyStringByName(fmt.Sprintf("k%d", v))
+		k, _ := NewStringKey(fmt.Sprintf("k%d", v))
 		ts.m[k] = []byte(fmt.Sprintf("v%d", v))
 	}
 	return ts

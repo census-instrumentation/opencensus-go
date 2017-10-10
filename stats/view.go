@@ -178,7 +178,7 @@ func (r *Row) String() string {
 	buffer.WriteString("{ ")
 	buffer.WriteString("{ ")
 	for _, t := range r.Tags {
-		buffer.WriteString(fmt.Sprintf("{%v %v}", t.K.Name(), t.K.ValueAsString(t.V)))
+		buffer.WriteString(fmt.Sprintf("{%v %v}", t.Key.Name(), t.Key.StringValue(t.Value)))
 	}
 	buffer.WriteString(" }")
 	buffer.WriteString(r.AggregationValue.String())

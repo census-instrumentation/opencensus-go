@@ -29,9 +29,9 @@ func Test_EncodeDecode_ValuesBytes(t *testing.T) {
 	}
 
 	km := newKeysManager()
-	k1, _ := km.createKeyString("k1")
-	k2, _ := km.createKeyString("k2")
-	k3, _ := km.createKeyString("k3")
+	k1, _ := km.newStringKey("k1")
+	k2, _ := km.newStringKey("k2")
+	k3, _ := km.newStringKey("k3")
 
 	testSet := []testData{
 		{
@@ -110,8 +110,7 @@ func Test_EncodeDecode_ValuesBytes(t *testing.T) {
 	}
 
 	for i, td := range testSet {
-		builder := NewTagSetBuilder(td.tagsSet)
-		ts := builder.Build()
+		ts := NewTagSet(td.tagsSet)
 
 		vb := toValuesBytes(ts, td.keys)
 		got := vb.toMap(td.keys)

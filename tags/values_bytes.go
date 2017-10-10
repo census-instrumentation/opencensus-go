@@ -133,6 +133,6 @@ func ToOrderedTagsSlice(s string, ks []Key) []Tag {
 		buf: []byte(s),
 	}
 	tags := vb.toSlice(ks)
-	sort.Slice(tags, func(i, j int) bool { return tags[i].K.Name() < tags[j].K.Name() })
+	sort.Slice(tags, func(i, j int) bool { return tags[i].Key.Name() < tags[j].Key.Name() })
 	return tags
 }
