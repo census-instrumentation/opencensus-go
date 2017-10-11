@@ -80,6 +80,10 @@ type view struct {
 	c *collector
 }
 
+type subscription struct {
+	droppedViewData uint64
+}
+
 // NewView creates a new View.
 func NewView(name, description string, keys []tags.Key, measure Measure, agg Aggregation, wnd Window) View {
 	var keysCopy []tags.Key
