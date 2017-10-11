@@ -49,6 +49,7 @@ type View interface {
 	collectedRows(now time.Time) []*Row
 
 	addSample(ts *tags.TagSet, val interface{}, now time.Time)
+	// TODO(jbd): Remove View interface? Are we expecting custom interface types?
 }
 
 // view is the data structure that holds the info describing the view as well

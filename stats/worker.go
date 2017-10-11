@@ -88,8 +88,8 @@ func NewMeasureInt64(name, description, unit string) (*MeasureInt64, error) {
 	return m, nil
 }
 
-// GetMeasureByName returns the registered measure associated with name.
-func GetMeasureByName(name string) (Measure, error) {
+// MeasureByName returns the registered measure associated with name.
+func MeasureByName(name string) (Measure, error) {
 	req := &getMeasureByNameReq{
 		name: name,
 		c:    make(chan *getMeasureByNameResp),
@@ -111,8 +111,8 @@ func DeleteMeasure(m Measure) error {
 	return <-req.err
 }
 
-// GetViewByName returns the registered view associated with this name.
-func GetViewByName(name string) (View, error) {
+// ViewByName returns the registered view associated with this name.
+func ViewByName(name string) (View, error) {
 	req := &getViewByNameReq{
 		name: name,
 		c:    make(chan *getViewByNameResp),
@@ -165,9 +165,8 @@ func UnregisterView(v View) error {
 // buffered channel or blocking on the channel waiting for the collected data.
 func SubscribeToView(v View, c chan *ViewData) error {
 	if v == nil {
-		return errors.New("cannot SubscribeToView for nil view")
+		return errors.New("cannot subscribe nil view")
 	}
-
 	req := &subscribeToViewReq{
 		v:   v,
 		c:   c,
@@ -183,9 +182,8 @@ func SubscribeToView(v View, c chan *ViewData) error {
 // view.
 func UnsubscribeFromView(v View, c chan *ViewData) error {
 	if v == nil {
-		return errors.New("cannot UnsubscribeFromView for nil view")
+		return errors.New("cannot unsubscribe nil view")
 	}
-
 	req := &unsubscribeFromViewReq{
 		v:   v,
 		c:   c,
@@ -199,9 +197,8 @@ func UnsubscribeFromView(v View, c chan *ViewData) error {
 // listeners are subscribed to it.
 func ForceCollection(v View) error {
 	if v == nil {
-		return errors.New("cannot ForceCollection for nil view")
+		return errors.New("cannot for collect nil view")
 	}
-
 	req := &startForcedCollectionReq{
 		v:   v,
 		err: make(chan error),
@@ -214,9 +211,8 @@ func ForceCollection(v View) error {
 // 1 listener is subscribed to it.
 func StopForcedCollection(v View) error {
 	if v == nil {
-		return errors.New("cannot StopForcedCollection for nil view")
+		return errors.New("cannot stop force collection for nil view")
 	}
-
 	req := &stopForcedCollectionReq{
 		v:   v,
 		err: make(chan error),
@@ -228,7 +224,7 @@ func StopForcedCollection(v View) error {
 // RetrieveData returns the current collected data for the view.
 func RetrieveData(v View) ([]*Row, error) {
 	if v == nil {
-		return nil, errors.New("cannot retrieve data for nil view")
+		return nil, errors.New("cannot retrieve data from nil view")
 	}
 	req := &retrieveDataReq{
 		now: time.Now(),
@@ -321,15 +317,14 @@ func (w *worker) start() {
 
 func (w *worker) stop() {
 	w.quit <- true
-	_ = <-w.done
+	<-w.done
 }
 
 func (w *worker) tryRegisterMeasure(m Measure) error {
 	if x, ok := w.measuresByName[m.Name()]; ok {
 		if x != m {
-			return fmt.Errorf("cannot register the measure with name '%v' because a different measure with the same name is already registered", m.Name())
+			return fmt.Errorf("cannot register measure %q; another measure with the same name is already registered", m.Name())
 		}
-
 		// the measure is already registered so there is nothing to do and the
 		// command is considered successful.
 		return nil
@@ -343,7 +338,7 @@ func (w *worker) tryRegisterMeasure(m Measure) error {
 func (w *worker) tryRegisterView(v View) error {
 	if x, ok := w.viewsByName[v.Name()]; ok {
 		if x != v {
-			return fmt.Errorf("cannot register the view with name '%v' because a different view with the same name is already registered", v.Name())
+			return fmt.Errorf("cannot register view %q; another view with the same name is already registered", v.Name())
 		}
 
 		// the view is already registered so there is nothing to do and the
@@ -354,7 +349,7 @@ func (w *worker) tryRegisterView(v View) error {
 	// view is not registered and needs to be registered, but first its measure
 	// needs to be registered.
 	if err := w.tryRegisterMeasure(v.Measure()); err != nil {
-		return fmt.Errorf("%v. Hence cannot register view '%v,", err, v.Name())
+		return fmt.Errorf("cannot register view %q: %v", v.Name(), err)
 	}
 
 	w.viewsByName[v.Name()] = v

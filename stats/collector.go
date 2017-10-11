@@ -45,11 +45,9 @@ func (c *collector) addSample(s string, v interface{}, now time.Time) {
 func (c *collector) collectedRows(keys []tags.Key, now time.Time) []*Row {
 	var rows []*Row
 	for sig, aggregator := range c.signatures {
-		ts := tags.ToOrderedTagsSlice(sig, keys)
-		rows = append(rows, &Row{
-			ts,
-			aggregator.retrieveCollected(now),
-		})
+		tags := tags.ToOrderedTagsSlice(sig, keys)
+		row := &Row{tags, aggregator.retrieveCollected(now)}
+		rows = append(rows, row)
 	}
 	return rows
 }

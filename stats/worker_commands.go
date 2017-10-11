@@ -39,16 +39,10 @@ type getMeasureByNameResp struct {
 
 func (cmd *getMeasureByNameReq) handleCommand(w *worker) {
 	if m, ok := w.measuresByName[cmd.name]; ok {
-		cmd.c <- &getMeasureByNameResp{
-			m,
-			nil,
-		}
+		cmd.c <- &getMeasureByNameResp{m, nil}
 		return
 	}
-	cmd.c <- &getMeasureByNameResp{
-		nil,
-		fmt.Errorf("no measure named '%v' is registered", cmd.name),
-	}
+	cmd.c <- &getMeasureByNameResp{nil, fmt.Errorf("no registered measure %q", cmd.name)}
 }
 
 // registerMeasureReq is the command to register a measure with the library.
@@ -79,8 +73,8 @@ func (cmd *deleteMeasureReq) handleCommand(w *worker) {
 		return
 	}
 
-	if m.viewsCount() != 0 {
-		cmd.err <- fmt.Errorf("cannot delete measure '%v'. All views referring to it must be unregistered first", cmd.m.Name())
+	if c := m.viewsCount(); c > 0 {
+		cmd.err <- fmt.Errorf("cannot delete; measure %q used by %v registered views", cmd.m.Name(), c)
 		return
 	}
 
@@ -102,15 +96,12 @@ type getViewByNameResp struct {
 
 func (cmd *getViewByNameReq) handleCommand(w *worker) {
 	if v, ok := w.viewsByName[cmd.name]; ok {
-		cmd.c <- &getViewByNameResp{
-			v,
-			nil,
-		}
+		cmd.c <- &getViewByNameResp{v, nil}
 		return
 	}
 	cmd.c <- &getViewByNameResp{
 		nil,
-		fmt.Errorf("no view named '%v' is registered", cmd.name),
+		fmt.Errorf("view %q is not registered", cmd.name),
 	}
 }
 
@@ -136,17 +127,14 @@ func (cmd *unregisterViewReq) handleCommand(w *worker) {
 		cmd.err <- nil
 		return
 	}
-
 	if v != cmd.v {
 		cmd.err <- nil
 		return
 	}
-
 	if v.isCollecting() {
-		cmd.err <- fmt.Errorf("cannot unregister view '%v'. All subscriptions to it must be unsubscribed and its forced collection must be stopped first", cmd.v.Name())
+		cmd.err <- fmt.Errorf("cannot unregister view %q. all subscriptions must be unsubscribed and its forced collection must be stopped first", cmd.v.Name())
 		return
 	}
-
 	delete(w.viewsByName, cmd.v.Name())
 	delete(w.views, cmd.v)
 	cmd.v.Measure().removeView(v)
@@ -166,7 +154,7 @@ func (cmd *subscribeToViewReq) handleCommand(w *worker) {
 		return
 	}
 	if err := w.tryRegisterView(cmd.v); err != nil {
-		cmd.err <- fmt.Errorf("%v. Hence cannot subscribe to channel", err)
+		cmd.err <- fmt.Errorf("cannot subscribe to view: %v", err)
 		return
 	}
 
@@ -208,7 +196,7 @@ type startForcedCollectionReq struct {
 
 func (cmd *startForcedCollectionReq) handleCommand(w *worker) {
 	if err := w.tryRegisterView(cmd.v); err != nil {
-		cmd.err <- fmt.Errorf("%v. Hence cannot start forced collection", err)
+		cmd.err <- fmt.Errorf("cannot start forced collection: %v", err)
 		return
 	}
 
@@ -257,7 +245,7 @@ func (cmd *retrieveDataReq) handleCommand(w *worker) {
 	if _, ok := w.views[cmd.v]; !ok {
 		cmd.c <- &retrieveDataResp{
 			nil,
-			fmt.Errorf("cannot retrieve data for view with name '%v' because it is not registered", cmd.v.Name()),
+			fmt.Errorf("cannot retrieve data; view %q is not registered", cmd.v.Name()),
 		}
 		return
 	}
@@ -265,7 +253,7 @@ func (cmd *retrieveDataReq) handleCommand(w *worker) {
 	if !cmd.v.isCollecting() {
 		cmd.c <- &retrieveDataResp{
 			nil,
-			fmt.Errorf("cannot retrieve data for view with name '%v' because no client is subscribed to it and its collection was not forcibly started", cmd.v.Name()),
+			fmt.Errorf("cannot retrieve data; view %q has no subscriptions or collection is not forcibly started", cmd.v.Name()),
 		}
 		return
 	}
