@@ -40,30 +40,30 @@ var (
 	RPCServerResponseCount     *istats.MeasureInt64
 
 	// Default server views
-	RPCServerErrorCountView        istats.View
-	RPCServerServerElapsedTimeView istats.View
-	RPCServerRequestBytesView      istats.View
-	RPCServerResponseBytesView     istats.View
-	RPCServerRequestCountView      istats.View
-	RPCServerResponseCountView     istats.View
+	RPCServerErrorCountView        *istats.View
+	RPCServerServerElapsedTimeView *istats.View
+	RPCServerRequestBytesView      *istats.View
+	RPCServerResponseBytesView     *istats.View
+	RPCServerRequestCountView      *istats.View
+	RPCServerResponseCountView     *istats.View
 
-	RPCServerServerElapsedTimeMinuteView istats.View
-	RPCServerRequestBytesMinuteView      istats.View
-	RPCServerResponseBytesMinuteView     istats.View
-	RPCServerErrorCountMinuteView        istats.View
-	RPCServerStartedCountMinuteView      istats.View
-	RPCServerFinishedCountMinuteView     istats.View
-	RPCServerRequestCountMinuteView      istats.View
-	RPCServerResponseCountMinuteView     istats.View
+	RPCServerServerElapsedTimeMinuteView *istats.View
+	RPCServerRequestBytesMinuteView      *istats.View
+	RPCServerResponseBytesMinuteView     *istats.View
+	RPCServerErrorCountMinuteView        *istats.View
+	RPCServerStartedCountMinuteView      *istats.View
+	RPCServerFinishedCountMinuteView     *istats.View
+	RPCServerRequestCountMinuteView      *istats.View
+	RPCServerResponseCountMinuteView     *istats.View
 
-	RPCServerServerElapsedTimeHourView istats.View
-	RPCServerRequestBytesHourView      istats.View
-	RPCServerResponseBytesHourView     istats.View
-	RPCServerErrorCountHourView        istats.View
-	RPCServerStartedCountHourView      istats.View
-	RPCServerFinishedCountHourView     istats.View
-	RPCServerRequestCountHourView      istats.View
-	RPCServerResponseCountHourView     istats.View
+	RPCServerServerElapsedTimeHourView *istats.View
+	RPCServerRequestBytesHourView      *istats.View
+	RPCServerResponseBytesHourView     *istats.View
+	RPCServerErrorCountHourView        *istats.View
+	RPCServerStartedCountHourView      *istats.View
+	RPCServerFinishedCountHourView     *istats.View
+	RPCServerRequestCountHourView      *istats.View
+	RPCServerResponseCountHourView     *istats.View
 )
 
 func createDefaultMeasuresServer() {
@@ -98,7 +98,7 @@ func createDefaultMeasuresServer() {
 }
 
 func registerDefaultViewsServer() {
-	var views []istats.View
+	var views []*istats.View
 
 	RPCServerErrorCountView = istats.NewView("grpc.io/server/error_count/distribution_cumulative", "RPC Errors", []tags.Key{keyMethod, keyOpStatus, keyService}, RPCServerErrorCount, aggCount, windowCumulative)
 	views = append(views, RPCServerErrorCountView)
@@ -150,10 +150,10 @@ func registerDefaultViewsServer() {
 	// Registering views
 	for _, v := range views {
 		if err := istats.RegisterView(v); err != nil {
-			log.Fatalf("init() failed to register %v.%v\n", v, err)
+			log.Fatalf("init() failed to register %v: %v.\n", v, err)
 		}
-		if err := istats.ForceCollection(v); err != nil {
-			log.Fatalf("init() failed to ForceCollection %v.%v\n", v, err)
+		if err := v.ForceCollect(); err != nil {
+			log.Fatalf("init() failed to ForceCollect %v: %v.\n", v, err)
 		}
 	}
 }

@@ -94,13 +94,13 @@ func main() {
 		}
 	}(ch)
 
-	if err = stats.SubscribeToView(videoSizeView, ch); err != nil {
+	if err = videoSizeView.Subscribe(ch); err != nil {
 		log.Fatalf("Cannot subscribe to the video size view: %v\n", err)
 	}
 
-	// ForceCollection explicitly instructs the library to collect the
+	// ForceCollect explicitly instructs the library to collect the
 	// view data for on-demand retrieval.
-	if err := stats.ForceCollection(videoSpamCountView); err != nil {
+	if err := videoSpamCountView.ForceCollect(); err != nil {
 		log.Fatalf("Cannot force collect from the video spam count view: %v\n", err)
 	}
 
@@ -129,7 +129,7 @@ func main() {
 	time.Sleep(2 * time.Second)
 
 	fmt.Println("Retrieving data on demand...")
-	rows, err := stats.RetrieveData(videoSpamCountView)
+	rows, err := videoSpamCountView.RetrieveData()
 	if err != nil {
 		log.Fatalf("Cannot retrieve spam stats data: %v", err)
 	}
