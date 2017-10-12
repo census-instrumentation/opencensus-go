@@ -20,8 +20,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/census-instrumentation/opencensus-go/tags"
 	"golang.org/x/net/context"
+
+	"github.com/census-instrumentation/opencensus-go/tags"
 )
 
 func Test_Worker_MeasureCreation(t *testing.T) {

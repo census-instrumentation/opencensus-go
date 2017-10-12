@@ -17,10 +17,9 @@ package tags
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"sort"
-
-	"golang.org/x/net/context"
 )
 
 // Tag is a key value pair that can be propagated on wire.
