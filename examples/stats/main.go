@@ -19,13 +19,13 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"time"
 
 	"github.com/census-instrumentation/opencensus-go/stats"
 	"github.com/census-instrumentation/opencensus-go/tags"
-	"golang.org/x/net/context"
 )
 
 func main() {
