@@ -19,8 +19,8 @@ package stats
 // defining a view.
 type Measure interface {
 	Name() string
-	addView(v View)
-	removeView(v View)
+	addView(v *View)
+	removeView(v *View)
 	viewsCount() int
 }
 

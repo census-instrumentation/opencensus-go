@@ -90,7 +90,7 @@ type getViewByNameReq struct {
 }
 
 type getViewByNameResp struct {
-	v   View
+	v   *View
 	err error
 }
 
@@ -107,7 +107,7 @@ func (cmd *getViewByNameReq) handleCommand(w *worker) {
 
 // registerViewReq is the command to register a view with the library.
 type registerViewReq struct {
-	v   View
+	v   *View
 	err chan error
 }
 
@@ -117,7 +117,7 @@ func (cmd *registerViewReq) handleCommand(w *worker) {
 
 // unregisterViewReq is the command to unregister a view from the library.
 type unregisterViewReq struct {
-	v   View
+	v   *View
 	err chan error
 }
 
@@ -143,7 +143,7 @@ func (cmd *unregisterViewReq) handleCommand(w *worker) {
 
 // subscribeToViewReq is the command to subscribe to a view.
 type subscribeToViewReq struct {
-	v   View
+	v   *View
 	c   chan *ViewData
 	err chan error
 }
@@ -167,7 +167,7 @@ func (cmd *subscribeToViewReq) handleCommand(w *worker) {
 // impact on the data collection for client that are pulling data from the
 // library.
 type unsubscribeFromViewReq struct {
-	v   View
+	v   *View
 	c   chan *ViewData
 	err chan error
 }
@@ -190,7 +190,7 @@ func (cmd *unsubscribeFromViewReq) handleCommand(w *worker) {
 // startForcedCollection is the command to start collecting data for a view
 // without subscribing to it.
 type startForcedCollectionReq struct {
-	v   View
+	v   *View
 	err chan error
 }
 
@@ -212,7 +212,7 @@ func (cmd *startForcedCollectionReq) handleCommand(w *worker) {
 // clients will be requesting data for a view. Has no impact on the
 // subscriptions.
 type stopForcedCollectionReq struct {
-	v   View
+	v   *View
 	err chan error
 }
 
@@ -232,7 +232,7 @@ func (cmd *stopForcedCollectionReq) handleCommand(w *worker) {
 // retrieveDataReq is the command to retrieve data for a view.
 type retrieveDataReq struct {
 	now time.Time
-	v   View
+	v   *View
 	c   chan *retrieveDataResp
 }
 

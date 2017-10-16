@@ -24,37 +24,9 @@ import (
 	"github.com/census-instrumentation/opencensus-go/tags"
 )
 
-// View is the generic interface defining the various type of views.
-type View interface {
-	Name() string        // Name returns the name of a View.
-	Description() string // Description returns the description of a View.
-	Window() Window
-	Aggregation() Aggregation
-	Measure() Measure
-
-	addSubscription(c chan *ViewData)
-	deleteSubscription(c chan *ViewData)
-	subscriptionExists(c chan *ViewData) bool
-	subscriptionsCount() int
-	subscriptions() map[chan *ViewData]subscription
-
-	startForcedCollection()
-	stopForcedCollection()
-
-	isCollecting() bool
-
-	clearRows()
-
-	collector() *collector
-	collectedRows(now time.Time) []*Row
-
-	addSample(ts *tags.TagSet, val interface{}, now time.Time)
-	// TODO(jbd): Remove View interface? Are we expecting custom interface types?
-}
-
-// view is the data structure that holds the info describing the view as well
+// View is the data structure that holds the info describing the view as well
 // as the aggregated data.
-type view struct {
+type View struct {
 	// name of View. Must be unique.
 	name        string
 	description string
@@ -77,6 +49,8 @@ type view struct {
 	// model.
 	isForcedCollection bool
 
+	// TODO(jbd): Guard isForcedCollection.
+
 	c *collector
 }
 
@@ -84,14 +58,15 @@ type subscription struct {
 	droppedViewData uint64
 }
 
-// NewView creates a new View.
-func NewView(name, description string, keys []tags.Key, measure Measure, agg Aggregation, wnd Window) View {
+// NewView creates a new view. Views need to be registered
+// via RegisterView to enable data collection.
+func NewView(name, description string, keys []tags.Key, measure Measure, agg Aggregation, window Window) *View {
 	var keysCopy []tags.Key
 	for _, k := range keys {
 		keysCopy = append(keysCopy, k)
 	}
 
-	return &view{
+	return &View{
 		name,
 		description,
 		keysCopy,
@@ -99,82 +74,83 @@ func NewView(name, description string, keys []tags.Key, measure Measure, agg Agg
 		time.Date(1, 1, 1, 0, 0, 0, 0, time.UTC),
 		make(map[chan *ViewData]subscription),
 		false,
-		&collector{
-			make(map[string]aggregator),
-			agg,
-			wnd,
-		},
+		&collector{make(map[string]aggregator), agg, window},
 	}
 }
 
 // Name returns the name of view.
-func (v *view) Name() string {
+func (v *View) Name() string {
 	return v.name
 }
 
 // Description returns the name of view.
-func (v *view) Description() string {
+func (v *View) Description() string {
 	return v.description
 }
 
-func (v *view) addSubscription(c chan *ViewData) {
+func (v *View) addSubscription(c chan *ViewData) {
 	v.ss[c] = subscription{}
 }
 
-func (v *view) deleteSubscription(c chan *ViewData) {
+func (v *View) deleteSubscription(c chan *ViewData) {
 	delete(v.ss, c)
 }
 
-func (v *view) subscriptionExists(c chan *ViewData) bool {
+func (v *View) subscriptionExists(c chan *ViewData) bool {
 	_, ok := v.ss[c]
 	return ok
 }
 
-func (v *view) subscriptionsCount() int {
+func (v *View) subscriptionsCount() int {
 	return len(v.ss)
 }
 
-func (v *view) subscriptions() map[chan *ViewData]subscription {
+func (v *View) subscriptions() map[chan *ViewData]subscription {
 	return v.ss
 }
 
-func (v *view) startForcedCollection() {
+func (v *View) startForcedCollection() {
 	v.isForcedCollection = true
 }
 
-func (v *view) stopForcedCollection() {
+func (v *View) stopForcedCollection() {
 	v.isForcedCollection = false
 }
 
-func (v *view) isCollecting() bool {
+func (v *View) isCollecting() bool {
 	return v.subscriptionsCount() > 0 || v.isForcedCollection
 }
 
-func (v *view) clearRows() {
+func (v *View) clearRows() {
 	v.c.clearRows()
 }
 
-func (v *view) collector() *collector {
+func (v *View) collector() *collector {
 	return v.c
 }
 
-func (v *view) Window() Window {
+// Window returns the timing window is being used to collect
+// metrics on this view.
+func (v *View) Window() Window {
 	return v.c.w
 }
 
-func (v *view) Aggregation() Aggregation {
+// Aggregation returns the Aggregation used to aggregate the measurements
+// collected by this view.
+func (v *View) Aggregation() Aggregation {
 	return v.c.a
 }
 
-func (v *view) Measure() Measure {
+// Measure returns the measure type the view is collecting measurements for.
+func (v *View) Measure() Measure {
 	return v.m
 }
 
-func (v *view) collectedRows(now time.Time) []*Row {
+func (v *View) collectedRows(now time.Time) []*Row {
 	return v.c.collectedRows(v.tagKeys, now)
 }
 
-func (v *view) addSample(ts *tags.TagSet, val interface{}, now time.Time) {
+func (v *View) addSample(ts *tags.TagSet, val interface{}, now time.Time) {
 	if !v.isCollecting() {
 		return
 	}
@@ -186,7 +162,7 @@ func (v *view) addSample(ts *tags.TagSet, val interface{}, now time.Time) {
 // with the given view during a particular window. Each row is specific to a
 // unique set of tags.
 type ViewData struct {
-	V          View
+	V          *View
 	Start, End time.Time
 	Rows       []*Row
 }
