@@ -68,24 +68,24 @@ var (
 	windowSlidingHour   = istats.NewWindowSlidingTime(1*time.Hour, 6)
 	windowSlidingMinute = istats.NewWindowSlidingTime(1*time.Minute, 6)
 
-	keyService  *tags.KeyString
-	keyMethod   *tags.KeyString
-	keyOpStatus *tags.KeyString
+	keyService  tags.StringKey
+	keyMethod   tags.StringKey
+	keyOpStatus tags.StringKey
 )
 
 func createDefaultKeys() {
 	// Initializing keys
 	var err error
-	if keyService, err = tags.KeyStringByName("grpc.service"); err != nil {
-		log.Fatalf("tags.KeyStringByName(\"grpc.service\") failed to create/retrieve keyService. %v", err)
+	if keyService, err = tags.NewStringKey("grpc.service"); err != nil {
+		log.Fatalf("tags.NewStringKey(\"grpc.service\") failed to create/retrieve keyService. %v", err)
 	}
 
-	if keyMethod, err = tags.KeyStringByName("grpc.method"); err != nil {
-		log.Fatalf("tags.KeyStringByName(\"grpc.method\") failed to create/retrieve keyMethod. %v", err)
+	if keyMethod, err = tags.NewStringKey("grpc.method"); err != nil {
+		log.Fatalf("tags.NewStringKey(\"grpc.method\") failed to create/retrieve keyMethod. %v", err)
 	}
 
-	if keyOpStatus, err = tags.KeyStringByName("grpc.opstatus"); err != nil {
-		log.Fatalf("tags.KeyStringByName(\"grpc.opstatus\") failed to create/retrieve keyOpStatus. %v", err)
+	if keyOpStatus, err = tags.NewStringKey("grpc.opstatus"); err != nil {
+		log.Fatalf("tags.NewStringKey(\"grpc.opstatus\") failed to create/retrieve keyOpStatus. %v", err)
 	}
 }
 

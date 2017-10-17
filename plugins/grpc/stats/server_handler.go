@@ -171,11 +171,9 @@ func (sh serverHandler) handleRPCEnd(ctx context.Context, s *stats.End) {
 	measurements = append(measurements, RPCServerServerElapsedTime.M(float64(elapsedTime)/float64(time.Millisecond)))
 	if s.Error != nil {
 		errorCode := s.Error.Error()
-		ts := tags.FromContext(ctx)
-		tsb := tags.NewTagSetBuilder(ts)
-		tsb.UpsertString(keyOpStatus, errorCode)
-
-		ts = tsb.Build()
+		ts := tags.NewTagSet(tags.FromContext(ctx),
+			tags.UpsertString(keyOpStatus, errorCode),
+		)
 		ctx = tags.NewContext(ctx, ts)
 		measurements = append(measurements, RPCServerErrorCount.M(1))
 	}
@@ -186,18 +184,16 @@ func (sh serverHandler) handleRPCEnd(ctx context.Context, s *stats.End) {
 // createTagSet creates a new tagSet containing the tags extracted from the
 // gRPC metadata.
 func (sh serverHandler) createTagSet(ctx context.Context, serviceName, methodName string) (*tags.TagSet, error) {
-	var tsb *tags.TagSetBuilder
-
-	if tagsBin := stats.Tags(ctx); tagsBin == nil {
-		tsb = tags.NewTagSetBuilder(nil)
-	} else {
-		ts, err := tags.Decode([]byte(tagsBin))
-		if err != nil {
-			return nil, fmt.Errorf("serverHandler.createTagSet failed to decode tagsBin: %v. %v", tagsBin, err)
-		}
-		tsb = tags.NewTagSetBuilder(ts)
+	mods := []tags.Mutator{
+		tags.UpsertString(keyService, serviceName),
+		tags.UpsertString(keyMethod, methodName),
 	}
-	tsb.UpsertString(keyService, serviceName)
-	tsb.UpsertString(keyMethod, methodName)
-	return tsb.Build(), nil
+	if tagsBin := stats.Tags(ctx); tagsBin != nil {
+		old, err := tags.Decode([]byte(tagsBin))
+		if err != nil {
+			return nil, fmt.Errorf("serverHandler.createTagSet failed to decode tagsBin %v: %v", tagsBin, err)
+		}
+		return tags.NewTagSet(old, mods...), nil
+	}
+	return tags.NewTagSet(nil, mods...), nil
 }

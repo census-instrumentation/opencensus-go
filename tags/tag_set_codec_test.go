@@ -19,17 +19,16 @@ import (
 	"reflect"
 	"sort"
 	"testing"
-	"unsafe"
 )
 
 func Test_EncodeDecode_TagSet(t *testing.T) {
-	k1, _ := KeyStringByName("k1")
-	k2, _ := KeyStringByName("k2")
-	k3, _ := KeyStringByName("k3 is very weird <>.,?/'\";:`~!@#$%^&*()_-+={[}]|\\")
-	k4, _ := KeyStringByName("k4")
+	k1, _ := NewStringKey("k1")
+	k2, _ := NewStringKey("k2")
+	k3, _ := NewStringKey("k3 is very weird <>.,?/'\";:`~!@#$%^&*()_-+={[}]|\\")
+	k4, _ := NewStringKey("k4")
 
 	type pair struct {
-		k *KeyString
+		k StringKey
 		v string
 	}
 
@@ -76,35 +75,34 @@ func Test_EncodeDecode_TagSet(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		tsb := NewTagSetBuilder(nil)
-		for _, pair := range tc.pairs {
-			tsb.UpsertString(pair.k, pair.v)
+		mods := make([]Mutator, len(tc.pairs))
+		for i, pair := range tc.pairs {
+			mods[i] = UpsertString(pair.k, pair.v)
 		}
-		ts := tsb.Build()
+		ts := NewTagSet(nil, mods...)
 
 		encoded := Encode(ts)
 		decoded, err := Decode(encoded)
 
 		if err != nil {
-			t.Errorf("Test case '%v'. Decoding encoded tagSet failed. %v", tc.label, err)
+			t.Errorf("%v: decoding encoded tagSet failed: %v", tc.label, err)
 		}
 
 		got := make([]pair, 0)
 		for k, v := range decoded.m {
-			ks, ok := k.(*KeyString)
+			ks, ok := k.(StringKey)
 			if !ok {
-				t.Errorf("Test case '%v'. Wrong key type. got %T, want *KeyString", tc.label, k)
+				t.Errorf("%v: wrong key type; got %T, want StringKey", tc.label, k)
 			}
 			got = append(got, pair{ks, string(v)})
 		}
 		want := tc.pairs
 
-		sort.Slice(got, func(i, j int) bool { return uintptr(unsafe.Pointer(got[i].k)) < uintptr(unsafe.Pointer(got[j].k)) })
-		sort.Slice(want, func(i, j int) bool { return uintptr(unsafe.Pointer(want[i].k)) < uintptr(unsafe.Pointer(want[j].k)) })
+		sort.Slice(got, func(i, j int) bool { return got[i].k.Name() < got[j].k.Name() })
+		sort.Slice(want, func(i, j int) bool { return got[i].k.Name() < got[j].k.Name() })
 
 		if !reflect.DeepEqual(got, tc.pairs) {
-			t.Errorf("Test case '%v'. Decoded tagSet is wrong. Got %v, want %v", tc.label, got, tc.pairs)
+			t.Errorf("%v: decoded tagSet = %#v; want %#v", tc.label, got, want)
 		}
-
 	}
 }

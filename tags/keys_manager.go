@@ -20,6 +20,12 @@ import (
 	"sync"
 )
 
+var km = newKeysManager()
+
+// TODO(jbd): Guard keys.
+
+var keys []Key
+
 const (
 	// maxKeyLength is the maximum value able to be encoded in a 2-byte varint.
 	maxKeyLength = 1<<14 - 1
@@ -42,26 +48,26 @@ func newKeysManager() *keysManager {
 	}
 }
 
-// CreateKeyString creates or retrieves a key of type keyString with name/ID
+// newStringKey creates or retrieves a key of type keyString with name/ID
 // set to the input argument name. Returns an error if a key with the same name
 // exists and is of a different type.
-func (km *keysManager) createKeyString(name string) (*KeyString, error) {
+func (km *keysManager) newStringKey(name string) (StringKey, error) {
 	if !validateKeyName(name) {
-		return nil, fmt.Errorf("key name %v is invalid", name)
+		return StringKey{}, fmt.Errorf("key name %v is invalid", name)
 	}
 	km.Lock()
 	defer km.Unlock()
 
 	k, ok := km.keys[name]
 	if ok {
-		ks, ok := k.(*KeyString)
+		ks, ok := k.(StringKey)
 		if !ok {
-			return nil, fmt.Errorf("key with name %v cannot be created/retrieved as type *keyString. It was already registered as type %T", name, k)
+			return StringKey{}, fmt.Errorf("key with name %v cannot be created/retrieved as type *keyString. It was already registered as type %T", name, k)
 		}
 		return ks, nil
 	}
 
-	ks := &KeyString{
+	ks := StringKey{
 		name: name,
 		id:   km.nextKeyID,
 	}
@@ -94,9 +100,4 @@ func validateKeyName(name string) bool {
 		}
 	}
 	return true
-}
-
-func init() {
-	km := newKeysManager()
-	createKeyString = km.createKeyString
 }

@@ -212,7 +212,7 @@ func Decode(bytes []byte) (*TagSet, error) {
 			return nil, err
 		}
 
-		key, err := KeyStringByName(string(k))
+		key, err := NewStringKey(string(k))
 		if err != nil {
 			// TODO(acetechnologist): log that key received on the wire and its value was ignored
 			continue

@@ -27,16 +27,16 @@ func Test_KeysManager_NoErrors(t *testing.T) {
 	testSet := []testData{
 		{
 			[]func(km *keysManager) (Key, error){
-				func(km *keysManager) (Key, error) { return km.createKeyString("k1") },
-				func(km *keysManager) (Key, error) { return km.createKeyString("k2") },
+				func(km *keysManager) (Key, error) { return km.newStringKey("k1") },
+				func(km *keysManager) (Key, error) { return km.newStringKey("k2") },
 			},
 			2,
 			0,
 		},
 		{
 			[]func(km *keysManager) (Key, error){
-				func(km *keysManager) (Key, error) { return km.createKeyString("k1") },
-				func(km *keysManager) (Key, error) { return km.createKeyString("k1") },
+				func(km *keysManager) (Key, error) { return km.newStringKey("k1") },
+				func(km *keysManager) (Key, error) { return km.newStringKey("k1") },
 			},
 			1,
 			0,
@@ -78,36 +78,36 @@ func Test_KeysManager_InvalidKeyErrors(t *testing.T) {
 	testSet := []testData{
 		{
 			[]func(km *keysManager) (Key, error){
-				func(km *keysManager) (Key, error) { return km.createKeyString("k1") },
+				func(km *keysManager) (Key, error) { return km.newStringKey("k1") },
 			},
 			1,
 		},
 		{
 			[]func(km *keysManager) (Key, error){
-				func(km *keysManager) (Key, error) { return km.createKeyString("k\xb0") },
+				func(km *keysManager) (Key, error) { return km.newStringKey("k\xb0") },
 			},
 			0,
 		},
 		{
 			[]func(km *keysManager) (Key, error){
-				func(km *keysManager) (Key, error) { return km.createKeyString("k1") },
-				func(km *keysManager) (Key, error) { return km.createKeyString("k\xb0") },
+				func(km *keysManager) (Key, error) { return km.newStringKey("k1") },
+				func(km *keysManager) (Key, error) { return km.newStringKey("k\xb0") },
 			},
 			1,
 		},
 		{
 			[]func(km *keysManager) (Key, error){
-				func(km *keysManager) (Key, error) { return km.createKeyString("k\x19") },
-				func(km *keysManager) (Key, error) { return km.createKeyString("k\x7f") },
+				func(km *keysManager) (Key, error) { return km.newStringKey("k\x19") },
+				func(km *keysManager) (Key, error) { return km.newStringKey("k\x7f") },
 			},
 			0,
 		},
 		{
 			[]func(km *keysManager) (Key, error){
-				func(km *keysManager) (Key, error) { return km.createKeyString("k\x19") },
-				func(km *keysManager) (Key, error) { return km.createKeyString("k\x20") },
-				func(km *keysManager) (Key, error) { return km.createKeyString("k\x7e") },
-				func(km *keysManager) (Key, error) { return km.createKeyString("k\x7f") },
+				func(km *keysManager) (Key, error) { return km.newStringKey("k\x19") },
+				func(km *keysManager) (Key, error) { return km.newStringKey("k\x20") },
+				func(km *keysManager) (Key, error) { return km.newStringKey("k\x7e") },
+				func(km *keysManager) (Key, error) { return km.newStringKey("k\x7f") },
 			},
 			2,
 		},

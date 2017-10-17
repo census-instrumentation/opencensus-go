@@ -31,11 +31,11 @@ import (
 func main() {
 	// Creates keys. There will be two dimensions, device ID and OS version,
 	// that will be collected with the metrics we collect in the program.
-	deviceIDKey, err := tags.KeyStringByName("/mycompany.com/key/deviceID")
+	deviceIDKey, err := tags.NewStringKey("/mycompany.com/key/deviceID")
 	if err != nil {
 		log.Fatalf("Device ID key not created: %v\n", err)
 	}
-	osVersionKey, err := tags.KeyStringByName("/mycompany.com/key/osVersionKey")
+	osVersionKey, err := tags.NewStringKey("/mycompany.com/key/osVersionKey")
 	if err != nil {
 		log.Fatalf("OS version key not created: %v\n", err)
 	}
@@ -110,11 +110,11 @@ func main() {
 
 	// Adding tags to context to record each datapoint with
 	// the following device ID and OS version.
-	tsb := tags.NewTagSetBuilder(nil)
-	tsb.UpsertString(deviceIDKey, "device-id-768dfd76")
-	tsb.UpsertString(osVersionKey, "mac-osx-10.12.6")
-
-	ctx := tags.NewContext(context.Background(), tsb.Build())
+	ts := tags.NewTagSet(nil,
+		tags.UpsertString(deviceIDKey, "device-id-768dfd76"),
+		tags.UpsertString(osVersionKey, "mac-osx-10.12.6"),
+	)
+	ctx := tags.NewContext(context.Background(), ts)
 
 	// Recording single datapoint at a time.
 	videoSize.Record(ctx, 10.0)

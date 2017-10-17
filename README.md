@@ -37,12 +37,12 @@ A key is defined by its name. To use a key a user needs to know its name and typ
 Currently, only keys of type string are supported.
 Other types will be supported in the future.
 
-See the [KeyStringByName][keystringbyname-ex] example.
+See the [NewStringKey][newstringkey-ex] example.
 
 ### Creating a set of tags associated with keys
 TagSet is a set of tags. Package tags provide a builder to create tag sets.
 
-See the [NewTagSetBuilder][newtagsetbuilder-ex] example.
+See the [NewTagSet][newtags-ex] example.
 
 ### Propagating a TagSet in a context
 To propagate a tag set to downstream methods and downstream RPCs, add a tag set
@@ -56,9 +56,9 @@ ctx = tags.NewContext(ctx, newTagSet)
 ```
 
 In order to update an existing tag set, get the tag set from the current context,
-use TagSetBuilder to mutate and put it back to the context.
+use NewTagSet and put the new tag set back to the context.
 
-See the [NewTagSetBuilder (Replace)][newtagsetbuilderreplace-ex] example.
+See the [NewTagSet (Replace)][newtags-replace-ex] example.
 
 
 ## Stats API
@@ -276,6 +276,6 @@ TODO: update the doc once tracing API is ready.
 [gitter-url]: https://gitter.im/census-instrumentation/lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
 
 
-[keystringbyname-ex]: https://godoc.org/github.com/census-instrumentation/opencensus-go/tags/#example_KeyStringByName
-[newtagsetbuilder-ex]: https://godoc.org/github.com/census-instrumentation/opencensus-go/tags#example_NewTagSetBuilder
-[newtagsetbuilderreplace-ex]: https://godoc.org/github.com/census-instrumentation/opencensus-go/tags#example_NewTagSetBuilder_replace
+[newstringkey-ex]: https://godoc.org/github.com/census-instrumentation/opencensus-go/tags/#example_NewStringKey
+[newtags-ex]: https://godoc.org/github.com/census-instrumentation/opencensus-go/tags#example_NewTagSet
+[newtags-replace-ex]: https://godoc.org/github.com/census-instrumentation/opencensus-go/tags#example_NewTagSet_replace

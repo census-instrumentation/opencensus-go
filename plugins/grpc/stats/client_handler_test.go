@@ -28,11 +28,11 @@ import (
 )
 
 func TestClientDefaultCollections(t *testing.T) {
-	k1, _ := tags.KeyStringByName("k1")
-	k2, _ := tags.KeyStringByName("k2")
+	k1, _ := tags.NewStringKey("k1")
+	k2, _ := tags.NewStringKey("k2")
 
 	type tagPair struct {
-		k *tags.KeyString
+		k tags.StringKey
 		v string
 	}
 
@@ -75,8 +75,8 @@ func TestClientDefaultCollections(t *testing.T) {
 					[]*istats.Row{
 						{
 							[]tags.Tag{
-								{K: keyMethod, V: []byte("method")},
-								{K: keyService, V: []byte("package.service")},
+								{Key: keyMethod, Value: []byte("method")},
+								{Key: keyService, Value: []byte("package.service")},
 							},
 							istats.NewTestingAggregationDistributionValue(rpcCountBucketBoundaries, []int64{0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 1, 1, 1, 1, 0),
 						},
@@ -87,8 +87,8 @@ func TestClientDefaultCollections(t *testing.T) {
 					[]*istats.Row{
 						{
 							[]tags.Tag{
-								{K: keyMethod, V: []byte("method")},
-								{K: keyService, V: []byte("package.service")},
+								{Key: keyMethod, Value: []byte("method")},
+								{Key: keyService, Value: []byte("package.service")},
 							},
 							istats.NewTestingAggregationDistributionValue(rpcCountBucketBoundaries, []int64{0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 1, 1, 1, 1, 0),
 						},
@@ -99,8 +99,8 @@ func TestClientDefaultCollections(t *testing.T) {
 					[]*istats.Row{
 						{
 							[]tags.Tag{
-								{K: keyMethod, V: []byte("method")},
-								{K: keyService, V: []byte("package.service")},
+								{Key: keyMethod, Value: []byte("method")},
+								{Key: keyService, Value: []byte("package.service")},
 							},
 							istats.NewTestingAggregationDistributionValue(rpcBytesBucketBoundaries, []int64{0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 1, 10, 10, 10, 0),
 						},
@@ -111,8 +111,8 @@ func TestClientDefaultCollections(t *testing.T) {
 					[]*istats.Row{
 						{
 							[]tags.Tag{
-								{K: keyMethod, V: []byte("method")},
-								{K: keyService, V: []byte("package.service")},
+								{Key: keyMethod, Value: []byte("method")},
+								{Key: keyService, Value: []byte("package.service")},
 							},
 							istats.NewTestingAggregationDistributionValue(rpcBytesBucketBoundaries, []int64{0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 1, 10, 10, 10, 0),
 						},
@@ -156,9 +156,9 @@ func TestClientDefaultCollections(t *testing.T) {
 					[]*istats.Row{
 						{
 							[]tags.Tag{
-								{K: keyMethod, V: []byte("method")},
-								{K: keyOpStatus, V: []byte("someError")},
-								{K: keyService, V: []byte("package.service")},
+								{Key: keyMethod, Value: []byte("method")},
+								{Key: keyOpStatus, Value: []byte("someError")},
+								{Key: keyService, Value: []byte("package.service")},
 							},
 							istats.NewTestingAggregationCountValue(1),
 						},
@@ -169,8 +169,8 @@ func TestClientDefaultCollections(t *testing.T) {
 					[]*istats.Row{
 						{
 							[]tags.Tag{
-								{K: keyMethod, V: []byte("method")},
-								{K: keyService, V: []byte("package.service")},
+								{Key: keyMethod, Value: []byte("method")},
+								{Key: keyService, Value: []byte("package.service")},
 							},
 							istats.NewTestingAggregationDistributionValue(rpcCountBucketBoundaries, []int64{0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 2, 2, 3, 2.5, 0.5),
 						},
@@ -181,8 +181,8 @@ func TestClientDefaultCollections(t *testing.T) {
 					[]*istats.Row{
 						{
 							[]tags.Tag{
-								{K: keyMethod, V: []byte("method")},
-								{K: keyService, V: []byte("package.service")},
+								{Key: keyMethod, Value: []byte("method")},
+								{Key: keyService, Value: []byte("package.service")},
 							},
 							istats.NewTestingAggregationDistributionValue(rpcCountBucketBoundaries, []int64{0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 2, 1, 2, 1.5, 0.5),
 						},
@@ -239,17 +239,17 @@ func TestClientDefaultCollections(t *testing.T) {
 					[]*istats.Row{
 						{
 							[]tags.Tag{
-								{K: keyMethod, V: []byte("method")},
-								{K: keyOpStatus, V: []byte("someError1")},
-								{K: keyService, V: []byte("package.service")},
+								{Key: keyMethod, Value: []byte("method")},
+								{Key: keyOpStatus, Value: []byte("someError1")},
+								{Key: keyService, Value: []byte("package.service")},
 							},
 							istats.NewTestingAggregationCountValue(1),
 						},
 						{
 							[]tags.Tag{
-								{K: keyMethod, V: []byte("method")},
-								{K: keyOpStatus, V: []byte("someError2")},
-								{K: keyService, V: []byte("package.service")},
+								{Key: keyMethod, Value: []byte("method")},
+								{Key: keyOpStatus, Value: []byte("someError2")},
+								{Key: keyService, Value: []byte("package.service")},
 							},
 							istats.NewTestingAggregationCountValue(1),
 						},
@@ -260,8 +260,8 @@ func TestClientDefaultCollections(t *testing.T) {
 					[]*istats.Row{
 						{
 							[]tags.Tag{
-								{K: keyMethod, V: []byte("method")},
-								{K: keyService, V: []byte("package.service")},
+								{Key: keyMethod, Value: []byte("method")},
+								{Key: keyService, Value: []byte("package.service")},
 							},
 							istats.NewTestingAggregationDistributionValue(rpcCountBucketBoundaries, []int64{0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 3, 2, 3, 2.666666666, 0.333333333*2),
 						},
@@ -272,8 +272,8 @@ func TestClientDefaultCollections(t *testing.T) {
 					[]*istats.Row{
 						{
 							[]tags.Tag{
-								{K: keyMethod, V: []byte("method")},
-								{K: keyService, V: []byte("package.service")},
+								{Key: keyMethod, Value: []byte("method")},
+								{Key: keyService, Value: []byte("package.service")},
 							},
 							istats.NewTestingAggregationDistributionValue(rpcCountBucketBoundaries, []int64{0, 0, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 3, 1, 2, 1.333333333, 0.333333333*2),
 						},
@@ -284,8 +284,8 @@ func TestClientDefaultCollections(t *testing.T) {
 					[]*istats.Row{
 						{
 							[]tags.Tag{
-								{K: keyMethod, V: []byte("method")},
-								{K: keyService, V: []byte("package.service")},
+								{Key: keyMethod, Value: []byte("method")},
+								{Key: keyService, Value: []byte("package.service")},
 							},
 							istats.NewTestingAggregationDistributionValue(rpcBytesBucketBoundaries, []int64{0, 1, 1, 1, 2, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0}, 8, 1, 65536, 13696.125, 481423542.982143*7),
 						},
@@ -296,8 +296,8 @@ func TestClientDefaultCollections(t *testing.T) {
 					[]*istats.Row{
 						{
 							[]tags.Tag{
-								{K: keyMethod, V: []byte("method")},
-								{K: keyService, V: []byte("package.service")},
+								{Key: keyMethod, Value: []byte("method")},
+								{Key: keyService, Value: []byte("package.service")},
 							},
 							istats.NewTestingAggregationDistributionValue(rpcBytesBucketBoundaries, []int64{0, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 4, 1, 16384, 4864.25, 59678208.25*3),
 						},
@@ -313,11 +313,11 @@ func TestClientDefaultCollections(t *testing.T) {
 
 		h := NewClientHandler()
 		for _, rpc := range tc.rpcs {
-			tsb := tags.NewTagSetBuilder(nil)
+			mods := []tags.Mutator{}
 			for _, t := range rpc.tags {
-				tsb.UpsertString(t.k, t.v)
+				mods = append(mods, tags.UpsertString(t.k, t.v))
 			}
-			ts := tsb.Build()
+			ts := tags.NewTagSet(nil, mods...)
 			encoded := tags.Encode(ts)
 			ctx := stats.SetTags(context.Background(), encoded)
 
