@@ -26,7 +26,7 @@ func TestContext(t *testing.T) {
 	k1, _ := NewStringKey("k1")
 	k2, _ := NewStringKey("k2")
 
-	want := NewTagSet(nil,
+	want := NewMap(nil,
 		InsertString(k1, "v1"),
 		InsertString(k2, "v2"),
 	)
@@ -35,24 +35,24 @@ func TestContext(t *testing.T) {
 	got := FromContext(ctx)
 
 	if !reflect.DeepEqual(got, want) {
-		t.Errorf("TagSet = %#v; want %#v", got, want)
+		t.Errorf("Map = %#v; want %#v", got, want)
 	}
 }
 
-func TestNewTagSet(t *testing.T) {
+func TestNewMap(t *testing.T) {
 	k1, _ := NewStringKey("k1")
 	k2, _ := NewStringKey("k2")
 	k3, _ := NewStringKey("k3")
 	k4, _ := NewStringKey("k4")
 	k5, _ := NewStringKey("k5")
 
-	initial := makeTestTagSet(5)
+	initial := makeTestTagMap(5)
 
 	tests := []struct {
 		name    string
-		initial *TagSet
+		initial *Map
 		mods    []Mutator
-		want    *TagSet
+		want    *Map
 	}{
 		{
 			name:    "from empty; insert",
@@ -60,7 +60,7 @@ func TestNewTagSet(t *testing.T) {
 			mods: []Mutator{
 				InsertString(k5, "v5"),
 			},
-			want: makeTestTagSet(2, 4, 5),
+			want: makeTestTagMap(2, 4, 5),
 		},
 		{
 			name:    "from empty; insert existing",
@@ -68,7 +68,7 @@ func TestNewTagSet(t *testing.T) {
 			mods: []Mutator{
 				InsertString(k1, "v1"),
 			},
-			want: makeTestTagSet(1, 2, 4),
+			want: makeTestTagMap(1, 2, 4),
 		},
 		{
 			name:    "from empty; update",
@@ -76,7 +76,7 @@ func TestNewTagSet(t *testing.T) {
 			mods: []Mutator{
 				UpdateString(k1, "v1"),
 			},
-			want: makeTestTagSet(2, 4),
+			want: makeTestTagMap(2, 4),
 		},
 		{
 			name:    "from empty; update unexisting",
@@ -84,7 +84,7 @@ func TestNewTagSet(t *testing.T) {
 			mods: []Mutator{
 				UpdateString(k5, "v5"),
 			},
-			want: makeTestTagSet(2, 4),
+			want: makeTestTagMap(2, 4),
 		},
 		{
 			name:    "from existing; upsert",
@@ -92,7 +92,7 @@ func TestNewTagSet(t *testing.T) {
 			mods: []Mutator{
 				UpsertString(k5, "v5"),
 			},
-			want: makeTestTagSet(2, 4, 5),
+			want: makeTestTagMap(2, 4, 5),
 		},
 		{
 			name:    "from existing; delete",
@@ -100,7 +100,7 @@ func TestNewTagSet(t *testing.T) {
 			mods: []Mutator{
 				Delete(k2),
 			},
-			want: makeTestTagSet(4, 5),
+			want: makeTestTagMap(4, 5),
 		},
 	}
 
@@ -114,7 +114,7 @@ func TestNewTagSet(t *testing.T) {
 			Delete(k1),
 		}
 		mods = append(mods, tt.mods...)
-		got := NewTagSet(tt.initial, mods...)
+		got := NewMap(tt.initial, mods...)
 
 		if !reflect.DeepEqual(got, tt.want) {
 			t.Errorf("%v: got %v; want %v", tt.name, got, tt.want)
@@ -122,11 +122,11 @@ func TestNewTagSet(t *testing.T) {
 	}
 }
 
-func makeTestTagSet(ids ...int) *TagSet {
-	ts := newTagSet(len(ids))
+func makeTestTagMap(ids ...int) *Map {
+	m := newMap(len(ids))
 	for _, v := range ids {
 		k, _ := NewStringKey(fmt.Sprintf("k%d", v))
-		ts.m[k] = []byte(fmt.Sprintf("v%d", v))
+		m.m[k] = []byte(fmt.Sprintf("v%d", v))
 	}
-	return ts
+	return m
 }

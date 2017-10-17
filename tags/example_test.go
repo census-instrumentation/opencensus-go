@@ -24,7 +24,7 @@ import (
 )
 
 var (
-	tagSet *tags.TagSet
+	tagMap *tags.Map
 	ctx    context.Context
 	key    tags.StringKey
 )
@@ -38,7 +38,7 @@ func ExampleNewStringKey() {
 	_ = key // use key
 }
 
-func ExampleNewTagSet() {
+func ExampleNewMap() {
 	osKey, err := tags.NewStringKey("/my/namespace/user-os")
 	if err != nil {
 		log.Fatal(err)
@@ -48,33 +48,33 @@ func ExampleNewTagSet() {
 		log.Fatal(err)
 	}
 
-	tagSet := tags.NewTagSet(nil,
+	tagMap := tags.NewMap(nil,
 		tags.InsertString(osKey, "macOS-10.12.5"),
 		tags.UpsertString(userIDKey, "cde36753ed"),
 	)
-	_ = tagSet // use the tag set
+	_ = tagMap // use the tag map
 }
 
-func ExampleNewTagSet_replace() {
-	oldTagSet := tags.FromContext(ctx)
-	tagSet := tags.NewTagSet(oldTagSet,
+func ExampleNewMap_replace() {
+	oldTagMap := tags.FromContext(ctx)
+	tagMap := tags.NewMap(oldTagMap,
 		tags.InsertString(key, "macOS-10.12.5"),
 		tags.UpsertString(key, "macOS-10.12.7"),
 	)
-	ctx = tags.NewContext(ctx, tagSet)
+	ctx = tags.NewContext(ctx, tagMap)
 
 	_ = ctx // use context
 }
 
 func ExampleNewContext() {
-	// Propagate the tag set in the current context.
-	ctx := tags.NewContext(context.Background(), tagSet)
+	// Propagate the tag map in the current context.
+	ctx := tags.NewContext(context.Background(), tagMap)
 
 	_ = ctx // use context
 }
 
 func ExampleFromContext() {
-	tagSet := tags.FromContext(ctx)
+	tagMap := tags.FromContext(ctx)
 
-	_ = tagSet // use tag set
+	_ = tagMap // use the tag map
 }

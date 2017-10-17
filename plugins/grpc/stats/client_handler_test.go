@@ -317,8 +317,8 @@ func TestClientDefaultCollections(t *testing.T) {
 			for _, t := range rpc.tags {
 				mods = append(mods, tags.UpsertString(t.k, t.v))
 			}
-			ts := tags.NewTagSet(nil, mods...)
-			encoded := tags.Encode(ts)
+			tm := tags.NewMap(nil, mods...)
+			encoded := tags.Encode(tm)
 			ctx := stats.SetTags(context.Background(), encoded)
 
 			ctx = h.TagRPC(ctx, rpc.tagInfo)

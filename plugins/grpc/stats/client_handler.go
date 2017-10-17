@@ -95,13 +95,13 @@ func (ch clientHandler) TagRPC(ctx context.Context, info *stats.RPCTagInfo) cont
 	encoded := tags.Encode(ts)
 	ctx = stats.SetTags(ctx, encoded)
 
-	tagSets := tags.NewTagSet(ts,
+	tagMap := tags.NewMap(ts,
 		tags.UpsertString(keyService, serviceName),
 		tags.UpsertString(keyMethod, methodName),
 	)
 	// TODO(acetechnologist): should we be recording this later? What is the
 	// point of updating d.reqLen & d.reqCount if we update now?
-	ctx = tags.NewContext(ctx, tagSets)
+	ctx = tags.NewContext(ctx, tagMap)
 	RPCClientStartedCount.Record(ctx, 1)
 
 	return context.WithValue(ctx, grpcClientRPCKey, d)
@@ -167,11 +167,10 @@ func (ch clientHandler) handleRPCEnd(ctx context.Context, s *stats.End) {
 
 	if s.Error != nil {
 		errorCode := s.Error.Error()
-		ts := tags.FromContext(ctx)
-		newTs := tags.NewTagSet(ts,
+		newTagMap := tags.NewMap(tags.FromContext(ctx),
 			tags.UpsertString(keyOpStatus, errorCode),
 		)
-		ctx = tags.NewContext(ctx, newTs)
+		ctx = tags.NewContext(ctx, newTagMap)
 		measurements = append(measurements, RPCClientErrorCount.M(1))
 	}
 

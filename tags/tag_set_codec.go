@@ -159,15 +159,15 @@ func (eg *encoderGRPC) bytes() []byte {
 	return eg.buf[:eg.writeIdx]
 }
 
-// Encode encodes the tag set into a []byte. It is useful to propagate
-// the tag sets on wire in binary format.
-func Encode(ts *TagSet) []byte {
+// Encode encodes the tag map into a []byte. It is useful to propagate
+// the tag maps on wire in binary format.
+func Encode(m *Map) []byte {
 	eg := &encoderGRPC{
-		buf: make([]byte, len(ts.m)),
+		buf: make([]byte, len(m.m)),
 	}
 
 	eg.writeByte(byte(tagsVersionID))
-	for k, v := range ts.m {
+	for k, v := range m.m {
 		eg.writeByte(byte(keyTypeString))
 		eg.writeStringWithVarintLen(k.Name())
 		eg.writeBytesWithVarintLen(v)
@@ -176,9 +176,9 @@ func Encode(ts *TagSet) []byte {
 	return eg.bytes()
 }
 
-// Decode  decodes the given []byte into a tag set.
-func Decode(bytes []byte) (*TagSet, error) {
-	ts := newTagSet(0)
+// Decode  decodes the given []byte into a tag map.
+func Decode(bytes []byte) (*Map, error) {
+	ts := newMap(0)
 
 	eg := &encoderGRPC{
 		buf: bytes,

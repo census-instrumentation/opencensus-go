@@ -159,7 +159,7 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowCumulative(t *testin
 			for _, tag := range r.tags {
 				mods = append(mods, tags.InsertString(tag.k, tag.v))
 			}
-			ts := tags.NewTagSet(nil, mods...)
+			ts := tags.NewMap(nil, mods...)
 			vw1.addSample(ts, r.f, time.Now())
 		}
 
@@ -346,7 +346,7 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowSlidingTime(t *testi
 			for _, t := range r.tags {
 				mods = append(mods, tags.InsertString(t.k, t.v))
 			}
-			ts := tags.NewTagSet(nil, mods...)
+			ts := tags.NewMap(nil, mods...)
 			vw1.addSample(ts, r.f, r.now)
 		}
 
@@ -550,7 +550,7 @@ func Test_View_MeasureFloat64_AggregationCount_WindowSlidingTime(t *testing.T) {
 			for _, t := range r.tags {
 				mods = append(mods, tags.InsertString(t.k, t.v))
 			}
-			ts := tags.NewTagSet(nil, mods...)
+			ts := tags.NewMap(nil, mods...)
 			vw1.addSample(ts, r.f, r.now)
 		}
 
@@ -678,7 +678,7 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowSlidingCount(t *test
 			for _, tag := range r.tags {
 				mods = append(mods, tags.InsertString(tag.k, tag.v))
 			}
-			ts := tags.NewTagSet(nil, mods...)
+			ts := tags.NewMap(nil, mods...)
 			vw1.addSample(ts, r.f, time.Now())
 		}
 

@@ -30,35 +30,37 @@ OpenCensus libraries require Go 1.8 or later as it uses the convenience function
 
 Tags represent propagated key values. They can propagated using context.Context
 in the same process or can be encoded to be transmitted on wire and decoded back
-to a TagSet at the destination.
+to a tags.Map at the destination.
 
 ### Getting a key by a name
+
 A key is defined by its name. To use a key a user needs to know its name and type.
 Currently, only keys of type string are supported.
 Other types will be supported in the future.
 
 See the [NewStringKey][newstringkey-ex] example.
 
-### Creating a set of tags associated with keys
-TagSet is a set of tags. Package tags provide a builder to create tag sets.
+### Creating a map of tags associated with keys
 
-See the [NewTagSet][newtags-ex] example.
+tags.Map is a map of tags. Package tags provide a builder to create tag maps.
 
-### Propagating a TagSet in a context
-To propagate a tag set to downstream methods and downstream RPCs, add a tag set
+See the [NewMap][newtags-ex] example.
+
+### Propagating a tag map in a context
+To propagate a tag map to downstream methods and downstream RPCs, add a tag map
 to the current context. NewContext will return a copy of the current context,
-and put the tag set into the returned one.
-If there is already a tag set in the current context, it will be replaced.
+and put the tag map into the returned one.
+If there is already a tag map in the current context, it will be replaced.
 
 ```go
-newTagSet  := ...
-ctx = tags.NewContext(ctx, newTagSet)
+tagMap  := ...
+ctx = tags.NewContext(ctx, tagMap)
 ```
 
-In order to update an existing tag set, get the tag set from the current context,
-use NewTagSet and put the new tag set back to the context.
+In order to update an existing tag map, get the tag map from the current context,
+use NewMap and put the new tag map back to the context.
 
-See the [NewTagSet (Replace)][newtags-replace-ex] example.
+See the [NewMap (Replace)][newtags-replace-ex] example.
 
 
 ## Stats API
@@ -277,5 +279,5 @@ TODO: update the doc once tracing API is ready.
 
 
 [newstringkey-ex]: https://godoc.org/github.com/census-instrumentation/opencensus-go/tags/#example_NewStringKey
-[newtags-ex]: https://godoc.org/github.com/census-instrumentation/opencensus-go/tags#example_NewTagSet
-[newtags-replace-ex]: https://godoc.org/github.com/census-instrumentation/opencensus-go/tags#example_NewTagSet_replace
+[newtags-ex]: https://godoc.org/github.com/census-instrumentation/opencensus-go/tags#example_NewMap
+[newtags-replace-ex]: https://godoc.org/github.com/census-instrumentation/opencensus-go/tags#example_NewMap_replace

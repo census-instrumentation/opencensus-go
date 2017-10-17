@@ -21,7 +21,7 @@ import (
 	"testing"
 )
 
-func Test_EncodeDecode_TagSet(t *testing.T) {
+func Test_EncodeDecode_Set(t *testing.T) {
 	k1, _ := NewStringKey("k1")
 	k2, _ := NewStringKey("k2")
 	k3, _ := NewStringKey("k3 is very weird <>.,?/'\";:`~!@#$%^&*()_-+={[}]|\\")
@@ -79,13 +79,12 @@ func Test_EncodeDecode_TagSet(t *testing.T) {
 		for i, pair := range tc.pairs {
 			mods[i] = UpsertString(pair.k, pair.v)
 		}
-		ts := NewTagSet(nil, mods...)
-
+		ts := NewMap(nil, mods...)
 		encoded := Encode(ts)
 		decoded, err := Decode(encoded)
 
 		if err != nil {
-			t.Errorf("%v: decoding encoded tagSet failed: %v", tc.label, err)
+			t.Errorf("%v: decoding encoded tag map failed: %v", tc.label, err)
 		}
 
 		got := make([]pair, 0)
@@ -102,7 +101,7 @@ func Test_EncodeDecode_TagSet(t *testing.T) {
 		sort.Slice(want, func(i, j int) bool { return got[i].k.Name() < got[j].k.Name() })
 
 		if !reflect.DeepEqual(got, tc.pairs) {
-			t.Errorf("%v: decoded tagSet = %#v; want %#v", tc.label, got, want)
+			t.Errorf("%v: decoded tag map = %#v; want %#v", tc.label, got, want)
 		}
 	}
 }

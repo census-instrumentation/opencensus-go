@@ -15,9 +15,9 @@
 
 package tags
 
-// Mutator modifies a tag set.
+// Mutator modifies a tag map.
 type Mutator interface {
-	Mutate(t *TagSet) *TagSet
+	Mutate(t *Map) *Map
 }
 
 // Key represents a tag key. Keys with the same name will return
@@ -26,8 +26,8 @@ type Key interface {
 	// Name returns the name of the key.
 	Name() string
 
-	// StringValue encodes the given value represented in binary to string.
-	StringValue(b []byte) string
+	// ValueToString encodes the given value represented in binary to string.
+	ValueToString(b []byte) string
 }
 
 // StringKey is a Key and represents string keys.
@@ -47,39 +47,39 @@ func (k StringKey) Name() string {
 	return k.name
 }
 
-// StringValue encodes the given value represented in binary to string.
-func (k StringKey) StringValue(v []byte) string {
+// ValueToString represents the []byte as string.
+func (k StringKey) ValueToString(v []byte) string {
 	return string(v)
 }
 
 type mutator struct {
-	fn func(t *TagSet) *TagSet
+	fn func(t *Map) *Map
 }
 
-func (m *mutator) Mutate(t *TagSet) *TagSet {
+func (m *mutator) Mutate(t *Map) *Map {
 	return m.fn(t)
 }
 
 // InsertString returns a mutator that inserts a
-// value assiciated with k. If k already exists in the tag set,
+// value assiciated with k. If k already exists in the tag map,
 // mutator doesn't update the value.
 func InsertString(k StringKey, v string) Mutator {
 	return &mutator{
-		fn: func(ts *TagSet) *TagSet {
-			ts.insert(k, []byte(v))
-			return ts
+		fn: func(m *Map) *Map {
+			m.insert(k, []byte(v))
+			return m
 		},
 	}
 }
 
 // UpdateString returns a mutator that updates the
 // value of the tag assiciated with k with v. If k doesn't
-// exists in the tag set, the mutator doesn't insert the value.
+// exists in the tag map, the mutator doesn't insert the value.
 func UpdateString(k StringKey, v string) Mutator {
 	return &mutator{
-		fn: func(ts *TagSet) *TagSet {
-			ts.update(k, []byte(v))
-			return ts
+		fn: func(m *Map) *Map {
+			m.update(k, []byte(v))
+			return m
 		},
 	}
 }
@@ -90,9 +90,9 @@ func UpdateString(k StringKey, v string) Mutator {
 // if k already exists.
 func UpsertString(k StringKey, v string) Mutator {
 	return &mutator{
-		fn: func(ts *TagSet) *TagSet {
-			ts.upsert(k, []byte(v))
-			return ts
+		fn: func(m *Map) *Map {
+			m.upsert(k, []byte(v))
+			return m
 		},
 	}
 }
@@ -101,27 +101,27 @@ func UpsertString(k StringKey, v string) Mutator {
 // the value assiciated with k.
 func Delete(k Key) Mutator {
 	return &mutator{
-		fn: func(ts *TagSet) *TagSet {
-			ts.delete(k)
-			return ts
+		fn: func(m *Map) *Map {
+			m.delete(k)
+			return m
 		},
 	}
 }
 
-// NewTagSet returns a new tag set originated from orig,
+// NewMap returns a new tag map originated from orig,
 // modified with the provided mutators.
-func NewTagSet(orig *TagSet, m ...Mutator) *TagSet {
-	var ts *TagSet
+func NewMap(orig *Map, mutator ...Mutator) *Map {
+	var m *Map
 	if orig == nil {
-		ts = newTagSet(0)
+		m = newMap(0)
 	} else {
-		ts = newTagSet(len(orig.m))
+		m = newMap(len(orig.m))
 		for k, v := range orig.m {
-			ts.insert(k, v)
+			m.insert(k, v)
 		}
 	}
-	for _, mod := range m {
-		ts = mod.Mutate(ts)
+	for _, mod := range mutator {
+		m = mod.Mutate(m)
 	}
-	return ts
+	return m
 }
