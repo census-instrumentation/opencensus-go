@@ -57,7 +57,7 @@ func Test_Worker_MeasureCreation(t *testing.T) {
 	}
 }
 
-func Test_Worker_MeasureByName(t *testing.T) {
+func Test_Worker_FindMeasure(t *testing.T) {
 	RestartWorker()
 
 	someError := errors.New("some error")
@@ -127,12 +127,12 @@ func Test_Worker_MeasureByName(t *testing.T) {
 	}
 
 	for _, tc := range tcs {
-		m, err := MeasureByName(tc.name)
+		m, err := FindMeasure(tc.name)
 		if (err != nil) != (tc.err != nil) {
-			t.Errorf("MeasureByName(%q) = %v, want %v", tc.label, err, tc.err)
+			t.Errorf("FindMeasure(%q) = %v, want %v", tc.label, err, tc.err)
 		}
 		if m != tc.m {
-			t.Errorf("MeasureByName(%q) got measure %v; want %v", tc.label, m, tc.m)
+			t.Errorf("FindMeasure(%q) got measure %v; want %v", tc.label, m, tc.m)
 		}
 	}
 }
@@ -222,9 +222,9 @@ func Test_Worker_MeasureDelete(t *testing.T) {
 		}
 
 		for _, r := range tc.registrations {
-			m, err := MeasureByName(r.measureName)
+			m, err := FindMeasure(r.measureName)
 			if err != nil {
-				t.Errorf("%v: MeasureByName(%q) = %v; want no error", tc.label, r.measureName, err)
+				t.Errorf("%v: FindMeasure(%q) = %v; want no error", tc.label, r.measureName, err)
 				continue
 			}
 			if err = r.regFunc(m); err != nil {
@@ -234,9 +234,9 @@ func Test_Worker_MeasureDelete(t *testing.T) {
 		}
 
 		for _, d := range tc.deletions {
-			m, err := MeasureByName(d.name)
+			m, err := FindMeasure(d.name)
 			if (err != nil) != (d.getErr != nil) {
-				t.Errorf("%v: MeasureByName = %v; want %v", tc.label, d.getErr, err)
+				t.Errorf("%v: FindMeasure = %v; want %v", tc.label, d.getErr, err)
 				continue
 			}
 
@@ -255,7 +255,7 @@ func Test_Worker_MeasureDelete(t *testing.T) {
 				deleted = true
 			}
 
-			if _, err := MeasureByName(d.name); deleted && err == nil {
+			if _, err := FindMeasure(d.name); deleted && err == nil {
 				// TODO(jbd): Look for ErrNotExists instead.
 				t.Errorf("%v: Measure %q shouldn't exist after deletion but exists", tc.label, d.name)
 				continue
@@ -666,7 +666,7 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 		}
 
 		for _, value := range tc.records {
-			RecordFloat64(ctx, m, value)
+			m.Record(ctx, value)
 		}
 
 		for _, w := range tc.wants {

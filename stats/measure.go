@@ -24,8 +24,32 @@ type Measure interface {
 	viewsCount() int
 }
 
-// Measurement is the interface for all measurement types. Measurements are
-// required when recording stats.
+// Measurement is the numeric value measured when recording stats. Each measure
+// provides methods to create measurements of their kind. For example, MeasureInt64
+// provides M to convert an int64 into a measurement.
 type Measurement interface {
-	isMeasurement() bool
+	isMeasurement()
+}
+
+// FindMeasure returns the registered measure associated with name.
+func FindMeasure(name string) (Measure, error) {
+	req := &getMeasureByNameReq{
+		name: name,
+		c:    make(chan *getMeasureByNameResp),
+	}
+	defaultWorker.c <- req
+	resp := <-req.c
+	return resp.m, resp.err
+}
+
+// DeleteMeasure deletes an existing measure to allow for creation of a new
+// measure with the same name. It returns an error if the measure cannot be
+// deleted (if one or multiple registered views refer to it).
+func DeleteMeasure(m Measure) error {
+	req := &deleteMeasureReq{
+		m:   m,
+		err: make(chan error),
+	}
+	defaultWorker.c <- req
+	return <-req.err
 }

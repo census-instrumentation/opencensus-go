@@ -88,29 +88,6 @@ func NewMeasureInt64(name, description, unit string) (*MeasureInt64, error) {
 	return m, nil
 }
 
-// MeasureByName returns the registered measure associated with name.
-func MeasureByName(name string) (Measure, error) {
-	req := &getMeasureByNameReq{
-		name: name,
-		c:    make(chan *getMeasureByNameResp),
-	}
-	defaultWorker.c <- req
-	resp := <-req.c
-	return resp.m, resp.err
-}
-
-// DeleteMeasure deletes an existing measure to allow for creation of a new
-// measure with the same name. It returns an error if the measure cannot be
-// deleted (if one or multiple registered views refer to it).
-func DeleteMeasure(m Measure) error {
-	req := &deleteMeasureReq{
-		m:   m,
-		err: make(chan error),
-	}
-	defaultWorker.c <- req
-	return <-req.err
-}
-
 // FindView returns a registered view associated with this name.
 func FindView(name string) (*View, error) {
 	req := &getViewByNameReq{
@@ -235,25 +212,25 @@ func (v *View) RetrieveData() ([]*Row, error) {
 	return resp.rows, resp.err
 }
 
-// RecordFloat64 records a float64 value against a measure and the tags passed
+// Record records a float64 value against a measure and the tags passed
 // as part of the context.
-func RecordFloat64(ctx context.Context, mf *MeasureFloat64, v float64) {
+func (m *MeasureFloat64) Record(ctx context.Context, v float64) {
 	req := &recordFloat64Req{
 		now: time.Now(),
 		ts:  tags.FromContext(ctx),
-		mf:  mf,
+		mf:  m,
 		v:   v,
 	}
 	defaultWorker.c <- req
 }
 
-// RecordInt64 records an int64 value against a measure and the tags passed as
+// Record records an int64 value against a measure and the tags passed as
 // part of the context.
-func RecordInt64(ctx context.Context, mi *MeasureInt64, v int64) {
+func (m *MeasureInt64) Record(ctx context.Context, v int64) {
 	req := &recordInt64Req{
 		now: time.Now(),
 		ts:  tags.FromContext(ctx),
-		mi:  mi,
+		mi:  m,
 		v:   v,
 	}
 	defaultWorker.c <- req
@@ -261,6 +238,9 @@ func RecordInt64(ctx context.Context, mi *MeasureInt64, v int64) {
 
 // Record records one or multiple measurements with the same tags at once.
 func Record(ctx context.Context, ms ...Measurement) {
+	// TODO(jbd): Reconsider this API. Is there a use case
+	// where (Measure).Record is not sufficient enough that
+	// we provide this API?
 	req := &recordReq{
 		now: time.Now(),
 		ts:  tags.FromContext(ctx),

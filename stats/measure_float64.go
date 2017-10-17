@@ -43,12 +43,10 @@ func (m *MeasureFloat64) removeView(v *View) {
 
 func (m *MeasureFloat64) viewsCount() int { return len(m.views) }
 
-// Is creates a new measurement/datapoint of type measurementFloat64.
-func (m *MeasureFloat64) Is(v float64) Measurement {
-	return &measurementFloat64{
-		m: m,
-		v: v,
-	}
+// M creates a new float64 measurement.
+// Use Record to record multiple measurements.
+func (m *MeasureFloat64) M(v float64) Measurement {
+	return &measurementFloat64{m: m, v: v}
 }
 
 type measurementFloat64 struct {
@@ -56,4 +54,4 @@ type measurementFloat64 struct {
 	v float64
 }
 
-func (mf *measurementFloat64) isMeasurement() bool { return true }
+func (mf *measurementFloat64) isMeasurement() {}
