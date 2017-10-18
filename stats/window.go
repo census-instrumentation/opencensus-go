@@ -20,65 +20,42 @@ import "time"
 // Window represents the interval/samples count over which the aggregation
 // occurs.
 type Window interface {
-	isWindow() bool
+	isWindow()
 	newAggregator(now time.Time, aggregationValueConstructor func() AggregationValue) aggregator
 }
 
-// WindowCumulative indicates that the aggregation occurs over the lifetime of
+// CumulativeWindow indicates that the aggregation occurs over the lifetime of
 // the view.
-type WindowCumulative struct{}
+type CumulativeWindow struct{}
 
-// NewWindowCumulative creates a new aggregation window of type cumulative.
-func NewWindowCumulative() *WindowCumulative {
-	return &WindowCumulative{}
-}
+func (w CumulativeWindow) isWindow() {}
 
-func (w *WindowCumulative) isWindow() bool { return true }
-
-func (w *WindowCumulative) newAggregator(now time.Time, aggregationValueConstructor func() AggregationValue) aggregator {
+func (w CumulativeWindow) newAggregator(now time.Time, aggregationValueConstructor func() AggregationValue) aggregator {
 	return newAggregatorCumulative(now, aggregationValueConstructor)
 }
 
-// WindowSlidingTime indicates that the aggregation occurs over a sliding
-// window of time: i.e. last n seconds, minutes, hours...
-type WindowSlidingTime struct {
-	duration     time.Duration
-	subIntervals int
+// SlidingTimeWindow indicates that the aggregation occurs over a sliding
+// window of time: last n seconds, minutes, hours.
+type SlidingTimeWindow struct {
+	Duration  time.Duration
+	Intervals int
 }
 
-// NewWindowSlidingTime creates a new aggregation window of type sliding time
-// a.k.a time interval.
-func NewWindowSlidingTime(duration time.Duration, subIntervals int) *WindowSlidingTime {
-	return &WindowSlidingTime{
-		duration:     duration,
-		subIntervals: subIntervals,
-	}
+func (w SlidingTimeWindow) isWindow() {}
+
+func (w SlidingTimeWindow) newAggregator(now time.Time, aggregationValueConstructor func() AggregationValue) aggregator {
+	return newAggregatorSlidingTime(now, w.Duration, w.Intervals, aggregationValueConstructor)
 }
 
-func (w *WindowSlidingTime) isWindow() bool { return true }
-
-func (w *WindowSlidingTime) newAggregator(now time.Time, aggregationValueConstructor func() AggregationValue) aggregator {
-	return newAggregatorSlidingTime(now, w.duration, w.subIntervals, aggregationValueConstructor)
+// SlidingCountWindow indicates that the aggregation
+// occurs over a sliding number of samples.
+type SlidingCountWindow struct {
+	N       uint64
+	Subsets int
 }
 
-// WindowSlidingCount indicates that the aggregation occurs over a sliding
-// number of samples.
-type WindowSlidingCount struct {
-	n       uint64
-	subSets int
-}
+func (w SlidingCountWindow) isWindow() {}
 
-// NewWindowSlidingCount creates a new aggregation window of type sliding count
-// a.k.a last n samples.
-func NewWindowSlidingCount(count uint64, subSets int) *WindowSlidingCount {
-	return &WindowSlidingCount{
-		n:       count,
-		subSets: subSets,
-	}
-}
-
-func (w *WindowSlidingCount) isWindow() bool { return true }
-
-func (w *WindowSlidingCount) newAggregator(now time.Time, aggregationValueConstructor func() AggregationValue) aggregator {
-	return newAggregatorSlidingCount(now, w.n, w.subSets, aggregationValueConstructor)
+func (w SlidingCountWindow) newAggregator(now time.Time, aggregationValueConstructor func() AggregationValue) aggregator {
+	return newAggregatorSlidingCount(now, w.N, w.Subsets, aggregationValueConstructor)
 }

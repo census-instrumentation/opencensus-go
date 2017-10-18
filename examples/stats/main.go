@@ -56,7 +56,7 @@ func main() {
 	agg1 := stats.NewAggregationDistribution(histogramBounds)
 	agg2 := stats.NewAggregationCount()
 
-	window := stats.NewWindowSlidingTime(10*time.Second, 10)
+	window := stats.SlidingTimeWindow{Duration: 10 * time.Second, Intervals: 10}
 
 	// Create views.
 	const (

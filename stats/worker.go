@@ -357,7 +357,7 @@ func (w *worker) reportUsage(now time.Time) {
 			}
 		}
 
-		if _, ok := v.Window().(*WindowCumulative); !ok {
+		if _, ok := v.Window().(*CumulativeWindow); !ok {
 			v.clearRows()
 		}
 	}

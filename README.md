@@ -104,6 +104,7 @@ if err := stats.DeleteMeasure(mi); err != nil {
 ```
 
 ### Creating an aggregation
+
 Currently only 2 types of aggregations are supported. The AggregationCount is used to count the number of times a sample was recorded. The AggregationDistribution is used to provide a histogram of the values of the samples.
 
 ```go
@@ -113,19 +114,26 @@ agg2 := stats.NewAggregationCount()
 ```
 
 ### Create an aggregation window
-Currently only 3 types of aggregation windows are supported. The WindowCumulative is used to continuously aggregate the data received. The WindowSlidingTime to aggregate the data received over the last specified time interval. The NewWindowSlidingCount to aggregate the data received over the last specified sample count.
-Currently all aggregation types are compatible with all aggregation windows. Later we might provide aggregation types that are incompatible with some windows.
+
+Currently only 3 types of aggregation windows are supported. The CumulativeWindow
+is used to continuously aggregate the data received.
+The SlidingTimeWindow to aggregate the data received over the last specified time interval.
+The SlidingCountWindow to aggregate the data received over the last specified sample count.
+Currently all aggregation types are compatible with all aggregation windows.
+Later we might provide aggregation types that are incompatible with some windows.
 
 ```go
-duration := 10 * time.Second
-precisionIntervals := 5
-wnd1 := stats.NewWindowSlidingTime(duration, precisionIntervals)
+wnd1 := stats.SlidingTimeWindow{
+    Duration:  10 * time.Second,
+    Intervals: 5,
+}
 
-lastNSamples := 100
-precisionSubsets := 10
-wnd2 := stats.NewWindowSlidingCount(lastNSamples, precisionSubsets)
+wnd2 := stats.SlidingCountWindow{
+    N:       100,
+    Subsets: 10,
+}
 
-wn3 := stats.NewWindowCumulative()
+wn3 := stats.CumulativeWindow{}
 ```
 
 ### Creating, registering and unregistering a view

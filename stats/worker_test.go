@@ -486,8 +486,8 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 	)
 	ctx := tags.NewContext(context.Background(), ts)
 
-	v1 := NewView("VF1", "desc VF1", []tags.Key{k1, k2}, m, NewAggregationCount(), NewWindowCumulative())
-	v2 := NewView("VF2", "desc VF2", []tags.Key{k1, k2}, m, NewAggregationCount(), NewWindowCumulative())
+	v1 := NewView("VF1", "desc VF1", []tags.Key{k1, k2}, m, NewAggregationCount(), CumulativeWindow{})
+	v2 := NewView("VF2", "desc VF2", []tags.Key{k1, k2}, m, NewAggregationCount(), CumulativeWindow{})
 
 	c1 := make(chan *ViewData)
 	type subscription struct {
