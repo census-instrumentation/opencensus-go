@@ -104,13 +104,13 @@ if err := stats.DeleteMeasure(mi); err != nil {
 ```
 
 ### Creating an aggregation
-
-Currently only 2 types of aggregations are supported. The AggregationCount is used to count the number of times a sample was recorded. The AggregationDistribution is used to provide a histogram of the values of the samples.
+Currently only 2 types of aggregations are supported. The CountAggregation is used to count
+the number of times a sample was recorded. The DistributionAggregation is used to
+provide a histogram of the values of the samples.
 
 ```go
-histogramBounds := []float64 { -10, 0, 10, 20}
-agg1 := stats.NewAggregationDistribution(histogramBounds)
-agg2 := stats.NewAggregationCount()
+agg1 := stats.DistributionAggregation([]float64 {-10, 0, 10, 20})
+agg2 := stats.CountAggregation{}
 ```
 
 ### Create an aggregation window

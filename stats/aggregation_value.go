@@ -81,9 +81,9 @@ func (a *AggregationCountValue) String() string {
 	return fmt.Sprintf("{%v}", *a)
 }
 
-// AggregationDistributionValue is the aggregated data for an
-// AggregationDistributionFloat64  or AggregationDistributionInt64.
-type AggregationDistributionValue struct {
+// DistributionAggregationValue is the aggregated data for an
+// DistributionAggregation.
+type DistributionAggregationValue struct {
 	count    int64
 	min, max float64
 
@@ -108,11 +108,11 @@ type AggregationDistributionValue struct {
 	bounds         []float64
 }
 
-// NewTestingAggregationDistributionValue allows to initialize a new
-// AggregationDistributionValue to some desired values. It is expected to be
+// NewTestingDistributionAggregationValue allows to initialize a new
+// DistributionAggregationValue to some desired values. It is expected to be
 // used to facilitate testing only. It should not be invoked in production.
-func NewTestingAggregationDistributionValue(bounds []float64, countPerBucket []int64, count int64, min, max, mean, sumOfSquaredDev float64) *AggregationDistributionValue {
-	return &AggregationDistributionValue{
+func NewTestingDistributionAggregationValue(bounds []float64, countPerBucket []int64, count int64, min, max, mean, sumOfSquaredDev float64) *DistributionAggregationValue {
+	return &DistributionAggregationValue{
 		countPerBucket:  countPerBucket,
 		bounds:          bounds,
 		count:           count,
@@ -123,8 +123,8 @@ func NewTestingAggregationDistributionValue(bounds []float64, countPerBucket []i
 	}
 }
 
-func newAggregationDistributionValue(bounds []float64) *AggregationDistributionValue {
-	return &AggregationDistributionValue{
+func newDistributionAggregationValue(bounds []float64) *DistributionAggregationValue {
+	return &DistributionAggregationValue{
 		countPerBucket: make([]int64, len(bounds)+1),
 		bounds:         bounds,
 		min:            math.MaxFloat64,
@@ -133,21 +133,21 @@ func newAggregationDistributionValue(bounds []float64) *AggregationDistributionV
 }
 
 // Count returns the count of all samples collected.
-func (a *AggregationDistributionValue) Count() int64 { return a.count }
+func (a *DistributionAggregationValue) Count() int64 { return a.count }
 
 // Min returns the min of all samples collected.
-func (a *AggregationDistributionValue) Min() float64 { return a.min }
+func (a *DistributionAggregationValue) Min() float64 { return a.min }
 
 // Mean returns the mean of all samples collected.
-func (a *AggregationDistributionValue) Mean() float64 { return a.mean }
+func (a *DistributionAggregationValue) Mean() float64 { return a.mean }
 
 // Max returns the max of all samples collected.
-func (a *AggregationDistributionValue) Max() float64 { return a.max }
+func (a *DistributionAggregationValue) Max() float64 { return a.max }
 
 // Sum returns the sum of all samples collected.
-func (a *AggregationDistributionValue) Sum() float64 { return a.mean * float64(a.count) }
+func (a *DistributionAggregationValue) Sum() float64 { return a.mean * float64(a.count) }
 
-func (a *AggregationDistributionValue) variance() float64 {
+func (a *DistributionAggregationValue) variance() float64 {
 	if a.count <= 1 {
 		return 0
 	}
@@ -157,15 +157,15 @@ func (a *AggregationDistributionValue) variance() float64 {
 // SumOfSquaredDeviation returns the sum of all samples deviations from the
 // mean squared. This the M2 variable in Knuth's online algorithm for variance
 // calculation. https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance
-func (a *AggregationDistributionValue) SumOfSquaredDeviation() float64 { return a.sumOfSquaredDev }
+func (a *DistributionAggregationValue) SumOfSquaredDeviation() float64 { return a.sumOfSquaredDev }
 
-func (a *AggregationDistributionValue) String() string {
+func (a *DistributionAggregationValue) String() string {
 	return fmt.Sprintf("{%v %v %v %v %v %v %v}", a.Count(), a.Min(), a.Max(), a.Mean(), a.variance(), a.countPerBucket, a.bounds)
 }
 
 // CountPerBucket returns count per bucket. The buckets bounds are the same as
 // the ones setup in AggregationDistribution.
-func (a *AggregationDistributionValue) CountPerBucket() []int64 {
+func (a *DistributionAggregationValue) CountPerBucket() []int64 {
 	var ret []int64
 	for _, c := range a.countPerBucket {
 		ret = append(ret, c)
@@ -173,9 +173,9 @@ func (a *AggregationDistributionValue) CountPerBucket() []int64 {
 	return ret
 }
 
-func (a *AggregationDistributionValue) isAggregate() bool { return true }
+func (a *DistributionAggregationValue) isAggregate() bool { return true }
 
-func (a *AggregationDistributionValue) addSample(v interface{}) {
+func (a *DistributionAggregationValue) addSample(v interface{}) {
 	var f float64
 	switch x := v.(type) {
 	case int64:
@@ -207,7 +207,7 @@ func (a *AggregationDistributionValue) addSample(v interface{}) {
 	a.sumOfSquaredDev = a.sumOfSquaredDev + (f-oldMean)*(f-a.mean)
 }
 
-func (a *AggregationDistributionValue) incrementBucketCount(f float64) {
+func (a *DistributionAggregationValue) incrementBucketCount(f float64) {
 	if len(a.bounds) == 0 {
 		a.countPerBucket[0]++
 		return
@@ -222,15 +222,15 @@ func (a *AggregationDistributionValue) incrementBucketCount(f float64) {
 	a.countPerBucket[len(a.bounds)]++
 }
 
-// AggregationDistributionValue will not multiply by the fraction for this type
+// DistributionAggregationValue will not multiply by the fraction for this type
 // of aggregation. The 'fraction' argument is there just to satisfy the
 // interface 'AggregationValue'. For simplicity, we include the oldest partial
 // bucket in its entirety when the aggregation is a distribution. We do not try
 //  to multiply it by the fraction as it would make the calculation too complex
 // and will create inconsistencies between sumOfSquaredDev, min, max and the
 // various buckets of the histogram.
-func (a *AggregationDistributionValue) multiplyByFraction(fraction float64) AggregationValue {
-	ret := newAggregationDistributionValue(a.bounds)
+func (a *DistributionAggregationValue) multiplyByFraction(fraction float64) AggregationValue {
+	ret := newDistributionAggregationValue(a.bounds)
 	for i, c := range a.countPerBucket {
 		ret.countPerBucket[i] = c
 	}
@@ -244,8 +244,8 @@ func (a *AggregationDistributionValue) multiplyByFraction(fraction float64) Aggr
 
 }
 
-func (a *AggregationDistributionValue) addToIt(av AggregationValue) {
-	other, ok := av.(*AggregationDistributionValue)
+func (a *DistributionAggregationValue) addToIt(av AggregationValue) {
+	other, ok := av.(*DistributionAggregationValue)
 	if !ok {
 		return
 	}
@@ -271,7 +271,7 @@ func (a *AggregationDistributionValue) addToIt(av AggregationValue) {
 	}
 }
 
-func (a *AggregationDistributionValue) clear() {
+func (a *DistributionAggregationValue) clear() {
 	a.count = 0
 	a.min = math.MaxFloat64
 	a.max = math.SmallestNonzeroFloat64
@@ -282,8 +282,8 @@ func (a *AggregationDistributionValue) clear() {
 	}
 }
 
-func (a *AggregationDistributionValue) equal(other AggregationValue) bool {
-	a2, ok := other.(*AggregationDistributionValue)
+func (a *DistributionAggregationValue) equal(other AggregationValue) bool {
+	a2, ok := other.(*DistributionAggregationValue)
 	if !ok {
 		return false
 	}
