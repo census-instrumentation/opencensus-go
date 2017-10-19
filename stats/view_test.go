@@ -420,7 +420,7 @@ func Test_View_MeasureFloat64_AggregationCount_WindowSlidingTime(t *testing.T) {
 					[]*Row{
 						{
 							[]tags.Tag{{Key: k1, Value: []byte("v1")}},
-							newAggregationCountValue(6),
+							newCountAggregationValue(6),
 						},
 					},
 				},
@@ -430,7 +430,7 @@ func Test_View_MeasureFloat64_AggregationCount_WindowSlidingTime(t *testing.T) {
 					[]*Row{
 						{
 							[]tags.Tag{{Key: k1, Value: []byte("v1")}},
-							newAggregationCountValue(4),
+							newCountAggregationValue(4),
 						},
 					},
 				},
@@ -440,7 +440,7 @@ func Test_View_MeasureFloat64_AggregationCount_WindowSlidingTime(t *testing.T) {
 					[]*Row{
 						{
 							[]tags.Tag{{Key: k1, Value: []byte("v1")}},
-							newAggregationCountValue(2),
+							newCountAggregationValue(2),
 						},
 					},
 				},
@@ -464,7 +464,7 @@ func Test_View_MeasureFloat64_AggregationCount_WindowSlidingTime(t *testing.T) {
 					[]*Row{
 						{
 							[]tags.Tag{{Key: k1, Value: []byte("v1")}},
-							newAggregationCountValue(7),
+							newCountAggregationValue(7),
 						},
 					},
 				},
@@ -474,7 +474,7 @@ func Test_View_MeasureFloat64_AggregationCount_WindowSlidingTime(t *testing.T) {
 					[]*Row{
 						{
 							[]tags.Tag{{Key: k1, Value: []byte("v1")}},
-							newAggregationCountValue(7),
+							newCountAggregationValue(7),
 						},
 					},
 				},
@@ -484,7 +484,7 @@ func Test_View_MeasureFloat64_AggregationCount_WindowSlidingTime(t *testing.T) {
 					[]*Row{
 						{
 							[]tags.Tag{{Key: k1, Value: []byte("v1")}},
-							newAggregationCountValue(7),
+							newCountAggregationValue(7),
 						},
 					},
 				},
@@ -494,7 +494,7 @@ func Test_View_MeasureFloat64_AggregationCount_WindowSlidingTime(t *testing.T) {
 					[]*Row{
 						{
 							[]tags.Tag{{Key: k1, Value: []byte("v1")}},
-							newAggregationCountValue(6),
+							newCountAggregationValue(6),
 						},
 					},
 				},
@@ -504,7 +504,7 @@ func Test_View_MeasureFloat64_AggregationCount_WindowSlidingTime(t *testing.T) {
 					[]*Row{
 						{
 							[]tags.Tag{{Key: k1, Value: []byte("v1")}},
-							newAggregationCountValue(5),
+							newCountAggregationValue(5),
 						},
 					},
 				},
@@ -514,7 +514,7 @@ func Test_View_MeasureFloat64_AggregationCount_WindowSlidingTime(t *testing.T) {
 					[]*Row{
 						{
 							[]tags.Tag{{Key: k1, Value: []byte("v1")}},
-							newAggregationCountValue(4),
+							newCountAggregationValue(4),
 						},
 					},
 				},
@@ -524,7 +524,7 @@ func Test_View_MeasureFloat64_AggregationCount_WindowSlidingTime(t *testing.T) {
 					[]*Row{
 						{
 							[]tags.Tag{{Key: k1, Value: []byte("v1")}},
-							newAggregationCountValue(3),
+							newCountAggregationValue(3),
 						},
 					},
 				},
@@ -534,7 +534,7 @@ func Test_View_MeasureFloat64_AggregationCount_WindowSlidingTime(t *testing.T) {
 					[]*Row{
 						{
 							[]tags.Tag{{Key: k1, Value: []byte("v1")}},
-							newAggregationCountValue(2),
+							newCountAggregationValue(2),
 						},
 					},
 				},

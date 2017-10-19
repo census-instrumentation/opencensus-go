@@ -27,7 +27,7 @@ type CountAggregation struct{}
 func (a CountAggregation) isAggregation() bool { return true }
 
 func (a CountAggregation) aggregationValueConstructor() func() AggregationValue {
-	return func() AggregationValue { return newAggregationCountValue(0) }
+	return func() AggregationValue { return newCountAggregationValue(0) }
 }
 
 // DistributionAggregation indicates that the desired aggregation is
