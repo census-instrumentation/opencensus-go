@@ -20,7 +20,7 @@ import (
 	"math"
 )
 
-// AggregationValue is the interface for all types of aggregations values.
+// AggregationValue represents the aggregated data.
 type AggregationValue interface {
 	String() string
 	equal(other AggregationValue) bool
@@ -31,45 +31,45 @@ type AggregationValue interface {
 	clear()
 }
 
-// AggregationCountValue is the aggregated data for an AggregationCountInt64.
-type AggregationCountValue int64
+// CountAggregationValue is the aggregated data for a count aggregation.
+type CountAggregationValue int64
 
-// NewTestingAggregationCountValue is used to facilitate testing only and
+// NewTestingCountAggregationValue is used to facilitate testing only and
 // should not be invoked in production.
-func NewTestingAggregationCountValue(v int64) *AggregationCountValue {
-	return newAggregationCountValue(v)
+func NewTestingCountAggregationValue(v int64) *CountAggregationValue {
+	return newCountAggregationValue(v)
 }
 
-func newAggregationCountValue(v int64) *AggregationCountValue {
-	tmp := AggregationCountValue(v)
+func newCountAggregationValue(v int64) *CountAggregationValue {
+	tmp := CountAggregationValue(v)
 	return &tmp
 }
 
-func (a *AggregationCountValue) isAggregate() bool { return true }
+func (a *CountAggregationValue) isAggregate() bool { return true }
 
-func (a *AggregationCountValue) addSample(v interface{}) {
+func (a *CountAggregationValue) addSample(v interface{}) {
 	*a = *a + 1
 }
 
-func (a *AggregationCountValue) multiplyByFraction(fraction float64) AggregationValue {
-	return newAggregationCountValue(int64(float64(int64(*a))*fraction + 0.5)) // adding 0.5 because go runtime will take floor instead of rounding
+func (a *CountAggregationValue) multiplyByFraction(fraction float64) AggregationValue {
+	return newCountAggregationValue(int64(float64(int64(*a))*fraction + 0.5)) // adding 0.5 because go runtime will take floor instead of rounding
 
 }
 
-func (a *AggregationCountValue) addToIt(av AggregationValue) {
-	other, ok := av.(*AggregationCountValue)
+func (a *CountAggregationValue) addToIt(av AggregationValue) {
+	other, ok := av.(*CountAggregationValue)
 	if !ok {
 		return
 	}
 	*a = *a + *other
 }
 
-func (a *AggregationCountValue) clear() {
+func (a *CountAggregationValue) clear() {
 	*a = 0
 }
 
-func (a *AggregationCountValue) equal(other AggregationValue) bool {
-	a2, ok := other.(*AggregationCountValue)
+func (a *CountAggregationValue) equal(other AggregationValue) bool {
+	a2, ok := other.(*CountAggregationValue)
 	if !ok {
 		return false
 	}
@@ -77,7 +77,7 @@ func (a *AggregationCountValue) equal(other AggregationValue) bool {
 	return int64(*a) == int64(*a2)
 }
 
-func (a *AggregationCountValue) String() string {
+func (a *CountAggregationValue) String() string {
 	return fmt.Sprintf("{%v}", *a)
 }
 
