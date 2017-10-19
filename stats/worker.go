@@ -363,9 +363,11 @@ func (w *worker) reportUsage(now time.Time) {
 	}
 }
 
-// RestartWorker is used for testing only. It stops the old worker and creates
-// a new worker. It should never be called by production code.
-func RestartWorker() {
+// Restart stops the current processors and creates a new one.
+// This is for testing purposes only.
+// It should never be called by production code.
+func Restart() {
+	// TODO(jbd): Consider removing this API.
 	defaultWorker.stop()
 	defaultWorker = newWorker()
 	go defaultWorker.start()

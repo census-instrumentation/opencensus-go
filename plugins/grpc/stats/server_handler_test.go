@@ -308,7 +308,7 @@ func TestServerDefaultCollections(t *testing.T) {
 	}
 
 	for _, tc := range tcs {
-		istats.RestartWorker()
+		istats.Restart()
 		registerDefaultsServer()
 
 		h := NewServerHandler()
