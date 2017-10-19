@@ -109,11 +109,11 @@ func main() {
 
 	// Adding tags to context to record each datapoint with
 	// the following device ID and OS version.
-	ts := tags.NewTagSet(nil,
+	tm := tags.NewMap(nil,
 		tags.UpsertString(deviceIDKey, "device-id-768dfd76"),
 		tags.UpsertString(osVersionKey, "mac-osx-10.12.6"),
 	)
-	ctx := tags.NewContext(context.Background(), ts)
+	ctx := tags.NewContext(context.Background(), tm)
 
 	// Recording single datapoint at a time.
 	videoSize.Record(ctx, 10.0)

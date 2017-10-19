@@ -23,7 +23,7 @@ import (
 func Test_EncodeDecode_ValuesBytes(t *testing.T) {
 	type testData struct {
 		label     int
-		tagsSet   *TagSet
+		m         *Map
 		keys      []Key
 		wantSlice map[Key][]byte
 	}
@@ -36,7 +36,7 @@ func Test_EncodeDecode_ValuesBytes(t *testing.T) {
 	testSet := []testData{
 		{
 			0,
-			&TagSet{
+			&Map{
 				map[Key][]byte{},
 			},
 			[]Key{k1},
@@ -44,7 +44,7 @@ func Test_EncodeDecode_ValuesBytes(t *testing.T) {
 		},
 		{
 			1,
-			&TagSet{
+			&Map{
 				map[Key][]byte{k2: []byte("v2")},
 			},
 			[]Key{},
@@ -52,7 +52,7 @@ func Test_EncodeDecode_ValuesBytes(t *testing.T) {
 		},
 		{
 			3,
-			&TagSet{
+			&Map{
 				map[Key][]byte{k2: []byte("v2")},
 			},
 			[]Key{k1},
@@ -60,7 +60,7 @@ func Test_EncodeDecode_ValuesBytes(t *testing.T) {
 		},
 		{
 			4,
-			&TagSet{
+			&Map{
 				map[Key][]byte{k2: []byte("v2")},
 			},
 			[]Key{k2},
@@ -70,7 +70,7 @@ func Test_EncodeDecode_ValuesBytes(t *testing.T) {
 		},
 		{
 			5,
-			&TagSet{
+			&Map{
 				map[Key][]byte{
 					k1: []byte("v1"),
 					k2: []byte("v2")},
@@ -82,7 +82,7 @@ func Test_EncodeDecode_ValuesBytes(t *testing.T) {
 		},
 		{
 			6,
-			&TagSet{
+			&Map{
 				map[Key][]byte{
 					k2: []byte("v2"),
 					k1: []byte("v1")},
@@ -95,7 +95,7 @@ func Test_EncodeDecode_ValuesBytes(t *testing.T) {
 		},
 		{
 			7,
-			&TagSet{
+			&Map{
 				map[Key][]byte{
 					k1: []byte("v1"),
 					k2: []byte("v2"),
@@ -110,7 +110,7 @@ func Test_EncodeDecode_ValuesBytes(t *testing.T) {
 	}
 
 	for i, td := range testSet {
-		ts := NewTagSet(td.tagsSet)
+		ts := NewMap(td.m)
 
 		vb := toValuesBytes(ts, td.keys)
 		got := vb.toMap(td.keys)

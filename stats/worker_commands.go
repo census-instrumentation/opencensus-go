@@ -266,7 +266,7 @@ func (cmd *retrieveDataReq) handleCommand(w *worker) {
 // recordFloat64Req is the command to record data related to a measure.
 type recordFloat64Req struct {
 	now time.Time
-	ts  *tags.TagSet
+	tm  *tags.Map
 	mf  *MeasureFloat64
 	v   float64
 }
@@ -276,14 +276,14 @@ func (cmd *recordFloat64Req) handleCommand(w *worker) {
 		return
 	}
 	for v := range cmd.mf.views {
-		v.addSample(cmd.ts, cmd.v, cmd.now)
+		v.addSample(cmd.tm, cmd.v, cmd.now)
 	}
 }
 
 // recordInt64Req is the command to record data related to a measure.
 type recordInt64Req struct {
 	now time.Time
-	ts  *tags.TagSet
+	tm  *tags.Map
 	mi  *MeasureInt64
 	v   int64
 }
@@ -293,7 +293,7 @@ func (cmd *recordInt64Req) handleCommand(w *worker) {
 		return
 	}
 	for v := range cmd.mi.views {
-		v.addSample(cmd.ts, cmd.v, cmd.now)
+		v.addSample(cmd.tm, cmd.v, cmd.now)
 	}
 }
 
@@ -301,7 +301,7 @@ func (cmd *recordInt64Req) handleCommand(w *worker) {
 // at once.
 type recordReq struct {
 	now time.Time
-	ts  *tags.TagSet
+	tm  *tags.Map
 	ms  []Measurement
 }
 
@@ -310,11 +310,11 @@ func (cmd *recordReq) handleCommand(w *worker) {
 		switch measurement := m.(type) {
 		case *measurementFloat64:
 			for v := range measurement.m.views {
-				v.addSample(cmd.ts, measurement.v, cmd.now)
+				v.addSample(cmd.tm, measurement.v, cmd.now)
 			}
 		case *measurementInt64:
 			for v := range measurement.m.views {
-				v.addSample(cmd.ts, measurement.v, cmd.now)
+				v.addSample(cmd.tm, measurement.v, cmd.now)
 			}
 		default:
 		}

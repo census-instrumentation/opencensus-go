@@ -103,25 +103,25 @@ func (vb *valuesBytes) bytes() []byte {
 	return vb.buf[:vb.wIdx]
 }
 
-func toValuesBytes(ts *TagSet, ks []Key) *valuesBytes {
+func toValuesBytes(m *Map, ks []Key) *valuesBytes {
 	vb := &valuesBytes{
 		buf: make([]byte, len(ks)),
 	}
 	for _, k := range ks {
-		v := ts.m[k]
+		v := m.m[k]
 		vb.writeValue(v)
 	}
 	return vb
 }
 
-// ToValuesString returns the values bytes resulting from projecting *TagSet
-// along the []Key.
-func ToValuesString(ts *TagSet, ks []Key) string {
+// ToValuesString returns the values bytes resulting from
+// projecting map along the []Key.
+func ToValuesString(m *Map, ks []Key) string {
 	vb := &valuesBytes{
 		buf: make([]byte, len(ks)),
 	}
 	for _, k := range ks {
-		v := ts.m[k]
+		v := m.m[k]
 		vb.writeValue(v)
 	}
 	return string(vb.bytes())

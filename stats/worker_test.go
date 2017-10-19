@@ -480,7 +480,7 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 
 	k1, _ := tags.NewStringKey("k1")
 	k2, _ := tags.NewStringKey("k2")
-	ts := tags.NewTagSet(nil,
+	ts := tags.NewMap(nil,
 		tags.InsertString(k1, "v1"),
 		tags.InsertString(k2, "v2"),
 	)

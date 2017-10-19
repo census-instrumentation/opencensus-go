@@ -150,7 +150,7 @@ func (v *View) collectedRows(now time.Time) []*Row {
 	return v.c.collectedRows(v.tagKeys, now)
 }
 
-func (v *View) addSample(ts *tags.TagSet, val interface{}, now time.Time) {
+func (v *View) addSample(ts *tags.Map, val interface{}, now time.Time) {
 	if !v.isCollecting() {
 		return
 	}
@@ -178,7 +178,7 @@ func (r *Row) String() string {
 	buffer.WriteString("{ ")
 	buffer.WriteString("{ ")
 	for _, t := range r.Tags {
-		buffer.WriteString(fmt.Sprintf("{%v %v}", t.Key.Name(), t.Key.StringValue(t.Value)))
+		buffer.WriteString(fmt.Sprintf("{%v %v}", t.Key.Name(), t.Key.ValueToString(t.Value)))
 	}
 	buffer.WriteString(" }")
 	buffer.WriteString(r.AggregationValue.String())

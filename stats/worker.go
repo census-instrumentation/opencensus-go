@@ -217,7 +217,7 @@ func (v *View) RetrieveData() ([]*Row, error) {
 func (m *MeasureFloat64) Record(ctx context.Context, v float64) {
 	req := &recordFloat64Req{
 		now: time.Now(),
-		ts:  tags.FromContext(ctx),
+		tm:  tags.FromContext(ctx),
 		mf:  m,
 		v:   v,
 	}
@@ -229,7 +229,7 @@ func (m *MeasureFloat64) Record(ctx context.Context, v float64) {
 func (m *MeasureInt64) Record(ctx context.Context, v int64) {
 	req := &recordInt64Req{
 		now: time.Now(),
-		ts:  tags.FromContext(ctx),
+		tm:  tags.FromContext(ctx),
 		mi:  m,
 		v:   v,
 	}
@@ -243,7 +243,7 @@ func Record(ctx context.Context, ms ...Measurement) {
 	// we provide this API?
 	req := &recordReq{
 		now: time.Now(),
-		ts:  tags.FromContext(ctx),
+		tm:  tags.FromContext(ctx),
 		ms:  ms,
 	}
 	defaultWorker.c <- req

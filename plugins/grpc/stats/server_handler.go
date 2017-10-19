@@ -93,7 +93,7 @@ func (sh serverHandler) TagRPC(ctx context.Context, info *stats.RPCTagInfo) cont
 		startTime: startTime,
 	}
 
-	ts, err := sh.createTagSet(ctx, serviceName, methodName)
+	ts, err := sh.createTagMap(ctx, serviceName, methodName)
 	if err != nil {
 		return ctx
 	}
@@ -171,19 +171,19 @@ func (sh serverHandler) handleRPCEnd(ctx context.Context, s *stats.End) {
 	measurements = append(measurements, RPCServerServerElapsedTime.M(float64(elapsedTime)/float64(time.Millisecond)))
 	if s.Error != nil {
 		errorCode := s.Error.Error()
-		ts := tags.NewTagSet(tags.FromContext(ctx),
+		tm := tags.NewMap(tags.FromContext(ctx),
 			tags.UpsertString(keyOpStatus, errorCode),
 		)
-		ctx = tags.NewContext(ctx, ts)
+		ctx = tags.NewContext(ctx, tm)
 		measurements = append(measurements, RPCServerErrorCount.M(1))
 	}
 
 	istats.Record(ctx, measurements...)
 }
 
-// createTagSet creates a new tagSet containing the tags extracted from the
+// createTagMap creates a new tag map containing the tags extracted from the
 // gRPC metadata.
-func (sh serverHandler) createTagSet(ctx context.Context, serviceName, methodName string) (*tags.TagSet, error) {
+func (sh serverHandler) createTagMap(ctx context.Context, serviceName, methodName string) (*tags.Map, error) {
 	mods := []tags.Mutator{
 		tags.UpsertString(keyService, serviceName),
 		tags.UpsertString(keyMethod, methodName),
@@ -191,9 +191,9 @@ func (sh serverHandler) createTagSet(ctx context.Context, serviceName, methodNam
 	if tagsBin := stats.Tags(ctx); tagsBin != nil {
 		old, err := tags.Decode([]byte(tagsBin))
 		if err != nil {
-			return nil, fmt.Errorf("serverHandler.createTagSet failed to decode tagsBin %v: %v", tagsBin, err)
+			return nil, fmt.Errorf("serverHandler.createTagMap failed to decode tagsBin %v: %v", tagsBin, err)
 		}
-		return tags.NewTagSet(old, mods...), nil
+		return tags.NewMap(old, mods...), nil
 	}
-	return tags.NewTagSet(nil, mods...), nil
+	return tags.NewMap(nil, mods...), nil
 }
