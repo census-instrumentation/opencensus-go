@@ -286,6 +286,6 @@ TODO: update the doc once tracing API is ready.
 [gitter-url]: https://gitter.im/census-instrumentation/lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
 
 
-[newstringkey-ex]: https://godoc.org/github.com/census-instrumentation/opencensus-go/tags/#example_NewStringKey
-[newtags-ex]: https://godoc.org/github.com/census-instrumentation/opencensus-go/tags#example_NewMap
-[newtags-replace-ex]: https://godoc.org/github.com/census-instrumentation/opencensus-go/tags#example_NewMap_replace
+[newstringkey-ex]: https://godoc.org/github.com/census-instrumentation/opencensus-go/tags#example-NewStringKey
+[newtags-ex]: https://godoc.org/github.com/census-instrumentation/opencensus-go/tags#example-NewMap
+[newtags-replace-ex]: https://godoc.org/github.com/census-instrumentation/opencensus-go/tags#example-NewMap--Replace
