@@ -32,8 +32,9 @@ type Map struct {
 	m map[Key][]byte
 }
 
-// ValueToString returns value associated with the specified key
-// encoded as a string. If key is not found, ok is false.
+// ValueToString represents the binary value of the key as string.
+// It is used for pretty printing.
+// If key is not found in the map, it ok is returned as false.
 func (m *Map) ValueToString(k Key) (encoded string, ok bool) {
 	b, ok := m.m[k]
 	if !ok {

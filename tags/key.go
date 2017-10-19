@@ -26,8 +26,9 @@ type Key interface {
 	// Name returns the name of the key.
 	Name() string
 
-	// ValueToString encodes the given value represented in binary to string.
-	ValueToString(b []byte) string
+	// ValueToString represents the binary value of the key as string.
+	// It is used for pretty printing.
+	ValueToString(v []byte) string
 }
 
 // StringKey is a Key and represents string keys.
@@ -47,7 +48,8 @@ func (k StringKey) Name() string {
 	return k.name
 }
 
-// ValueToString represents the []byte as string.
+// ValueToString represents the binary value of the key as string.
+// It is used for pretty printing.
 func (k StringKey) ValueToString(v []byte) string {
 	return string(v)
 }
