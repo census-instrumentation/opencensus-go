@@ -44,7 +44,7 @@ func (m *MeasureFloat64) removeView(v *View) {
 func (m *MeasureFloat64) viewsCount() int { return len(m.views) }
 
 // M creates a new float64 measurement.
-// Use Record to record multiple measurements.
+// Use Record to record measurements.
 func (m *MeasureFloat64) M(v float64) Measurement {
 	return &measurementFloat64{m: m, v: v}
 }

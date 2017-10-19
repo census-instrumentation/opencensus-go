@@ -212,35 +212,9 @@ func (v *View) RetrieveData() ([]*Row, error) {
 	return resp.rows, resp.err
 }
 
-// Record records a float64 value against a measure and the tags passed
-// as part of the context.
-func (m *MeasureFloat64) Record(ctx context.Context, v float64) {
-	req := &recordFloat64Req{
-		now: time.Now(),
-		tm:  tags.FromContext(ctx),
-		mf:  m,
-		v:   v,
-	}
-	defaultWorker.c <- req
-}
-
-// Record records an int64 value against a measure and the tags passed as
-// part of the context.
-func (m *MeasureInt64) Record(ctx context.Context, v int64) {
-	req := &recordInt64Req{
-		now: time.Now(),
-		tm:  tags.FromContext(ctx),
-		mi:  m,
-		v:   v,
-	}
-	defaultWorker.c <- req
-}
-
 // Record records one or multiple measurements with the same tags at once.
+// If there are any tags in the context, measurements will be tagged with them.
 func Record(ctx context.Context, ms ...Measurement) {
-	// TODO(jbd): Reconsider this API. Is there a use case
-	// where (Measure).Record is not sufficient enough that
-	// we provide this API?
 	req := &recordReq{
 		now: time.Now(),
 		tm:  tags.FromContext(ctx),

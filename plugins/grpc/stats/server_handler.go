@@ -99,7 +99,7 @@ func (sh serverHandler) TagRPC(ctx context.Context, info *stats.RPCTagInfo) cont
 	}
 	ctx = tags.NewContext(ctx, ts)
 
-	RPCServerStartedCount.Record(ctx, 1)
+	istats.Record(ctx, RPCServerStartedCount.M(1))
 	return context.WithValue(ctx, grpcServerRPCKey, d)
 }
 
@@ -137,7 +137,7 @@ func (sh serverHandler) handleRPCInPayload(ctx context.Context, s *stats.InPaylo
 		return
 	}
 
-	RPCServerRequestBytes.Record(ctx, int64(s.Length))
+	istats.Record(ctx, RPCServerRequestBytes.M(int64(s.Length)))
 	atomic.AddUint64(&d.reqCount, 1)
 }
 
@@ -150,7 +150,7 @@ func (sh serverHandler) handleRPCOutPayload(ctx context.Context, s *stats.OutPay
 		return
 	}
 
-	RPCServerResponseBytes.Record(ctx, int64(s.Length))
+	istats.Record(ctx, RPCServerResponseBytes.M(int64(s.Length)))
 	atomic.AddUint64(&d.respCount, 1)
 }
 

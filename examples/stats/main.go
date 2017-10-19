@@ -115,11 +115,7 @@ func main() {
 	)
 	ctx := tags.NewContext(context.Background(), tm)
 
-	// Recording single datapoint at a time.
-	videoSize.Record(ctx, 10.0)
-	videoSpamCount.Record(ctx, 1)
-
-	// Recording multiple datapoints at once.
+	// Recording datapoints.
 	stats.Record(ctx, videoSpamCount.M(2), videoSize.M(100.0))
 
 	// Wait for a duration longer than reporting duration to ensure the stats

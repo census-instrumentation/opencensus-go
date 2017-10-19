@@ -44,7 +44,7 @@ func (m *MeasureInt64) removeView(v *View) {
 func (m *MeasureInt64) viewsCount() int { return len(m.views) }
 
 // M creates a new int64 measurement.
-// Use Record to record multiple measurements.
+// Use Record to record measurements.
 func (m *MeasureInt64) M(v int64) Measurement {
 	return &measurementInt64{m: m, v: v}
 }
