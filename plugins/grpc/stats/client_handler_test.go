@@ -308,7 +308,7 @@ func TestClientDefaultCollections(t *testing.T) {
 	}
 
 	for _, tc := range tcs {
-		istats.RestartWorker()
+		istats.Restart()
 		registerDefaultsClient()
 
 		h := NewClientHandler()
