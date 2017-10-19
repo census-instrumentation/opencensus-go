@@ -52,9 +52,8 @@ func main() {
 	}
 
 	// Create aggregations.
-	histogramBounds := []float64{-10, 0, 10, 20}
-	agg1 := stats.NewAggregationDistribution(histogramBounds)
-	agg2 := stats.NewAggregationCount()
+	agg1 := stats.DistributionAggregation([]float64{-10, 0, 10, 20})
+	agg2 := stats.CountAggregation{}
 
 	window := stats.SlidingTimeWindow{Duration: 10 * time.Second, Intervals: 10}
 

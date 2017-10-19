@@ -21,66 +21,37 @@ type Aggregation interface {
 	aggregationValueConstructor() func() AggregationValue
 }
 
-// AggregationCount indicates that the desired aggregation is count.
-type AggregationCount struct{}
+// CountAggregation indicates that the desired aggregation is count.
+type CountAggregation struct{}
 
-// NewAggregationCount creates a new aggregation of type count.
-func NewAggregationCount() *AggregationCount {
-	return &AggregationCount{}
-}
+func (a CountAggregation) isAggregation() bool { return true }
 
-func (a *AggregationCount) isAggregation() bool { return true }
-
-func (a *AggregationCount) aggregationValueConstructor() func() AggregationValue {
+func (a CountAggregation) aggregationValueConstructor() func() AggregationValue {
 	return func() AggregationValue { return newAggregationCountValue(0) }
 }
 
-// AggregationDistribution indicates that the desired aggregation is a histograms
-// distribution.
-type AggregationDistribution struct {
-	// An aggregation distribution may contain a histogram of the values in the
-	// population. The bucket boundaries for that histogram are described
-	// by Bounds. This defines len(Bounds)+1 buckets.
-	//
-	// if len(Bounds) >= 2 then the boundaries for bucket index i are:
-	// [-infinity, bounds[i]) for i = 0
-	// [bounds[i-1], bounds[i]) for 0 < i < len(Bounds)
-	// [bounds[i-1], +infinity) for i = len(Bounds)
-	//
-	// if len(Bounds) == 0 then there is no histogram associated with the
-	// distribution. There will be a single bucket with boundaries
-	// (-infinity, +infinity).
-	//
-	// if len(Bounds) == 1 then there is no finite buckets, and that single
-	// element is the common boundary of the overflow and underflow buckets.
-	bounds []float64
-}
-
-// NewAggregationDistribution creates a new aggregation of type distribution
-// a.k.a histogram. The buckets boundaries for that histogram are defined by
-// bounds. It defines len(Bounds)+1 buckets.
+// DistributionAggregation indicates that the desired aggregation is
+// a histogram distribution.
+// An distribution aggregation may contain a histogram of the values in the
+// population. The bucket boundaries for that histogram are described
+// by DistributionAggregation slice. This defines length+1 buckets.
 //
-// if len(Bounds) == 0 then there is no histogram associated with the
+// If length >= 2 then the boundaries for bucket index i are:
+//
+//     [-infinity, bounds[i]) for i = 0
+//     [bounds[i-1], bounds[i]) for 0 < i < length
+//     [bounds[i-1], +infinity) for i = length
+//
+// If length is 0 then there is no histogram associated with the
 // distribution. There will be a single bucket with boundaries
 // (-infinity, +infinity).
 //
-// if len(Bounds) == 1 then there is no finite buckets, and that single
+// If length is 1 then there is no finite buckets, and that single
 // element is the common boundary of the overflow and underflow buckets.
-//
-// if len(Bounds) >= 2 then the boundaries for bucket index i are:
-// [-infinity, bounds[i]) for i = 0
-// [bounds[i-1], bounds[i]) for 0 < i < len(Bounds)
-// [bounds[i-1], +infinity) for i = len(Bounds)
-func NewAggregationDistribution(bounds []float64) *AggregationDistribution {
-	copyBounds := make([]float64, len(bounds))
-	copy(copyBounds, bounds)
-	return &AggregationDistribution{
-		bounds: copyBounds,
-	}
-}
+type DistributionAggregation []float64
 
-func (a *AggregationDistribution) isAggregation() bool { return true }
+func (a DistributionAggregation) isAggregation() bool { return true }
 
-func (a *AggregationDistribution) aggregationValueConstructor() func() AggregationValue {
-	return func() AggregationValue { return newAggregationDistributionValue(a.bounds) }
+func (a DistributionAggregation) aggregationValueConstructor() func() AggregationValue {
+	return func() AggregationValue { return newDistributionAggregationValue([]float64(a)) }
 }
