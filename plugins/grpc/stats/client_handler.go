@@ -102,7 +102,7 @@ func (ch clientHandler) TagRPC(ctx context.Context, info *stats.RPCTagInfo) cont
 	// TODO(acetechnologist): should we be recording this later? What is the
 	// point of updating d.reqLen & d.reqCount if we update now?
 	ctx = tags.NewContext(ctx, tagMap)
-	RPCClientStartedCount.Record(ctx, 1)
+	istats.Record(ctx, RPCClientStartedCount.M(1))
 
 	return context.WithValue(ctx, grpcClientRPCKey, d)
 }
@@ -132,7 +132,7 @@ func (ch clientHandler) handleRPCOutPayload(ctx context.Context, s *stats.OutPay
 		return
 	}
 
-	RPCClientRequestBytes.Record(ctx, int64(s.Length))
+	istats.Record(ctx, RPCClientRequestBytes.M(int64(s.Length)))
 	atomic.AddUint64(&d.reqCount, 1)
 }
 
@@ -145,7 +145,7 @@ func (ch clientHandler) handleRPCInPayload(ctx context.Context, s *stats.InPaylo
 		return
 	}
 
-	RPCClientResponseBytes.Record(ctx, int64(s.Length))
+	istats.Record(ctx, RPCClientResponseBytes.M(int64(s.Length)))
 	atomic.AddUint64(&d.respCount, 1)
 }
 

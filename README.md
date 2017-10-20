@@ -245,8 +245,6 @@ and their registered views. Measurements are implicitly tagged with the
 tags in the context:
 
 ```go
-mi.Record(ctx, 1)
-mf.Record(ctx, 5.6)
 stats.Record(ctx, mi.M(4), mf.M(10.5))
 ```
 
