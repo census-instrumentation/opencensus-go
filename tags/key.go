@@ -63,7 +63,7 @@ func (m *mutator) Mutate(t *Map) *Map {
 }
 
 // InsertString returns a mutator that inserts a
-// value assiciated with k. If k already exists in the tag map,
+// value associated with k. If k already exists in the tag map,
 // mutator doesn't update the value.
 func InsertString(k StringKey, v string) Mutator {
 	return &mutator{
@@ -75,7 +75,7 @@ func InsertString(k StringKey, v string) Mutator {
 }
 
 // UpdateString returns a mutator that updates the
-// value of the tag assiciated with k with v. If k doesn't
+// value of the tag associated with k with v. If k doesn't
 // exists in the tag map, the mutator doesn't insert the value.
 func UpdateString(k StringKey, v string) Mutator {
 	return &mutator{
@@ -87,7 +87,7 @@ func UpdateString(k StringKey, v string) Mutator {
 }
 
 // UpsertString returns a mutator that upserts the
-// value of the tag assiciated with k with v. It inserts the
+// value of the tag associated with k with v. It inserts the
 // value if k doesn't exist already. It mutates the value
 // if k already exists.
 func UpsertString(k StringKey, v string) Mutator {
@@ -100,7 +100,7 @@ func UpsertString(k StringKey, v string) Mutator {
 }
 
 // Delete returns a mutator that deletes
-// the value assiciated with k.
+// the value associated with k.
 func Delete(k Key) Mutator {
 	return &mutator{
 		fn: func(m *Map) *Map {
