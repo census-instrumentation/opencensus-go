@@ -20,7 +20,7 @@ import (
 	"log"
 
 	istats "github.com/census-instrumentation/opencensus-go/stats"
-	"github.com/census-instrumentation/opencensus-go/tags"
+	"github.com/census-instrumentation/opencensus-go/tag"
 )
 
 // The following variables define the default hard-coded metrics to collect for
@@ -100,51 +100,51 @@ func createDefaultMeasuresClient() {
 func registerDefaultViewsClient() {
 	var views []*istats.View
 
-	RPCClientErrorCountView = istats.NewView("grpc.io/client/error_count/distribution_cumulative", "RPC Errors", []tags.Key{keyOpStatus, keyService, keyMethod}, RPCClientErrorCount, aggCount, windowCumulative)
+	RPCClientErrorCountView = istats.NewView("grpc.io/client/error_count/distribution_cumulative", "RPC Errors", []tag.Key{keyOpStatus, keyService, keyMethod}, RPCClientErrorCount, aggCount, windowCumulative)
 	views = append(views, RPCClientErrorCountView)
-	RPCClientRoundTripLatencyView = istats.NewView("grpc.io/client/roundtrip_latency/distribution_cumulative", "Latency in msecs", []tags.Key{keyService, keyMethod}, RPCClientRoundTripLatency, aggDistMillis, windowCumulative)
+	RPCClientRoundTripLatencyView = istats.NewView("grpc.io/client/roundtrip_latency/distribution_cumulative", "Latency in msecs", []tag.Key{keyService, keyMethod}, RPCClientRoundTripLatency, aggDistMillis, windowCumulative)
 	views = append(views, RPCClientRoundTripLatencyView)
-	RPCClientRequestBytesView = istats.NewView("grpc.io/client/request_bytes/distribution_cumulative", "Request bytes", []tags.Key{keyService, keyMethod}, RPCClientRequestBytes, aggDistBytes, windowCumulative)
+	RPCClientRequestBytesView = istats.NewView("grpc.io/client/request_bytes/distribution_cumulative", "Request bytes", []tag.Key{keyService, keyMethod}, RPCClientRequestBytes, aggDistBytes, windowCumulative)
 	views = append(views, RPCClientRequestBytesView)
-	RPCClientResponseBytesView = istats.NewView("grpc.io/client/response_bytes/distribution_cumulative", "Response bytes", []tags.Key{keyService, keyMethod}, RPCClientResponseBytes, aggDistBytes, windowCumulative)
+	RPCClientResponseBytesView = istats.NewView("grpc.io/client/response_bytes/distribution_cumulative", "Response bytes", []tag.Key{keyService, keyMethod}, RPCClientResponseBytes, aggDistBytes, windowCumulative)
 	views = append(views, RPCClientResponseBytesView)
-	RPCClientRequestCountView = istats.NewView("grpc.io/client/request_count/distribution_cumulative", "Count of request messages per client RPC", []tags.Key{keyService, keyMethod}, RPCClientRequestCount, aggDistCounts, windowCumulative)
+	RPCClientRequestCountView = istats.NewView("grpc.io/client/request_count/distribution_cumulative", "Count of request messages per client RPC", []tag.Key{keyService, keyMethod}, RPCClientRequestCount, aggDistCounts, windowCumulative)
 	views = append(views, RPCClientRequestCountView)
-	RPCClientResponseCountView = istats.NewView("grpc.io/client/response_count/distribution_cumulative", "Count of response messages per client RPC", []tags.Key{keyService, keyMethod}, RPCClientResponseCount, aggDistCounts, windowCumulative)
+	RPCClientResponseCountView = istats.NewView("grpc.io/client/response_count/distribution_cumulative", "Count of response messages per client RPC", []tag.Key{keyService, keyMethod}, RPCClientResponseCount, aggDistCounts, windowCumulative)
 	views = append(views, RPCClientResponseCountView)
 
-	RPCClientRoundTripLatencyMinuteView = istats.NewView("grpc.io/client/roundtrip_latency/minute_interval", "Minute stats for latency in msecs", []tags.Key{keyService, keyMethod}, RPCClientRoundTripLatency, aggDistMillis, windowSlidingMinute)
+	RPCClientRoundTripLatencyMinuteView = istats.NewView("grpc.io/client/roundtrip_latency/minute_interval", "Minute stats for latency in msecs", []tag.Key{keyService, keyMethod}, RPCClientRoundTripLatency, aggDistMillis, windowSlidingMinute)
 	views = append(views, RPCClientRoundTripLatencyMinuteView)
-	RPCClientRequestBytesMinuteView = istats.NewView("grpc.io/client/request_bytes/minute_interval", "Minute stats for request size in bytes", []tags.Key{keyService, keyMethod}, RPCClientRequestBytes, aggCount, windowSlidingMinute)
+	RPCClientRequestBytesMinuteView = istats.NewView("grpc.io/client/request_bytes/minute_interval", "Minute stats for request size in bytes", []tag.Key{keyService, keyMethod}, RPCClientRequestBytes, aggCount, windowSlidingMinute)
 	views = append(views, RPCClientRequestBytesMinuteView)
-	RPCClientResponseBytesMinuteView = istats.NewView("grpc.io/client/response_bytes/minute_interval", "Minute stats for response size in bytes", []tags.Key{keyService, keyMethod}, RPCClientResponseBytes, aggCount, windowSlidingMinute)
+	RPCClientResponseBytesMinuteView = istats.NewView("grpc.io/client/response_bytes/minute_interval", "Minute stats for response size in bytes", []tag.Key{keyService, keyMethod}, RPCClientResponseBytes, aggCount, windowSlidingMinute)
 	views = append(views, RPCClientResponseBytesMinuteView)
-	RPCClientErrorCountMinuteView = istats.NewView("grpc.io/client/error_count/minute_interval", "Minute stats for rpc errors", []tags.Key{keyService, keyMethod}, RPCClientErrorCount, aggCount, windowSlidingMinute)
+	RPCClientErrorCountMinuteView = istats.NewView("grpc.io/client/error_count/minute_interval", "Minute stats for rpc errors", []tag.Key{keyService, keyMethod}, RPCClientErrorCount, aggCount, windowSlidingMinute)
 	views = append(views, RPCClientErrorCountMinuteView)
-	RPCClientStartedCountMinuteView = istats.NewView("grpc.io/client/started_count/minute_interval", "Minute stats on the number of client RPCs started", []tags.Key{keyService, keyMethod}, RPCClientStartedCount, aggCount, windowSlidingMinute)
+	RPCClientStartedCountMinuteView = istats.NewView("grpc.io/client/started_count/minute_interval", "Minute stats on the number of client RPCs started", []tag.Key{keyService, keyMethod}, RPCClientStartedCount, aggCount, windowSlidingMinute)
 	views = append(views, RPCClientStartedCountMinuteView)
-	RPCClientFinishedCountMinuteView = istats.NewView("grpc.io/client/finished_count/minute_interval", "Minute stats on the number of client RPCs finished", []tags.Key{keyService, keyMethod}, RPCClientFinishedCount, aggCount, windowSlidingMinute)
+	RPCClientFinishedCountMinuteView = istats.NewView("grpc.io/client/finished_count/minute_interval", "Minute stats on the number of client RPCs finished", []tag.Key{keyService, keyMethod}, RPCClientFinishedCount, aggCount, windowSlidingMinute)
 	views = append(views, RPCClientFinishedCountMinuteView)
-	RPCClientRequestCountMinuteView = istats.NewView("grpc.io/client/request_count/minute_interval", "Minute stats on the count of request messages per client RPC", []tags.Key{keyService, keyMethod}, RPCClientRequestCount, aggCount, windowSlidingMinute)
+	RPCClientRequestCountMinuteView = istats.NewView("grpc.io/client/request_count/minute_interval", "Minute stats on the count of request messages per client RPC", []tag.Key{keyService, keyMethod}, RPCClientRequestCount, aggCount, windowSlidingMinute)
 	views = append(views, RPCClientRequestCountMinuteView)
-	RPCClientResponseCountMinuteView = istats.NewView("grpc.io/client/response_count/minute_interval", "Minute stats on the count of response messages per client RPC", []tags.Key{keyService, keyMethod}, RPCClientResponseCount, aggCount, windowSlidingMinute)
+	RPCClientResponseCountMinuteView = istats.NewView("grpc.io/client/response_count/minute_interval", "Minute stats on the count of response messages per client RPC", []tag.Key{keyService, keyMethod}, RPCClientResponseCount, aggCount, windowSlidingMinute)
 	views = append(views, RPCClientResponseCountMinuteView)
 
-	RPCClientRoundTripLatencyHourView = istats.NewView("grpc.io/client/roundtrip_latency/hour_interval", "Hour stats for latency in msecs", []tags.Key{keyService, keyMethod}, RPCClientRoundTripLatency, aggDistMillis, windowSlidingHour)
+	RPCClientRoundTripLatencyHourView = istats.NewView("grpc.io/client/roundtrip_latency/hour_interval", "Hour stats for latency in msecs", []tag.Key{keyService, keyMethod}, RPCClientRoundTripLatency, aggDistMillis, windowSlidingHour)
 	views = append(views, RPCClientRoundTripLatencyHourView)
-	RPCClientRequestBytesHourView = istats.NewView("grpc.io/client/request_bytes/hour_interval", "Hour stats for request size in bytes", []tags.Key{keyService, keyMethod}, RPCClientRequestBytes, aggCount, windowSlidingHour)
+	RPCClientRequestBytesHourView = istats.NewView("grpc.io/client/request_bytes/hour_interval", "Hour stats for request size in bytes", []tag.Key{keyService, keyMethod}, RPCClientRequestBytes, aggCount, windowSlidingHour)
 	views = append(views, RPCClientRequestBytesHourView)
-	RPCClientResponseBytesHourView = istats.NewView("grpc.io/client/response_bytes/hour_interval", "Hour stats for response size in bytes", []tags.Key{keyService, keyMethod}, RPCClientResponseBytes, aggCount, windowSlidingHour)
+	RPCClientResponseBytesHourView = istats.NewView("grpc.io/client/response_bytes/hour_interval", "Hour stats for response size in bytes", []tag.Key{keyService, keyMethod}, RPCClientResponseBytes, aggCount, windowSlidingHour)
 	views = append(views, RPCClientResponseBytesHourView)
-	RPCClientErrorCountHourView = istats.NewView("grpc.io/client/error_count/hour_interval", "Hour stats for rpc errors", []tags.Key{keyService, keyMethod}, RPCClientErrorCount, aggCount, windowSlidingHour)
+	RPCClientErrorCountHourView = istats.NewView("grpc.io/client/error_count/hour_interval", "Hour stats for rpc errors", []tag.Key{keyService, keyMethod}, RPCClientErrorCount, aggCount, windowSlidingHour)
 	views = append(views, RPCClientErrorCountHourView)
-	RPCClientStartedCountHourView = istats.NewView("grpc.io/client/started_count/hour_interval", "Hour stats on the number of client RPCs started", []tags.Key{keyService, keyMethod}, RPCClientStartedCount, aggCount, windowSlidingHour)
+	RPCClientStartedCountHourView = istats.NewView("grpc.io/client/started_count/hour_interval", "Hour stats on the number of client RPCs started", []tag.Key{keyService, keyMethod}, RPCClientStartedCount, aggCount, windowSlidingHour)
 	views = append(views, RPCClientStartedCountHourView)
-	RPCClientFinishedCountHourView = istats.NewView("grpc.io/client/finished_count/hour_interval", "Hour stats on the number of client RPCs finished", []tags.Key{keyService, keyMethod}, RPCClientFinishedCount, aggCount, windowSlidingHour)
+	RPCClientFinishedCountHourView = istats.NewView("grpc.io/client/finished_count/hour_interval", "Hour stats on the number of client RPCs finished", []tag.Key{keyService, keyMethod}, RPCClientFinishedCount, aggCount, windowSlidingHour)
 	views = append(views, RPCClientFinishedCountHourView)
-	RPCClientRequestCountHourView = istats.NewView("grpc.io/client/request_count/hour_interval", "Hour stats on the count of request messages per client RPC", []tags.Key{keyService, keyMethod}, RPCClientRequestCount, aggCount, windowSlidingHour)
+	RPCClientRequestCountHourView = istats.NewView("grpc.io/client/request_count/hour_interval", "Hour stats on the count of request messages per client RPC", []tag.Key{keyService, keyMethod}, RPCClientRequestCount, aggCount, windowSlidingHour)
 	views = append(views, RPCClientRequestCountHourView)
-	RPCClientResponseCountHourView = istats.NewView("grpc.io/client/response_count/hour_interval", "Hour stats on the count of response messages per client RPC", []tags.Key{keyService, keyMethod}, RPCClientResponseCount, aggCount, windowSlidingHour)
+	RPCClientResponseCountHourView = istats.NewView("grpc.io/client/response_count/hour_interval", "Hour stats on the count of response messages per client RPC", []tag.Key{keyService, keyMethod}, RPCClientResponseCount, aggCount, windowSlidingHour)
 	views = append(views, RPCClientResponseCountHourView)
 
 	// Registering views

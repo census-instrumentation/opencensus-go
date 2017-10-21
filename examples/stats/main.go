@@ -25,17 +25,17 @@ import (
 	"time"
 
 	"github.com/census-instrumentation/opencensus-go/stats"
-	"github.com/census-instrumentation/opencensus-go/tags"
+	"github.com/census-instrumentation/opencensus-go/tag"
 )
 
 func main() {
 	// Creates keys. There will be two dimensions, device ID and OS version,
 	// that will be collected with the metrics we collect in the program.
-	deviceIDKey, err := tags.NewStringKey("/mycompany.com/key/deviceID")
+	deviceIDKey, err := tag.NewStringKey("/mycompany.com/key/deviceID")
 	if err != nil {
 		log.Fatalf("Device ID key not created: %v\n", err)
 	}
-	osVersionKey, err := tags.NewStringKey("/mycompany.com/key/osVersionKey")
+	osVersionKey, err := tag.NewStringKey("/mycompany.com/key/osVersionKey")
 	if err != nil {
 		log.Fatalf("OS version key not created: %v\n", err)
 	}
@@ -65,9 +65,9 @@ func main() {
 		videoSpamDesc = "count of videos marked as spam tagged by device ID"
 	)
 	// Create view to see video size over 10 seconds with device ID and OS version tags.
-	videoSizeView := stats.NewView(videoSizeName, videoSizeDesc, []tags.Key{deviceIDKey, osVersionKey}, videoSize, agg1, window)
+	videoSizeView := stats.NewView(videoSizeName, videoSizeDesc, []tag.Key{deviceIDKey, osVersionKey}, videoSize, agg1, window)
 	// Create view to see the count of spam videos over 10 sconds with device ID.
-	videoSpamCountView := stats.NewView(videoSpamName, videoSpamDesc, []tags.Key{deviceIDKey}, videoSpamCount, agg2, window)
+	videoSpamCountView := stats.NewView(videoSpamName, videoSpamDesc, []tag.Key{deviceIDKey}, videoSpamCount, agg2, window)
 
 	// Register views in order to collect data.
 	if err := stats.RegisterView(videoSizeView); err != nil {
@@ -109,11 +109,11 @@ func main() {
 
 	// Adding tags to context to record each datapoint with
 	// the following device ID and OS version.
-	tm := tags.NewMap(nil,
-		tags.UpsertString(deviceIDKey, "device-id-768dfd76"),
-		tags.UpsertString(osVersionKey, "mac-osx-10.12.6"),
+	tm := tag.NewMap(nil,
+		tag.UpsertString(deviceIDKey, "device-id-768dfd76"),
+		tag.UpsertString(osVersionKey, "mac-osx-10.12.6"),
 	)
-	ctx := tags.NewContext(context.Background(), tm)
+	ctx := tag.NewContext(context.Background(), tm)
 
 	// Recording datapoints.
 	stats.Record(ctx, videoSpamCount.M(2), videoSize.M(100.0))

@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-package tags
+package tag
 
 import (
 	"reflect"

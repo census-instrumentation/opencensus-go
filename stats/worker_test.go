@@ -20,9 +20,9 @@ import (
 	"fmt"
 	"testing"
 
-	"golang.org/x/net/context"
+	"github.com/census-instrumentation/opencensus-go/tag"
 
-	"github.com/census-instrumentation/opencensus-go/tags"
+	"golang.org/x/net/context"
 )
 
 func Test_Worker_MeasureCreation(t *testing.T) {
@@ -478,16 +478,16 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 		t.Errorf("NewMeasureFloat64(\"MF1\", \"desc MF1\") got error '%v', want no error", err)
 	}
 
-	k1, _ := tags.NewStringKey("k1")
-	k2, _ := tags.NewStringKey("k2")
-	ts := tags.NewMap(nil,
-		tags.InsertString(k1, "v1"),
-		tags.InsertString(k2, "v2"),
+	k1, _ := tag.NewStringKey("k1")
+	k2, _ := tag.NewStringKey("k2")
+	ts := tag.NewMap(nil,
+		tag.InsertString(k1, "v1"),
+		tag.InsertString(k2, "v2"),
 	)
-	ctx := tags.NewContext(context.Background(), ts)
+	ctx := tag.NewContext(context.Background(), ts)
 
-	v1 := NewView("VF1", "desc VF1", []tags.Key{k1, k2}, m, CountAggregation{}, CumulativeWindow{})
-	v2 := NewView("VF2", "desc VF2", []tags.Key{k1, k2}, m, CountAggregation{}, CumulativeWindow{})
+	v1 := NewView("VF1", "desc VF1", []tag.Key{k1, k2}, m, CountAggregation{}, CumulativeWindow{})
+	v2 := NewView("VF2", "desc VF2", []tag.Key{k1, k2}, m, CountAggregation{}, CumulativeWindow{})
 
 	c1 := make(chan *ViewData)
 	type subscription struct {
@@ -528,7 +528,7 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 					v1,
 					[]*Row{
 						{
-							[]tags.Tag{{Key: k1, Value: []byte("v1")}, {Key: k2, Value: []byte("v2")}},
+							[]tag.Tag{{Key: k1, Value: []byte("v1")}, {Key: k2, Value: []byte("v2")}},
 							newCountAggregationValue(2),
 						},
 					},
@@ -548,7 +548,7 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 					v1,
 					[]*Row{
 						{
-							[]tags.Tag{{Key: k1, Value: []byte("v1")}, {Key: k2, Value: []byte("v2")}},
+							[]tag.Tag{{Key: k1, Value: []byte("v1")}, {Key: k2, Value: []byte("v2")}},
 							newCountAggregationValue(2),
 						},
 					},
@@ -558,7 +558,7 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 					v2,
 					[]*Row{
 						{
-							[]tags.Tag{{Key: k1, Value: []byte("v1")}, {Key: k2, Value: []byte("v2")}},
+							[]tag.Tag{{Key: k1, Value: []byte("v1")}, {Key: k2, Value: []byte("v2")}},
 							newCountAggregationValue(2),
 						},
 					},
@@ -577,7 +577,7 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 					v1,
 					[]*Row{
 						{
-							[]tags.Tag{{Key: k1, Value: []byte("v1")}, {Key: k2, Value: []byte("v2")}},
+							[]tag.Tag{{Key: k1, Value: []byte("v1")}, {Key: k2, Value: []byte("v2")}},
 							newCountAggregationValue(2),
 						},
 					},
@@ -597,7 +597,7 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 					v1,
 					[]*Row{
 						{
-							[]tags.Tag{{Key: k1, Value: []byte("v1")}, {Key: k2, Value: []byte("v2")}},
+							[]tag.Tag{{Key: k1, Value: []byte("v1")}, {Key: k2, Value: []byte("v2")}},
 							newCountAggregationValue(2),
 						},
 					},
@@ -607,7 +607,7 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 					v2,
 					[]*Row{
 						{
-							[]tags.Tag{{Key: k1, Value: []byte("v1")}, {Key: k2, Value: []byte("v2")}},
+							[]tag.Tag{{Key: k1, Value: []byte("v1")}, {Key: k2, Value: []byte("v2")}},
 							newCountAggregationValue(2),
 						},
 					},
@@ -626,7 +626,7 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 					v1,
 					[]*Row{
 						{
-							[]tags.Tag{{Key: k1, Value: []byte("v1")}, {Key: k2, Value: []byte("v2")}},
+							[]tag.Tag{{Key: k1, Value: []byte("v1")}, {Key: k2, Value: []byte("v2")}},
 							newCountAggregationValue(3),
 						},
 					},
@@ -636,7 +636,7 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 					v2,
 					[]*Row{
 						{
-							[]tags.Tag{{Key: k1, Value: []byte("v1")}, {Key: k2, Value: []byte("v2")}},
+							[]tag.Tag{{Key: k1, Value: []byte("v1")}, {Key: k2, Value: []byte("v2")}},
 							newCountAggregationValue(3),
 						},
 					},

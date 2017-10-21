@@ -13,25 +13,26 @@
 // limitations under the License.
 //
 
-package tags_test
+package tag_test
 
 import (
 	"log"
 
-	"golang.org/x/net/context"
+	"github.com/census-instrumentation/opencensus-go/tag"
+	"github.com/rakyll/census/tags"
 
-	"github.com/census-instrumentation/opencensus-go/tags"
+	"golang.org/x/net/context"
 )
 
 var (
-	tagMap *tags.Map
+	tagMap *tag.Map
 	ctx    context.Context
-	key    tags.StringKey
+	key    tag.StringKey
 )
 
 func ExampleNewStringKey() {
 	// Get a key to represent user OS.
-	key, err := tags.NewStringKey("/my/namespace/user-os")
+	key, err := tag.NewStringKey("/my/namespace/user-os")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -39,36 +40,36 @@ func ExampleNewStringKey() {
 }
 
 func ExampleNewMap() {
-	osKey, err := tags.NewStringKey("/my/namespace/user-os")
+	osKey, err := tag.NewStringKey("/my/namespace/user-os")
 	if err != nil {
 		log.Fatal(err)
 	}
-	userIDKey, err := tags.NewStringKey("/my/namespace/user-id")
+	userIDKey, err := tag.NewStringKey("/my/namespace/user-id")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	tagMap := tags.NewMap(nil,
-		tags.InsertString(osKey, "macOS-10.12.5"),
-		tags.UpsertString(userIDKey, "cde36753ed"),
+	tagMap := tag.NewMap(nil,
+		tag.InsertString(osKey, "macOS-10.12.5"),
+		tag.UpsertString(userIDKey, "cde36753ed"),
 	)
 	_ = tagMap // use the tag map
 }
 
 func ExampleNewMap_replace() {
-	oldTagMap := tags.FromContext(ctx)
-	tagMap := tags.NewMap(oldTagMap,
-		tags.InsertString(key, "macOS-10.12.5"),
-		tags.UpsertString(key, "macOS-10.12.7"),
+	oldTagMap := tag.FromContext(ctx)
+	tagMap := tag.NewMap(oldTagMap,
+		tag.InsertString(key, "macOS-10.12.5"),
+		tag.UpsertString(key, "macOS-10.12.7"),
 	)
-	ctx = tags.NewContext(ctx, tagMap)
+	ctx = tag.NewContext(ctx, tagMap)
 
 	_ = ctx // use context
 }
 
 func ExampleNewContext() {
 	// Propagate the tag map in the current context.
-	ctx := tags.NewContext(context.Background(), tagMap)
+	ctx := tag.NewContext(context.Background(), tagMap)
 
 	_ = ctx // use context
 }

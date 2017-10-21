@@ -24,7 +24,7 @@ import (
 	"golang.org/x/net/context"
 
 	istats "github.com/census-instrumentation/opencensus-go/stats"
-	"github.com/census-instrumentation/opencensus-go/tags"
+	"github.com/census-instrumentation/opencensus-go/tag"
 	"github.com/golang/glog"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/stats"
@@ -62,7 +62,7 @@ func (sh serverHandler) HandleConn(ctx context.Context, s stats.ConnStats) {
 }
 
 // TagRPC gets the metadata from GRPC context, extracts the encoded tags from
-// it, creates a new github.com/census-instrumentation/opencensus-go/tags.TagsSet,
+// it, creates a new tag.Map,
 // adds it to the local context using tagging.NewContextWithTagsSet and finally
 // returns the new ctx.
 func (sh serverHandler) TagRPC(ctx context.Context, info *stats.RPCTagInfo) context.Context {
@@ -97,7 +97,7 @@ func (sh serverHandler) TagRPC(ctx context.Context, info *stats.RPCTagInfo) cont
 	if err != nil {
 		return ctx
 	}
-	ctx = tags.NewContext(ctx, ts)
+	ctx = tag.NewContext(ctx, ts)
 
 	istats.Record(ctx, RPCServerStartedCount.M(1))
 	return context.WithValue(ctx, grpcServerRPCKey, d)
@@ -171,10 +171,10 @@ func (sh serverHandler) handleRPCEnd(ctx context.Context, s *stats.End) {
 	measurements = append(measurements, RPCServerServerElapsedTime.M(float64(elapsedTime)/float64(time.Millisecond)))
 	if s.Error != nil {
 		errorCode := s.Error.Error()
-		tm := tags.NewMap(tags.FromContext(ctx),
-			tags.UpsertString(keyOpStatus, errorCode),
+		tm := tag.NewMap(tag.FromContext(ctx),
+			tag.UpsertString(keyOpStatus, errorCode),
 		)
-		ctx = tags.NewContext(ctx, tm)
+		ctx = tag.NewContext(ctx, tm)
 		measurements = append(measurements, RPCServerErrorCount.M(1))
 	}
 
@@ -183,17 +183,17 @@ func (sh serverHandler) handleRPCEnd(ctx context.Context, s *stats.End) {
 
 // createTagMap creates a new tag map containing the tags extracted from the
 // gRPC metadata.
-func (sh serverHandler) createTagMap(ctx context.Context, serviceName, methodName string) (*tags.Map, error) {
-	mods := []tags.Mutator{
-		tags.UpsertString(keyService, serviceName),
-		tags.UpsertString(keyMethod, methodName),
+func (sh serverHandler) createTagMap(ctx context.Context, serviceName, methodName string) (*tag.Map, error) {
+	mods := []tag.Mutator{
+		tag.UpsertString(keyService, serviceName),
+		tag.UpsertString(keyMethod, methodName),
 	}
 	if tagsBin := stats.Tags(ctx); tagsBin != nil {
-		old, err := tags.Decode([]byte(tagsBin))
+		old, err := tag.Decode([]byte(tagsBin))
 		if err != nil {
 			return nil, fmt.Errorf("serverHandler.createTagMap failed to decode tagsBin %v: %v", tagsBin, err)
 		}
-		return tags.NewMap(old, mods...), nil
+		return tag.NewMap(old, mods...), nil
 	}
-	return tags.NewMap(nil, mods...), nil
+	return tag.NewMap(nil, mods...), nil
 }

@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-package tags
+package tag
 
 // Mutator modifies a tag map.
 type Mutator interface {
