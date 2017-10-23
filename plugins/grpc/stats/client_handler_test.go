@@ -160,7 +160,7 @@ func TestClientDefaultCollections(t *testing.T) {
 								{Key: keyOpStatus, Value: []byte("someError")},
 								{Key: keyService, Value: []byte("package.service")},
 							},
-							istats.NewTestingCountAggregationValue(1),
+							newCountAggregationValue(1),
 						},
 					},
 				},
@@ -243,7 +243,7 @@ func TestClientDefaultCollections(t *testing.T) {
 								{Key: keyOpStatus, Value: []byte("someError1")},
 								{Key: keyService, Value: []byte("package.service")},
 							},
-							istats.NewTestingCountAggregationValue(1),
+							newCountAggregationValue(1),
 						},
 						{
 							[]tags.Tag{
@@ -251,7 +251,7 @@ func TestClientDefaultCollections(t *testing.T) {
 								{Key: keyOpStatus, Value: []byte("someError2")},
 								{Key: keyService, Value: []byte("package.service")},
 							},
-							istats.NewTestingCountAggregationValue(1),
+							newCountAggregationValue(1),
 						},
 					},
 				},

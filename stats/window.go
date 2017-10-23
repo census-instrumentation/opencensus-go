@@ -17,8 +17,8 @@ package stats
 
 import "time"
 
-// Window represents the interval/samples count over which the aggregation
-// occurs.
+// Window represents a time interval or samples count over
+// which the aggregation occurs.
 type Window interface {
 	isWindow()
 	newAggregator(now time.Time, aggregationValueConstructor func() AggregationValue) aggregator

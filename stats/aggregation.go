@@ -15,13 +15,18 @@
 
 package stats
 
-// Aggregation is the generic interface for all aggregtion types.
+// Aggregation represents a data aggregation method. There are several
+// aggregation methods made available in the package such as
+// CountAggregation and DistributionAggregation.
 type Aggregation interface {
 	isAggregation() bool
 	aggregationValueConstructor() func() AggregationValue
 }
 
-// CountAggregation indicates that the desired aggregation is count.
+// CountAggregation indicates that data collected and aggregated
+// with this method will be turned into a count value.
+// For example, total number of accepted requests can be
+// aggregated by using CountAggregation.
 type CountAggregation struct{}
 
 func (a CountAggregation) isAggregation() bool { return true }
