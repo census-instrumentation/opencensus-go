@@ -20,7 +20,7 @@ import (
 	"math"
 )
 
-// AggregationValue represents the aggregated data.
+// AggregationValue represents an aggregated value from a collection.
 type AggregationValue interface {
 	String() string
 	equal(other AggregationValue) bool
@@ -33,12 +33,6 @@ type AggregationValue interface {
 
 // CountAggregationValue is the aggregated data for a count aggregation.
 type CountAggregationValue int64
-
-// NewTestingCountAggregationValue is used to facilitate testing only and
-// should not be invoked in production.
-func NewTestingCountAggregationValue(v int64) *CountAggregationValue {
-	return newCountAggregationValue(v)
-}
 
 func newCountAggregationValue(v int64) *CountAggregationValue {
 	tmp := CountAggregationValue(v)

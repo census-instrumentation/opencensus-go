@@ -24,11 +24,12 @@ import (
 	"github.com/census-instrumentation/opencensus-go/tags"
 )
 
-// View is the data structure that holds the info describing the view as well
-// as the aggregated data.
+// View allows users to filter and aggregate the recorded events
+// over a time window. Each view has to be registered to enable
+// data retrieval. Use NewView to initiate new views.
+// Unregister views once you don't want to collect any more events.
 type View struct {
-	// name of View. Must be unique.
-	name        string
+	name        string // name of View. Must be unique.
 	description string
 
 	// tagKeys to perform the aggregation on.
@@ -71,19 +72,19 @@ func NewView(name, description string, keys []tags.Key, measure Measure, agg Agg
 		description,
 		keysCopy,
 		measure,
-		time.Date(1, 1, 1, 0, 0, 0, 0, time.UTC),
+		time.Time{},
 		make(map[chan *ViewData]subscription),
 		false,
 		&collector{make(map[string]aggregator), agg, window},
 	}
 }
 
-// Name returns the name of view.
+// Name returns the name of the view.
 func (v *View) Name() string {
 	return v.name
 }
 
-// Description returns the name of view.
+// Description returns the name of thte view.
 func (v *View) Description() string {
 	return v.description
 }
@@ -129,19 +130,19 @@ func (v *View) collector() *collector {
 	return v.c
 }
 
-// Window returns the timing window is being used to collect
-// metrics on this view.
+// Window returns the timing window being used to collect
+// metrics from this view.
 func (v *View) Window() Window {
 	return v.c.w
 }
 
-// Aggregation returns the Aggregation used to aggregate the measurements
-// collected by this view.
+// Aggregation returns the data aggregation method used to aggregate
+// the measurements collected by this view.
 func (v *View) Aggregation() Aggregation {
 	return v.c.a
 }
 
-// Measure returns the measure type the view is collecting measurements for.
+// Measure returns the measure the view is collecting measurements for.
 func (v *View) Measure() Measure {
 	return v.m
 }
@@ -207,18 +208,15 @@ func ContainsRow(rows []*Row, r *Row) bool {
 	return false
 }
 
-// EqualRows returns true if rows1, rows2 are equivalent. The rows position
-// into the slice is taken into account.
-func EqualRows(rows1, rows2 []*Row) (bool, string) {
+// EqualRows returns true if rows1 and rows2 contain exactly the same data.
+func EqualRows(rows1, rows2 []*Row) bool {
 	if len(rows1) != len(rows2) {
-		return false, fmt.Sprintf("len(rows1)=%v and len(rows2)=%v", len(rows1), len(rows2))
+		return false
 	}
-
 	for _, r1 := range rows1 {
 		if !ContainsRow(rows2, r1) {
-			return false, fmt.Sprintf("got unexpected row '%v' in rows1", r1)
+			return false
 		}
 	}
-
-	return true, ""
+	return true
 }

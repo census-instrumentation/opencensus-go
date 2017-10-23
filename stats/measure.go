@@ -15,10 +15,21 @@
 
 package stats
 
-// Measure is the interface for all measure types. A measure is required when
-// defining a view.
+// Measure represents a type of metric to be tracked and recorded.
+// For example, latency, request Mb/s, and response Mb/s are measures
+// to collect from a server.
+//
+// Each measure needs to be registered before being used.
+// Measure constructors such as NewMeasureInt64 and
+// NewMeasureFloat64 automatically registers the measure
+// by the given name.
+// Each registered measure needs to be unique by name.
+// Measures also have units that represent the unit of the
+// metric they are representing.
 type Measure interface {
 	Name() string
+	Unit() string
+
 	addView(v *View)
 	removeView(v *View)
 	viewsCount() int
@@ -44,7 +55,7 @@ func FindMeasure(name string) (Measure, error) {
 
 // DeleteMeasure deletes an existing measure to allow for creation of a new
 // measure with the same name. It returns an error if the measure cannot be
-// deleted (if one or multiple registered views refer to it).
+// deleted, such as one or multiple registered views refer to it.
 func DeleteMeasure(m Measure) error {
 	req := &deleteMeasureReq{
 		m:   m,
