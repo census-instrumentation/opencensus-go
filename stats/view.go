@@ -209,14 +209,14 @@ func ContainsRow(rows []*Row, r *Row) bool {
 }
 
 // EqualRows returns true if rows1 and rows2 contain exactly the same data.
-func EqualRows(rows1, rows2 []*Row) (bool, string) {
+func EqualRows(rows1, rows2 []*Row) bool {
 	if len(rows1) != len(rows2) {
-		return false, fmt.Sprintf("len(rows1)=%v and len(rows2)=%v", len(rows1), len(rows2))
+		return false
 	}
 	for _, r1 := range rows1 {
 		if !ContainsRow(rows2, r1) {
-			return false, fmt.Sprintf("got unexpected row '%v' in rows1", r1)
+			return false
 		}
 	}
-	return true, ""
+	return true
 }
