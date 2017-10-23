@@ -84,7 +84,7 @@ func (v *View) Name() string {
 	return v.name
 }
 
-// Description returns the name of thte view.
+// Description returns the name of the view.
 func (v *View) Description() string {
 	return v.description
 }
@@ -209,14 +209,14 @@ func ContainsRow(rows []*Row, r *Row) bool {
 }
 
 // EqualRows returns true if rows1 and rows2 contain exactly the same data.
-func EqualRows(rows1, rows2 []*Row) bool {
+func EqualRows(rows1, rows2 []*Row) (bool, string) {
 	if len(rows1) != len(rows2) {
-		return false
+		return false, fmt.Sprintf("len(rows1)=%v and len(rows2)=%v", len(rows1), len(rows2))
 	}
 	for _, r1 := range rows1 {
 		if !ContainsRow(rows2, r1) {
-			return false
+			return false, fmt.Sprintf("got unexpected row '%v' in rows1", r1)
 		}
 	}
-	return true
+	return true, ""
 }

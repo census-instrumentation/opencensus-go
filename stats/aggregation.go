@@ -16,7 +16,7 @@
 package stats
 
 // Aggregation represents a data aggregation method. There are several
-// aggregation methods made available by the package such as
+// aggregation methods made available in the package such as
 // CountAggregation and DistributionAggregation.
 type Aggregation interface {
 	isAggregation() bool
