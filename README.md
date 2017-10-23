@@ -160,16 +160,14 @@ if err := stats.RegisterView(myView2); err != nil {
 }
 ```
 
-TODO: distinguish "create" and "register". Why do they need to be separate?
-
 Retrieve view by name:
 
 ```go
-myView1, err := stats.GetViewByName("/my/int64/viewName")
+myView1, err := stats.FindView("/my/int64/viewName")
 if err != nil {
     // handle error
 }
-myView2, err := stats.GetViewByName("/my/float64/viewName")
+myView2, err := stats.FindView("/my/float64/viewName")
 if err != nil {
     // handle error
 }
@@ -178,10 +176,10 @@ if err != nil {
 Unregister view:
 
 ```go
-if err := stats.UnregisterView(myView1); err != nil {
+if err := myView1.Unregister(); err != nil {
     // handle error
 }
-if err := stats.UnregisterView(myView2); err != nil {
+if err := myView2.Unregister(); err != nil {
     // handle error
 }
 ```
@@ -193,11 +191,11 @@ Subscribe to a view:
 
 ```go
 c1 := make(c chan *stats.ViewData)
-if err := stats.SubscribeToView(myView1, c1); err != nil {
+if err := myView1.Subscribe(c1); err != nil {
     // handle error
 }
 c2 := make(c chan *stats.ViewData)
-if err := stats.SubscribeToView(myView2, c2); err != nil {
+if err := myView2.Subscribe(c2); err != nil {
     // handle error
 }
 ```
@@ -205,10 +203,10 @@ if err := stats.SubscribeToView(myView2, c2); err != nil {
 Unsubscribe from a view:
 
 ```go
-if err := stats.UnsubscribeFromView(myView1, c1); err != nil {
+if err := myView1.Unsubscribe(c1); err != nil {
     // handle error
 }
-if err := stats.UnsubscribeFromView(myView2, c2); err != nil {
+if err := myView2.Unsubscribe(c2); err != nil {
     // handle error
 }
 ```
@@ -216,17 +214,16 @@ if err := stats.UnsubscribeFromView(myView2, c2); err != nil {
 Configure/modify the default interval between reports of collected data. This is a system wide interval and impacts all views. The default interval duration is 10 seconds. Trying to set an interval with a duration less than a certain minimum (maybe 1s) should have no effect.
 
 ```go
-d := 20 * time.Second
-stats.SetReportingPeriod(d)
+stats.SetReportingPeriod(5 * time.Second)
 ```
 
 ### Force collecting data on-demand
-Even if a view is registered, if it has no subscriber no data for it is collected. In order to retrieve data on-demand for view, either the view needs to have at least 1 subscriber or the libray needs to be instructed explicitly to collect collect data for the desired view.
+Even if a view is registered, if it has no subscriber no data for it is collected. In order to retrieve data on-demand for view, either the view needs to have at least 1 subscriber or the library needs to be instructed explicitly to collect collect data for the desired view.
 
 ```go
 // To explicitly instruct the library to collect the view data for an on-demand
 // retrieval, StopForcedCollection should be used.
-if err := stats.ForceCollection(myView1); err != nil {
+if err := myView1.ForceCollect(); err != nil {
     // handle error
 }
 
@@ -234,7 +231,7 @@ if err := stats.ForceCollection(myView1); err != nil {
 // on-demand retrieval StopForcedCollection should be used. This call has no
 // impact on subscriptions, and if the view still has subscribers, the data for
 //  the view will still keep being collected.
-if err := stats.StopForcedCollection(myView1); err != nil {
+if err := myView1.StopForceCollection(); err != nil {
     // handle error
 }
 ```
