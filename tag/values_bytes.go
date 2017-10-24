@@ -114,25 +114,24 @@ func toValuesBytes(m *Map, ks []Key) *valuesBytes {
 	return vb
 }
 
-// ToValuesString returns the values bytes resulting from
-// projecting map along the []Key.
-func ToValuesString(m *Map, ks []Key) string {
+// EncodeOrderedTags encodes the map by using values
+// only associated with the keys provided.
+func EncodeOrderedTags(m *Map, keys []Key) []byte {
 	vb := &valuesBytes{
-		buf: make([]byte, len(ks)),
+		buf: make([]byte, len(keys)),
 	}
-	for _, k := range ks {
+	for _, k := range keys {
 		v := m.m[k]
 		vb.writeValue(v)
 	}
-	return string(vb.bytes())
+	return vb.bytes()
 }
 
-// ToOrderedTagsSlice returns the extracted and ordered tags from the argument s.
-func ToOrderedTagsSlice(s string, ks []Key) []Tag {
-	vb := &valuesBytes{
-		buf: []byte(s),
-	}
-	tags := vb.toSlice(ks)
+// DecodeOrderedTags decodes tags from the buffer and
+// orders them by the keys.
+func DecodeOrderedTags(buf []byte, keys []Key) []Tag {
+	vb := &valuesBytes{buf: buf}
+	tags := vb.toSlice(keys)
 	sort.Slice(tags, func(i, j int) bool { return tags[i].Key.Name() < tags[j].Key.Name() })
 	return tags
 }

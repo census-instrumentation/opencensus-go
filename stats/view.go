@@ -151,11 +151,11 @@ func (v *View) collectedRows(now time.Time) []*Row {
 	return v.c.collectedRows(v.tagKeys, now)
 }
 
-func (v *View) addSample(ts *tag.Map, val interface{}, now time.Time) {
+func (v *View) addSample(m *tag.Map, val interface{}, now time.Time) {
 	if !v.isCollecting() {
 		return
 	}
-	sig := tag.ToValuesString(ts, v.tagKeys)
+	sig := string(tag.EncodeOrderedTags(m, v.tagKeys))
 	v.c.addSample(sig, val, now)
 }
 
