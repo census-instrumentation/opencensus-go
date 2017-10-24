@@ -30,7 +30,7 @@ OpenCensus libraries require Go 1.8 or later as it uses the convenience function
 
 Tags represent propagated key values. They can propagated using context.Context
 in the same process or can be encoded to be transmitted on wire and decoded back
-to a tags.Map at the destination.
+to a tag.Map at the destination.
 
 ### Getting a key by a name
 
@@ -42,7 +42,7 @@ See the [NewStringKey][newstringkey-ex] example.
 
 ### Creating a map of tags associated with keys
 
-tags.Map is a map of tags. Package tags provide a builder to create tag maps.
+tag.Map is a map of tags. Package tags provide a builder to create tag maps.
 
 See the [NewMap][newtags-ex] example.
 
@@ -54,7 +54,7 @@ If there is already a tag map in the current context, it will be replaced.
 
 ```go
 tagMap  := ...
-ctx = tags.NewContext(ctx, tagMap)
+ctx = tag.NewContext(ctx, tagMap)
 ```
 
 In order to update an existing tag map, get the tag map from the current context,
@@ -145,8 +145,8 @@ TODO: define "view" (link to the spec).
 Create a view:
 
 ```go
-myView1 := stats.NewView("/my/int64/viewName", "some description", []tags.Key{key1, key2}, mf, agg1, wnd1)
-myView2 := stats.NewView("/my/float64/viewName", "some other description", []tags.Key{key1}, mi, agg2, wnd3)
+myView1 := stats.NewView("/my/int64/viewName", "some description", []tag.Key{key1, key2}, mf, agg1, wnd1)
+myView2 := stats.NewView("/my/float64/viewName", "some other description", []tag.Key{key1}, mi, agg2, wnd3)
 ```
 
 Register view:
@@ -281,6 +281,6 @@ TODO: update the doc once tracing API is ready.
 [gitter-url]: https://gitter.im/census-instrumentation/lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
 
 
-[newstringkey-ex]: https://godoc.org/github.com/census-instrumentation/opencensus-go/tags#example-NewStringKey
-[newtags-ex]: https://godoc.org/github.com/census-instrumentation/opencensus-go/tags#example-NewMap
-[newtags-replace-ex]: https://godoc.org/github.com/census-instrumentation/opencensus-go/tags#example-NewMap--Replace
+[newstringkey-ex]: https://godoc.org/github.com/census-instrumentation/opencensus-go/tag#example-NewStringKey
+[newtags-ex]: https://godoc.org/github.com/census-instrumentation/opencensus-go/tag#example-NewMap
+[newtags-replace-ex]: https://godoc.org/github.com/census-instrumentation/opencensus-go/tag#example-NewMap--Replace
