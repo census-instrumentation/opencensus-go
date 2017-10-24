@@ -22,7 +22,6 @@ import (
 
 // AggregationValue represents an aggregated value from a collection.
 type AggregationValue interface {
-	String() string
 	equal(other AggregationValue) bool
 	isAggregate() bool
 	addSample(v interface{})
