@@ -182,7 +182,7 @@ func (r *Row) String() string {
 		buffer.WriteString(fmt.Sprintf("{%v %v}", t.Key.Name(), t.Key.ValueToString(t.Value)))
 	}
 	buffer.WriteString(" }")
-	buffer.WriteString(r.AggregationValue.String())
+	buffer.WriteString(fmt.Sprintf("%v", r.AggregationValue))
 	buffer.WriteString(" }")
 	return buffer.String()
 }
