@@ -13,5 +13,5 @@
 // limitations under the License.
 //
 
-// Package tags contains the OpenCensus tags APIs.
+// Package tag contains the OpenCensus tags APIs.
 package tag
