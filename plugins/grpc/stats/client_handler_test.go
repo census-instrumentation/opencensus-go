@@ -22,17 +22,17 @@ import (
 	"golang.org/x/net/context"
 
 	istats "github.com/census-instrumentation/opencensus-go/stats"
-	"github.com/census-instrumentation/opencensus-go/tags"
+	"github.com/census-instrumentation/opencensus-go/tag"
 
 	"google.golang.org/grpc/stats"
 )
 
 func TestClientDefaultCollections(t *testing.T) {
-	k1, _ := tags.NewStringKey("k1")
-	k2, _ := tags.NewStringKey("k2")
+	k1, _ := tag.NewStringKey("k1")
+	k2, _ := tag.NewStringKey("k2")
 
 	type tagPair struct {
-		k tags.StringKey
+		k tag.StringKey
 		v string
 	}
 
@@ -74,7 +74,7 @@ func TestClientDefaultCollections(t *testing.T) {
 					func() *istats.View { return RPCClientRequestCountView },
 					[]*istats.Row{
 						{
-							[]tags.Tag{
+							[]tag.Tag{
 								{Key: keyMethod, Value: []byte("method")},
 								{Key: keyService, Value: []byte("package.service")},
 							},
@@ -86,7 +86,7 @@ func TestClientDefaultCollections(t *testing.T) {
 					func() *istats.View { return RPCClientResponseCountView },
 					[]*istats.Row{
 						{
-							[]tags.Tag{
+							[]tag.Tag{
 								{Key: keyMethod, Value: []byte("method")},
 								{Key: keyService, Value: []byte("package.service")},
 							},
@@ -98,7 +98,7 @@ func TestClientDefaultCollections(t *testing.T) {
 					func() *istats.View { return RPCClientRequestBytesView },
 					[]*istats.Row{
 						{
-							[]tags.Tag{
+							[]tag.Tag{
 								{Key: keyMethod, Value: []byte("method")},
 								{Key: keyService, Value: []byte("package.service")},
 							},
@@ -110,7 +110,7 @@ func TestClientDefaultCollections(t *testing.T) {
 					func() *istats.View { return RPCClientResponseBytesView },
 					[]*istats.Row{
 						{
-							[]tags.Tag{
+							[]tag.Tag{
 								{Key: keyMethod, Value: []byte("method")},
 								{Key: keyService, Value: []byte("package.service")},
 							},
@@ -155,7 +155,7 @@ func TestClientDefaultCollections(t *testing.T) {
 					func() *istats.View { return RPCClientErrorCountView },
 					[]*istats.Row{
 						{
-							[]tags.Tag{
+							[]tag.Tag{
 								{Key: keyMethod, Value: []byte("method")},
 								{Key: keyOpStatus, Value: []byte("someError")},
 								{Key: keyService, Value: []byte("package.service")},
@@ -168,7 +168,7 @@ func TestClientDefaultCollections(t *testing.T) {
 					func() *istats.View { return RPCClientRequestCountView },
 					[]*istats.Row{
 						{
-							[]tags.Tag{
+							[]tag.Tag{
 								{Key: keyMethod, Value: []byte("method")},
 								{Key: keyService, Value: []byte("package.service")},
 							},
@@ -180,7 +180,7 @@ func TestClientDefaultCollections(t *testing.T) {
 					func() *istats.View { return RPCClientResponseCountView },
 					[]*istats.Row{
 						{
-							[]tags.Tag{
+							[]tag.Tag{
 								{Key: keyMethod, Value: []byte("method")},
 								{Key: keyService, Value: []byte("package.service")},
 							},
@@ -238,7 +238,7 @@ func TestClientDefaultCollections(t *testing.T) {
 					func() *istats.View { return RPCClientErrorCountView },
 					[]*istats.Row{
 						{
-							[]tags.Tag{
+							[]tag.Tag{
 								{Key: keyMethod, Value: []byte("method")},
 								{Key: keyOpStatus, Value: []byte("someError1")},
 								{Key: keyService, Value: []byte("package.service")},
@@ -246,7 +246,7 @@ func TestClientDefaultCollections(t *testing.T) {
 							newCountAggregationValue(1),
 						},
 						{
-							[]tags.Tag{
+							[]tag.Tag{
 								{Key: keyMethod, Value: []byte("method")},
 								{Key: keyOpStatus, Value: []byte("someError2")},
 								{Key: keyService, Value: []byte("package.service")},
@@ -259,7 +259,7 @@ func TestClientDefaultCollections(t *testing.T) {
 					func() *istats.View { return RPCClientRequestCountView },
 					[]*istats.Row{
 						{
-							[]tags.Tag{
+							[]tag.Tag{
 								{Key: keyMethod, Value: []byte("method")},
 								{Key: keyService, Value: []byte("package.service")},
 							},
@@ -271,7 +271,7 @@ func TestClientDefaultCollections(t *testing.T) {
 					func() *istats.View { return RPCClientResponseCountView },
 					[]*istats.Row{
 						{
-							[]tags.Tag{
+							[]tag.Tag{
 								{Key: keyMethod, Value: []byte("method")},
 								{Key: keyService, Value: []byte("package.service")},
 							},
@@ -283,7 +283,7 @@ func TestClientDefaultCollections(t *testing.T) {
 					func() *istats.View { return RPCClientRequestBytesView },
 					[]*istats.Row{
 						{
-							[]tags.Tag{
+							[]tag.Tag{
 								{Key: keyMethod, Value: []byte("method")},
 								{Key: keyService, Value: []byte("package.service")},
 							},
@@ -295,7 +295,7 @@ func TestClientDefaultCollections(t *testing.T) {
 					func() *istats.View { return RPCClientResponseBytesView },
 					[]*istats.Row{
 						{
-							[]tags.Tag{
+							[]tag.Tag{
 								{Key: keyMethod, Value: []byte("method")},
 								{Key: keyService, Value: []byte("package.service")},
 							},
@@ -313,12 +313,12 @@ func TestClientDefaultCollections(t *testing.T) {
 
 		h := NewClientHandler()
 		for _, rpc := range tc.rpcs {
-			mods := []tags.Mutator{}
+			mods := []tag.Mutator{}
 			for _, t := range rpc.tags {
-				mods = append(mods, tags.UpsertString(t.k, t.v))
+				mods = append(mods, tag.UpsertString(t.k, t.v))
 			}
-			tm := tags.NewMap(nil, mods...)
-			encoded := tags.Encode(tm)
+			tm := tag.NewMap(nil, mods...)
+			encoded := tag.Encode(tm)
 			ctx := stats.SetTags(context.Background(), encoded)
 
 			ctx = h.TagRPC(ctx, rpc.tagInfo)

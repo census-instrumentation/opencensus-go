@@ -22,7 +22,7 @@ import (
 	"time"
 
 	istats "github.com/census-instrumentation/opencensus-go/stats"
-	"github.com/census-instrumentation/opencensus-go/tags"
+	"github.com/census-instrumentation/opencensus-go/tag"
 )
 
 type grpcInstrumentationKey struct{}
@@ -68,24 +68,24 @@ var (
 	windowSlidingHour   = istats.SlidingTimeWindow{Duration: 1 * time.Hour, Intervals: 6}
 	windowSlidingMinute = istats.SlidingTimeWindow{Duration: 1 * time.Minute, Intervals: 6}
 
-	keyService  tags.StringKey
-	keyMethod   tags.StringKey
-	keyOpStatus tags.StringKey
+	keyService  tag.StringKey
+	keyMethod   tag.StringKey
+	keyOpStatus tag.StringKey
 )
 
 func createDefaultKeys() {
 	// Initializing keys
 	var err error
-	if keyService, err = tags.NewStringKey("grpc.service"); err != nil {
-		log.Fatalf("tags.NewStringKey(\"grpc.service\") failed to create/retrieve keyService. %v", err)
+	if keyService, err = tag.NewStringKey("grpc.service"); err != nil {
+		log.Fatalf("tag.NewStringKey(\"grpc.service\") failed to create/retrieve keyService. %v", err)
 	}
 
-	if keyMethod, err = tags.NewStringKey("grpc.method"); err != nil {
-		log.Fatalf("tags.NewStringKey(\"grpc.method\") failed to create/retrieve keyMethod. %v", err)
+	if keyMethod, err = tag.NewStringKey("grpc.method"); err != nil {
+		log.Fatalf("tag.NewStringKey(\"grpc.method\") failed to create/retrieve keyMethod. %v", err)
 	}
 
-	if keyOpStatus, err = tags.NewStringKey("grpc.opstatus"); err != nil {
-		log.Fatalf("tags.NewStringKey(\"grpc.opstatus\") failed to create/retrieve keyOpStatus. %v", err)
+	if keyOpStatus, err = tag.NewStringKey("grpc.opstatus"); err != nil {
+		log.Fatalf("tag.NewStringKey(\"grpc.opstatus\") failed to create/retrieve keyOpStatus. %v", err)
 	}
 }
 

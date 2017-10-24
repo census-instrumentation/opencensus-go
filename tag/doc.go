@@ -14,4 +14,4 @@
 //
 
 // Package tags contains the OpenCensus tags APIs.
-package tags
+package tag

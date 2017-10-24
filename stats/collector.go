@@ -18,7 +18,7 @@ package stats
 import (
 	"time"
 
-	"github.com/census-instrumentation/opencensus-go/tags"
+	"github.com/census-instrumentation/opencensus-go/tag"
 )
 
 type collector struct {
@@ -42,10 +42,10 @@ func (c *collector) addSample(s string, v interface{}, now time.Time) {
 	aggregator.addSample(v, now)
 }
 
-func (c *collector) collectedRows(keys []tags.Key, now time.Time) []*Row {
+func (c *collector) collectedRows(keys []tag.Key, now time.Time) []*Row {
 	var rows []*Row
 	for sig, aggregator := range c.signatures {
-		tags := tags.ToOrderedTagsSlice(sig, keys)
+		tags := tag.ToOrderedTagsSlice(sig, keys)
 		row := &Row{tags, aggregator.retrieveCollected(now)}
 		rows = append(rows, row)
 	}

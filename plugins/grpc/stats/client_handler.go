@@ -23,7 +23,7 @@ import (
 	"golang.org/x/net/context"
 
 	istats "github.com/census-instrumentation/opencensus-go/stats"
-	"github.com/census-instrumentation/opencensus-go/tags"
+	"github.com/census-instrumentation/opencensus-go/tag"
 	"github.com/golang/glog"
 	"google.golang.org/grpc/stats"
 )
@@ -59,9 +59,8 @@ func (ch clientHandler) HandleConn(ctx context.Context, s stats.ConnStats) {
 	// Do nothing. This is here to satisfy the interface "google.golang.org/grpc/stats.Handler"
 }
 
-// TagRPC gets the github.com/census-instrumentation/opencensus-go/tags.TagsSet
-// populated by the application code, serializes its tags into the GRPC
-// metadata in order to be sent to the server.
+// TagRPC gets the tag.Map populated by the application code, serializes
+// its tags into the GRPC metadata in order to be sent to the server.
 func (ch clientHandler) TagRPC(ctx context.Context, info *stats.RPCTagInfo) context.Context {
 	startTime := time.Now()
 	if ctx == nil {
@@ -91,17 +90,17 @@ func (ch clientHandler) TagRPC(ctx context.Context, info *stats.RPCTagInfo) cont
 		startTime: startTime,
 	}
 
-	ts := tags.FromContext(ctx)
-	encoded := tags.Encode(ts)
+	ts := tag.FromContext(ctx)
+	encoded := tag.Encode(ts)
 	ctx = stats.SetTags(ctx, encoded)
 
-	tagMap := tags.NewMap(ts,
-		tags.UpsertString(keyService, serviceName),
-		tags.UpsertString(keyMethod, methodName),
+	tagMap := tag.NewMap(ts,
+		tag.UpsertString(keyService, serviceName),
+		tag.UpsertString(keyMethod, methodName),
 	)
 	// TODO(acetechnologist): should we be recording this later? What is the
 	// point of updating d.reqLen & d.reqCount if we update now?
-	ctx = tags.NewContext(ctx, tagMap)
+	ctx = tag.NewContext(ctx, tagMap)
 	istats.Record(ctx, RPCClientStartedCount.M(1))
 
 	return context.WithValue(ctx, grpcClientRPCKey, d)
@@ -167,10 +166,10 @@ func (ch clientHandler) handleRPCEnd(ctx context.Context, s *stats.End) {
 
 	if s.Error != nil {
 		errorCode := s.Error.Error()
-		newTagMap := tags.NewMap(tags.FromContext(ctx),
-			tags.UpsertString(keyOpStatus, errorCode),
+		newTagMap := tag.NewMap(tag.FromContext(ctx),
+			tag.UpsertString(keyOpStatus, errorCode),
 		)
-		ctx = tags.NewContext(ctx, newTagMap)
+		ctx = tag.NewContext(ctx, newTagMap)
 		measurements = append(measurements, RPCClientErrorCount.M(1))
 	}
 

@@ -21,7 +21,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/census-instrumentation/opencensus-go/tags"
+	"github.com/census-instrumentation/opencensus-go/tag"
 )
 
 func init() {
@@ -217,7 +217,7 @@ func (v *View) RetrieveData() ([]*Row, error) {
 func Record(ctx context.Context, ms ...Measurement) {
 	req := &recordReq{
 		now: time.Now(),
-		tm:  tags.FromContext(ctx),
+		tm:  tag.FromContext(ctx),
 		ms:  ms,
 	}
 	defaultWorker.c <- req

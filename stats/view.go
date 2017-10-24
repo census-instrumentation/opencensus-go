@@ -21,7 +21,7 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/census-instrumentation/opencensus-go/tags"
+	"github.com/census-instrumentation/opencensus-go/tag"
 )
 
 // View allows users to filter and aggregate the recorded events
@@ -33,7 +33,7 @@ type View struct {
 	description string
 
 	// tagKeys to perform the aggregation on.
-	tagKeys []tags.Key
+	tagKeys []tag.Key
 
 	// Examples of measures are cpu:tickCount, diskio:time...
 	m Measure
@@ -61,8 +61,8 @@ type subscription struct {
 
 // NewView creates a new view. Views need to be registered
 // via RegisterView to enable data collection.
-func NewView(name, description string, keys []tags.Key, measure Measure, agg Aggregation, window Window) *View {
-	var keysCopy []tags.Key
+func NewView(name, description string, keys []tag.Key, measure Measure, agg Aggregation, window Window) *View {
+	var keysCopy []tag.Key
 	for _, k := range keys {
 		keysCopy = append(keysCopy, k)
 	}
@@ -151,11 +151,11 @@ func (v *View) collectedRows(now time.Time) []*Row {
 	return v.c.collectedRows(v.tagKeys, now)
 }
 
-func (v *View) addSample(ts *tags.Map, val interface{}, now time.Time) {
+func (v *View) addSample(ts *tag.Map, val interface{}, now time.Time) {
 	if !v.isCollecting() {
 		return
 	}
-	sig := tags.ToValuesString(ts, v.tagKeys)
+	sig := tag.ToValuesString(ts, v.tagKeys)
 	v.c.addSample(sig, val, now)
 }
 
@@ -170,7 +170,7 @@ type ViewData struct {
 
 // Row is the collected value for a specific set of key value pairs a.k.a tags.
 type Row struct {
-	Tags             []tags.Tag
+	Tags             []tag.Tag
 	AggregationValue AggregationValue
 }
 

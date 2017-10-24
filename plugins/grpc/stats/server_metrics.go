@@ -20,7 +20,7 @@ import (
 	"log"
 
 	istats "github.com/census-instrumentation/opencensus-go/stats"
-	"github.com/census-instrumentation/opencensus-go/tags"
+	"github.com/census-instrumentation/opencensus-go/tag"
 )
 
 // These variables define the default hard-coded metrics to collect for a GRPC
@@ -100,51 +100,51 @@ func createDefaultMeasuresServer() {
 func registerDefaultViewsServer() {
 	var views []*istats.View
 
-	RPCServerErrorCountView = istats.NewView("grpc.io/server/error_count/distribution_cumulative", "RPC Errors", []tags.Key{keyMethod, keyOpStatus, keyService}, RPCServerErrorCount, aggCount, windowCumulative)
+	RPCServerErrorCountView = istats.NewView("grpc.io/server/error_count/distribution_cumulative", "RPC Errors", []tag.Key{keyMethod, keyOpStatus, keyService}, RPCServerErrorCount, aggCount, windowCumulative)
 	views = append(views, RPCServerErrorCountView)
-	RPCServerServerElapsedTimeView = istats.NewView("grpc.io/server/server_elapsed_time/distribution_cumulative", "Server elapsed time in msecs", []tags.Key{keyService, keyMethod}, RPCServerServerElapsedTime, aggDistMillis, windowCumulative)
+	RPCServerServerElapsedTimeView = istats.NewView("grpc.io/server/server_elapsed_time/distribution_cumulative", "Server elapsed time in msecs", []tag.Key{keyService, keyMethod}, RPCServerServerElapsedTime, aggDistMillis, windowCumulative)
 	views = append(views, RPCServerServerElapsedTimeView)
-	RPCServerRequestBytesView = istats.NewView("grpc.io/server/request_bytes/distribution_cumulative", "Request bytes", []tags.Key{keyService, keyMethod}, RPCServerRequestBytes, aggDistBytes, windowCumulative)
+	RPCServerRequestBytesView = istats.NewView("grpc.io/server/request_bytes/distribution_cumulative", "Request bytes", []tag.Key{keyService, keyMethod}, RPCServerRequestBytes, aggDistBytes, windowCumulative)
 	views = append(views, RPCServerRequestBytesView)
-	RPCServerResponseBytesView = istats.NewView("grpc.io/server/response_bytes/distribution_cumulative", "Response bytes", []tags.Key{keyService, keyMethod}, RPCServerResponseBytes, aggDistBytes, windowCumulative)
+	RPCServerResponseBytesView = istats.NewView("grpc.io/server/response_bytes/distribution_cumulative", "Response bytes", []tag.Key{keyService, keyMethod}, RPCServerResponseBytes, aggDistBytes, windowCumulative)
 	views = append(views, RPCServerResponseBytesView)
-	RPCServerRequestCountView = istats.NewView("grpc.io/server/request_count/distribution_cumulative", "Count of request messages per server RPC", []tags.Key{keyService, keyMethod}, RPCServerRequestCount, aggDistCounts, windowCumulative)
+	RPCServerRequestCountView = istats.NewView("grpc.io/server/request_count/distribution_cumulative", "Count of request messages per server RPC", []tag.Key{keyService, keyMethod}, RPCServerRequestCount, aggDistCounts, windowCumulative)
 	views = append(views, RPCServerRequestCountView)
-	RPCServerResponseCountView = istats.NewView("grpc.io/server/response_count/distribution_cumulative", "Count of response messages per server RPC", []tags.Key{keyService, keyMethod}, RPCServerResponseCount, aggDistCounts, windowCumulative)
+	RPCServerResponseCountView = istats.NewView("grpc.io/server/response_count/distribution_cumulative", "Count of response messages per server RPC", []tag.Key{keyService, keyMethod}, RPCServerResponseCount, aggDistCounts, windowCumulative)
 	views = append(views, RPCServerResponseCountView)
 
-	RPCServerServerElapsedTimeMinuteView = istats.NewView("grpc.io/server/server_elapsed_time/minute_interval", "Minute stats for server elapsed time in msecs", []tags.Key{keyService, keyMethod}, RPCServerServerElapsedTime, aggDistMillis, windowSlidingMinute)
+	RPCServerServerElapsedTimeMinuteView = istats.NewView("grpc.io/server/server_elapsed_time/minute_interval", "Minute stats for server elapsed time in msecs", []tag.Key{keyService, keyMethod}, RPCServerServerElapsedTime, aggDistMillis, windowSlidingMinute)
 	views = append(views, RPCServerServerElapsedTimeMinuteView)
-	RPCServerRequestBytesMinuteView = istats.NewView("grpc.io/server/request_bytes/minute_interval", "Minute stats for request size in bytes", []tags.Key{keyService, keyMethod}, RPCServerRequestBytes, aggCount, windowSlidingMinute)
+	RPCServerRequestBytesMinuteView = istats.NewView("grpc.io/server/request_bytes/minute_interval", "Minute stats for request size in bytes", []tag.Key{keyService, keyMethod}, RPCServerRequestBytes, aggCount, windowSlidingMinute)
 	views = append(views, RPCServerRequestBytesMinuteView)
-	RPCServerResponseBytesMinuteView = istats.NewView("grpc.io/server/response_bytes/minute_interval", "Minute stats for response size in bytes", []tags.Key{keyService, keyMethod}, RPCServerResponseBytes, aggCount, windowSlidingMinute)
+	RPCServerResponseBytesMinuteView = istats.NewView("grpc.io/server/response_bytes/minute_interval", "Minute stats for response size in bytes", []tag.Key{keyService, keyMethod}, RPCServerResponseBytes, aggCount, windowSlidingMinute)
 	views = append(views, RPCServerResponseBytesMinuteView)
-	RPCServerErrorCountMinuteView = istats.NewView("grpc.io/server/error_count/minute_interval", "Minute stats for rpc errors", []tags.Key{keyService, keyMethod}, RPCServerErrorCount, aggCount, windowSlidingMinute)
+	RPCServerErrorCountMinuteView = istats.NewView("grpc.io/server/error_count/minute_interval", "Minute stats for rpc errors", []tag.Key{keyService, keyMethod}, RPCServerErrorCount, aggCount, windowSlidingMinute)
 	views = append(views, RPCServerErrorCountMinuteView)
-	RPCServerStartedCountMinuteView = istats.NewView("grpc.io/server/started_count/minute_interval", "Minute stats on the number of server RPCs started", []tags.Key{keyService, keyMethod}, RPCServerStartedCount, aggCount, windowSlidingMinute)
+	RPCServerStartedCountMinuteView = istats.NewView("grpc.io/server/started_count/minute_interval", "Minute stats on the number of server RPCs started", []tag.Key{keyService, keyMethod}, RPCServerStartedCount, aggCount, windowSlidingMinute)
 	views = append(views, RPCServerStartedCountMinuteView)
-	RPCServerFinishedCountMinuteView = istats.NewView("grpc.io/server/finished_count/minute_interval", "Minute stats on the number of server RPCs finished", []tags.Key{keyService, keyMethod}, RPCServerFinishedCount, aggCount, windowSlidingMinute)
+	RPCServerFinishedCountMinuteView = istats.NewView("grpc.io/server/finished_count/minute_interval", "Minute stats on the number of server RPCs finished", []tag.Key{keyService, keyMethod}, RPCServerFinishedCount, aggCount, windowSlidingMinute)
 	views = append(views, RPCServerFinishedCountMinuteView)
-	RPCServerRequestCountMinuteView = istats.NewView("grpc.io/server/request_count/minute_interval", "Minute stats on the count of request messages per server RPC", []tags.Key{keyService, keyMethod}, RPCServerRequestCount, aggCount, windowSlidingMinute)
+	RPCServerRequestCountMinuteView = istats.NewView("grpc.io/server/request_count/minute_interval", "Minute stats on the count of request messages per server RPC", []tag.Key{keyService, keyMethod}, RPCServerRequestCount, aggCount, windowSlidingMinute)
 	views = append(views, RPCServerRequestCountMinuteView)
-	RPCServerResponseCountMinuteView = istats.NewView("grpc.io/server/response_count/minute_interval", "Minute stats on the count of response messages per server RPC", []tags.Key{keyService, keyMethod}, RPCServerResponseCount, aggCount, windowSlidingMinute)
+	RPCServerResponseCountMinuteView = istats.NewView("grpc.io/server/response_count/minute_interval", "Minute stats on the count of response messages per server RPC", []tag.Key{keyService, keyMethod}, RPCServerResponseCount, aggCount, windowSlidingMinute)
 	views = append(views, RPCServerResponseCountMinuteView)
 
-	RPCServerServerElapsedTimeHourView = istats.NewView("grpc.io/server/server_elapsed_time/hour_interval", "Hour stats for server elapsed time in msecs", []tags.Key{keyService, keyMethod}, RPCServerServerElapsedTime, aggDistMillis, windowSlidingHour)
+	RPCServerServerElapsedTimeHourView = istats.NewView("grpc.io/server/server_elapsed_time/hour_interval", "Hour stats for server elapsed time in msecs", []tag.Key{keyService, keyMethod}, RPCServerServerElapsedTime, aggDistMillis, windowSlidingHour)
 	views = append(views, RPCServerServerElapsedTimeHourView)
-	RPCServerRequestBytesHourView = istats.NewView("grpc.io/server/request_bytes/hour_interval", "Hour stats for request size in bytes", []tags.Key{keyService, keyMethod}, RPCServerRequestBytes, aggCount, windowSlidingHour)
+	RPCServerRequestBytesHourView = istats.NewView("grpc.io/server/request_bytes/hour_interval", "Hour stats for request size in bytes", []tag.Key{keyService, keyMethod}, RPCServerRequestBytes, aggCount, windowSlidingHour)
 	views = append(views, RPCServerRequestBytesHourView)
-	RPCServerResponseBytesHourView = istats.NewView("grpc.io/server/response_bytes/hour_interval", "Hour stats for response size in bytes", []tags.Key{keyService, keyMethod}, RPCServerResponseBytes, aggCount, windowSlidingHour)
+	RPCServerResponseBytesHourView = istats.NewView("grpc.io/server/response_bytes/hour_interval", "Hour stats for response size in bytes", []tag.Key{keyService, keyMethod}, RPCServerResponseBytes, aggCount, windowSlidingHour)
 	views = append(views, RPCServerResponseBytesHourView)
-	RPCServerErrorCountHourView = istats.NewView("grpc.io/server/error_count/hour_interval", "Hour stats for rpc errors", []tags.Key{keyService, keyMethod}, RPCServerErrorCount, aggCount, windowSlidingHour)
+	RPCServerErrorCountHourView = istats.NewView("grpc.io/server/error_count/hour_interval", "Hour stats for rpc errors", []tag.Key{keyService, keyMethod}, RPCServerErrorCount, aggCount, windowSlidingHour)
 	views = append(views, RPCServerErrorCountHourView)
-	RPCServerStartedCountHourView = istats.NewView("grpc.io/server/started_count/hour_interval", "Hour stats on the number of server RPCs started", []tags.Key{keyService, keyMethod}, RPCServerStartedCount, aggCount, windowSlidingHour)
+	RPCServerStartedCountHourView = istats.NewView("grpc.io/server/started_count/hour_interval", "Hour stats on the number of server RPCs started", []tag.Key{keyService, keyMethod}, RPCServerStartedCount, aggCount, windowSlidingHour)
 	views = append(views, RPCServerStartedCountHourView)
-	RPCServerFinishedCountHourView = istats.NewView("grpc.io/server/finished_count/hour_interval", "Hour stats on the number of server RPCs finished", []tags.Key{keyService, keyMethod}, RPCServerFinishedCount, aggCount, windowSlidingHour)
+	RPCServerFinishedCountHourView = istats.NewView("grpc.io/server/finished_count/hour_interval", "Hour stats on the number of server RPCs finished", []tag.Key{keyService, keyMethod}, RPCServerFinishedCount, aggCount, windowSlidingHour)
 	views = append(views, RPCServerFinishedCountHourView)
-	RPCServerRequestCountHourView = istats.NewView("grpc.io/server/request_count/hour_interval", "Hour stats on the count of request messages per server RPC", []tags.Key{keyService, keyMethod}, RPCServerRequestCount, aggCount, windowSlidingHour)
+	RPCServerRequestCountHourView = istats.NewView("grpc.io/server/request_count/hour_interval", "Hour stats on the count of request messages per server RPC", []tag.Key{keyService, keyMethod}, RPCServerRequestCount, aggCount, windowSlidingHour)
 	views = append(views, RPCServerRequestCountHourView)
-	RPCServerResponseCountHourView = istats.NewView("grpc.io/server/response_count/hour_interval", "Hour stats on the count of response messages per server RPC", []tags.Key{keyService, keyMethod}, RPCServerResponseCount, aggCount, windowSlidingHour)
+	RPCServerResponseCountHourView = istats.NewView("grpc.io/server/response_count/hour_interval", "Hour stats on the count of response messages per server RPC", []tag.Key{keyService, keyMethod}, RPCServerResponseCount, aggCount, windowSlidingHour)
 	views = append(views, RPCServerResponseCountHourView)
 
 	// Registering views

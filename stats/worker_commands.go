@@ -19,7 +19,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/census-instrumentation/opencensus-go/tags"
+	"github.com/census-instrumentation/opencensus-go/tag"
 )
 
 type command interface {
@@ -266,7 +266,7 @@ func (cmd *retrieveDataReq) handleCommand(w *worker) {
 // recordFloat64Req is the command to record data related to a measure.
 type recordFloat64Req struct {
 	now time.Time
-	tm  *tags.Map
+	tm  *tag.Map
 	mf  *MeasureFloat64
 	v   float64
 }
@@ -283,7 +283,7 @@ func (cmd *recordFloat64Req) handleCommand(w *worker) {
 // recordInt64Req is the command to record data related to a measure.
 type recordInt64Req struct {
 	now time.Time
-	tm  *tags.Map
+	tm  *tag.Map
 	mi  *MeasureInt64
 	v   int64
 }
@@ -301,7 +301,7 @@ func (cmd *recordInt64Req) handleCommand(w *worker) {
 // at once.
 type recordReq struct {
 	now time.Time
-	tm  *tags.Map
+	tm  *tag.Map
 	ms  []Measurement
 }
 
