@@ -19,7 +19,6 @@ import (
 	"log"
 
 	"github.com/census-instrumentation/opencensus-go/tag"
-	"github.com/rakyll/census/tags"
 
 	"golang.org/x/net/context"
 )
@@ -75,7 +74,7 @@ func ExampleNewContext() {
 }
 
 func ExampleFromContext() {
-	tagMap := tags.FromContext(ctx)
+	tagMap := tag.FromContext(ctx)
 
 	_ = tagMap // use the tag map
 }
