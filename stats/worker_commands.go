@@ -257,40 +257,6 @@ func (cmd *retrieveDataReq) handleCommand(w *worker) {
 	}
 }
 
-// recordFloat64Req is the command to record data related to a measure.
-type recordFloat64Req struct {
-	now time.Time
-	tm  *tag.Map
-	mf  *MeasureFloat64
-	v   float64
-}
-
-func (cmd *recordFloat64Req) handleCommand(w *worker) {
-	if _, ok := w.measures[cmd.mf]; !ok {
-		return
-	}
-	for v := range cmd.mf.views {
-		v.addSample(cmd.tm, cmd.v, cmd.now)
-	}
-}
-
-// recordInt64Req is the command to record data related to a measure.
-type recordInt64Req struct {
-	now time.Time
-	tm  *tag.Map
-	mi  *MeasureInt64
-	v   int64
-}
-
-func (cmd *recordInt64Req) handleCommand(w *worker) {
-	if _, ok := w.measures[cmd.mi]; !ok {
-		return
-	}
-	for v := range cmd.mi.views {
-		v.addSample(cmd.tm, cmd.v, cmd.now)
-	}
-}
-
 // recordReq is the command to record data related to multiple measures
 // at once.
 type recordReq struct {
