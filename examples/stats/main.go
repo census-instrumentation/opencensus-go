@@ -80,28 +80,21 @@ func main() {
 	// Set reporting period to report data at every second.
 	stats.SetReportingPeriod(1 * time.Second)
 
-	// Subscribe to view.
-	ch := make(chan *stats.ViewData, 10)
-
-	// Start consuming the processed data asynchronously.
-	go func(c chan *stats.ViewData) {
-		for vd := range c {
-			log.Printf("%v row(s) received\n", len(vd.Rows))
-			for _, r := range vd.Rows {
-				log.Println(r)
-			}
-		}
-	}(ch)
-
-	if err = videoSizeView.Subscribe(ch); err != nil {
-		log.Fatalf("Cannot subscribe to the video size view: %v\n", err)
-	}
-
 	// ForceCollect explicitly instructs the library to collect the
 	// view data for on-demand retrieval.
 	if err := videoSpamCountView.ForceCollect(); err != nil {
 		log.Fatalf("Cannot force collect from the video spam count view: %v\n", err)
 	}
+
+	// Subscribe will allow view data to be exported.
+	// Once no longer need, you can unsubscribe from the view.
+	if err := videoSizeView.Subscribe(); err != nil {
+		log.Fatalf("Cannot subscribe to the view: %v\n", err)
+	}
+
+	// Register an exporter to be able to retrieve
+	// the data from the subscribed views.
+	stats.RegisterExporter(&exporter{})
 
 	// Record usage. This section demonstrates how user code
 	// can record measures for video size and spam count with
@@ -134,4 +127,10 @@ func main() {
 	for _, r := range rows {
 		log.Println(r)
 	}
+}
+
+type exporter struct{}
+
+func (e *exporter) Export(vd *stats.ViewData) {
+	log.Println(vd)
 }

@@ -184,57 +184,12 @@ if err := myView2.Unregister(); err != nil {
 }
 ```
 
-### Subscribing to a view's collected data and unsubscribing
-Once a subscriber subscribes to a view, its collected date is reported at a regular interval. This interval is configured system wide.
-
-Subscribe to a view:
-
-```go
-c1 := make(c chan *stats.ViewData)
-if err := myView1.Subscribe(c1); err != nil {
-    // handle error
-}
-c2 := make(c chan *stats.ViewData)
-if err := myView2.Subscribe(c2); err != nil {
-    // handle error
-}
-```
-
-Unsubscribe from a view:
-
-```go
-if err := myView1.Unsubscribe(c1); err != nil {
-    // handle error
-}
-if err := myView2.Unsubscribe(c2); err != nil {
-    // handle error
-}
-```
-
 Configure/modify the default interval between reports of collected data. This is a system wide interval and impacts all views. The default interval duration is 10 seconds. Trying to set an interval with a duration less than a certain minimum (maybe 1s) should have no effect.
 
 ```go
 stats.SetReportingPeriod(5 * time.Second)
 ```
 
-### Force collecting data on-demand
-Even if a view is registered, if it has no subscriber no data for it is collected. In order to retrieve data on-demand for view, either the view needs to have at least 1 subscriber or the library needs to be instructed explicitly to collect collect data for the desired view.
-
-```go
-// To explicitly instruct the library to collect the view data for an on-demand
-// retrieval, StopForcedCollection should be used.
-if err := myView1.ForceCollect(); err != nil {
-    // handle error
-}
-
-// To explicitly instruct the library to stop collecting the view data for the
-// on-demand retrieval StopForcedCollection should be used. This call has no
-// impact on subscriptions, and if the view still has subscribers, the data for
-//  the view will still keep being collected.
-if err := myView1.StopForceCollection(); err != nil {
-    // handle error
-}
-```
 
 ### Recording measurements
 Recording usage can only be performed against already registered measure
@@ -245,25 +200,59 @@ tags in the context:
 stats.Record(ctx, mi.M(4), mf.M(10.5))
 ```
 
-### Retrieving collected data for a View
+### Retrieving collected data for a view
+
+Users need to subscribe to a view in order to retrieve collected data.
 
 ```go
-// assuming c1 is the channel that was used to subscribe to myView1
-go func(c chan *stats.ViewData) {
-    for vd := range c {
-        // process collected stats received.
-    }
-}(c1)
+if err := view.Subscribe(); err != nil {
+    // handle error
+}
+```
+
+Subscribed views' data will be exported via the registered exporters.
+
+```go
+// Register an exporter to be able to retrieve
+// the data from the subscribed views.
+stats.RegisterExporter(&exporter{})
+```
+
+An example logger exporter is below:
+
+``` go
+type exporter struct{}
+
+func (e *exporter) Export(vd *stats.ViewData) {
+    log.Println(vd)
+}
+```
+
+### Force collecting data on demand
+Even if a view is registered, if it has no subscriber no data for it is collected. In order to retrieve data on-demand for view, either the view needs to have at least one subscriber or the library needs to be instructed explicitly to collect collect data for the desired view.
+
+```go
+// To explicitly instruct the library to collect the view data for an on-demand
+// retrieval, force collect. When done, stop force collection.
+if err := view.ForceCollect(); err != nil {
+    // handle error
+}
 
 // Use RetrieveData to pull collected data synchronously from the library. This
-// assumes that at least 1 subscriber to myView1 exists or that
-// stats.ForceCollection(myView1) was called before.
-rows, err := stats.RetrieveData(myView1)
+// assumes that a subscription to the view exists or force collection is enabled.
+rows, err := view.RetrieveData()
 if err != nil {
     // handle error
 }
 for _, r := range rows {
     // process a single row of type *stats.Row
+}
+
+// To explicitly instruct the library to stop collecting the view data for the
+// on-demand retrieval, StopForceCollection should be used. This call has no
+// impact on the view's subscription status.
+if err := view.StopForceCollection(); err != nil {
+    // handle error
 }
 ```
 

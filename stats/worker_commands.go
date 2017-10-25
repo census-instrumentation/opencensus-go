@@ -144,12 +144,11 @@ func (cmd *unregisterViewReq) handleCommand(w *worker) {
 // subscribeToViewReq is the command to subscribe to a view.
 type subscribeToViewReq struct {
 	v   *View
-	c   chan *ViewData
 	err chan error
 }
 
 func (cmd *subscribeToViewReq) handleCommand(w *worker) {
-	if cmd.v.subscriptionExists(cmd.c) {
+	if cmd.v.isSubscribed() {
 		cmd.err <- nil
 		return
 	}
@@ -157,9 +156,7 @@ func (cmd *subscribeToViewReq) handleCommand(w *worker) {
 		cmd.err <- fmt.Errorf("cannot subscribe to view: %v", err)
 		return
 	}
-
-	cmd.v.addSubscription(cmd.c)
-
+	cmd.v.subscribe()
 	cmd.err <- nil
 }
 
@@ -168,19 +165,16 @@ func (cmd *subscribeToViewReq) handleCommand(w *worker) {
 // library.
 type unsubscribeFromViewReq struct {
 	v   *View
-	c   chan *ViewData
 	err chan error
 }
 
 func (cmd *unsubscribeFromViewReq) handleCommand(w *worker) {
-	cmd.v.deleteSubscription(cmd.c)
-
+	cmd.v.unsubscribe()
 	if !cmd.v.isCollecting() {
 		// this was the last subscription and view is not collecting anymore.
 		// The collected data can be cleared.
 		cmd.v.clearRows()
 	}
-
 	// we always return nil because this operation never fails. However we
 	// still need to return something on the channel to signal to the waiting
 	// go routine that the operation completed.
