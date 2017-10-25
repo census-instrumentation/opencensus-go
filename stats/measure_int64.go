@@ -28,6 +28,11 @@ func (m *MeasureInt64) Name() string {
 	return m.name
 }
 
+// Description returns the description of the measure.
+func (m *MeasureInt64) Description() string {
+	return m.description
+}
+
 // Unit returns the unit of the measure.
 func (m *MeasureInt64) Unit() string {
 	return m.unit
