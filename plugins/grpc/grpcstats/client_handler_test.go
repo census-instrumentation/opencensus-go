@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-package stats
+package grpcstats
 
 import (
 	"errors"
@@ -27,7 +27,7 @@ import (
 	"google.golang.org/grpc/stats"
 )
 
-func TestServerDefaultCollections(t *testing.T) {
+func TestClientDefaultCollections(t *testing.T) {
 	k1, _ := tag.NewStringKey("k1")
 	k2, _ := tag.NewStringKey("k2")
 
@@ -71,7 +71,7 @@ func TestServerDefaultCollections(t *testing.T) {
 			},
 			[]*wantData{
 				{
-					func() *istats.View { return RPCServerRequestCountView },
+					func() *istats.View { return RPCClientRequestCountView },
 					[]*istats.Row{
 						{
 							[]tag.Tag{
@@ -83,7 +83,7 @@ func TestServerDefaultCollections(t *testing.T) {
 					},
 				},
 				{
-					func() *istats.View { return RPCServerResponseCountView },
+					func() *istats.View { return RPCClientResponseCountView },
 					[]*istats.Row{
 						{
 							[]tag.Tag{
@@ -95,7 +95,7 @@ func TestServerDefaultCollections(t *testing.T) {
 					},
 				},
 				{
-					func() *istats.View { return RPCServerRequestBytesView },
+					func() *istats.View { return RPCClientRequestBytesView },
 					[]*istats.Row{
 						{
 							[]tag.Tag{
@@ -107,7 +107,7 @@ func TestServerDefaultCollections(t *testing.T) {
 					},
 				},
 				{
-					func() *istats.View { return RPCServerResponseBytesView },
+					func() *istats.View { return RPCClientResponseBytesView },
 					[]*istats.Row{
 						{
 							[]tag.Tag{
@@ -152,7 +152,7 @@ func TestServerDefaultCollections(t *testing.T) {
 			},
 			[]*wantData{
 				{
-					func() *istats.View { return RPCServerErrorCountView },
+					func() *istats.View { return RPCClientErrorCountView },
 					[]*istats.Row{
 						{
 							[]tag.Tag{
@@ -165,19 +165,7 @@ func TestServerDefaultCollections(t *testing.T) {
 					},
 				},
 				{
-					func() *istats.View { return RPCServerRequestCountView },
-					[]*istats.Row{
-						{
-							[]tag.Tag{
-								{Key: keyMethod, Value: []byte("method")},
-								{Key: keyService, Value: []byte("package.service")},
-							},
-							newDistributionAggregationValue(rpcCountBucketBoundaries, []int64{0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 2, 1, 2, 1.5, 0.5),
-						},
-					},
-				},
-				{
-					func() *istats.View { return RPCServerResponseCountView },
+					func() *istats.View { return RPCClientRequestCountView },
 					[]*istats.Row{
 						{
 							[]tag.Tag{
@@ -185,6 +173,18 @@ func TestServerDefaultCollections(t *testing.T) {
 								{Key: keyService, Value: []byte("package.service")},
 							},
 							newDistributionAggregationValue(rpcCountBucketBoundaries, []int64{0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 2, 2, 3, 2.5, 0.5),
+						},
+					},
+				},
+				{
+					func() *istats.View { return RPCClientResponseCountView },
+					[]*istats.Row{
+						{
+							[]tag.Tag{
+								{Key: keyMethod, Value: []byte("method")},
+								{Key: keyService, Value: []byte("package.service")},
+							},
+							newDistributionAggregationValue(rpcCountBucketBoundaries, []int64{0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 2, 1, 2, 1.5, 0.5),
 						},
 					},
 				},
@@ -235,7 +235,7 @@ func TestServerDefaultCollections(t *testing.T) {
 			},
 			[]*wantData{
 				{
-					func() *istats.View { return RPCServerErrorCountView },
+					func() *istats.View { return RPCClientErrorCountView },
 					[]*istats.Row{
 						{
 							[]tag.Tag{
@@ -256,19 +256,7 @@ func TestServerDefaultCollections(t *testing.T) {
 					},
 				},
 				{
-					func() *istats.View { return RPCServerRequestCountView },
-					[]*istats.Row{
-						{
-							[]tag.Tag{
-								{Key: keyMethod, Value: []byte("method")},
-								{Key: keyService, Value: []byte("package.service")},
-							},
-							newDistributionAggregationValue(rpcCountBucketBoundaries, []int64{0, 0, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 3, 1, 2, 1.333333333, 0.333333333*2),
-						},
-					},
-				},
-				{
-					func() *istats.View { return RPCServerResponseCountView },
+					func() *istats.View { return RPCClientRequestCountView },
 					[]*istats.Row{
 						{
 							[]tag.Tag{
@@ -280,19 +268,19 @@ func TestServerDefaultCollections(t *testing.T) {
 					},
 				},
 				{
-					func() *istats.View { return RPCServerRequestBytesView },
+					func() *istats.View { return RPCClientResponseCountView },
 					[]*istats.Row{
 						{
 							[]tag.Tag{
 								{Key: keyMethod, Value: []byte("method")},
 								{Key: keyService, Value: []byte("package.service")},
 							},
-							newDistributionAggregationValue(rpcBytesBucketBoundaries, []int64{0, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 4, 1, 16384, 4864.25, 59678208.25*3),
+							newDistributionAggregationValue(rpcCountBucketBoundaries, []int64{0, 0, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 3, 1, 2, 1.333333333, 0.333333333*2),
 						},
 					},
 				},
 				{
-					func() *istats.View { return RPCServerResponseBytesView },
+					func() *istats.View { return RPCClientRequestBytesView },
 					[]*istats.Row{
 						{
 							[]tag.Tag{
@@ -303,32 +291,51 @@ func TestServerDefaultCollections(t *testing.T) {
 						},
 					},
 				},
+				{
+					func() *istats.View { return RPCClientResponseBytesView },
+					[]*istats.Row{
+						{
+							[]tag.Tag{
+								{Key: keyMethod, Value: []byte("method")},
+								{Key: keyService, Value: []byte("package.service")},
+							},
+							newDistributionAggregationValue(rpcBytesBucketBoundaries, []int64{0, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 4, 1, 16384, 4864.25, 59678208.25*3),
+						},
+					},
+				},
 			},
 		},
 	}
 
 	for _, tc := range tcs {
-		istats.Restart()
-		registerDefaultsServer()
+		// Register views.
+		for _, v := range clientViews {
+			if err := istats.RegisterView(v); err != nil {
+				t.Error(err)
+			}
+			if err := v.ForceCollect(); err != nil {
+				t.Error(err)
+			}
+		}
 
-		h := NewServerHandler()
+		h := ClientStatsHandler()
 		for _, rpc := range tc.rpcs {
 			mods := []tag.Mutator{}
 			for _, t := range rpc.tags {
 				mods = append(mods, tag.UpsertString(t.k, t.v))
 			}
-			ts := tag.NewMap(nil, mods...)
-			encoded := tag.Encode(ts)
+			tm := tag.NewMap(nil, mods...)
+			encoded := tag.Encode(tm)
 			ctx := stats.SetTags(context.Background(), encoded)
 
 			ctx = h.TagRPC(ctx, rpc.tagInfo)
 
-			for _, in := range rpc.inPayloads {
-				h.HandleRPC(ctx, in)
-			}
-
 			for _, out := range rpc.outPayloads {
 				h.HandleRPC(ctx, out)
+			}
+
+			for _, in := range rpc.inPayloads {
+				h.HandleRPC(ctx, in)
 			}
 
 			h.HandleRPC(ctx, rpc.end)
@@ -337,40 +344,33 @@ func TestServerDefaultCollections(t *testing.T) {
 		for _, wantData := range tc.wants {
 			gotRows, err := wantData.v().RetrieveData()
 			if err != nil {
-				t.Errorf("Test case '%v'. RetrieveData for %v failed. %v", tc.label, wantData.v().Name(), err)
+				t.Errorf("%q: RetrieveData(%q) = %v", tc.label, wantData.v().Name(), err)
 				continue
 			}
 
 			for _, gotRow := range gotRows {
 				if !istats.ContainsRow(wantData.rows, gotRow) {
-					t.Errorf("Test case '%v'. View '%v' got unexpected row '%v'", tc.label, wantData.v().Name(), gotRow)
+					t.Errorf("%q: unwanted row for view %q = %v", tc.label, wantData.v().Name(), gotRow)
 					break
 				}
 			}
 
 			for _, wantRow := range wantData.rows {
 				if !istats.ContainsRow(gotRows, wantRow) {
-					t.Errorf("Test case '%v'. View '%v' want row '%v'. Not received", tc.label, wantData.v().Name(), wantRow)
+					t.Errorf("%q: row missing for view %q; want %v", tc.label, wantData.v().Name(), wantRow)
 					break
 				}
 			}
 		}
-	}
-}
 
-func newCountAggregationValue(v int) *istats.CountAggregationValue {
-	cav := istats.CountAggregationValue(v)
-	return &cav
-}
-
-func newDistributionAggregationValue(bounds []float64, countPerBucket []int64, count int64, min, max, mean, sumOfSquaredDev float64) *istats.DistributionAggregationValue {
-	return &istats.DistributionAggregationValue{
-		Count:           count,
-		Min:             min,
-		Max:             max,
-		Mean:            mean,
-		SumOfSquaredDev: sumOfSquaredDev,
-		CountPerBucket:  countPerBucket,
-		Bounds:          bounds,
+		// Unregister views to cleanup.
+		for _, v := range clientViews {
+			if err := v.StopForceCollection(); err != nil {
+				t.Error(err)
+			}
+			if err := v.Unregister(); err != nil {
+				t.Error(err)
+			}
+		}
 	}
 }

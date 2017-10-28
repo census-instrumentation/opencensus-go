@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-package stats
+package grpcstats
 
 import (
 	"errors"
@@ -27,7 +27,7 @@ import (
 	"google.golang.org/grpc/stats"
 )
 
-func TestClientDefaultCollections(t *testing.T) {
+func TestServerDefaultCollections(t *testing.T) {
 	k1, _ := tag.NewStringKey("k1")
 	k2, _ := tag.NewStringKey("k2")
 
@@ -71,7 +71,7 @@ func TestClientDefaultCollections(t *testing.T) {
 			},
 			[]*wantData{
 				{
-					func() *istats.View { return RPCClientRequestCountView },
+					func() *istats.View { return RPCServerRequestCountView },
 					[]*istats.Row{
 						{
 							[]tag.Tag{
@@ -83,7 +83,7 @@ func TestClientDefaultCollections(t *testing.T) {
 					},
 				},
 				{
-					func() *istats.View { return RPCClientResponseCountView },
+					func() *istats.View { return RPCServerResponseCountView },
 					[]*istats.Row{
 						{
 							[]tag.Tag{
@@ -95,7 +95,7 @@ func TestClientDefaultCollections(t *testing.T) {
 					},
 				},
 				{
-					func() *istats.View { return RPCClientRequestBytesView },
+					func() *istats.View { return RPCServerRequestBytesView },
 					[]*istats.Row{
 						{
 							[]tag.Tag{
@@ -107,7 +107,7 @@ func TestClientDefaultCollections(t *testing.T) {
 					},
 				},
 				{
-					func() *istats.View { return RPCClientResponseBytesView },
+					func() *istats.View { return RPCServerResponseBytesView },
 					[]*istats.Row{
 						{
 							[]tag.Tag{
@@ -152,7 +152,7 @@ func TestClientDefaultCollections(t *testing.T) {
 			},
 			[]*wantData{
 				{
-					func() *istats.View { return RPCClientErrorCountView },
+					func() *istats.View { return RPCServerErrorCountView },
 					[]*istats.Row{
 						{
 							[]tag.Tag{
@@ -165,19 +165,7 @@ func TestClientDefaultCollections(t *testing.T) {
 					},
 				},
 				{
-					func() *istats.View { return RPCClientRequestCountView },
-					[]*istats.Row{
-						{
-							[]tag.Tag{
-								{Key: keyMethod, Value: []byte("method")},
-								{Key: keyService, Value: []byte("package.service")},
-							},
-							newDistributionAggregationValue(rpcCountBucketBoundaries, []int64{0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 2, 2, 3, 2.5, 0.5),
-						},
-					},
-				},
-				{
-					func() *istats.View { return RPCClientResponseCountView },
+					func() *istats.View { return RPCServerRequestCountView },
 					[]*istats.Row{
 						{
 							[]tag.Tag{
@@ -185,6 +173,18 @@ func TestClientDefaultCollections(t *testing.T) {
 								{Key: keyService, Value: []byte("package.service")},
 							},
 							newDistributionAggregationValue(rpcCountBucketBoundaries, []int64{0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 2, 1, 2, 1.5, 0.5),
+						},
+					},
+				},
+				{
+					func() *istats.View { return RPCServerResponseCountView },
+					[]*istats.Row{
+						{
+							[]tag.Tag{
+								{Key: keyMethod, Value: []byte("method")},
+								{Key: keyService, Value: []byte("package.service")},
+							},
+							newDistributionAggregationValue(rpcCountBucketBoundaries, []int64{0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 2, 2, 3, 2.5, 0.5),
 						},
 					},
 				},
@@ -235,7 +235,7 @@ func TestClientDefaultCollections(t *testing.T) {
 			},
 			[]*wantData{
 				{
-					func() *istats.View { return RPCClientErrorCountView },
+					func() *istats.View { return RPCServerErrorCountView },
 					[]*istats.Row{
 						{
 							[]tag.Tag{
@@ -256,19 +256,7 @@ func TestClientDefaultCollections(t *testing.T) {
 					},
 				},
 				{
-					func() *istats.View { return RPCClientRequestCountView },
-					[]*istats.Row{
-						{
-							[]tag.Tag{
-								{Key: keyMethod, Value: []byte("method")},
-								{Key: keyService, Value: []byte("package.service")},
-							},
-							newDistributionAggregationValue(rpcCountBucketBoundaries, []int64{0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 3, 2, 3, 2.666666666, 0.333333333*2),
-						},
-					},
-				},
-				{
-					func() *istats.View { return RPCClientResponseCountView },
+					func() *istats.View { return RPCServerRequestCountView },
 					[]*istats.Row{
 						{
 							[]tag.Tag{
@@ -280,19 +268,19 @@ func TestClientDefaultCollections(t *testing.T) {
 					},
 				},
 				{
-					func() *istats.View { return RPCClientRequestBytesView },
+					func() *istats.View { return RPCServerResponseCountView },
 					[]*istats.Row{
 						{
 							[]tag.Tag{
 								{Key: keyMethod, Value: []byte("method")},
 								{Key: keyService, Value: []byte("package.service")},
 							},
-							newDistributionAggregationValue(rpcBytesBucketBoundaries, []int64{0, 1, 1, 1, 2, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0}, 8, 1, 65536, 13696.125, 481423542.982143*7),
+							newDistributionAggregationValue(rpcCountBucketBoundaries, []int64{0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 3, 2, 3, 2.666666666, 0.333333333*2),
 						},
 					},
 				},
 				{
-					func() *istats.View { return RPCClientResponseBytesView },
+					func() *istats.View { return RPCServerRequestBytesView },
 					[]*istats.Row{
 						{
 							[]tag.Tag{
@@ -303,32 +291,50 @@ func TestClientDefaultCollections(t *testing.T) {
 						},
 					},
 				},
+				{
+					func() *istats.View { return RPCServerResponseBytesView },
+					[]*istats.Row{
+						{
+							[]tag.Tag{
+								{Key: keyMethod, Value: []byte("method")},
+								{Key: keyService, Value: []byte("package.service")},
+							},
+							newDistributionAggregationValue(rpcBytesBucketBoundaries, []int64{0, 1, 1, 1, 2, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0}, 8, 1, 65536, 13696.125, 481423542.982143*7),
+						},
+					},
+				},
 			},
 		},
 	}
 
 	for _, tc := range tcs {
-		istats.Restart()
-		registerDefaultsClient()
+		for _, v := range serverViews {
+			if err := istats.RegisterView(v); err != nil {
+				t.Error(err)
+			}
+			if err := v.ForceCollect(); err != nil {
+				t.Error(err)
+			}
+		}
 
-		h := NewClientHandler()
+		h := ServerStatsHandler()
 		for _, rpc := range tc.rpcs {
 			mods := []tag.Mutator{}
 			for _, t := range rpc.tags {
 				mods = append(mods, tag.UpsertString(t.k, t.v))
 			}
-			tm := tag.NewMap(nil, mods...)
-			encoded := tag.Encode(tm)
+			ts := tag.NewMap(nil, mods...)
+			encoded := tag.Encode(ts)
 			ctx := stats.SetTags(context.Background(), encoded)
 
 			ctx = h.TagRPC(ctx, rpc.tagInfo)
 
-			for _, out := range rpc.outPayloads {
-				h.HandleRPC(ctx, out)
-			}
-
 			for _, in := range rpc.inPayloads {
 				h.HandleRPC(ctx, in)
+			}
+
+			for _, out := range rpc.outPayloads {
+				h.HandleRPC(ctx, out)
 			}
 
 			h.HandleRPC(ctx, rpc.end)
@@ -337,23 +343,50 @@ func TestClientDefaultCollections(t *testing.T) {
 		for _, wantData := range tc.wants {
 			gotRows, err := wantData.v().RetrieveData()
 			if err != nil {
-				t.Errorf("Test case '%v'. RetrieveData for %v failed. %v", tc.label, wantData.v().Name(), err)
+				t.Errorf("%q: RetrieveData (%q) = %v", tc.label, wantData.v().Name(), err)
 				continue
 			}
 
 			for _, gotRow := range gotRows {
 				if !istats.ContainsRow(wantData.rows, gotRow) {
-					t.Errorf("Test case '%v'. View '%v' got unexpected row '%v'", tc.label, wantData.v().Name(), gotRow)
+					t.Errorf("%q: unwanted row for view %q: %v", tc.label, wantData.v().Name(), gotRow)
 					break
 				}
 			}
 
 			for _, wantRow := range wantData.rows {
 				if !istats.ContainsRow(gotRows, wantRow) {
-					t.Errorf("Test case '%v'. View '%v' want row '%v'. Not received", tc.label, wantData.v().Name(), wantRow)
+					t.Errorf("%q: missing row for view %q: %v", tc.label, wantData.v().Name(), wantRow)
 					break
 				}
 			}
 		}
+
+		// Unregister views to cleanup.
+		for _, v := range serverViews {
+			if err := v.StopForceCollection(); err != nil {
+				t.Error(err)
+			}
+			if err := v.Unregister(); err != nil {
+				t.Error(err)
+			}
+		}
+	}
+}
+
+func newCountAggregationValue(v int) *istats.CountAggregationValue {
+	cav := istats.CountAggregationValue(v)
+	return &cav
+}
+
+func newDistributionAggregationValue(bounds []float64, countPerBucket []int64, count int64, min, max, mean, sumOfSquaredDev float64) *istats.DistributionAggregationValue {
+	return &istats.DistributionAggregationValue{
+		Count:           count,
+		Min:             min,
+		Max:             max,
+		Mean:            mean,
+		SumOfSquaredDev: sumOfSquaredDev,
+		CountPerBucket:  countPerBucket,
+		Bounds:          bounds,
 	}
 }

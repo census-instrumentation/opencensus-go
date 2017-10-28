@@ -13,37 +13,28 @@
 // limitations under the License.
 //
 
-package stats
+package grpcstats
 
 import (
 	"strings"
 	"sync/atomic"
 	"time"
 
-	"golang.org/x/net/context"
-
 	istats "github.com/census-instrumentation/opencensus-go/stats"
 	"github.com/census-instrumentation/opencensus-go/tag"
 	"github.com/golang/glog"
+	"golang.org/x/net/context"
 	"google.golang.org/grpc/stats"
-)
-
-var (
-	// grpcClientConnKey is the key used to store client instrumentation
-	// connection related data into the context.
-	grpcClientConnKey *grpcInstrumentationKey
-	// grpcClientRPCKey is the key used to store client instrumentation RPC
-	// related data into the context.
-	grpcClientRPCKey *grpcInstrumentationKey
 )
 
 // clientHandler is the type implementing the "google.golang.org/grpc/stats.Handler"
 // interface to process lifecycle events from the GRPC client.
 type clientHandler struct{}
 
-// NewClientHandler returns the "google.golang.org/grpc/stats.Handler"
-// implementation for the grpc client.
-func NewClientHandler() stats.Handler {
+// ClientStatsHandler returns a grpc/stats.Handler implementation
+// that collects stats for a gRPC client. Predefined
+// measures and views can be used to access the collected data.
+func ClientStatsHandler() stats.Handler {
 	return clientHandler{}
 }
 

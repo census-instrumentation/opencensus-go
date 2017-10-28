@@ -13,9 +13,8 @@
 // limitations under the License.
 //
 
-// Package stats defines the handlers to collect grpc statistics using the
-// opencensus library.
-package stats
+// Package grpcstats provides OpenCensus stats support for gRPC clients and servers.
+package grpcstats
 
 import (
 	"log"
@@ -47,9 +46,6 @@ type rpcData struct {
 // mechanism to load these defaults from a common repository/config shared by
 // all supported languages. Likely a serialized protobuf of these defaults.
 var (
-	// C is the channel where the client code can access the collected views.
-	C chan *istats.ViewData
-
 	unitByte             = "By"
 	unitCount            = "1"
 	unitMillisecond      = "ms"
@@ -73,23 +69,23 @@ var (
 	keyOpStatus tag.StringKey
 )
 
-func createDefaultKeys() {
-	// Initializing keys
+func init() {
 	var err error
 	if keyService, err = tag.NewStringKey("grpc.service"); err != nil {
-		log.Fatalf("tag.NewStringKey(\"grpc.service\") failed to create/retrieve keyService. %v", err)
+		log.Fatalf("Cannot create grpc.service key: %v", err)
 	}
-
 	if keyMethod, err = tag.NewStringKey("grpc.method"); err != nil {
-		log.Fatalf("tag.NewStringKey(\"grpc.method\") failed to create/retrieve keyMethod. %v", err)
+		log.Fatalf("Cannot create grpc.method key: %v", err)
 	}
-
 	if keyOpStatus, err = tag.NewStringKey("grpc.opstatus"); err != nil {
-		log.Fatalf("tag.NewStringKey(\"grpc.opstatus\") failed to create/retrieve keyOpStatus. %v", err)
+		log.Fatalf("Cannot create grpc.opstatus key: %v", err)
 	}
+	initServer()
+	initClient()
 }
 
-func init() {
-	registerDefaultsServer()
-	registerDefaultsClient()
-}
+var (
+	grpcServerConnKey = &grpcInstrumentationKey{}
+	grpcServerRPCKey  = &grpcInstrumentationKey{}
+	grpcClientRPCKey  = &grpcInstrumentationKey{}
+)
