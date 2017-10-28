@@ -16,11 +16,12 @@
 package stats
 
 import (
-	"fmt"
 	"math"
 )
 
 // AggregationValue represents an aggregated value from a collection.
+// They are reported on the view data during exporting or force
+// collection. Mosts users won't directly access aggregration values.
 type AggregationValue interface {
 	equal(other AggregationValue) bool
 	isAggregate() bool
@@ -31,6 +32,8 @@ type AggregationValue interface {
 }
 
 // CountAggregationValue is the aggregated data for a count aggregation.
+// A count aggregation processes data and counts the recordings.
+// CountAggregationValue is the value for CountAggregation.
 type CountAggregationValue int64
 
 func newCountAggregationValue(v int64) *CountAggregationValue {
@@ -70,10 +73,6 @@ func (a *CountAggregationValue) equal(other AggregationValue) bool {
 	return int64(*a) == int64(*a2)
 }
 
-func (a *CountAggregationValue) String() string {
-	return fmt.Sprintf("{%v}", *a)
-}
-
 // DistributionAggregationValue is the aggregated data for an
 // DistributionAggregation.
 type DistributionAggregationValue struct {
@@ -103,10 +102,6 @@ func (a *DistributionAggregationValue) variance() float64 {
 		return 0
 	}
 	return a.SumOfSquaredDev / float64(a.Count-1)
-}
-
-func (a *DistributionAggregationValue) String() string {
-	return fmt.Sprintf("{%v %v %v %v %v %v %v}", a.Count, a.Min, a.Max, a.Mean, a.variance(), a.CountPerBucket, a.Bounds)
 }
 
 func (a *DistributionAggregationValue) isAggregate() bool { return true }

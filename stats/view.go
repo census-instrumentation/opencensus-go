@@ -48,8 +48,16 @@ type View struct {
 	collector *collector
 }
 
-// NewView creates a new view. Views need to be registered
-// via RegisterView to enable data collection.
+// NewView creates a new view with the given name and description.
+// View names need to be unique globally in the entire system.
+//
+// Data collection will only filter measurements recorded by the given keys.
+// Collected data will be processed by the given aggregation algorithm for
+// the given time window.
+//
+// Views need to be registered via RegisterView, or subscribed to, or need to be force
+// collected to retrieve collection data. Once the view is no longer required,
+// view can be unregistered.
 func NewView(name, description string, keys []tag.Key, measure Measure, agg Aggregation, window Window) *View {
 	return &View{
 		name:        name,
