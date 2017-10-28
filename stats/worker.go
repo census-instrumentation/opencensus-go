@@ -118,8 +118,7 @@ func RegisterView(v *View) error {
 
 // Unregister removes the previously registered view. It returns an error
 // if the view wasn't registered. All data collected and not reported for the
-// corresponding view will be lost. All clients subscribed to this view are
-// unsubscribed automatically and their subscriptions channels closed.
+// corresponding view will be lost. The view is automatically be unsubscribed.
 func (v *View) Unregister() error {
 	if v == nil {
 		return errors.New("cannot UnregisterView for nil view")
@@ -132,37 +131,28 @@ func (v *View) Unregister() error {
 	return <-req.err
 }
 
-// Subscribe subscribes a channel to a View. If the view wasn't already
-// registered, it will be automatically registered. It allows for many clients
-// to consume the same ViewData with a single registration. -i.e. the aggregate
-// of the collected measurements will be reported to the calling code through
-// channel c. To avoid data loss, clients must ensure that channel sends
-// proceed in a timely manner. The calling code is responsible for using a
-// buffered channel or blocking on the channel waiting for the collected data.
-func (v *View) Subscribe(c chan *ViewData) error {
-	if v == nil {
-		return errors.New("cannot subscribe nil view")
-	}
+// Subscribe subscribes a view. Once a view is subscribed, it reports data
+// via the exporters.
+// During subscription, if the view wasn't registered, it will be automatically
+// registered. Once the view is no longer needed to export data,
+// user should unsubscribe from the view.
+func (v *View) Subscribe() error {
 	req := &subscribeToViewReq{
 		v:   v,
-		c:   c,
 		err: make(chan error),
 	}
 	defaultWorker.c <- req
 	return <-req.err
 }
 
-// Unsubscribe unsubscribes a previously subscribed channel from the
-// View subscriptions. If no more subscriber for v exists and the the ad hoc
+// Unsubscribe unsubscribes a previously subscribed channel.
+// Data will not be exported from this view once unsubscription happens.
+// If no more subscriber for v exists and the the ad hoc
 // collection for this view isn't active, data stops being collected for this
 // view.
-func (v *View) Unsubscribe(c chan *ViewData) error {
-	if v == nil {
-		return errors.New("cannot unsubscribe nil view")
-	}
+func (v *View) Unsubscribe() error {
 	req := &unsubscribeFromViewReq{
 		v:   v,
-		c:   c,
 		err: make(chan error),
 	}
 	defaultWorker.c <- req
@@ -313,24 +303,21 @@ func (w *worker) tryRegisterView(v *View) error {
 
 func (w *worker) reportUsage(now time.Time) {
 	for v := range w.views {
-		if v.subscriptionsCount() == 0 {
+		if !v.isSubscribed() {
 			continue
 		}
-
+		rows := v.collectedRows(now)
 		viewData := &ViewData{
-			V:    v,
-			Rows: v.collectedRows(now),
+			V:     v,
+			Start: now,
+			End:   time.Now(),
+			Rows:  rows,
 		}
-
-		for c, s := range v.subscriptions() {
-			select {
-			case c <- viewData:
-				return
-			default:
-				s.droppedViewData++
-			}
+		exportersMu.Lock()
+		for e := range exporters {
+			e.Export(viewData)
 		}
-
+		exportersMu.Unlock()
 		if _, ok := v.Window().(*CumulativeWindow); !ok {
 			v.clearRows()
 		}

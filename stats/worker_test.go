@@ -441,7 +441,7 @@ func Test_Worker_ViewRegistration(t *testing.T) {
 
 		for _, s := range tc.subscriptions {
 			v := views[s.vID]
-			err := v.Subscribe(s.c)
+			err := v.Subscribe()
 			if (err != nil) != (s.err != nil) {
 				t.Errorf("Subscribe. got error %v, want %v. Test case: %v", err, s.err, tc.label)
 			}
@@ -654,7 +654,7 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 		}
 
 		for _, s := range tc.subscriptions {
-			if err := s.v.Subscribe(s.c); err != nil {
+			if err := s.v.Subscribe(); err != nil {
 				t.Fatalf("Subscribe '%v' got error '%v', want no error for test case: '%v'", s.v.Name(), err, tc.label)
 			}
 		}
@@ -697,7 +697,7 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 		}
 
 		for _, s := range tc.subscriptions {
-			if err := s.v.Unsubscribe(s.c); err != nil {
+			if err := s.v.Unsubscribe(); err != nil {
 				t.Fatalf("%v: Unsubscribing from view %v errored with %v; want no error", tc.label, s.v.Name(), err)
 			}
 		}

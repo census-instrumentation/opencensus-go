@@ -19,6 +19,7 @@ import (
 	"bytes"
 	"fmt"
 	"reflect"
+	"sync/atomic"
 	"time"
 
 	"github.com/census-instrumentation/opencensus-go/tag"
@@ -41,41 +42,22 @@ type View struct {
 	// start is time when view collection was started originally.
 	start time.Time
 
-	// ss are the channels through which the collected views data for this view
-	// are sent to the consumers of this view.
-	ss map[chan *ViewData]subscription
+	forced     uint32 // 1 if view should collect data if no one is subscribed, use atomic to access
+	subscribed uint32 // 1 if someone is subscribed and data need to be exported, use atomic to access
 
-	// boolean to indicate if the the view should be collecting data even if no
-	// client is subscribed to it. This is necessary for supporting a pull
-	// model.
-	isForcedCollection bool
-
-	// TODO(jbd): Guard isForcedCollection.
-
-	c *collector
-}
-
-type subscription struct {
-	droppedViewData uint64
+	collector *collector
 }
 
 // NewView creates a new view. Views need to be registered
 // via RegisterView to enable data collection.
 func NewView(name, description string, keys []tag.Key, measure Measure, agg Aggregation, window Window) *View {
-	var keysCopy []tag.Key
-	for _, k := range keys {
-		keysCopy = append(keysCopy, k)
-	}
-
 	return &View{
-		name,
-		description,
-		keysCopy,
-		measure,
-		time.Time{},
-		make(map[chan *ViewData]subscription),
-		false,
-		&collector{make(map[string]aggregator), agg, window},
+		name:        name,
+		description: description,
+		tagKeys:     keys,
+		m:           measure,
+		start:       time.Time{},
+		collector:   &collector{make(map[string]aggregator), agg, window},
 	}
 }
 
@@ -89,57 +71,48 @@ func (v *View) Description() string {
 	return v.description
 }
 
-func (v *View) addSubscription(c chan *ViewData) {
-	v.ss[c] = subscription{}
-}
-
-func (v *View) deleteSubscription(c chan *ViewData) {
-	delete(v.ss, c)
-}
-
-func (v *View) subscriptionExists(c chan *ViewData) bool {
-	_, ok := v.ss[c]
-	return ok
-}
-
-func (v *View) subscriptionsCount() int {
-	return len(v.ss)
-}
-
-func (v *View) subscriptions() map[chan *ViewData]subscription {
-	return v.ss
-}
-
 func (v *View) startForcedCollection() {
-	v.isForcedCollection = true
+	atomic.StoreUint32(&v.forced, 1)
 }
 
 func (v *View) stopForcedCollection() {
-	v.isForcedCollection = false
+	atomic.StoreUint32(&v.forced, 0)
 }
 
+func (v *View) subscribe() {
+	atomic.StoreUint32(&v.subscribed, 1)
+}
+
+func (v *View) unsubscribe() {
+	atomic.StoreUint32(&v.subscribed, 0)
+}
+
+// isCollecting returns true if the view is exporting data
+// by subscription or enabled for force collection.
 func (v *View) isCollecting() bool {
-	return v.subscriptionsCount() > 0 || v.isForcedCollection
+	return atomic.LoadUint32(&v.subscribed) == 1 || atomic.LoadUint32(&v.forced) == 1
+}
+
+// isSubscribed returns true if the view is exporting
+// data by subscription.
+func (v *View) isSubscribed() bool {
+	return atomic.LoadUint32(&v.subscribed) == 1
 }
 
 func (v *View) clearRows() {
-	v.c.clearRows()
-}
-
-func (v *View) collector() *collector {
-	return v.c
+	v.collector.clearRows()
 }
 
 // Window returns the timing window being used to collect
 // metrics from this view.
 func (v *View) Window() Window {
-	return v.c.w
+	return v.collector.w
 }
 
 // Aggregation returns the data aggregation method used to aggregate
 // the measurements collected by this view.
 func (v *View) Aggregation() Aggregation {
-	return v.c.a
+	return v.collector.a
 }
 
 // Measure returns the measure the view is collecting measurements for.
@@ -148,7 +121,7 @@ func (v *View) Measure() Measure {
 }
 
 func (v *View) collectedRows(now time.Time) []*Row {
-	return v.c.collectedRows(v.tagKeys, now)
+	return v.collector.collectedRows(v.tagKeys, now)
 }
 
 func (v *View) addSample(m *tag.Map, val interface{}, now time.Time) {
@@ -156,7 +129,7 @@ func (v *View) addSample(m *tag.Map, val interface{}, now time.Time) {
 		return
 	}
 	sig := string(tag.EncodeOrderedTags(m, v.tagKeys))
-	v.c.addSample(sig, val, now)
+	v.collector.addSample(sig, val, now)
 }
 
 // A ViewData is a set of rows about usage of the single measure associated
