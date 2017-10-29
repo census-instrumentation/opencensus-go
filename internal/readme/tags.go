@@ -1,0 +1,68 @@
+// Copyright 2017, OpenCensus Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package readme
+
+import (
+	"context"
+	"log"
+
+	"github.com/census-instrumentation/opencensus-go/tag"
+)
+
+func tagsExamples() {
+	ctx := context.Background()
+
+	// START stringKey
+	// Get a key to represent user OS.
+	key, err := tag.NewStringKey("my.org/keys/user-os")
+	if err != nil {
+		log.Fatal(err)
+	}
+	// END stringKey
+	_ = key
+
+	// START tagMap
+	osKey, err := tag.NewStringKey("my.org/keys/user-os")
+	if err != nil {
+		log.Fatal(err)
+	}
+	userIDKey, err := tag.NewStringKey("my.org/keys/user-id")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	tagMap := tag.NewMap(nil,
+		tag.InsertString(osKey, "macOS-10.12.5"),
+		tag.UpsertString(userIDKey, "cde36753ed"),
+	)
+	// END tagMap
+
+	// START newContext
+	ctx = tag.NewContext(ctx, tagMap)
+	// END newContext
+
+	// START replaceTagMap
+	oldTagMap := tag.FromContext(ctx)
+	tagMap = tag.NewMap(oldTagMap,
+		tag.InsertString(key, "macOS-10.12.5"),
+		tag.UpsertString(key, "macOS-10.12.7"),
+		tag.UpsertString(userIDKey, "fff0989878"),
+	)
+	ctx = tag.NewContext(ctx, tagMap)
+	// END replaceTagMap
+
+	_ = oldTagMap
+
+}
