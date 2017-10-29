@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-package stats
+package grpcstats
 
 import (
 	"fmt"
@@ -30,22 +30,14 @@ import (
 	"google.golang.org/grpc/stats"
 )
 
-var (
-	// grpcServerConnKey is the key used to store client instrumentation
-	// connection related data into the context.
-	grpcServerConnKey *grpcInstrumentationKey
-	// grpcServerRPCKey is the key used to store client instrumentation RPC
-	// related data into the context.
-	grpcServerRPCKey *grpcInstrumentationKey
-)
-
 // serverHandler is the type implementing the "google.golang.org/grpc/stats.Handler"
 // interface to process lifecycle events from the GRPC server.
 type serverHandler struct{}
 
-// NewServerHandler returns the "google.golang.org/grpc/stats.Handler"
-// implementation for the grpc server.
-func NewServerHandler() stats.Handler {
+// ServerStatsHandler returns a grpc/stats.Handler implementation
+// that collects stats for a gRPC server. Predefined
+// measures and views can be used to access the collected data.
+func ServerStatsHandler() stats.Handler {
 	return serverHandler{}
 }
 
