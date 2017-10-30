@@ -26,7 +26,7 @@ import (
 )
 
 func Test_Worker_MeasureCreation(t *testing.T) {
-	Restart()
+	restart()
 
 	if _, err := NewMeasureFloat64("MF1", "desc MF1", "unit"); err != nil {
 		t.Errorf("NewMeasureFloat64(\"MF1\", \"desc MF1\") got error %v, want no error", err)
@@ -58,7 +58,7 @@ func Test_Worker_MeasureCreation(t *testing.T) {
 }
 
 func Test_Worker_FindMeasure(t *testing.T) {
-	Restart()
+	restart()
 
 	someError := errors.New("some error")
 	mf1, err := NewMeasureFloat64("MF1", "desc MF1", "unit")
@@ -213,7 +213,7 @@ func Test_Worker_MeasureDelete(t *testing.T) {
 	}
 
 	for _, tc := range tcs {
-		Restart()
+		restart()
 
 		for _, n := range tc.measureNames {
 			if _, err := NewMeasureInt64(n, "some desc", "unit"); err != nil {
@@ -418,7 +418,7 @@ func Test_Worker_ViewRegistration(t *testing.T) {
 	}
 
 	for _, tc := range tcs {
-		Restart()
+		restart()
 
 		mf1, _ := NewMeasureFloat64("MF1", "desc MF1", "unit")
 		mf2, _ := NewMeasureFloat64("MF2", "desc MF2", "unit")
@@ -470,7 +470,7 @@ func Test_Worker_ViewRegistration(t *testing.T) {
 }
 
 func Test_Worker_RecordFloat64(t *testing.T) {
-	Restart()
+	restart()
 
 	someError := errors.New("some error")
 	m, err := NewMeasureFloat64("MF1", "desc MF1", "unit")
@@ -708,4 +708,11 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 			}
 		}
 	}
+}
+
+// restart stops the current processors and creates a new one.
+func restart() {
+	defaultWorker.stop()
+	defaultWorker = newWorker()
+	go defaultWorker.start()
 }
