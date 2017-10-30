@@ -40,34 +40,12 @@ Currently, only keys of type string are supported.
 Other types will be supported in the future.
 
 [embedmd]:# (tags.go stringKey)
-```go
-// Get a key to represent user OS.
-key, err := tag.NewStringKey("my.org/keys/user-os")
-if err != nil {
-	log.Fatal(err)
-}
-```
 
 ### Creating a map of tags associated with keys
 
 tag.Map is a map of tags. Package tags provide a builder to create tag maps.
 
 [embedmd]:# (tags.go tagMap)
-```go
-osKey, err := tag.NewStringKey("my.org/keys/user-os")
-if err != nil {
-	log.Fatal(err)
-}
-userIDKey, err := tag.NewStringKey("my.org/keys/user-id")
-if err != nil {
-	log.Fatal(err)
-}
-
-tagMap := tag.NewMap(nil,
-	tag.InsertString(osKey, "macOS-10.12.5"),
-	tag.UpsertString(userIDKey, "cde36753ed"),
-)
-```
 
 ### Propagating a tag map in a context
 
@@ -77,23 +55,11 @@ and put the tag map into the returned one.
 If there is already a tag map in the current context, it will be replaced.
 
 [embedmd]:# (tags.go newContext)
-```go
-ctx = tag.NewContext(ctx, tagMap)
-```
 
 In order to update an existing tag map, get the tag map from the current context,
 use NewMap and put the new tag map back to the context.
 
 [embedmd]:# (tags.go replaceTagMap)
-```go
-oldTagMap := tag.FromContext(ctx)
-tagMap = tag.NewMap(oldTagMap,
-	tag.InsertString(key, "macOS-10.12.5"),
-	tag.UpsertString(key, "macOS-10.12.7"),
-	tag.UpsertString(userIDKey, "fff0989878"),
-)
-ctx = tag.NewContext(ctx, tagMap)
-```
 
 
 ## Stats
@@ -103,32 +69,15 @@ ctx = tag.NewContext(ctx, tagMap)
 Create and load measures with units:
 
 [embedmd]:# (stats.go measure)
-```go
-videoSize, err := stats.NewMeasureInt64("my.org/video_size", "processed video size", "MB")
-if err != nil {
-	log.Fatal(err)
-}
-```
 
 Retrieve measure by name:
 
 [embedmd]:# (stats.go findMeasure)
-```go
-m, err := stats.FindMeasure("my.org/video_size")
-if err != nil {
-	log.Fatal(err)
-}
-```
 
 Delete measure (this can be useful when replacing a measure by
 another measure with the same name):
 
 [embedmd]:# (stats.go deleteMeasure)
-```go
-if err := stats.DeleteMeasure(m); err != nil {
-	log.Fatal(err)
-}
-```
 
 ### Creating an aggregation
 
@@ -137,10 +86,6 @@ the number of times a sample was recorded. The DistributionAggregation is used t
 provide a histogram of the values of the samples.
 
 [embedmd]:# (stats.go aggs)
-```go
-distAgg := stats.DistributionAggregation([]float64{0, 1 << 32, 2 << 32, 3 << 32})
-countAgg := stats.CountAggregation{}
-```
 
 ### Create an aggregation window
 
@@ -152,57 +97,20 @@ Currently all aggregation types are compatible with all aggregation windows.
 Later we might provide aggregation types that are incompatible with some windows.
 
 [embedmd]:# (stats.go windows)
-```go
-slidingTimeWindow := stats.SlidingTimeWindow{
-	Duration:  10 * time.Second,
-	Intervals: 5,
-}
-
-slidingCountWindow := stats.SlidingCountWindow{
-	N:       100,
-	Subsets: 10,
-}
-
-cumWindow := stats.CumulativeWindow{}
-```
 
 ### Creating, registering and unregistering a view
 
 Create and register a view:
 
 [embedmd]:# (stats.go view)
-```go
-view := stats.NewView(
-	"my.org/video_size_distribution",
-	"distribution of processed video size over time",
-	nil,
-	videoSize,
-	distAgg,
-	cumWindow,
-)
-if err := stats.RegisterView(view); err != nil {
-	log.Fatal(err)
-}
-```
 
 Find view by name:
 
 [embedmd]:# (stats.go findView)
-```go
-v, err := stats.FindView("my.org/video_size_distribution")
-if err != nil {
-	log.Fatal(err)
-}
-```
 
 Unregister view:
 
 [embedmd]:# (stats.go unregisterView)
-```go
-if v.Unregister(); err != nil {
-	log.Fatal(err)
-}
-```
 
 Configure the default interval between reports of collected data.
 This is a system wide interval and impacts all views. The default
@@ -210,9 +118,6 @@ interval duration is 10 seconds. Trying to set an interval with
 a duration less than a certain minimum (maybe 1s) should have no effect.
 
 [embedmd]:# (stats.go reportingPeriod)
-```go
-stats.SetReportingPeriod(5 * time.Second)
-```
 
 ### Recording measurements
 
@@ -221,42 +126,20 @@ and their registered views. Measurements are implicitly tagged with the
 tags in the context:
 
 [embedmd]:# (stats.go record)
-```go
-stats.Record(ctx, videoSize.M(102478))
-```
 
 ### Retrieving collected data for a view
 
 Users need to subscribe to a view in order to retrieve collected data.
 
 [embedmd]:# (stats.go subscribe)
-```go
-if view.Subscribe(); err != nil {
-	log.Fatal(err)
-}
-```
 
 Subscribed views' data will be exported via the registered exporters.
 
 [embedmd]:# (stats.go registerExporter)
-```go
-// Register an exporter to be able to retrieve
-// the data from the subscribed views.
-stats.RegisterExporter(&exporter{})
-```
 
 An example logger exporter is below:
 
 [embedmd]:# (stats.go exporter)
-```go
-
-type exporter struct{}
-
-func (e *exporter) Export(vd *stats.ViewData) {
-	log.Println(vd)
-}
-
-```
 
 ### Force collecting data on demand
 
@@ -266,31 +149,6 @@ view, library can be instructed explicitly to collect
 data for the desired view.
 
 [embedmd]:# (stats.go forceCollect)
-```go
-// To explicitly instruct the library to collect the view data for an on-demand
-// retrieval, force collect. When done, stop force collection.
-if err := view.ForceCollect(); err != nil {
-	log.Fatal(err)
-}
-
-// Use RetrieveData to pull collected data synchronously from the library. This
-// assumes that a subscription to the view exists or force collection is enabled.
-rows, err := view.RetrieveData()
-if err != nil {
-	log.Fatal(err)
-}
-for _, r := range rows {
-	// process a single row of type *stats.Row
-	log.Println(r)
-}
-
-// To explicitly instruct the library to stop collecting the view data for the
-// on-demand retrieval, StopForceCollection should be used. This call has no
-// impact on the view's subscription status.
-if err := view.StopForceCollection(); err != nil {
-	log.Fatal(err)
-}
-```
 
 ## Tracing
 
