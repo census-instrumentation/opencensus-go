@@ -144,7 +144,7 @@ func (v *View) addSample(m *tag.Map, val interface{}, now time.Time) {
 // with the given view during a particular window. Each row is specific to a
 // unique set of tags.
 type ViewData struct {
-	V          *View
+	View       *View
 	Start, End time.Time
 	Rows       []*Row
 }

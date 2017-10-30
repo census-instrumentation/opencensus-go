@@ -308,7 +308,7 @@ func (w *worker) reportUsage(now time.Time) {
 		}
 		rows := v.collectedRows(now)
 		viewData := &ViewData{
-			V:     v,
+			View:  v,
 			Start: now,
 			End:   time.Now(),
 			Rows:  rows,
