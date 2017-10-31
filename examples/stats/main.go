@@ -24,8 +24,8 @@ import (
 	"log"
 	"time"
 
-	"github.com/census-instrumentation/opencensus-go/stats"
-	"github.com/census-instrumentation/opencensus-go/tag"
+	"go.opencensus.io/stats"
+	"go.opencensus.io/tag"
 )
 
 func main() {

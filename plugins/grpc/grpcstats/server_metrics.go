@@ -18,8 +18,8 @@ package grpcstats
 import (
 	"fmt"
 
-	"github.com/census-instrumentation/opencensus-go/stats"
-	"github.com/census-instrumentation/opencensus-go/tag"
+	"go.opencensus.io/stats"
+	"go.opencensus.io/tag"
 )
 
 // The following variables are measures and views made available for gRPC clients.

@@ -18,7 +18,7 @@ package stats
 import (
 	"time"
 
-	"github.com/census-instrumentation/opencensus-go/tag"
+	"go.opencensus.io/tag"
 )
 
 type collector struct {

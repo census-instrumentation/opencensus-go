@@ -21,7 +21,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/census-instrumentation/opencensus-go/tag"
+	"go.opencensus.io/tag"
 )
 
 func init() {
