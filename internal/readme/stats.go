@@ -65,7 +65,7 @@ func statsExamples() {
 	}
 
 	slidingCountWindow := stats.SlidingCountWindow{
-		N:       100,
+		Count:   100,
 		Subsets: 10,
 	}
 
