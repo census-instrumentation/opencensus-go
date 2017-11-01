@@ -12,6 +12,7 @@ notifications:
 before_script:
   - GO_FILES=$(find . -iname '*.go' | grep -v /vendor/)  # All the .go files, excluding vendor/ if any
   - PKGS=$(go list ./... | grep -v /vendor/)             # All the import paths, excluding vendor/ if any
+  - go install github.com/golang/lint/golint
 
 script:
   - gofmt -w ./
