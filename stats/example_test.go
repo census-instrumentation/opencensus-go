@@ -20,7 +20,7 @@ import (
 
 	"golang.org/x/net/context"
 
-	"github.com/census-instrumentation/opencensus-go/stats"
+	"go.opencensus.io/stats"
 )
 
 func Example_record() {
