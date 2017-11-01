@@ -22,7 +22,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/census-instrumentation/opencensus-go/tag"
+	"go.opencensus.io/tag"
 )
 
 // View allows users to filter and aggregate the recorded events

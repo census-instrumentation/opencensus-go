@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/census-instrumentation/opencensus-go/tag"
+	"go.opencensus.io/tag"
 
 	"golang.org/x/net/context"
 )

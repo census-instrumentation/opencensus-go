@@ -18,7 +18,7 @@ import (
 	"context"
 	"log"
 
-	"github.com/census-instrumentation/opencensus-go/tag"
+	"go.opencensus.io/tag"
 )
 
 func tagsExamples() {

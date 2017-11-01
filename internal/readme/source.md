@@ -20,7 +20,7 @@ doc when it is available.
 ## Installation
 
 ```
-$ go get -u github.com/census-instrumentation/opencensus-go/...
+$ go get -u go.opencensus.io/...
 ```
 
 ## Prerequisites
@@ -159,11 +159,11 @@ Coming soon.
 [travis-url]: https://travis-ci.org/census-instrumentation/opencensus-go
 [appveyor-image]: https://ci.appveyor.com/api/projects/status/vgtt29ps1783ig38?svg=true
 [appveyor-url]: https://ci.appveyor.com/project/opencensusgoteam/opencensus-go/branch/master
-[godoc-image]: https://godoc.org/github.com/census-instrumentation/opencensus-go?status.svg
-[godoc-url]: https://godoc.org/github.com/census-instrumentation/opencensus-go
+[godoc-image]: https://godoc.org/go.opencensus.io?status.svg
+[godoc-url]: https://godoc.org/go.opencensus.io
 [gitter-image]: https://badges.gitter.im/census-instrumentation/lobby.svg
 [gitter-url]: https://gitter.im/census-instrumentation/lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
 
 
-[newtags-ex]: https://godoc.org/github.com/census-instrumentation/opencensus-go/tag#example-NewMap
-[newtags-replace-ex]: https://godoc.org/github.com/census-instrumentation/opencensus-go/tag#example-NewMap--Replace
+[newtags-ex]: https://godoc.org/go.opencensus.io/tag#example-NewMap
+[newtags-replace-ex]: https://godoc.org/go.opencensus.io/tag#example-NewMap--Replace

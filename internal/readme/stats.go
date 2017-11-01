@@ -19,7 +19,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/census-instrumentation/opencensus-go/stats"
+	"go.opencensus.io/stats"
 )
 
 // README.md is generated with the examples here by using embedmd.

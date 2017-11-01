@@ -11,10 +11,6 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
 
-// Package stats contains the OpenCensus stats collection APIs.
-package stats // import "go.opencensus.io/stats"
-
-// TODO(acetechnologist): Add a link to the language independent OpenCensus
-// spec when it is available.
+// Package opencensus contains Go support for OpenCensus.
+package opencensus // import "go.opencensus.io"

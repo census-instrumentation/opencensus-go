@@ -14,14 +14,14 @@
 //
 
 // Package grpcstats provides OpenCensus stats support for gRPC clients and servers.
-package grpcstats
+package grpcstats // import "go.opencensus.io/plugins/grpc/grpcstats"
 
 import (
 	"log"
 	"time"
 
-	istats "github.com/census-instrumentation/opencensus-go/stats"
-	"github.com/census-instrumentation/opencensus-go/tag"
+	istats "go.opencensus.io/stats"
+	"go.opencensus.io/tag"
 )
 
 type grpcInstrumentationKey struct{}

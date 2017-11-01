@@ -20,9 +20,9 @@ import (
 	"sync/atomic"
 	"time"
 
-	istats "github.com/census-instrumentation/opencensus-go/stats"
-	"github.com/census-instrumentation/opencensus-go/tag"
 	"github.com/golang/glog"
+	istats "go.opencensus.io/stats"
+	"go.opencensus.io/tag"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/stats"
 )

@@ -14,4 +14,4 @@
 //
 
 // Package tag contains the OpenCensus tags APIs.
-package tag
+package tag // import "go.opencensus.io/tag"

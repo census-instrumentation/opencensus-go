@@ -21,8 +21,8 @@ import (
 
 	"golang.org/x/net/context"
 
-	istats "github.com/census-instrumentation/opencensus-go/stats"
-	"github.com/census-instrumentation/opencensus-go/tag"
+	istats "go.opencensus.io/stats"
+	"go.opencensus.io/tag"
 
 	"google.golang.org/grpc/stats"
 )
