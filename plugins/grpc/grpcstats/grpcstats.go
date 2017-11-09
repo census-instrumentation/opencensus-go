@@ -24,7 +24,7 @@ import (
 	"go.opencensus.io/tag"
 )
 
-type grpcInstrumentationKey struct{}
+type grpcInstrumentationKey string
 
 // rpcData holds the instrumentation RPC data that is needed between the start
 // and end of an call. It holds the info that this package needs to keep track
@@ -85,7 +85,7 @@ func init() {
 }
 
 var (
-	grpcServerConnKey = &grpcInstrumentationKey{}
-	grpcServerRPCKey  = &grpcInstrumentationKey{}
-	grpcClientRPCKey  = &grpcInstrumentationKey{}
+	grpcServerConnKey = grpcInstrumentationKey("server-conn")
+	grpcServerRPCKey  = grpcInstrumentationKey("server-rpc")
+	grpcClientRPCKey  = grpcInstrumentationKey("client-rpc")
 )
