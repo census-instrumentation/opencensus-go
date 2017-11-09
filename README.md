@@ -7,12 +7,11 @@
 
 OpenCensus Go is a Go implementation of OpenCensus, a toolkit for
 collecting application performance and behavior monitoring data.
-Currently it consists of three major APIs: tags, stats, and tracing.
+Currently it consists of three major components: tags, stats, and tracing.
 
 This project is still at a very early stage of development and
 a lot of the API calls are in the process of being changed and
 might break your code in the future.
-
 
 TODO: Add a link to the language independent OpenCensus
 doc when it is available.

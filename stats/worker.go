@@ -99,10 +99,13 @@ func FindView(name string) (*View, error) {
 	return resp.v, resp.err
 }
 
-// RegisterView registers view. It returns an error if the view cannot be
-// registered. Subsequent calls to Record with the same measure as the one in
-// the view will NOT cause the usage to be recorded unless a consumer is
-// subscribed to the view or ForceCollect for this view is called.
+// RegisterView registers view. It returns an error if the view is already registered.
+//
+// Subscription and force collection automatically registers a view.
+// Most users will not register directly but register via subscription or force
+// collection. Registeration can be used by libraries to claim a view name.
+//
+// Unregister the view once the view is not required anymore.
 func RegisterView(v *View) error {
 	if v == nil {
 		return errors.New("cannot RegisterView for nil view")
@@ -159,8 +162,8 @@ func (v *View) Unsubscribe() error {
 	return <-req.err
 }
 
-// ForceCollect starts data collection for this view even if no
-// listeners are subscribed to it.
+// ForceCollect starts data collection for this view even if it is
+// not subscribed to. The view will be automatically registered.
 func (v *View) ForceCollect() error {
 	if v == nil {
 		return errors.New("cannot for collect nil view")
@@ -174,7 +177,7 @@ func (v *View) ForceCollect() error {
 }
 
 // StopForceCollection stops data collection for this
-// view unless at least 1 listener is subscribed to it.
+// view if view is not subscribed to.
 func (v *View) StopForceCollection() error {
 	if v == nil {
 		return errors.New("cannot stop force collection for nil view")
@@ -214,8 +217,8 @@ func Record(ctx context.Context, ms ...Measurement) {
 }
 
 // SetReportingPeriod sets the interval between reporting aggregated views in
-// the program. Calling SetReportingPeriod with duration argument less than or
-// equal to zero enables the default behavior.
+// the program. If duration is less than or
+// equal to zero, it enables the default behavior.
 func SetReportingPeriod(d time.Duration) {
 	// TODO(acetechnologist): ensure that the duration d is more than a certain
 	// value. e.g. 1s

@@ -24,8 +24,7 @@ package stats
 // NewMeasureFloat64 automatically registers the measure
 // by the given name.
 // Each registered measure needs to be unique by name.
-// Measures also have units that represent the unit of the
-// metric they are representing.
+// Measures also have a description and a unit.
 type Measure interface {
 	Name() string
 	Description() string
