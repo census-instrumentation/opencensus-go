@@ -92,7 +92,7 @@ func (vb *valuesBytes) toSlice(ks []Key) []Tag {
 	for _, k := range ks {
 		v := vb.readValue()
 		if v != nil {
-			tags = append(tags, Tag{k, v})
+			tags = append(tags, Tag{k, string(v)})
 		}
 	}
 	vb.rIdx = 0
@@ -109,7 +109,7 @@ func toValuesBytes(m *Map, ks []Key) *valuesBytes {
 	}
 	for _, k := range ks {
 		v := m.m[k]
-		vb.writeValue(v)
+		vb.writeValue([]byte(v))
 	}
 	return vb
 }
@@ -122,7 +122,7 @@ func EncodeOrderedTags(m *Map, keys []Key) []byte {
 	}
 	for _, k := range keys {
 		v := m.m[k]
-		vb.writeValue(v)
+		vb.writeValue([]byte(v))
 	}
 	return vb.bytes()
 }
@@ -132,6 +132,6 @@ func EncodeOrderedTags(m *Map, keys []Key) []byte {
 func DecodeOrderedTags(buf []byte, keys []Key) []Tag {
 	vb := &valuesBytes{buf: buf}
 	tags := vb.toSlice(keys)
-	sort.Slice(tags, func(i, j int) bool { return tags[i].Key.Name() < tags[j].Key.Name() })
+	sort.Slice(tags, func(i, j int) bool { return tags[i].Key.name < tags[j].Key.name })
 	return tags
 }

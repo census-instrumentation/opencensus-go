@@ -22,13 +22,13 @@ import (
 )
 
 func Test_EncodeDecode_Set(t *testing.T) {
-	k1, _ := NewStringKey("k1")
-	k2, _ := NewStringKey("k2")
-	k3, _ := NewStringKey("k3 is very weird <>.,?/'\";:`~!@#$%^&*()_-+={[}]|\\")
-	k4, _ := NewStringKey("k4")
+	k1, _ := NewKey("k1")
+	k2, _ := NewKey("k2")
+	k3, _ := NewKey("k3 is very weird <>.,?/'\";:`~!@#$%^&*()_-+={[}]|\\")
+	k4, _ := NewKey("k4")
 
 	type pair struct {
-		k StringKey
+		k Key
 		v string
 	}
 
@@ -77,7 +77,7 @@ func Test_EncodeDecode_Set(t *testing.T) {
 	for _, tc := range testCases {
 		mods := make([]Mutator, len(tc.pairs))
 		for i, pair := range tc.pairs {
-			mods[i] = UpsertString(pair.k, pair.v)
+			mods[i] = Upsert(pair.k, pair.v)
 		}
 		ts := NewMap(nil, mods...)
 		encoded := Encode(ts)
@@ -89,16 +89,12 @@ func Test_EncodeDecode_Set(t *testing.T) {
 
 		got := make([]pair, 0)
 		for k, v := range decoded.m {
-			ks, ok := k.(StringKey)
-			if !ok {
-				t.Errorf("%v: wrong key type; got %T, want StringKey", tc.label, k)
-			}
-			got = append(got, pair{ks, string(v)})
+			got = append(got, pair{k, string(v)})
 		}
 		want := tc.pairs
 
-		sort.Slice(got, func(i, j int) bool { return got[i].k.Name() < got[j].k.Name() })
-		sort.Slice(want, func(i, j int) bool { return got[i].k.Name() < got[j].k.Name() })
+		sort.Slice(got, func(i, j int) bool { return got[i].k.name < got[j].k.name })
+		sort.Slice(want, func(i, j int) bool { return got[i].k.name < got[j].k.name })
 
 		if !reflect.DeepEqual(got, tc.pairs) {
 			t.Errorf("%v: decoded tag map = %#v; want %#v", tc.label, got, want)

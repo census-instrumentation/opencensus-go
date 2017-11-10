@@ -37,7 +37,7 @@ func Test_EncodeDecode_ValuesBytes(t *testing.T) {
 		{
 			0,
 			&Map{
-				map[Key][]byte{},
+				map[Key]string{},
 			},
 			[]Key{k1},
 			nil,
@@ -45,7 +45,7 @@ func Test_EncodeDecode_ValuesBytes(t *testing.T) {
 		{
 			1,
 			&Map{
-				map[Key][]byte{k2: []byte("v2")},
+				map[Key]string{k2: "v2"},
 			},
 			[]Key{},
 			nil,
@@ -53,7 +53,7 @@ func Test_EncodeDecode_ValuesBytes(t *testing.T) {
 		{
 			3,
 			&Map{
-				map[Key][]byte{k2: []byte("v2")},
+				map[Key]string{k2: "v2"},
 			},
 			[]Key{k1},
 			nil,
@@ -61,7 +61,7 @@ func Test_EncodeDecode_ValuesBytes(t *testing.T) {
 		{
 			4,
 			&Map{
-				map[Key][]byte{k2: []byte("v2")},
+				map[Key]string{k2: "v2"},
 			},
 			[]Key{k2},
 			map[Key][]byte{
@@ -71,9 +71,9 @@ func Test_EncodeDecode_ValuesBytes(t *testing.T) {
 		{
 			5,
 			&Map{
-				map[Key][]byte{
-					k1: []byte("v1"),
-					k2: []byte("v2")},
+				map[Key]string{
+					k1: "v1",
+					k2: "v2"},
 			},
 			[]Key{k1},
 			map[Key][]byte{
@@ -83,9 +83,9 @@ func Test_EncodeDecode_ValuesBytes(t *testing.T) {
 		{
 			6,
 			&Map{
-				map[Key][]byte{
-					k2: []byte("v2"),
-					k1: []byte("v1")},
+				map[Key]string{
+					k2: "v2",
+					k1: "v1"},
 			},
 			[]Key{k1, k2},
 			map[Key][]byte{
@@ -96,10 +96,10 @@ func Test_EncodeDecode_ValuesBytes(t *testing.T) {
 		{
 			7,
 			&Map{
-				map[Key][]byte{
-					k1: []byte("v1"),
-					k2: []byte("v2"),
-					k3: []byte("v3")},
+				map[Key]string{
+					k1: "v1",
+					k2: "v2",
+					k3: "v3"},
 			},
 			[]Key{k3, k1},
 			map[Key][]byte{
@@ -121,7 +121,7 @@ func Test_EncodeDecode_ValuesBytes(t *testing.T) {
 		for wantK, wantV := range td.wantSlice {
 			v, ok := got[wantK]
 			if !ok {
-				t.Errorf("got key %v not found in decoded %v, want it found. Test case: %v", wantK.Name(), got, i)
+				t.Errorf("got key %v not found in decoded %v, want it found. Test case: %v", wantK.name, got, i)
 			}
 			if !reflect.DeepEqual(v, wantV) {
 				t.Errorf("got tag %v in decoded, want %v. Test case: %v", v, wantV, i)

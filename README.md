@@ -42,7 +42,7 @@ Other types will be supported in the future.
 [embedmd]:# (tags.go stringKey)
 ```go
 // Get a key to represent user OS.
-key, err := tag.NewStringKey("my.org/keys/user-os")
+key, err := tag.NewKey("my.org/keys/user-os")
 if err != nil {
 	log.Fatal(err)
 }
@@ -54,18 +54,18 @@ tag.Map is a map of tags. Package tags provide a builder to create tag maps.
 
 [embedmd]:# (tags.go tagMap)
 ```go
-osKey, err := tag.NewStringKey("my.org/keys/user-os")
+osKey, err := tag.NewKey("my.org/keys/user-os")
 if err != nil {
 	log.Fatal(err)
 }
-userIDKey, err := tag.NewStringKey("my.org/keys/user-id")
+userIDKey, err := tag.NewKey("my.org/keys/user-id")
 if err != nil {
 	log.Fatal(err)
 }
 
 tagMap := tag.NewMap(nil,
-	tag.InsertString(osKey, "macOS-10.12.5"),
-	tag.UpsertString(userIDKey, "cde36753ed"),
+	tag.Insert(osKey, "macOS-10.12.5"),
+	tag.Upsert(userIDKey, "cde36753ed"),
 )
 ```
 
@@ -88,9 +88,9 @@ use NewMap and put the new tag map back to the context.
 ```go
 oldTagMap := tag.FromContext(ctx)
 tagMap = tag.NewMap(oldTagMap,
-	tag.InsertString(key, "macOS-10.12.5"),
-	tag.UpsertString(key, "macOS-10.12.7"),
-	tag.UpsertString(userIDKey, "fff0989878"),
+	tag.Insert(key, "macOS-10.12.5"),
+	tag.Upsert(key, "macOS-10.12.7"),
+	tag.Upsert(userIDKey, "fff0989878"),
 )
 ctx = tag.NewContext(ctx, tagMap)
 ```

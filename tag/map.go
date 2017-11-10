@@ -24,23 +24,12 @@ import (
 // Tag is a key value pair that can be propagated on wire.
 type Tag struct {
 	Key   Key
-	Value []byte
+	Value string
 }
 
 // Map is a map of tags. Use NewMap to build tag maps.
 type Map struct {
-	m map[Key][]byte
-}
-
-// ValueToString represents the binary value of the key as string.
-// It is used for pretty printing.
-// If key is not found in the map, it ok is returned as false.
-func (m *Map) ValueToString(k Key) (s string, ok bool) {
-	b, ok := m.m[k]
-	if !ok {
-		return "", false
-	}
-	return k.ValueToString(b), true
+	m map[Key]string
 }
 
 func (m *Map) String() string {
@@ -53,26 +42,26 @@ func (m *Map) String() string {
 	var buffer bytes.Buffer
 	buffer.WriteString("{ ")
 	for _, k := range keys {
-		buffer.WriteString(fmt.Sprintf("{%v %v}", k.Name(), k.ValueToString(m.m[k])))
+		buffer.WriteString(fmt.Sprintf("{%v %v}", k.name, m.m[k]))
 	}
 	buffer.WriteString(" }")
 	return buffer.String()
 }
 
-func (m *Map) insert(k Key, v []byte) {
+func (m *Map) insert(k Key, v string) {
 	if _, ok := m.m[k]; ok {
 		return
 	}
 	m.m[k] = v
 }
 
-func (m *Map) update(k Key, v []byte) {
+func (m *Map) update(k Key, v string) {
 	if _, ok := m.m[k]; ok {
 		m.m[k] = v
 	}
 }
 
-func (m *Map) upsert(k Key, v []byte) {
+func (m *Map) upsert(k Key, v string) {
 	m.m[k] = v
 }
 
@@ -81,5 +70,5 @@ func (m *Map) delete(k Key) {
 }
 
 func newMap(sizeHint int) *Map {
-	return &Map{m: make(map[Key][]byte, sizeHint)}
+	return &Map{m: make(map[Key]string, sizeHint)}
 }

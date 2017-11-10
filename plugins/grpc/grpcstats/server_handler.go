@@ -164,7 +164,7 @@ func (sh serverHandler) handleRPCEnd(ctx context.Context, s *stats.End) {
 	if s.Error != nil {
 		errorCode := s.Error.Error()
 		tm := tag.NewMap(tag.FromContext(ctx),
-			tag.UpsertString(keyOpStatus, errorCode),
+			tag.Upsert(keyOpStatus, errorCode),
 		)
 		ctx = tag.NewContext(ctx, tm)
 		measurements = append(measurements, RPCServerErrorCount.M(1))
@@ -177,8 +177,8 @@ func (sh serverHandler) handleRPCEnd(ctx context.Context, s *stats.End) {
 // gRPC metadata.
 func (sh serverHandler) createTagMap(ctx context.Context, serviceName, methodName string) (*tag.Map, error) {
 	mods := []tag.Mutator{
-		tag.UpsertString(keyService, serviceName),
-		tag.UpsertString(keyMethod, methodName),
+		tag.Upsert(keyService, serviceName),
+		tag.Upsert(keyMethod, methodName),
 	}
 	if tagsBin := stats.Tags(ctx); tagsBin != nil {
 		old, err := tag.Decode([]byte(tagsBin))

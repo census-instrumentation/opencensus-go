@@ -26,7 +26,7 @@ func tagsExamples() {
 
 	// START stringKey
 	// Get a key to represent user OS.
-	key, err := tag.NewStringKey("my.org/keys/user-os")
+	key, err := tag.NewKey("my.org/keys/user-os")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -34,18 +34,18 @@ func tagsExamples() {
 	_ = key
 
 	// START tagMap
-	osKey, err := tag.NewStringKey("my.org/keys/user-os")
+	osKey, err := tag.NewKey("my.org/keys/user-os")
 	if err != nil {
 		log.Fatal(err)
 	}
-	userIDKey, err := tag.NewStringKey("my.org/keys/user-id")
+	userIDKey, err := tag.NewKey("my.org/keys/user-id")
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	tagMap := tag.NewMap(nil,
-		tag.InsertString(osKey, "macOS-10.12.5"),
-		tag.UpsertString(userIDKey, "cde36753ed"),
+		tag.Insert(osKey, "macOS-10.12.5"),
+		tag.Upsert(userIDKey, "cde36753ed"),
 	)
 	// END tagMap
 
@@ -56,9 +56,9 @@ func tagsExamples() {
 	// START replaceTagMap
 	oldTagMap := tag.FromContext(ctx)
 	tagMap = tag.NewMap(oldTagMap,
-		tag.InsertString(key, "macOS-10.12.5"),
-		tag.UpsertString(key, "macOS-10.12.7"),
-		tag.UpsertString(userIDKey, "fff0989878"),
+		tag.Insert(key, "macOS-10.12.5"),
+		tag.Upsert(key, "macOS-10.12.7"),
+		tag.Upsert(userIDKey, "fff0989878"),
 	)
 	ctx = tag.NewContext(ctx, tagMap)
 	// END replaceTagMap

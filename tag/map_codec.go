@@ -169,8 +169,8 @@ func Encode(m *Map) []byte {
 	eg.writeByte(byte(tagsVersionID))
 	for k, v := range m.m {
 		eg.writeByte(byte(keyTypeString))
-		eg.writeStringWithVarintLen(k.Name())
-		eg.writeBytesWithVarintLen(v)
+		eg.writeStringWithVarintLen(k.name)
+		eg.writeBytesWithVarintLen([]byte(v))
 	}
 
 	return eg.bytes()
@@ -212,12 +212,12 @@ func Decode(bytes []byte) (*Map, error) {
 			return nil, err
 		}
 
-		key, err := NewStringKey(string(k))
+		key, err := NewKey(string(k))
 		if err != nil {
 			// TODO(acetechnologist): log that key received on the wire and its value was ignored
 			continue
 		}
-		ts.upsert(key, v)
+		ts.upsert(key, string(v))
 	}
 
 	return ts, nil
