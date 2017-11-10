@@ -35,7 +35,7 @@ type aggregatorSlidingCount struct {
 }
 
 // newAggregatorSlidingCount creates an aggregatorSlidingCount.
-func newAggregatorSlidingCount(now time.Time, desiredCount uint64, bucketsCount int, newAggregationValue func() AggregationValue) *aggregatorSlidingCount {
+func newAggregatorSlidingCount(now time.Time, desiredCount uint64, bucketsCount int, newAggregationValue func() AggregationData) *aggregatorSlidingCount {
 	var entries []*subBucketEntry
 	// Keeps track of subSetsCount+1 entries in order to approximate the
 	// collected stats without storing every instance.
@@ -69,7 +69,7 @@ func (a *aggregatorSlidingCount) addSample(v interface{}, now time.Time) {
 	e.av.addSample(v)
 }
 
-func (a *aggregatorSlidingCount) retrieveCollected(now time.Time) AggregationValue {
+func (a *aggregatorSlidingCount) retrieveCollected(now time.Time) AggregationData {
 	e := a.entries[a.idx]
 	remaining := float64(a.itemsPerBucket-e.count) / float64(a.itemsPerBucket)
 	oldestIdx := (a.idx + 1) % len(a.entries)
@@ -87,5 +87,5 @@ func (a *aggregatorSlidingCount) retrieveCollected(now time.Time) AggregationVal
 
 type subBucketEntry struct {
 	count uint64
-	av    AggregationValue
+	av    AggregationData
 }

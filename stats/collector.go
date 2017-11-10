@@ -36,7 +36,7 @@ type collector struct {
 func (c *collector) addSample(s string, v interface{}, now time.Time) {
 	aggregator, ok := c.signatures[s]
 	if !ok {
-		aggregator = c.w.newAggregator(now, c.a.aggregationValueConstructor())
+		aggregator = c.w.newAggregator(now, c.a.newData())
 		c.signatures[s] = aggregator
 	}
 	aggregator.addSample(v, now)

@@ -151,8 +151,8 @@ type ViewData struct {
 
 // Row is the collected value for a specific set of key value pairs a.k.a tags.
 type Row struct {
-	Tags             []tag.Tag
-	AggregationValue AggregationValue
+	Tags []tag.Tag
+	Data AggregationData
 }
 
 func (r *Row) String() string {
@@ -163,7 +163,7 @@ func (r *Row) String() string {
 		buffer.WriteString(fmt.Sprintf("{%v %v}", t.Key.Name(), t.Value))
 	}
 	buffer.WriteString(" }")
-	buffer.WriteString(fmt.Sprintf("%v", r.AggregationValue))
+	buffer.WriteString(fmt.Sprintf("%v", r.Data))
 	buffer.WriteString(" }")
 	return buffer.String()
 }
@@ -176,7 +176,7 @@ func (r *Row) Equal(other *Row) bool {
 		return true
 	}
 
-	return reflect.DeepEqual(r.Tags, other.Tags) && r.AggregationValue.equal(other.AggregationValue)
+	return reflect.DeepEqual(r.Tags, other.Tags) && r.Data.equal(other.Data)
 }
 
 // ContainsRow returns true if rows contain r.
