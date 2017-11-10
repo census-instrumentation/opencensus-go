@@ -140,15 +140,6 @@ An example logger exporter is below:
 
 [embedmd]:# (stats.go exporter)
 
-### Force collecting data on demand
-
-Even if a view is registered, if it has no subscriber no data
-for it is collected. In order to retrieve data on demand from a
-view, library can be instructed explicitly to collect
-data for the desired view.
-
-[embedmd]:# (stats.go forceCollect)
-
 ## Tracing
 
 Coming soon.

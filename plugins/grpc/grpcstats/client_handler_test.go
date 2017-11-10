@@ -310,10 +310,7 @@ func TestClientDefaultCollections(t *testing.T) {
 	for _, tc := range tcs {
 		// Register views.
 		for _, v := range clientViews {
-			if err := istats.RegisterView(v); err != nil {
-				t.Error(err)
-			}
-			if err := v.ForceCollect(); err != nil {
+			if err := v.Subscribe(); err != nil {
 				t.Error(err)
 			}
 		}
@@ -365,10 +362,7 @@ func TestClientDefaultCollections(t *testing.T) {
 
 		// Unregister views to cleanup.
 		for _, v := range clientViews {
-			if err := v.StopForceCollection(); err != nil {
-				t.Error(err)
-			}
-			if err := v.Unregister(); err != nil {
+			if err := v.Unsubscribe(); err != nil {
 				t.Error(err)
 			}
 		}

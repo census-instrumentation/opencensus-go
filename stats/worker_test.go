@@ -268,9 +268,8 @@ func Test_Worker_ViewRegistration(t *testing.T) {
 	sc1 := make(chan *ViewData)
 
 	type registerWant struct {
-		vID                string
-		err                error
-		isForcedCollection bool
+		vID string
+		err error
 	}
 	type unregisterWant struct {
 		vID string
@@ -296,12 +295,11 @@ func Test_Worker_ViewRegistration(t *testing.T) {
 	}
 	tcs := []testCase{
 		{
-			"0",
+			"register and subscribe to v1ID",
 			[]registerWant{
 				{
 					"v1ID",
 					nil,
-					true,
 				},
 			},
 			[]subscription{
@@ -331,17 +329,15 @@ func Test_Worker_ViewRegistration(t *testing.T) {
 			},
 		},
 		{
-			"1",
+			"register v1ID+v2ID, susbsribe to v1ID",
 			[]registerWant{
 				{
 					"v1ID",
 					nil,
-					false,
 				},
 				{
 					"v2ID",
 					nil,
-					true,
 				},
 			},
 			[]subscription{
@@ -375,12 +371,11 @@ func Test_Worker_ViewRegistration(t *testing.T) {
 			},
 		},
 		{
-			"2",
+			"register to v1ID; subscribe to v1ID and view with same ID",
 			[]registerWant{
 				{
 					"v1ID",
 					nil,
-					true,
 				},
 			},
 			[]subscription{
@@ -434,7 +429,7 @@ func Test_Worker_ViewRegistration(t *testing.T) {
 			if (err != nil) != (reg.err != nil) {
 				t.Errorf("RegisterView. got error %v, want %v. Test case: %v", err, reg.err, tc.label)
 			}
-			v.ForceCollect()
+			v.subscribe()
 		}
 
 		for _, s := range tc.subscriptions {
@@ -487,30 +482,23 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 	v1 := NewView("VF1", "desc VF1", []tag.Key{k1, k2}, m, CountAggregation{}, CumulativeWindow{})
 	v2 := NewView("VF2", "desc VF2", []tag.Key{k1, k2}, m, CountAggregation{}, CumulativeWindow{})
 
-	c1 := make(chan *ViewData)
-	type subscription struct {
-		v *View
-		c chan *ViewData
-	}
 	type want struct {
 		v    *View
 		rows []*Row
 		err  error
 	}
 	type testCase struct {
-		label           string
-		registrations   []*View
-		subscriptions   []subscription
-		forcedCollected []*View
-		records         []float64
-		wants           []want
+		label         string
+		registrations []*View
+		subscriptions []*View
+		records       []float64
+		wants         []want
 	}
 
 	tcs := []testCase{
 		{
 			"0",
 			[]*View{v1, v2},
-			[]subscription{},
 			[]*View{},
 			[]float64{1, 1},
 			[]want{{v1, nil, someError}, {v2, nil, someError}},
@@ -518,7 +506,6 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 		{
 			"1",
 			[]*View{v1, v2},
-			[]subscription{},
 			[]*View{v1},
 			[]float64{1, 1},
 			[]want{
@@ -538,7 +525,6 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 		{
 			"2",
 			[]*View{v1, v2},
-			[]subscription{},
 			[]*View{v1, v2},
 			[]float64{1, 1},
 			[]want{
@@ -558,84 +544,6 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 						{
 							[]tag.Tag{{Key: k1, Value: "v1"}, {Key: k2, Value: "v2"}},
 							newCountData(2),
-						},
-					},
-					nil,
-				},
-			},
-		},
-		{
-			"3",
-			[]*View{v1, v2},
-			[]subscription{{v1, c1}},
-			[]*View{},
-			[]float64{1, 1},
-			[]want{
-				{
-					v1,
-					[]*Row{
-						{
-							[]tag.Tag{{Key: k1, Value: "v1"}, {Key: k2, Value: "v2"}},
-							newCountData(2),
-						},
-					},
-					nil,
-				},
-				{v2, nil, someError},
-			},
-		},
-		{
-			"4",
-			[]*View{v1, v2},
-			[]subscription{{v1, c1}, {v2, c1}},
-			[]*View{},
-			[]float64{1, 1},
-			[]want{
-				{
-					v1,
-					[]*Row{
-						{
-							[]tag.Tag{{Key: k1, Value: "v1"}, {Key: k2, Value: "v2"}},
-							newCountData(2),
-						},
-					},
-					nil,
-				},
-				{
-					v2,
-					[]*Row{
-						{
-							[]tag.Tag{{Key: k1, Value: "v1"}, {Key: k2, Value: "v2"}},
-							newCountData(2),
-						},
-					},
-					nil,
-				},
-			},
-		},
-		{
-			"5",
-			[]*View{v1, v2},
-			[]subscription{{v1, c1}},
-			[]*View{v2},
-			[]float64{1, 1, 10},
-			[]want{
-				{
-					v1,
-					[]*Row{
-						{
-							[]tag.Tag{{Key: k1, Value: "v1"}, {Key: k2, Value: "v2"}},
-							newCountData(3),
-						},
-					},
-					nil,
-				},
-				{
-					v2,
-					[]*Row{
-						{
-							[]tag.Tag{{Key: k1, Value: "v1"}, {Key: k2, Value: "v2"}},
-							newCountData(3),
 						},
 					},
 					nil,
@@ -647,19 +555,13 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 	for _, tc := range tcs {
 		for _, v := range tc.registrations {
 			if err := RegisterView(v); err != nil {
-				t.Fatalf("RegisterView '%v' got error '%v', want no error for test case: '%v'", v.Name(), err, tc.label)
+				t.Fatalf("%v: RegisterView(%v) = %v; want no errors", tc.label, v.Name(), err)
 			}
 		}
 
-		for _, s := range tc.subscriptions {
-			if err := s.v.Subscribe(); err != nil {
-				t.Fatalf("Subscribe '%v' got error '%v', want no error for test case: '%v'", s.v.Name(), err, tc.label)
-			}
-		}
-
-		for _, v := range tc.forcedCollected {
-			if err := v.ForceCollect(); err != nil {
-				t.Fatalf("ForceCollect '%v' got error '%v', want no error for test case: '%v'", v.Name(), err, tc.label)
+		for _, v := range tc.subscriptions {
+			if err := v.Subscribe(); err != nil {
+				t.Fatalf("%v: Subscribe(%v) = %v; want no errors", tc.label, v.Name(), err)
 			}
 		}
 
@@ -670,33 +572,26 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 		for _, w := range tc.wants {
 			gotRows, err := w.v.RetrieveData()
 			if (err != nil) != (w.err != nil) {
-				t.Fatalf("RetrieveData '%v' got error '%v', want no error for test case: '%v'", w.v.Name(), err, tc.label)
+				t.Fatalf("%v: RetrieveData(%v) = %v; want no errors", tc.label, w.v.Name(), err)
 			}
-			for _, gotRow := range gotRows {
-				if !ContainsRow(w.rows, gotRow) {
-					t.Errorf("got unexpected row '%v' for test case: '%v'", gotRow, tc.label)
+			for _, got := range gotRows {
+				if !ContainsRow(w.rows, got) {
+					t.Errorf("%v: got row %v; want none", tc.label, got)
 					break
 				}
 			}
-
-			for _, wantRow := range w.rows {
-				if !ContainsRow(gotRows, wantRow) {
-					t.Errorf("want row '%v' for test case: '%v'. Not received", wantRow, tc.label)
+			for _, want := range w.rows {
+				if !ContainsRow(gotRows, want) {
+					t.Errorf("%v: got none; want %v'", tc.label, want)
 					break
 				}
 			}
 		}
 
 		// cleaning up
-		for _, v := range tc.forcedCollected {
-			if err := v.StopForceCollection(); err != nil {
-				t.Fatalf("%v: StopForceCollection for %v = %v; want no errors", tc.label, v.Name(), err)
-			}
-		}
-
-		for _, s := range tc.subscriptions {
-			if err := s.v.Unsubscribe(); err != nil {
-				t.Fatalf("%v: Unsubscribing from view %v errored with %v; want no error", tc.label, s.v.Name(), err)
+		for _, v := range tc.subscriptions {
+			if err := v.Unsubscribe(); err != nil {
+				t.Fatalf("%v: Unsubscribing from view %v errored with %v; want no error", tc.label, v.Name(), err)
 			}
 		}
 

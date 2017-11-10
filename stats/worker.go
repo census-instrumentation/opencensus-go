@@ -102,16 +102,12 @@ func FindView(name string) (v *View, ok bool) {
 
 // RegisterView registers view. It returns an error if the view is already registered.
 //
-// Subscription and force collection automatically registers a view.
-// Most users will not register directly but register via subscription or force
-// collection. Registeration can be used by libraries to claim a view name.
+// Subscription automatically registers a view.
+// Most users will not register directly but register via subscription.
+// Registeration can be used by libraries to claim a view name.
 //
 // Unregister the view once the view is not required anymore.
 func RegisterView(v *View) error {
-	if v == nil {
-		return errors.New("cannot RegisterView for nil view")
-	}
-
 	req := &registerViewReq{
 		v:   v,
 		err: make(chan error),
@@ -124,9 +120,6 @@ func RegisterView(v *View) error {
 // if the view wasn't registered. All data collected and not reported for the
 // corresponding view will be lost. The view is automatically be unsubscribed.
 func (v *View) Unregister() error {
-	if v == nil {
-		return errors.New("cannot UnregisterView for nil view")
-	}
 	req := &unregisterViewReq{
 		v:   v,
 		err: make(chan error),
@@ -156,34 +149,6 @@ func (v *View) Subscribe() error {
 // view.
 func (v *View) Unsubscribe() error {
 	req := &unsubscribeFromViewReq{
-		v:   v,
-		err: make(chan error),
-	}
-	defaultWorker.c <- req
-	return <-req.err
-}
-
-// ForceCollect starts data collection for this view even if it is
-// not subscribed to. The view will be automatically registered.
-func (v *View) ForceCollect() error {
-	if v == nil {
-		return errors.New("cannot for collect nil view")
-	}
-	req := &startForcedCollectionReq{
-		v:   v,
-		err: make(chan error),
-	}
-	defaultWorker.c <- req
-	return <-req.err
-}
-
-// StopForceCollection stops data collection for this
-// view if view is not subscribed to.
-func (v *View) StopForceCollection() error {
-	if v == nil {
-		return errors.New("cannot stop force collection for nil view")
-	}
-	req := &stopForcedCollectionReq{
 		v:   v,
 		err: make(chan error),
 	}
