@@ -136,7 +136,7 @@ func (v *View) addSample(m *tag.Map, val interface{}, now time.Time) {
 	if !v.isCollecting() {
 		return
 	}
-	sig := string(tag.EncodeOrderedTags(m, v.tagKeys))
+	sig := string(encodeWithKeys(m, v.tagKeys))
 	v.collector.addSample(sig, val, now)
 }
 
