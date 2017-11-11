@@ -188,16 +188,3 @@ func ContainsRow(rows []*Row, r *Row) bool {
 	}
 	return false
 }
-
-// EqualRows returns true if rows1 and rows2 contain exactly the same data.
-func EqualRows(rows1, rows2 []*Row) bool {
-	if len(rows1) != len(rows2) {
-		return false
-	}
-	for _, r1 := range rows1 {
-		if !ContainsRow(rows2, r1) {
-			return false
-		}
-	}
-	return true
-}
