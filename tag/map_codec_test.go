@@ -79,7 +79,10 @@ func Test_EncodeDecode_Set(t *testing.T) {
 		for i, pair := range tc.pairs {
 			mods[i] = Upsert(pair.k, pair.v)
 		}
-		ts := NewMap(nil, mods...)
+		ts, err := NewMap(nil, mods...)
+		if err != nil {
+			t.Errorf("%v: NewMap = %v", tc.label, err)
+		}
 		encoded := Encode(ts)
 		decoded, err := Decode(encoded)
 

@@ -26,7 +26,7 @@ func TestContext(t *testing.T) {
 	k1, _ := NewKey("k1")
 	k2, _ := NewKey("k2")
 
-	want := NewMap(nil,
+	want, _ := NewMap(nil,
 		Insert(k1, "v1"),
 		Insert(k2, "v2"),
 	)
@@ -114,7 +114,10 @@ func TestNewMap(t *testing.T) {
 			Delete(k1),
 		}
 		mods = append(mods, tt.mods...)
-		got := NewMap(tt.initial, mods...)
+		got, err := NewMap(tt.initial, mods...)
+		if err != nil {
+			t.Errorf("%v: NewMap = %v", tt.name, err)
+		}
 
 		if !reflect.DeepEqual(got, tt.want) {
 			t.Errorf("%v: got %v; want %v", tt.name, got, tt.want)

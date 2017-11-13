@@ -40,38 +40,43 @@ func TestEncodeDecodeTags(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	m1, _ := tag.NewMap(nil)
+	m2, _ := tag.NewMap(nil, tag.Insert(k2, "v2"))
+	m3, _ := tag.NewMap(nil, tag.Insert(k1, "v1"), tag.Insert(k2, "v2"))
+	m4, _ := tag.NewMap(nil, tag.Insert(k1, "v1"), tag.Insert(k2, "v2"), tag.Insert(k3, "v3"))
+
 	tests := []testData{
 		{
-			tag.NewMap(nil),
+			m1,
 			[]tag.Key{k1},
 			nil,
 		},
 		{
-			tag.NewMap(nil, tag.Insert(k2, "v2")),
+			m2,
 			[]tag.Key{},
 			nil,
 		},
 		{
-			tag.NewMap(nil, tag.Insert(k2, "v2")),
+			m2,
 			[]tag.Key{k1},
 			nil,
 		},
 		{
-			tag.NewMap(nil, tag.Insert(k2, "v2")),
+			m2,
 			[]tag.Key{k2},
 			map[tag.Key][]byte{
 				k2: []byte("v2"),
 			},
 		},
 		{
-			tag.NewMap(nil, tag.Insert(k1, "v1"), tag.Insert(k2, "v2")),
+			m3,
 			[]tag.Key{k1},
 			map[tag.Key][]byte{
 				k1: []byte("v1"),
 			},
 		},
 		{
-			tag.NewMap(nil, tag.Insert(k1, "v1"), tag.Insert(k2, "v2")),
+			m3,
 			[]tag.Key{k1, k2},
 			map[tag.Key][]byte{
 				k1: []byte("v1"),
@@ -79,7 +84,7 @@ func TestEncodeDecodeTags(t *testing.T) {
 			},
 		},
 		{
-			tag.NewMap(nil, tag.Insert(k1, "v1"), tag.Insert(k2, "v2"), tag.Insert(k3, "v3")),
+			m4,
 			[]tag.Key{k3, k1},
 			map[tag.Key][]byte{
 				k1: []byte("v1"),

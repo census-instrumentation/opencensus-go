@@ -17,7 +17,7 @@ package tag
 
 // Mutator modifies a tag map.
 type Mutator interface {
-	Mutate(t *Map) *Map
+	Mutate(t *Map) (*Map, error)
 }
 
 // Key represents a tag key. Keys with the same name will return
@@ -39,10 +39,10 @@ func (k Key) Name() string {
 }
 
 type mutator struct {
-	fn func(t *Map) *Map
+	fn func(t *Map) (*Map, error)
 }
 
-func (m *mutator) Mutate(t *Map) *Map {
+func (m *mutator) Mutate(t *Map) (*Map, error) {
 	return m.fn(t)
 }
 
@@ -51,9 +51,9 @@ func (m *mutator) Mutate(t *Map) *Map {
 // mutator doesn't update the value.
 func Insert(k Key, v string) Mutator {
 	return &mutator{
-		fn: func(m *Map) *Map {
+		fn: func(m *Map) (*Map, error) {
 			m.insert(k, v)
-			return m
+			return m, nil
 		},
 	}
 }
@@ -63,9 +63,9 @@ func Insert(k Key, v string) Mutator {
 // exists in the tag map, the mutator doesn't insert the value.
 func Update(k Key, v string) Mutator {
 	return &mutator{
-		fn: func(m *Map) *Map {
+		fn: func(m *Map) (*Map, error) {
 			m.update(k, v)
-			return m
+			return m, nil
 		},
 	}
 }
@@ -76,9 +76,9 @@ func Update(k Key, v string) Mutator {
 // if k already exists.
 func Upsert(k Key, v string) Mutator {
 	return &mutator{
-		fn: func(m *Map) *Map {
+		fn: func(m *Map) (*Map, error) {
 			m.upsert(k, v)
-			return m
+			return m, nil
 		},
 	}
 }
@@ -87,16 +87,17 @@ func Upsert(k Key, v string) Mutator {
 // the value associated with k.
 func Delete(k Key) Mutator {
 	return &mutator{
-		fn: func(m *Map) *Map {
+		fn: func(m *Map) (*Map, error) {
 			m.delete(k)
-			return m
+			return m, nil
 		},
 	}
 }
 
 // NewMap returns a new tag map originated from orig,
 // modified with the provided mutators.
-func NewMap(orig *Map, mutator ...Mutator) *Map {
+func NewMap(orig *Map, mutator ...Mutator) (*Map, error) {
+	// TODO(jbd): Implement validation of keys and values.
 	var m *Map
 	if orig == nil {
 		m = newMap(0)
@@ -106,8 +107,12 @@ func NewMap(orig *Map, mutator ...Mutator) *Map {
 			m.insert(k, v)
 		}
 	}
+	var err error
 	for _, mod := range mutator {
-		m = mod.Mutate(m)
+		m, err = mod.Mutate(m)
+		if err != nil {
+			return nil, err
+		}
 	}
-	return m
+	return m, nil
 }

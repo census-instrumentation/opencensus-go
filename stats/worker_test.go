@@ -473,10 +473,13 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 
 	k1, _ := tag.NewKey("k1")
 	k2, _ := tag.NewKey("k2")
-	ts := tag.NewMap(nil,
+	ts, err := tag.NewMap(nil,
 		tag.Insert(k1, "v1"),
 		tag.Insert(k2, "v2"),
 	)
+	if err != nil {
+		t.Fatal(err)
+	}
 	ctx := tag.NewContext(context.Background(), ts)
 
 	v1 := NewView("VF1", "desc VF1", []tag.Key{k1, k2}, m, CountAggregation{}, CumulativeWindow{})
