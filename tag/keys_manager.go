@@ -51,23 +51,19 @@ func newKeysManager() *keysManager {
 // newStringKey creates or retrieves a key of type keyString with name/ID
 // set to the input argument name. Returns an error if a key with the same name
 // exists and is of a different type.
-func (km *keysManager) newStringKey(name string) (StringKey, error) {
+func (km *keysManager) newStringKey(name string) (Key, error) {
 	if !validateKeyName(name) {
-		return StringKey{}, fmt.Errorf("key name %v is invalid", name)
+		return Key{}, fmt.Errorf("key name %v is invalid", name)
 	}
 	km.Lock()
 	defer km.Unlock()
 
 	k, ok := km.keys[name]
 	if ok {
-		ks, ok := k.(StringKey)
-		if !ok {
-			return StringKey{}, fmt.Errorf("key with name %v cannot be created/retrieved as type *keyString. It was already registered as type %T", name, k)
-		}
-		return ks, nil
+		return k, nil
 	}
 
-	ks := StringKey{
+	ks := Key{
 		name: name,
 		id:   km.nextKeyID,
 	}

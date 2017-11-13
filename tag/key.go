@@ -22,36 +22,20 @@ type Mutator interface {
 
 // Key represents a tag key. Keys with the same name will return
 // true when compared with the == operator.
-type Key interface {
-	// Name returns the name of the key.
-	Name() string
-
-	// ValueToString represents the binary value of the key as string.
-	// It is used for pretty printing.
-	ValueToString(v []byte) string
-}
-
-// StringKey is a Key and represents string keys.
-type StringKey struct {
+type Key struct {
 	id   uint16
 	name string
 }
 
-// NewStringKey creates or retrieves a string key identified by name.
-// Calling NewStringKey consequently with the same name returns the same key.
-func NewStringKey(name string) (StringKey, error) {
+// NewKey creates or retrieves a string key identified by name.
+// Calling NewKey consequently with the same name returns the same key.
+func NewKey(name string) (Key, error) {
 	return km.newStringKey(name)
 }
 
 // Name returns the name of the key.
-func (k StringKey) Name() string {
+func (k Key) Name() string {
 	return k.name
-}
-
-// ValueToString represents the binary value of the key as string.
-// It is used for pretty printing.
-func (k StringKey) ValueToString(v []byte) string {
-	return string(v)
 }
 
 type mutator struct {
@@ -62,38 +46,38 @@ func (m *mutator) Mutate(t *Map) *Map {
 	return m.fn(t)
 }
 
-// InsertString returns a mutator that inserts a
+// Insert returns a mutator that inserts a
 // value associated with k. If k already exists in the tag map,
 // mutator doesn't update the value.
-func InsertString(k StringKey, v string) Mutator {
+func Insert(k Key, v string) Mutator {
 	return &mutator{
 		fn: func(m *Map) *Map {
-			m.insert(k, []byte(v))
+			m.insert(k, v)
 			return m
 		},
 	}
 }
 
-// UpdateString returns a mutator that updates the
+// Update returns a mutator that updates the
 // value of the tag associated with k with v. If k doesn't
 // exists in the tag map, the mutator doesn't insert the value.
-func UpdateString(k StringKey, v string) Mutator {
+func Update(k Key, v string) Mutator {
 	return &mutator{
 		fn: func(m *Map) *Map {
-			m.update(k, []byte(v))
+			m.update(k, v)
 			return m
 		},
 	}
 }
 
-// UpsertString returns a mutator that upserts the
+// Upsert returns a mutator that upserts the
 // value of the tag associated with k with v. It inserts the
 // value if k doesn't exist already. It mutates the value
 // if k already exists.
-func UpsertString(k StringKey, v string) Mutator {
+func Upsert(k Key, v string) Mutator {
 	return &mutator{
 		fn: func(m *Map) *Map {
-			m.upsert(k, []byte(v))
+			m.upsert(k, v)
 			return m
 		},
 	}

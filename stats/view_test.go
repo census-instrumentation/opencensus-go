@@ -23,14 +23,14 @@ import (
 )
 
 func Test_View_MeasureFloat64_AggregationDistribution_WindowCumulative(t *testing.T) {
-	k1, _ := tag.NewStringKey("k1")
-	k2, _ := tag.NewStringKey("k2")
-	k3, _ := tag.NewStringKey("k3")
+	k1, _ := tag.NewKey("k1")
+	k2, _ := tag.NewKey("k2")
+	k3, _ := tag.NewKey("k3")
 	agg1 := DistributionAggregation([]float64{2})
 	vw1 := NewView("VF1", "desc VF1", []tag.Key{k1, k2}, nil, agg1, CumulativeWindow{})
 
 	type tagString struct {
-		k tag.StringKey
+		k tag.Key
 		v string
 	}
 	type record struct {
@@ -53,7 +53,7 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowCumulative(t *testin
 			},
 			[]*Row{
 				{
-					[]tag.Tag{{Key: k1, Value: []byte("v1")}},
+					[]tag.Tag{{Key: k1, Value: "v1"}},
 					&DistributionAggregationValue{
 						2, 1, 5, 3, 8, []int64{1, 1}, agg1,
 					},
@@ -68,13 +68,13 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowCumulative(t *testin
 			},
 			[]*Row{
 				{
-					[]tag.Tag{{Key: k1, Value: []byte("v1")}},
+					[]tag.Tag{{Key: k1, Value: "v1"}},
 					&DistributionAggregationValue{
 						1, 1, 1, 1, 0, []int64{1, 0}, agg1,
 					},
 				},
 				{
-					[]tag.Tag{{Key: k2, Value: []byte("v2")}},
+					[]tag.Tag{{Key: k2, Value: "v2"}},
 					&DistributionAggregationValue{
 						1, 5, 5, 5, 0, []int64{0, 1}, agg1,
 					},
@@ -92,25 +92,25 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowCumulative(t *testin
 			},
 			[]*Row{
 				{
-					[]tag.Tag{{Key: k1, Value: []byte("v1")}},
+					[]tag.Tag{{Key: k1, Value: "v1"}},
 					&DistributionAggregationValue{
 						2, 1, 5, 3, 8, []int64{1, 1}, agg1,
 					},
 				},
 				{
-					[]tag.Tag{{Key: k1, Value: []byte("v1 other")}},
+					[]tag.Tag{{Key: k1, Value: "v1 other"}},
 					&DistributionAggregationValue{
 						1, 1, 1, 1, 0, []int64{1, 0}, agg1,
 					},
 				},
 				{
-					[]tag.Tag{{Key: k2, Value: []byte("v2")}},
+					[]tag.Tag{{Key: k2, Value: "v2"}},
 					&DistributionAggregationValue{
 						1, 5, 5, 5, 0, []int64{0, 1}, agg1,
 					},
 				},
 				{
-					[]tag.Tag{{Key: k1, Value: []byte("v1")}, {Key: k2, Value: []byte("v2")}},
+					[]tag.Tag{{Key: k1, Value: "v1"}, {Key: k2, Value: "v2"}},
 					&DistributionAggregationValue{
 						1, 5, 5, 5, 0, []int64{0, 1}, agg1,
 					},
@@ -130,19 +130,19 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowCumulative(t *testin
 			},
 			[]*Row{
 				{
-					[]tag.Tag{{Key: k1, Value: []byte("v1 is a very long value key")}},
+					[]tag.Tag{{Key: k1, Value: "v1 is a very long value key"}},
 					&DistributionAggregationValue{
 						2, 1, 5, 3, 8, []int64{1, 1}, agg1,
 					},
 				},
 				{
-					[]tag.Tag{{Key: k1, Value: []byte("v1 is another very long value key")}},
+					[]tag.Tag{{Key: k1, Value: "v1 is another very long value key"}},
 					&DistributionAggregationValue{
 						1, 1, 1, 1, 0, []int64{1, 0}, agg1,
 					},
 				},
 				{
-					[]tag.Tag{{Key: k1, Value: []byte("v1 is a very long value key")}, {Key: k2, Value: []byte("v2 is a very long value key")}},
+					[]tag.Tag{{Key: k1, Value: "v1 is a very long value key"}, {Key: k2, Value: "v2 is a very long value key"}},
 					&DistributionAggregationValue{
 						4, 1, 5, 3, 2.66666666666667 * 3, []int64{1, 3}, agg1,
 					},
@@ -157,24 +157,23 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowCumulative(t *testin
 		for _, r := range tc.records {
 			mods := []tag.Mutator{}
 			for _, t := range r.tags {
-				mods = append(mods, tag.InsertString(t.k, t.v))
+				mods = append(mods, tag.Insert(t.k, t.v))
 			}
 			ts := tag.NewMap(nil, mods...)
 			vw1.addSample(ts, r.f, time.Now())
 		}
 
 		gotRows := vw1.collectedRows(time.Now())
-
-		for _, gotRow := range gotRows {
-			if !ContainsRow(tc.wantRows, gotRow) {
-				t.Errorf("got unexpected row '%v' for test case: '%v'", gotRow, tc.label)
+		for i, got := range gotRows {
+			if !ContainsRow(tc.wantRows, got) {
+				t.Errorf("%v-%d: got row %v; want none", tc.label, i, got)
 				break
 			}
 		}
 
-		for _, wantRow := range tc.wantRows {
-			if !ContainsRow(gotRows, wantRow) {
-				t.Errorf("want row '%v' for test case: '%v'. Not received", wantRow, tc.label)
+		for i, want := range tc.wantRows {
+			if !ContainsRow(gotRows, want) {
+				t.Errorf("%v-%d: got none; want row %v", tc.label, i, want)
 				break
 			}
 		}
@@ -184,13 +183,13 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowCumulative(t *testin
 func Test_View_MeasureFloat64_AggregationDistribution_WindowSlidingTime(t *testing.T) {
 	startTime := time.Date(2010, 1, 1, 0, 0, 0, 0, time.UTC)
 
-	k1, _ := tag.NewStringKey("k1")
-	k2, _ := tag.NewStringKey("k2")
+	k1, _ := tag.NewKey("k1")
+	k2, _ := tag.NewKey("k2")
 	agg1 := DistributionAggregation([]float64{2})
 	vw1 := NewView("VF1", "desc VF1", []tag.Key{k1, k2}, nil, agg1, SlidingTimeWindow{10 * time.Second, 5})
 
 	type tagString struct {
-		k tag.StringKey
+		k tag.Key
 		v string
 	}
 	type record struct {
@@ -229,7 +228,7 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowSlidingTime(t *testi
 					startTime.Add(14 * time.Second),
 					[]*Row{
 						{
-							[]tag.Tag{{Key: k1, Value: []byte("v1")}},
+							[]tag.Tag{{Key: k1, Value: "v1"}},
 							&DistributionAggregationValue{
 								6, 2, 5, 3.8333333333, 1.3666666667 * 5, []int64{0, 6}, agg1,
 							},
@@ -241,7 +240,7 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowSlidingTime(t *testi
 					startTime.Add(18 * time.Second),
 					[]*Row{
 						{
-							[]tag.Tag{{Key: k1, Value: []byte("v1")}},
+							[]tag.Tag{{Key: k1, Value: "v1"}},
 							&DistributionAggregationValue{
 								4, 3, 5, 4, 0.6666666667 * 3, []int64{0, 4}, agg1,
 							},
@@ -253,7 +252,7 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowSlidingTime(t *testi
 					startTime.Add(22 * time.Second),
 					[]*Row{
 						{
-							[]tag.Tag{{Key: k1, Value: []byte("v1")}},
+							[]tag.Tag{{Key: k1, Value: "v1"}},
 							&DistributionAggregationValue{
 								2, 3, 4, 3.5, 0.5, []int64{0, 2}, agg1,
 							},
@@ -279,7 +278,7 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowSlidingTime(t *testi
 					startTime.Add(10 * time.Second),
 					[]*Row{
 						{
-							[]tag.Tag{{Key: k1, Value: []byte("v1")}},
+							[]tag.Tag{{Key: k1, Value: "v1"}},
 							&DistributionAggregationValue{
 								7, 1, 5, 3.57142857142857, 2.61904761904762 * 6, []int64{1, 6}, agg1,
 							},
@@ -291,7 +290,7 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowSlidingTime(t *testi
 					startTime.Add(12 * time.Second),
 					[]*Row{
 						{
-							[]tag.Tag{{Key: k1, Value: []byte("v1")}},
+							[]tag.Tag{{Key: k1, Value: "v1"}},
 							&DistributionAggregationValue{
 								7, 1, 5, 3.57142857142857, 2.61904761904762 * 6, []int64{1, 6}, agg1,
 							},
@@ -303,7 +302,7 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowSlidingTime(t *testi
 					startTime.Add(15 * time.Second),
 					[]*Row{
 						{
-							[]tag.Tag{{Key: k1, Value: []byte("v1")}},
+							[]tag.Tag{{Key: k1, Value: "v1"}},
 							&DistributionAggregationValue{
 								6, 2, 5, 4, 1.6 * 5, []int64{0, 6}, agg1,
 							},
@@ -315,7 +314,7 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowSlidingTime(t *testi
 					startTime.Add(17*time.Second - 1*time.Millisecond),
 					[]*Row{
 						{
-							[]tag.Tag{{Key: k1, Value: []byte("v1")}},
+							[]tag.Tag{{Key: k1, Value: "v1"}},
 							&DistributionAggregationValue{
 								6, 2, 5, 4, 1.6 * 5, []int64{0, 6}, agg1,
 							},
@@ -327,7 +326,7 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowSlidingTime(t *testi
 					startTime.Add(18 * time.Second),
 					[]*Row{
 						{
-							[]tag.Tag{{Key: k1, Value: []byte("v1")}},
+							[]tag.Tag{{Key: k1, Value: "v1"}},
 							&DistributionAggregationValue{
 								4, 4, 5, 4.75, 0.25 * 3, []int64{0, 4}, agg1,
 							},
@@ -344,7 +343,7 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowSlidingTime(t *testi
 		for _, r := range tc.records {
 			mods := []tag.Mutator{}
 			for _, t := range r.tags {
-				mods = append(mods, tag.InsertString(t.k, t.v))
+				mods = append(mods, tag.Insert(t.k, t.v))
 			}
 			ts := tag.NewMap(nil, mods...)
 			vw1.addSample(ts, r.f, r.now)
@@ -374,13 +373,13 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowSlidingTime(t *testi
 func Test_View_MeasureFloat64_AggregationCount_WindowSlidingTime(t *testing.T) {
 	startTime := time.Date(2010, 1, 1, 0, 0, 0, 0, time.UTC)
 
-	k1, _ := tag.NewStringKey("k1")
-	k2, _ := tag.NewStringKey("k2")
+	k1, _ := tag.NewKey("k1")
+	k2, _ := tag.NewKey("k2")
 	agg1 := CountAggregation{}
 	vw1 := NewView("VF1", "desc VF1", []tag.Key{k1, k2}, nil, agg1, SlidingTimeWindow{10 * time.Second, 5})
 
 	type tagString struct {
-		k tag.StringKey
+		k tag.Key
 		v string
 	}
 	type record struct {
@@ -419,7 +418,7 @@ func Test_View_MeasureFloat64_AggregationCount_WindowSlidingTime(t *testing.T) {
 					startTime.Add(14 * time.Second),
 					[]*Row{
 						{
-							[]tag.Tag{{Key: k1, Value: []byte("v1")}},
+							[]tag.Tag{{Key: k1, Value: "v1"}},
 							newCountAggregationValue(6),
 						},
 					},
@@ -429,7 +428,7 @@ func Test_View_MeasureFloat64_AggregationCount_WindowSlidingTime(t *testing.T) {
 					startTime.Add(18 * time.Second),
 					[]*Row{
 						{
-							[]tag.Tag{{Key: k1, Value: []byte("v1")}},
+							[]tag.Tag{{Key: k1, Value: "v1"}},
 							newCountAggregationValue(4),
 						},
 					},
@@ -439,7 +438,7 @@ func Test_View_MeasureFloat64_AggregationCount_WindowSlidingTime(t *testing.T) {
 					startTime.Add(22 * time.Second),
 					[]*Row{
 						{
-							[]tag.Tag{{Key: k1, Value: []byte("v1")}},
+							[]tag.Tag{{Key: k1, Value: "v1"}},
 							newCountAggregationValue(2),
 						},
 					},
@@ -463,7 +462,7 @@ func Test_View_MeasureFloat64_AggregationCount_WindowSlidingTime(t *testing.T) {
 					startTime.Add(10 * time.Second),
 					[]*Row{
 						{
-							[]tag.Tag{{Key: k1, Value: []byte("v1")}},
+							[]tag.Tag{{Key: k1, Value: "v1"}},
 							newCountAggregationValue(7),
 						},
 					},
@@ -473,7 +472,7 @@ func Test_View_MeasureFloat64_AggregationCount_WindowSlidingTime(t *testing.T) {
 					startTime.Add(12 * time.Second),
 					[]*Row{
 						{
-							[]tag.Tag{{Key: k1, Value: []byte("v1")}},
+							[]tag.Tag{{Key: k1, Value: "v1"}},
 							newCountAggregationValue(7),
 						},
 					},
@@ -483,7 +482,7 @@ func Test_View_MeasureFloat64_AggregationCount_WindowSlidingTime(t *testing.T) {
 					startTime.Add(12 * time.Second),
 					[]*Row{
 						{
-							[]tag.Tag{{Key: k1, Value: []byte("v1")}},
+							[]tag.Tag{{Key: k1, Value: "v1"}},
 							newCountAggregationValue(7),
 						},
 					},
@@ -493,7 +492,7 @@ func Test_View_MeasureFloat64_AggregationCount_WindowSlidingTime(t *testing.T) {
 					startTime.Add(15*time.Second + 400*time.Millisecond),
 					[]*Row{
 						{
-							[]tag.Tag{{Key: k1, Value: []byte("v1")}},
+							[]tag.Tag{{Key: k1, Value: "v1"}},
 							newCountAggregationValue(6),
 						},
 					},
@@ -503,7 +502,7 @@ func Test_View_MeasureFloat64_AggregationCount_WindowSlidingTime(t *testing.T) {
 					startTime.Add(16 * time.Second),
 					[]*Row{
 						{
-							[]tag.Tag{{Key: k1, Value: []byte("v1")}},
+							[]tag.Tag{{Key: k1, Value: "v1"}},
 							newCountAggregationValue(5),
 						},
 					},
@@ -513,7 +512,7 @@ func Test_View_MeasureFloat64_AggregationCount_WindowSlidingTime(t *testing.T) {
 					startTime.Add(17*time.Second + 200*time.Millisecond),
 					[]*Row{
 						{
-							[]tag.Tag{{Key: k1, Value: []byte("v1")}},
+							[]tag.Tag{{Key: k1, Value: "v1"}},
 							newCountAggregationValue(4),
 						},
 					},
@@ -523,7 +522,7 @@ func Test_View_MeasureFloat64_AggregationCount_WindowSlidingTime(t *testing.T) {
 					startTime.Add(18 * time.Second),
 					[]*Row{
 						{
-							[]tag.Tag{{Key: k1, Value: []byte("v1")}},
+							[]tag.Tag{{Key: k1, Value: "v1"}},
 							newCountAggregationValue(3),
 						},
 					},
@@ -533,7 +532,7 @@ func Test_View_MeasureFloat64_AggregationCount_WindowSlidingTime(t *testing.T) {
 					startTime.Add(18*time.Second + 600*time.Millisecond),
 					[]*Row{
 						{
-							[]tag.Tag{{Key: k1, Value: []byte("v1")}},
+							[]tag.Tag{{Key: k1, Value: "v1"}},
 							newCountAggregationValue(2),
 						},
 					},
@@ -548,7 +547,7 @@ func Test_View_MeasureFloat64_AggregationCount_WindowSlidingTime(t *testing.T) {
 		for _, r := range tc.records {
 			mods := []tag.Mutator{}
 			for _, t := range r.tags {
-				mods = append(mods, tag.InsertString(t.k, t.v))
+				mods = append(mods, tag.Insert(t.k, t.v))
 			}
 			ts := tag.NewMap(nil, mods...)
 			vw1.addSample(ts, r.f, r.now)
@@ -576,13 +575,13 @@ func Test_View_MeasureFloat64_AggregationCount_WindowSlidingTime(t *testing.T) {
 }
 
 func Test_View_MeasureFloat64_AggregationDistribution_WindowSlidingCount(t *testing.T) {
-	k1, _ := tag.NewStringKey("k1")
-	k2, _ := tag.NewStringKey("k2")
+	k1, _ := tag.NewKey("k1")
+	k2, _ := tag.NewKey("k2")
 	agg1 := DistributionAggregation([]float64{2})
 	vw1 := NewView("VF1", "desc VF1", []tag.Key{k1, k2}, nil, agg1, SlidingCountWindow{12, 4})
 
 	type tagString struct {
-		k tag.StringKey
+		k tag.Key
 		v string
 	}
 	type record struct {
@@ -607,7 +606,7 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowSlidingCount(t *test
 			},
 			[]*Row{
 				{
-					[]tag.Tag{{Key: k1, Value: []byte("v1")}},
+					[]tag.Tag{{Key: k1, Value: "v1"}},
 					&DistributionAggregationValue{
 						4, 1, 4, 2.5, 1.6666666667 * 3, []int64{1, 3}, agg1,
 					},
@@ -635,7 +634,7 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowSlidingCount(t *test
 			},
 			[]*Row{
 				{
-					[]tag.Tag{{Key: k1, Value: []byte("v1")}},
+					[]tag.Tag{{Key: k1, Value: "v1"}},
 					&DistributionAggregationValue{
 						15, 1, 15, 8, 20 * 14, []int64{1, 14}, agg1,
 					},
@@ -661,7 +660,7 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowSlidingCount(t *test
 			},
 			[]*Row{
 				{
-					[]tag.Tag{{Key: k1, Value: []byte("v1")}},
+					[]tag.Tag{{Key: k1, Value: "v1"}},
 					&DistributionAggregationValue{
 						13, 1, 13, 7, 15.1666666667 * 12, []int64{1, 12}, agg1,
 					},
@@ -676,7 +675,7 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowSlidingCount(t *test
 		for _, r := range tc.records {
 			mods := []tag.Mutator{}
 			for _, t := range r.tags {
-				mods = append(mods, tag.InsertString(t.k, t.v))
+				mods = append(mods, tag.Insert(t.k, t.v))
 			}
 			ts := tag.NewMap(nil, mods...)
 			vw1.addSample(ts, r.f, time.Now())

@@ -23,12 +23,12 @@ import (
 )
 
 func TestContext(t *testing.T) {
-	k1, _ := NewStringKey("k1")
-	k2, _ := NewStringKey("k2")
+	k1, _ := NewKey("k1")
+	k2, _ := NewKey("k2")
 
 	want := NewMap(nil,
-		InsertString(k1, "v1"),
-		InsertString(k2, "v2"),
+		Insert(k1, "v1"),
+		Insert(k2, "v2"),
 	)
 
 	ctx := NewContext(context.Background(), want)
@@ -40,11 +40,11 @@ func TestContext(t *testing.T) {
 }
 
 func TestNewMap(t *testing.T) {
-	k1, _ := NewStringKey("k1")
-	k2, _ := NewStringKey("k2")
-	k3, _ := NewStringKey("k3")
-	k4, _ := NewStringKey("k4")
-	k5, _ := NewStringKey("k5")
+	k1, _ := NewKey("k1")
+	k2, _ := NewKey("k2")
+	k3, _ := NewKey("k3")
+	k4, _ := NewKey("k4")
+	k5, _ := NewKey("k5")
 
 	initial := makeTestTagMap(5)
 
@@ -58,7 +58,7 @@ func TestNewMap(t *testing.T) {
 			name:    "from empty; insert",
 			initial: nil,
 			mods: []Mutator{
-				InsertString(k5, "v5"),
+				Insert(k5, "v5"),
 			},
 			want: makeTestTagMap(2, 4, 5),
 		},
@@ -66,7 +66,7 @@ func TestNewMap(t *testing.T) {
 			name:    "from empty; insert existing",
 			initial: nil,
 			mods: []Mutator{
-				InsertString(k1, "v1"),
+				Insert(k1, "v1"),
 			},
 			want: makeTestTagMap(1, 2, 4),
 		},
@@ -74,7 +74,7 @@ func TestNewMap(t *testing.T) {
 			name:    "from empty; update",
 			initial: nil,
 			mods: []Mutator{
-				UpdateString(k1, "v1"),
+				Update(k1, "v1"),
 			},
 			want: makeTestTagMap(2, 4),
 		},
@@ -82,7 +82,7 @@ func TestNewMap(t *testing.T) {
 			name:    "from empty; update unexisting",
 			initial: nil,
 			mods: []Mutator{
-				UpdateString(k5, "v5"),
+				Update(k5, "v5"),
 			},
 			want: makeTestTagMap(2, 4),
 		},
@@ -90,7 +90,7 @@ func TestNewMap(t *testing.T) {
 			name:    "from existing; upsert",
 			initial: initial,
 			mods: []Mutator{
-				UpsertString(k5, "v5"),
+				Upsert(k5, "v5"),
 			},
 			want: makeTestTagMap(2, 4, 5),
 		},
@@ -106,11 +106,11 @@ func TestNewMap(t *testing.T) {
 
 	for _, tt := range tests {
 		mods := []Mutator{
-			InsertString(k1, "v1"),
-			InsertString(k2, "v2"),
-			UpdateString(k3, "v3"),
-			UpsertString(k4, "v4"),
-			InsertString(k2, "v2"),
+			Insert(k1, "v1"),
+			Insert(k2, "v2"),
+			Update(k3, "v3"),
+			Upsert(k4, "v4"),
+			Insert(k2, "v2"),
 			Delete(k1),
 		}
 		mods = append(mods, tt.mods...)
@@ -125,8 +125,8 @@ func TestNewMap(t *testing.T) {
 func makeTestTagMap(ids ...int) *Map {
 	m := newMap(len(ids))
 	for _, v := range ids {
-		k, _ := NewStringKey(fmt.Sprintf("k%d", v))
-		m.m[k] = []byte(fmt.Sprintf("v%d", v))
+		k, _ := NewKey(fmt.Sprintf("k%d", v))
+		m.m[k] = fmt.Sprintf("v%d", v)
 	}
 	return m
 }

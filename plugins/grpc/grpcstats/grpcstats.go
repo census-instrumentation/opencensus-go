@@ -64,20 +64,20 @@ var (
 	windowSlidingHour   = istats.SlidingTimeWindow{Duration: 1 * time.Hour, Intervals: 6}
 	windowSlidingMinute = istats.SlidingTimeWindow{Duration: 1 * time.Minute, Intervals: 6}
 
-	keyService  tag.StringKey
-	keyMethod   tag.StringKey
-	keyOpStatus tag.StringKey
+	keyService  tag.Key
+	keyMethod   tag.Key
+	keyOpStatus tag.Key
 )
 
 func init() {
 	var err error
-	if keyService, err = tag.NewStringKey("grpc.service"); err != nil {
+	if keyService, err = tag.NewKey("grpc.service"); err != nil {
 		log.Fatalf("Cannot create grpc.service key: %v", err)
 	}
-	if keyMethod, err = tag.NewStringKey("grpc.method"); err != nil {
+	if keyMethod, err = tag.NewKey("grpc.method"); err != nil {
 		log.Fatalf("Cannot create grpc.method key: %v", err)
 	}
-	if keyOpStatus, err = tag.NewStringKey("grpc.opstatus"); err != nil {
+	if keyOpStatus, err = tag.NewKey("grpc.opstatus"); err != nil {
 		log.Fatalf("Cannot create grpc.opstatus key: %v", err)
 	}
 	initServer()

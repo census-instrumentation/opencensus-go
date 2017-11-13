@@ -478,11 +478,11 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 		t.Errorf("NewMeasureFloat64(\"MF1\", \"desc MF1\") got error '%v', want no error", err)
 	}
 
-	k1, _ := tag.NewStringKey("k1")
-	k2, _ := tag.NewStringKey("k2")
+	k1, _ := tag.NewKey("k1")
+	k2, _ := tag.NewKey("k2")
 	ts := tag.NewMap(nil,
-		tag.InsertString(k1, "v1"),
-		tag.InsertString(k2, "v2"),
+		tag.Insert(k1, "v1"),
+		tag.Insert(k2, "v2"),
 	)
 	ctx := tag.NewContext(context.Background(), ts)
 
@@ -528,7 +528,7 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 					v1,
 					[]*Row{
 						{
-							[]tag.Tag{{Key: k1, Value: []byte("v1")}, {Key: k2, Value: []byte("v2")}},
+							[]tag.Tag{{Key: k1, Value: "v1"}, {Key: k2, Value: "v2"}},
 							newCountAggregationValue(2),
 						},
 					},
@@ -548,7 +548,7 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 					v1,
 					[]*Row{
 						{
-							[]tag.Tag{{Key: k1, Value: []byte("v1")}, {Key: k2, Value: []byte("v2")}},
+							[]tag.Tag{{Key: k1, Value: "v1"}, {Key: k2, Value: "v2"}},
 							newCountAggregationValue(2),
 						},
 					},
@@ -558,7 +558,7 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 					v2,
 					[]*Row{
 						{
-							[]tag.Tag{{Key: k1, Value: []byte("v1")}, {Key: k2, Value: []byte("v2")}},
+							[]tag.Tag{{Key: k1, Value: "v1"}, {Key: k2, Value: "v2"}},
 							newCountAggregationValue(2),
 						},
 					},
@@ -577,7 +577,7 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 					v1,
 					[]*Row{
 						{
-							[]tag.Tag{{Key: k1, Value: []byte("v1")}, {Key: k2, Value: []byte("v2")}},
+							[]tag.Tag{{Key: k1, Value: "v1"}, {Key: k2, Value: "v2"}},
 							newCountAggregationValue(2),
 						},
 					},
@@ -597,7 +597,7 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 					v1,
 					[]*Row{
 						{
-							[]tag.Tag{{Key: k1, Value: []byte("v1")}, {Key: k2, Value: []byte("v2")}},
+							[]tag.Tag{{Key: k1, Value: "v1"}, {Key: k2, Value: "v2"}},
 							newCountAggregationValue(2),
 						},
 					},
@@ -607,7 +607,7 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 					v2,
 					[]*Row{
 						{
-							[]tag.Tag{{Key: k1, Value: []byte("v1")}, {Key: k2, Value: []byte("v2")}},
+							[]tag.Tag{{Key: k1, Value: "v1"}, {Key: k2, Value: "v2"}},
 							newCountAggregationValue(2),
 						},
 					},
@@ -626,7 +626,7 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 					v1,
 					[]*Row{
 						{
-							[]tag.Tag{{Key: k1, Value: []byte("v1")}, {Key: k2, Value: []byte("v2")}},
+							[]tag.Tag{{Key: k1, Value: "v1"}, {Key: k2, Value: "v2"}},
 							newCountAggregationValue(3),
 						},
 					},
@@ -636,7 +636,7 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 					v2,
 					[]*Row{
 						{
-							[]tag.Tag{{Key: k1, Value: []byte("v1")}, {Key: k2, Value: []byte("v2")}},
+							[]tag.Tag{{Key: k1, Value: "v1"}, {Key: k2, Value: "v2"}},
 							newCountAggregationValue(3),
 						},
 					},
