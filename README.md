@@ -257,40 +257,6 @@ func (e *exporter) Export(vd *stats.ViewData) {
 
 ```
 
-### Force collecting data on demand
-
-Even if a view is registered, if it has no subscriber no data
-for it is collected. In order to retrieve data on demand from a
-view, library can be instructed explicitly to collect
-data for the desired view.
-
-[embedmd]:# (stats.go forceCollect)
-```go
-// To explicitly instruct the library to collect the view data for an on-demand
-// retrieval, force collect. When done, stop force collection.
-if err := view.ForceCollect(); err != nil {
-	log.Fatal(err)
-}
-
-// Use RetrieveData to pull collected data synchronously from the library. This
-// assumes that a subscription to the view exists or force collection is enabled.
-rows, err := view.RetrieveData()
-if err != nil {
-	log.Fatal(err)
-}
-for _, r := range rows {
-	// process a single row of type *stats.Row
-	log.Println(r)
-}
-
-// To explicitly instruct the library to stop collecting the view data for the
-// on-demand retrieval, StopForceCollection should be used. This call has no
-// impact on the view's subscription status.
-if err := view.StopForceCollection(); err != nil {
-	log.Fatal(err)
-}
-```
-
 ## Tracing
 
 Coming soon.

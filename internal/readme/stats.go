@@ -122,33 +122,6 @@ func statsExamples() {
 	// the data from the subscribed views.
 	stats.RegisterExporter(&exporter{})
 	// END registerExporter
-
-	// START forceCollect
-	// To explicitly instruct the library to collect the view data for an on-demand
-	// retrieval, force collect. When done, stop force collection.
-	if err := view.ForceCollect(); err != nil {
-		log.Fatal(err)
-	}
-
-	// Use RetrieveData to pull collected data synchronously from the library. This
-	// assumes that a subscription to the view exists or force collection is enabled.
-	rows, err := view.RetrieveData()
-	if err != nil {
-		log.Fatal(err)
-	}
-	for _, r := range rows {
-		// process a single row of type *stats.Row
-		log.Println(r)
-	}
-
-	// To explicitly instruct the library to stop collecting the view data for the
-	// on-demand retrieval, StopForceCollection should be used. This call has no
-	// impact on the view's subscription status.
-	if err := view.StopForceCollection(); err != nil {
-		log.Fatal(err)
-	}
-	// END forceCollect
-
 }
 
 // START exporter

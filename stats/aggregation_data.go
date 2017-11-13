@@ -20,8 +20,8 @@ import (
 )
 
 // AggregationData represents an aggregated value from a collection.
-// They are reported on the view data during exporting or force
-// collection. Mosts users won't directly access aggregration data.
+// They are reported on the view data during exporting.
+// Mosts users won't directly access aggregration data.
 type AggregationData interface {
 	equal(other AggregationData) bool
 	isAggregate() bool

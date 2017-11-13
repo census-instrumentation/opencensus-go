@@ -122,8 +122,8 @@ func (cmd *unregisterViewReq) handleCommand(w *worker) {
 		cmd.err <- nil
 		return
 	}
-	if v.isCollecting() {
-		cmd.err <- fmt.Errorf("cannot unregister view %q. all subscriptions must be unsubscribed and its forced collection must be stopped first", cmd.v.Name())
+	if v.isSubscribed() {
+		cmd.err <- fmt.Errorf("cannot unregister view %q; all subscriptions must be unsubscribed first", cmd.v.Name())
 		return
 	}
 	delete(w.viewsByName, cmd.v.Name())
@@ -161,53 +161,11 @@ type unsubscribeFromViewReq struct {
 
 func (cmd *unsubscribeFromViewReq) handleCommand(w *worker) {
 	cmd.v.unsubscribe()
-	if !cmd.v.isCollecting() {
+	if !cmd.v.isSubscribed() {
 		// this was the last subscription and view is not collecting anymore.
 		// The collected data can be cleared.
 		cmd.v.clearRows()
 	}
-	// we always return nil because this operation never fails. However we
-	// still need to return something on the channel to signal to the waiting
-	// go routine that the operation completed.
-	cmd.err <- nil
-}
-
-// startForcedCollection is the command to start collecting data for a view
-// without subscribing to it.
-type startForcedCollectionReq struct {
-	v   *View
-	err chan error
-}
-
-func (cmd *startForcedCollectionReq) handleCommand(w *worker) {
-	if err := w.tryRegisterView(cmd.v); err != nil {
-		cmd.err <- fmt.Errorf("cannot start forced collection: %v", err)
-		return
-	}
-
-	cmd.v.startForcedCollection()
-
-	// we always return nil because this operation never fails. However we
-	// still need to return something on the channel to signal to the waiting
-	// go routine that the operation completed.
-	cmd.err <- nil
-}
-
-// stopForcedCollectionReq is the command to signal to the library that no more
-// clients will be requesting data for a view. Has no impact on the
-// subscriptions.
-type stopForcedCollectionReq struct {
-	v   *View
-	err chan error
-}
-
-func (cmd *stopForcedCollectionReq) handleCommand(w *worker) {
-	cmd.v.stopForcedCollection()
-
-	if !cmd.v.isCollecting() {
-		cmd.v.clearRows()
-	}
-
 	// we always return nil because this operation never fails. However we
 	// still need to return something on the channel to signal to the waiting
 	// go routine that the operation completed.
@@ -235,7 +193,7 @@ func (cmd *retrieveDataReq) handleCommand(w *worker) {
 		return
 	}
 
-	if !cmd.v.isCollecting() {
+	if !cmd.v.isSubscribed() {
 		cmd.c <- &retrieveDataResp{
 			nil,
 			fmt.Errorf("cannot retrieve data; view %q has no subscriptions or collection is not forcibly started", cmd.v.Name()),

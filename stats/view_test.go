@@ -153,7 +153,7 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowCumulative(t *testin
 
 	for _, tc := range tcs {
 		vw1.clearRows()
-		vw1.startForcedCollection()
+		vw1.subscribe()
 		for _, r := range tc.records {
 			mods := []tag.Mutator{}
 			for _, t := range r.tags {
@@ -339,7 +339,7 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowSlidingTime(t *testi
 
 	for _, tc := range tcs {
 		vw1.clearRows()
-		vw1.startForcedCollection()
+		vw1.subscribe()
 		for _, r := range tc.records {
 			mods := []tag.Mutator{}
 			for _, t := range r.tags {
@@ -543,7 +543,7 @@ func Test_View_MeasureFloat64_AggregationCount_WindowSlidingTime(t *testing.T) {
 
 	for _, tc := range tcs {
 		vw1.clearRows()
-		vw1.startForcedCollection()
+		vw1.subscribe()
 		for _, r := range tc.records {
 			mods := []tag.Mutator{}
 			for _, t := range r.tags {
@@ -671,7 +671,7 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowSlidingCount(t *test
 
 	for _, tc := range tcs {
 		vw1.clearRows()
-		vw1.startForcedCollection()
+		vw1.subscribe()
 		for _, r := range tc.records {
 			mods := []tag.Mutator{}
 			for _, t := range r.tags {
