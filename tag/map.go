@@ -32,6 +32,13 @@ type Map struct {
 	m map[Key]string
 }
 
+// Value returns the value for the key if a value
+// for the key exists.
+func (m *Map) Value(k Key) (string, bool) {
+	v, ok := m.m[k]
+	return v, ok
+}
+
 func (m *Map) String() string {
 	var keys []Key
 	for k := range m.m {
