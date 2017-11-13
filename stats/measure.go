@@ -44,14 +44,15 @@ type Measurement interface {
 }
 
 // FindMeasure returns the registered measure associated with name.
-func FindMeasure(name string) (Measure, error) {
+// If no registered measure is not found, ok is false.
+func FindMeasure(name string) (m Measure, ok bool) {
 	req := &getMeasureByNameReq{
 		name: name,
 		c:    make(chan *getMeasureByNameResp),
 	}
 	defaultWorker.c <- req
 	resp := <-req.c
-	return resp.m, resp.err
+	return resp.m, resp.ok
 }
 
 // DeleteMeasure deletes an existing measure to allow for creation of a new

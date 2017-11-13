@@ -114,9 +114,9 @@ Retrieve measure by name:
 
 [embedmd]:# (stats.go findMeasure)
 ```go
-m, err := stats.FindMeasure("my.org/video_size")
-if err != nil {
-	log.Fatal(err)
+m, ok := stats.FindMeasure("my.org/video_size")
+if !ok {
+	log.Fatalln("measure not found")
 }
 ```
 
@@ -189,9 +189,9 @@ Find view by name:
 
 [embedmd]:# (stats.go findView)
 ```go
-v, err := stats.FindView("my.org/video_size_distribution")
-if err != nil {
-	log.Fatal(err)
+v, ok := stats.FindView("my.org/video_size_distribution")
+if !ok {
+	log.Fatalln("view not found")
 }
 ```
 

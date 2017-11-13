@@ -89,14 +89,15 @@ func NewMeasureInt64(name, description, unit string) (*MeasureInt64, error) {
 }
 
 // FindView returns a registered view associated with this name.
-func FindView(name string) (*View, error) {
+// If no registered view is found, ok is false.
+func FindView(name string) (v *View, ok bool) {
 	req := &getViewByNameReq{
 		name: name,
 		c:    make(chan *getViewByNameResp),
 	}
 	defaultWorker.c <- req
 	resp := <-req.c
-	return resp.v, resp.err
+	return resp.v, resp.ok
 }
 
 // RegisterView registers view. It returns an error if the view cannot be
