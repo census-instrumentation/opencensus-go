@@ -23,11 +23,11 @@ import (
 // seen since the view collection started.
 type aggregatorCumulative struct {
 	started time.Time
-	av      AggregationValue
+	av      AggregationData
 }
 
 // newAggregatorCumulative creates an aggregatorCumulative.
-func newAggregatorCumulative(now time.Time, newAggregationValue func() AggregationValue) *aggregatorCumulative {
+func newAggregatorCumulative(now time.Time, newAggregationValue func() AggregationData) *aggregatorCumulative {
 	return &aggregatorCumulative{
 		started: now,
 		av:      newAggregationValue(),
@@ -42,6 +42,6 @@ func (a *aggregatorCumulative) addSample(v interface{}, now time.Time) {
 	a.av.addSample(v)
 }
 
-func (a *aggregatorCumulative) retrieveCollected(now time.Time) AggregationValue {
+func (a *aggregatorCumulative) retrieveCollected(now time.Time) AggregationData {
 	return a.av
 }

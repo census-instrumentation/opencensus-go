@@ -529,7 +529,7 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 					[]*Row{
 						{
 							[]tag.Tag{{Key: k1, Value: "v1"}, {Key: k2, Value: "v2"}},
-							newCountAggregationValue(2),
+							newCountData(2),
 						},
 					},
 					nil,
@@ -549,7 +549,7 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 					[]*Row{
 						{
 							[]tag.Tag{{Key: k1, Value: "v1"}, {Key: k2, Value: "v2"}},
-							newCountAggregationValue(2),
+							newCountData(2),
 						},
 					},
 					nil,
@@ -559,7 +559,7 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 					[]*Row{
 						{
 							[]tag.Tag{{Key: k1, Value: "v1"}, {Key: k2, Value: "v2"}},
-							newCountAggregationValue(2),
+							newCountData(2),
 						},
 					},
 					nil,
@@ -578,7 +578,7 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 					[]*Row{
 						{
 							[]tag.Tag{{Key: k1, Value: "v1"}, {Key: k2, Value: "v2"}},
-							newCountAggregationValue(2),
+							newCountData(2),
 						},
 					},
 					nil,
@@ -598,7 +598,7 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 					[]*Row{
 						{
 							[]tag.Tag{{Key: k1, Value: "v1"}, {Key: k2, Value: "v2"}},
-							newCountAggregationValue(2),
+							newCountData(2),
 						},
 					},
 					nil,
@@ -608,7 +608,7 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 					[]*Row{
 						{
 							[]tag.Tag{{Key: k1, Value: "v1"}, {Key: k2, Value: "v2"}},
-							newCountAggregationValue(2),
+							newCountData(2),
 						},
 					},
 					nil,
@@ -627,7 +627,7 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 					[]*Row{
 						{
 							[]tag.Tag{{Key: k1, Value: "v1"}, {Key: k2, Value: "v2"}},
-							newCountAggregationValue(3),
+							newCountData(3),
 						},
 					},
 					nil,
@@ -637,7 +637,7 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 					[]*Row{
 						{
 							[]tag.Tag{{Key: k1, Value: "v1"}, {Key: k2, Value: "v2"}},
-							newCountAggregationValue(3),
+							newCountData(3),
 						},
 					},
 					nil,

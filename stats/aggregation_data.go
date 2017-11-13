@@ -19,53 +19,54 @@ import (
 	"math"
 )
 
-// AggregationValue represents an aggregated value from a collection.
+// AggregationData represents an aggregated value from a collection.
 // They are reported on the view data during exporting or force
-// collection. Mosts users won't directly access aggregration values.
-type AggregationValue interface {
-	equal(other AggregationValue) bool
+// collection. Mosts users won't directly access aggregration data.
+type AggregationData interface {
+	equal(other AggregationData) bool
 	isAggregate() bool
 	addSample(v interface{})
-	multiplyByFraction(fraction float64) AggregationValue
-	addToIt(other AggregationValue)
+	multiplyByFraction(fraction float64) AggregationData
+	addToIt(other AggregationData)
 	clear()
 }
 
-// CountAggregationValue is the aggregated data for a count aggregation.
+// CountData is the aggregated data for a CountAggregation.
 // A count aggregation processes data and counts the recordings.
-// CountAggregationValue is the value for CountAggregation.
-type CountAggregationValue int64
+//
+// Most users won't directly access count data.
+type CountData int64
 
-func newCountAggregationValue(v int64) *CountAggregationValue {
-	tmp := CountAggregationValue(v)
+func newCountData(v int64) *CountData {
+	tmp := CountData(v)
 	return &tmp
 }
 
-func (a *CountAggregationValue) isAggregate() bool { return true }
+func (a *CountData) isAggregate() bool { return true }
 
-func (a *CountAggregationValue) addSample(v interface{}) {
+func (a *CountData) addSample(v interface{}) {
 	*a = *a + 1
 }
 
-func (a *CountAggregationValue) multiplyByFraction(fraction float64) AggregationValue {
-	return newCountAggregationValue(int64(float64(int64(*a))*fraction + 0.5)) // adding 0.5 because go runtime will take floor instead of rounding
+func (a *CountData) multiplyByFraction(fraction float64) AggregationData {
+	return newCountData(int64(float64(int64(*a))*fraction + 0.5)) // adding 0.5 because go runtime will take floor instead of rounding
 
 }
 
-func (a *CountAggregationValue) addToIt(av AggregationValue) {
-	other, ok := av.(*CountAggregationValue)
+func (a *CountData) addToIt(av AggregationData) {
+	other, ok := av.(*CountData)
 	if !ok {
 		return
 	}
 	*a = *a + *other
 }
 
-func (a *CountAggregationValue) clear() {
+func (a *CountData) clear() {
 	*a = 0
 }
 
-func (a *CountAggregationValue) equal(other AggregationValue) bool {
-	a2, ok := other.(*CountAggregationValue)
+func (a *CountData) equal(other AggregationData) bool {
+	a2, ok := other.(*CountData)
 	if !ok {
 		return false
 	}
@@ -73,9 +74,11 @@ func (a *CountAggregationValue) equal(other AggregationValue) bool {
 	return int64(*a) == int64(*a2)
 }
 
-// DistributionAggregationValue is the aggregated data for an
+// DistributionData is the aggregated data for an
 // DistributionAggregation.
-type DistributionAggregationValue struct {
+//
+// Most users won't directly access distribution data.
+type DistributionData struct {
 	Count           int64     // number of data points aggregated
 	Min             float64   // minimum value in the distribution
 	Max             float64   // max value in the distribution
@@ -85,8 +88,8 @@ type DistributionAggregationValue struct {
 	Bounds          []float64 // histogram distribution of the values
 }
 
-func newDistributionAggregationValue(bounds []float64) *DistributionAggregationValue {
-	return &DistributionAggregationValue{
+func newDistributionData(bounds []float64) *DistributionData {
+	return &DistributionData{
 		CountPerBucket: make([]int64, len(bounds)+1),
 		Bounds:         bounds,
 		Min:            math.MaxFloat64,
@@ -95,18 +98,18 @@ func newDistributionAggregationValue(bounds []float64) *DistributionAggregationV
 }
 
 // Sum returns the sum of all samples collected.
-func (a *DistributionAggregationValue) Sum() float64 { return a.Mean * float64(a.Count) }
+func (a *DistributionData) Sum() float64 { return a.Mean * float64(a.Count) }
 
-func (a *DistributionAggregationValue) variance() float64 {
+func (a *DistributionData) variance() float64 {
 	if a.Count <= 1 {
 		return 0
 	}
 	return a.SumOfSquaredDev / float64(a.Count-1)
 }
 
-func (a *DistributionAggregationValue) isAggregate() bool { return true }
+func (a *DistributionData) isAggregate() bool { return true }
 
-func (a *DistributionAggregationValue) addSample(v interface{}) {
+func (a *DistributionData) addSample(v interface{}) {
 	var f float64
 	switch x := v.(type) {
 	case int64:
@@ -138,7 +141,7 @@ func (a *DistributionAggregationValue) addSample(v interface{}) {
 	a.SumOfSquaredDev = a.SumOfSquaredDev + (f-oldMean)*(f-a.Mean)
 }
 
-func (a *DistributionAggregationValue) incrementBucketCount(f float64) {
+func (a *DistributionData) incrementBucketCount(f float64) {
 	if len(a.Bounds) == 0 {
 		a.CountPerBucket[0]++
 		return
@@ -153,15 +156,15 @@ func (a *DistributionAggregationValue) incrementBucketCount(f float64) {
 	a.CountPerBucket[len(a.Bounds)]++
 }
 
-// DistributionAggregationValue will not multiply by the fraction for this type
+// DistributionData will not multiply by the fraction for this type
 // of aggregation. The 'fraction' argument is there just to satisfy the
-// interface 'AggregationValue'. For simplicity, we include the oldest partial
+// interface 'AggregationData'. For simplicity, we include the oldest partial
 // bucket in its entirety when the aggregation is a distribution. We do not try
 //  to multiply it by the fraction as it would make the calculation too complex
 // and will create inconsistencies between sumOfSquaredDev, min, max and the
 // various buckets of the histogram.
-func (a *DistributionAggregationValue) multiplyByFraction(fraction float64) AggregationValue {
-	ret := newDistributionAggregationValue(a.Bounds)
+func (a *DistributionData) multiplyByFraction(fraction float64) AggregationData {
+	ret := newDistributionData(a.Bounds)
 	for i, c := range a.CountPerBucket {
 		ret.CountPerBucket[i] = c
 	}
@@ -173,8 +176,8 @@ func (a *DistributionAggregationValue) multiplyByFraction(fraction float64) Aggr
 	return ret
 }
 
-func (a *DistributionAggregationValue) addToIt(av AggregationValue) {
-	other, ok := av.(*DistributionAggregationValue)
+func (a *DistributionData) addToIt(av AggregationData) {
+	other, ok := av.(*DistributionData)
 	if !ok {
 		return
 	}
@@ -197,7 +200,7 @@ func (a *DistributionAggregationValue) addToIt(av AggregationValue) {
 	}
 }
 
-func (a *DistributionAggregationValue) clear() {
+func (a *DistributionData) clear() {
 	a.Count = 0
 	a.Min = math.MaxFloat64
 	a.Max = math.SmallestNonzeroFloat64
@@ -208,8 +211,8 @@ func (a *DistributionAggregationValue) clear() {
 	}
 }
 
-func (a *DistributionAggregationValue) equal(other AggregationValue) bool {
-	a2, ok := other.(*DistributionAggregationValue)
+func (a *DistributionData) equal(other AggregationData) bool {
+	a2, ok := other.(*DistributionData)
 	if !ok {
 		return false
 	}

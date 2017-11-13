@@ -78,7 +78,7 @@ func TestServerDefaultCollections(t *testing.T) {
 								{Key: keyMethod, Value: "method"},
 								{Key: keyService, Value: "package.service"},
 							},
-							newDistributionAggregationValue(rpcCountBucketBoundaries, []int64{0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 1, 1, 1, 1, 0),
+							newDistributionData(rpcCountBucketBoundaries, []int64{0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 1, 1, 1, 1, 0),
 						},
 					},
 				},
@@ -90,7 +90,7 @@ func TestServerDefaultCollections(t *testing.T) {
 								{Key: keyMethod, Value: "method"},
 								{Key: keyService, Value: "package.service"},
 							},
-							newDistributionAggregationValue(rpcCountBucketBoundaries, []int64{0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 1, 1, 1, 1, 0),
+							newDistributionData(rpcCountBucketBoundaries, []int64{0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 1, 1, 1, 1, 0),
 						},
 					},
 				},
@@ -102,7 +102,7 @@ func TestServerDefaultCollections(t *testing.T) {
 								{Key: keyMethod, Value: "method"},
 								{Key: keyService, Value: "package.service"},
 							},
-							newDistributionAggregationValue(rpcBytesBucketBoundaries, []int64{0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 1, 10, 10, 10, 0),
+							newDistributionData(rpcBytesBucketBoundaries, []int64{0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 1, 10, 10, 10, 0),
 						},
 					},
 				},
@@ -114,7 +114,7 @@ func TestServerDefaultCollections(t *testing.T) {
 								{Key: keyMethod, Value: "method"},
 								{Key: keyService, Value: "package.service"},
 							},
-							newDistributionAggregationValue(rpcBytesBucketBoundaries, []int64{0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 1, 10, 10, 10, 0),
+							newDistributionData(rpcBytesBucketBoundaries, []int64{0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 1, 10, 10, 10, 0),
 						},
 					},
 				},
@@ -160,7 +160,7 @@ func TestServerDefaultCollections(t *testing.T) {
 								{Key: keyOpStatus, Value: "someError"},
 								{Key: keyService, Value: "package.service"},
 							},
-							newCountAggregationValue(1),
+							newCountData(1),
 						},
 					},
 				},
@@ -172,7 +172,7 @@ func TestServerDefaultCollections(t *testing.T) {
 								{Key: keyMethod, Value: "method"},
 								{Key: keyService, Value: "package.service"},
 							},
-							newDistributionAggregationValue(rpcCountBucketBoundaries, []int64{0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 2, 1, 2, 1.5, 0.5),
+							newDistributionData(rpcCountBucketBoundaries, []int64{0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 2, 1, 2, 1.5, 0.5),
 						},
 					},
 				},
@@ -184,7 +184,7 @@ func TestServerDefaultCollections(t *testing.T) {
 								{Key: keyMethod, Value: "method"},
 								{Key: keyService, Value: "package.service"},
 							},
-							newDistributionAggregationValue(rpcCountBucketBoundaries, []int64{0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 2, 2, 3, 2.5, 0.5),
+							newDistributionData(rpcCountBucketBoundaries, []int64{0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 2, 2, 3, 2.5, 0.5),
 						},
 					},
 				},
@@ -243,7 +243,7 @@ func TestServerDefaultCollections(t *testing.T) {
 								{Key: keyOpStatus, Value: "someError1"},
 								{Key: keyService, Value: "package.service"},
 							},
-							newCountAggregationValue(1),
+							newCountData(1),
 						},
 						{
 							[]tag.Tag{
@@ -251,7 +251,7 @@ func TestServerDefaultCollections(t *testing.T) {
 								{Key: keyOpStatus, Value: "someError2"},
 								{Key: keyService, Value: "package.service"},
 							},
-							newCountAggregationValue(1),
+							newCountData(1),
 						},
 					},
 				},
@@ -263,7 +263,7 @@ func TestServerDefaultCollections(t *testing.T) {
 								{Key: keyMethod, Value: "method"},
 								{Key: keyService, Value: "package.service"},
 							},
-							newDistributionAggregationValue(rpcCountBucketBoundaries, []int64{0, 0, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 3, 1, 2, 1.333333333, 0.333333333*2),
+							newDistributionData(rpcCountBucketBoundaries, []int64{0, 0, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 3, 1, 2, 1.333333333, 0.333333333*2),
 						},
 					},
 				},
@@ -275,7 +275,7 @@ func TestServerDefaultCollections(t *testing.T) {
 								{Key: keyMethod, Value: "method"},
 								{Key: keyService, Value: "package.service"},
 							},
-							newDistributionAggregationValue(rpcCountBucketBoundaries, []int64{0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 3, 2, 3, 2.666666666, 0.333333333*2),
+							newDistributionData(rpcCountBucketBoundaries, []int64{0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 3, 2, 3, 2.666666666, 0.333333333*2),
 						},
 					},
 				},
@@ -287,7 +287,7 @@ func TestServerDefaultCollections(t *testing.T) {
 								{Key: keyMethod, Value: "method"},
 								{Key: keyService, Value: "package.service"},
 							},
-							newDistributionAggregationValue(rpcBytesBucketBoundaries, []int64{0, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 4, 1, 16384, 4864.25, 59678208.25*3),
+							newDistributionData(rpcBytesBucketBoundaries, []int64{0, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 4, 1, 16384, 4864.25, 59678208.25*3),
 						},
 					},
 				},
@@ -299,7 +299,7 @@ func TestServerDefaultCollections(t *testing.T) {
 								{Key: keyMethod, Value: "method"},
 								{Key: keyService, Value: "package.service"},
 							},
-							newDistributionAggregationValue(rpcBytesBucketBoundaries, []int64{0, 1, 1, 1, 2, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0}, 8, 1, 65536, 13696.125, 481423542.982143*7),
+							newDistributionData(rpcBytesBucketBoundaries, []int64{0, 1, 1, 1, 2, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0}, 8, 1, 65536, 13696.125, 481423542.982143*7),
 						},
 					},
 				},
@@ -374,13 +374,13 @@ func TestServerDefaultCollections(t *testing.T) {
 	}
 }
 
-func newCountAggregationValue(v int) *istats.CountAggregationValue {
-	cav := istats.CountAggregationValue(v)
+func newCountData(v int) *istats.CountData {
+	cav := istats.CountData(v)
 	return &cav
 }
 
-func newDistributionAggregationValue(bounds []float64, countPerBucket []int64, count int64, min, max, mean, sumOfSquaredDev float64) *istats.DistributionAggregationValue {
-	return &istats.DistributionAggregationValue{
+func newDistributionData(bounds []float64, countPerBucket []int64, count int64, min, max, mean, sumOfSquaredDev float64) *istats.DistributionData {
+	return &istats.DistributionData{
 		Count:           count,
 		Min:             min,
 		Max:             max,

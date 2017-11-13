@@ -21,7 +21,7 @@ import "time"
 // which the aggregation occurs.
 type Window interface {
 	isWindow()
-	newAggregator(now time.Time, aggregationValueConstructor func() AggregationValue) aggregator
+	newAggregator(now time.Time, aggregationValueConstructor func() AggregationData) aggregator
 }
 
 // CumulativeWindow indicates that the aggregation occurs over the lifetime of
@@ -30,7 +30,7 @@ type CumulativeWindow struct{}
 
 func (w CumulativeWindow) isWindow() {}
 
-func (w CumulativeWindow) newAggregator(now time.Time, aggregationValueConstructor func() AggregationValue) aggregator {
+func (w CumulativeWindow) newAggregator(now time.Time, aggregationValueConstructor func() AggregationData) aggregator {
 	return newAggregatorCumulative(now, aggregationValueConstructor)
 }
 
@@ -43,7 +43,7 @@ type SlidingTimeWindow struct {
 
 func (w SlidingTimeWindow) isWindow() {}
 
-func (w SlidingTimeWindow) newAggregator(now time.Time, aggregationValueConstructor func() AggregationValue) aggregator {
+func (w SlidingTimeWindow) newAggregator(now time.Time, aggregationValueConstructor func() AggregationData) aggregator {
 	return newAggregatorSlidingTime(now, w.Duration, w.Intervals, aggregationValueConstructor)
 }
 
@@ -56,6 +56,6 @@ type SlidingCountWindow struct {
 
 func (w SlidingCountWindow) isWindow() {}
 
-func (w SlidingCountWindow) newAggregator(now time.Time, aggregationValueConstructor func() AggregationValue) aggregator {
+func (w SlidingCountWindow) newAggregator(now time.Time, aggregationValueConstructor func() AggregationData) aggregator {
 	return newAggregatorSlidingCount(now, w.Count, w.Subsets, aggregationValueConstructor)
 }

@@ -20,7 +20,7 @@ package stats
 // CountAggregation and DistributionAggregation.
 type Aggregation interface {
 	isAggregation() bool
-	aggregationValueConstructor() func() AggregationValue
+	newData() func() AggregationData
 }
 
 // CountAggregation indicates that data collected and aggregated
@@ -31,8 +31,8 @@ type CountAggregation struct{}
 
 func (a CountAggregation) isAggregation() bool { return true }
 
-func (a CountAggregation) aggregationValueConstructor() func() AggregationValue {
-	return func() AggregationValue { return newCountAggregationValue(0) }
+func (a CountAggregation) newData() func() AggregationData {
+	return func() AggregationData { return newCountData(0) }
 }
 
 // DistributionAggregation indicates that the desired aggregation is
@@ -57,6 +57,6 @@ type DistributionAggregation []float64
 
 func (a DistributionAggregation) isAggregation() bool { return true }
 
-func (a DistributionAggregation) aggregationValueConstructor() func() AggregationValue {
-	return func() AggregationValue { return newDistributionAggregationValue([]float64(a)) }
+func (a DistributionAggregation) newData() func() AggregationData {
+	return func() AggregationData { return newDistributionData([]float64(a)) }
 }
