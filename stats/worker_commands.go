@@ -33,16 +33,13 @@ type getMeasureByNameReq struct {
 }
 
 type getMeasureByNameResp struct {
-	m   Measure
-	err error
+	m  Measure
+	ok bool
 }
 
 func (cmd *getMeasureByNameReq) handleCommand(w *worker) {
-	if m, ok := w.measuresByName[cmd.name]; ok {
-		cmd.c <- &getMeasureByNameResp{m, nil}
-		return
-	}
-	cmd.c <- &getMeasureByNameResp{nil, fmt.Errorf("no registered measure %q", cmd.name)}
+	m, ok := w.measuresByName[cmd.name]
+	cmd.c <- &getMeasureByNameResp{m, ok}
 }
 
 // registerMeasureReq is the command to register a measure with the library.
@@ -90,19 +87,13 @@ type getViewByNameReq struct {
 }
 
 type getViewByNameResp struct {
-	v   *View
-	err error
+	v  *View
+	ok bool
 }
 
 func (cmd *getViewByNameReq) handleCommand(w *worker) {
-	if v, ok := w.viewsByName[cmd.name]; ok {
-		cmd.c <- &getViewByNameResp{v, nil}
-		return
-	}
-	cmd.c <- &getViewByNameResp{
-		nil,
-		fmt.Errorf("view %q is not registered", cmd.name),
-	}
+	v, ok := w.viewsByName[cmd.name]
+	cmd.c <- &getViewByNameResp{v, ok}
 }
 
 // registerViewReq is the command to register a view with the library.

@@ -37,9 +37,9 @@ func statsExamples() {
 	_ = videoSize
 
 	// START findMeasure
-	m, err := stats.FindMeasure("my.org/video_size")
-	if err != nil {
-		log.Fatal(err)
+	m, ok := stats.FindMeasure("my.org/video_size")
+	if !ok {
+		log.Fatalln("measure not found")
 	}
 	// END findMeasure
 
@@ -89,9 +89,9 @@ func statsExamples() {
 	// END view
 
 	// START findView
-	v, err := stats.FindView("my.org/video_size_distribution")
-	if err != nil {
-		log.Fatal(err)
+	v, ok := stats.FindView("my.org/video_size_distribution")
+	if !ok {
+		log.Fatalln("view not found")
 	}
 	// END findView
 

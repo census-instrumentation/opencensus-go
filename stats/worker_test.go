@@ -60,7 +60,6 @@ func Test_Worker_MeasureCreation(t *testing.T) {
 func Test_Worker_FindMeasure(t *testing.T) {
 	restart()
 
-	someError := errors.New("some error")
 	mf1, err := NewMeasureFloat64("MF1", "desc MF1", "unit")
 	if err != nil {
 		t.Errorf("NewMeasureFloat64(\"MF1\", \"desc MF1\") got error %v, want no error", err)
@@ -78,7 +77,7 @@ func Test_Worker_FindMeasure(t *testing.T) {
 		label string
 		name  string
 		m     Measure
-		err   error
+		ok    bool
 	}
 
 	tcs := []testCase{
@@ -86,50 +85,50 @@ func Test_Worker_FindMeasure(t *testing.T) {
 			"0",
 			mf1.Name(),
 			mf1,
-			nil,
+			true,
 		},
 		{
 			"1",
 			"MF1",
 			mf1,
-			nil,
+			true,
 		},
 		{
 			"2",
 			mf2.Name(),
 			mf2,
-			nil,
+			true,
 		},
 		{
 			"3",
 			"MF2",
 			mf2,
-			nil,
+			true,
 		},
 		{
 			"4",
 			mi1.Name(),
 			mi1,
-			nil,
+			true,
 		},
 		{
 			"5",
 			"MI1",
 			mi1,
-			nil,
+			true,
 		},
 		{
 			"6",
 			"other",
 			nil,
-			someError,
+			false,
 		},
 	}
 
 	for _, tc := range tcs {
-		m, err := FindMeasure(tc.name)
-		if (err != nil) != (tc.err != nil) {
-			t.Errorf("FindMeasure(%q) = %v, want %v", tc.label, err, tc.err)
+		m, ok := FindMeasure(tc.name)
+		if ok != tc.ok {
+			t.Errorf("FindMeasure(%q) = %v, want %v", tc.label, ok, tc.ok)
 		}
 		if m != tc.m {
 			t.Errorf("FindMeasure(%q) got measure %v; want %v", tc.label, m, tc.m)
@@ -162,7 +161,7 @@ func Test_Worker_MeasureDelete(t *testing.T) {
 
 	type deletion struct {
 		name      string
-		getErr    error
+		findOk    bool
 		deleteErr error
 	}
 
@@ -179,7 +178,7 @@ func Test_Worker_MeasureDelete(t *testing.T) {
 			[]string{"mi1"},
 			[]vRegistrations{},
 			[]deletion{
-				{"mi1", nil, nil},
+				{"mi1", true, nil},
 			},
 		},
 		{
@@ -192,8 +191,8 @@ func Test_Worker_MeasureDelete(t *testing.T) {
 				},
 			},
 			[]deletion{
-				{"mi1", nil, someError},
-				{"mi2", someError, nil},
+				{"mi1", true, someError},
+				{"mi2", false, nil},
 			},
 		},
 		{
@@ -206,8 +205,8 @@ func Test_Worker_MeasureDelete(t *testing.T) {
 				},
 			},
 			[]deletion{
-				{"mi1", nil, someError},
-				{"mi2", nil, nil},
+				{"mi1", true, someError},
+				{"mi2", true, nil},
 			},
 		},
 	}
@@ -222,30 +221,30 @@ func Test_Worker_MeasureDelete(t *testing.T) {
 		}
 
 		for _, r := range tc.registrations {
-			m, err := FindMeasure(r.measureName)
-			if err != nil {
-				t.Errorf("%v: FindMeasure(%q) = %v; want no error", tc.label, r.measureName, err)
+			m, ok := FindMeasure(r.measureName)
+			if !ok {
+				t.Errorf("%v: FindMeasure(%q) = %v; want true", tc.label, r.measureName, ok)
 				continue
 			}
-			if err = r.regFunc(m); err != nil {
+			if err := r.regFunc(m); err != nil {
 				t.Errorf("%v: Cannot register view: %v", tc.label, err)
 				continue
 			}
 		}
 
 		for _, d := range tc.deletions {
-			m, err := FindMeasure(d.name)
-			if (err != nil) != (d.getErr != nil) {
-				t.Errorf("%v: FindMeasure = %v; want %v", tc.label, d.getErr, err)
+			m, ok := FindMeasure(d.name)
+			if ok != d.findOk {
+				t.Errorf("%v: FindMeasure = %v; want %v", tc.label, ok, d.findOk)
 				continue
 			}
 
-			if err != nil {
-				// err was expected to be nil
+			if !ok {
+				// ok was expected to be true
 				continue
 			}
 
-			err = DeleteMeasure(m)
+			err := DeleteMeasure(m)
 			if (err != nil) != (d.deleteErr != nil) {
 				t.Errorf("%v: Cannot delete measure: got %v as error; want %v", tc.label, err, d.deleteErr)
 			}
@@ -255,8 +254,7 @@ func Test_Worker_MeasureDelete(t *testing.T) {
 				deleted = true
 			}
 
-			if _, err := FindMeasure(d.name); deleted && err == nil {
-				// TODO(jbd): Look for ErrNotExists instead.
+			if _, ok := FindMeasure(d.name); deleted && ok {
 				t.Errorf("%v: Measure %q shouldn't exist after deletion but exists", tc.label, d.name)
 				continue
 			}
@@ -281,7 +279,7 @@ func Test_Worker_ViewRegistration(t *testing.T) {
 	type byNameWant struct {
 		name string
 		vID  string
-		err  error
+		ok   bool
 	}
 
 	type subscription struct {
@@ -323,12 +321,12 @@ func Test_Worker_ViewRegistration(t *testing.T) {
 				{
 					"VF1",
 					"v1ID",
-					nil,
+					true,
 				},
 				{
 					"VF2",
 					"vNilID",
-					someError,
+					false,
 				},
 			},
 		},
@@ -367,12 +365,12 @@ func Test_Worker_ViewRegistration(t *testing.T) {
 				{
 					"VF1",
 					"v1ID",
-					nil,
+					true,
 				},
 				{
 					"VF2",
 					"v2ID",
-					nil,
+					true,
 				},
 			},
 		},
@@ -411,7 +409,7 @@ func Test_Worker_ViewRegistration(t *testing.T) {
 				{
 					"VF1",
 					"v1ID",
-					nil,
+					true,
 				},
 			},
 		},
@@ -456,14 +454,14 @@ func Test_Worker_ViewRegistration(t *testing.T) {
 		}
 
 		for _, byname := range tc.bynames {
-			v, err := FindView(byname.name)
-			if (err != nil) != (byname.err != nil) {
-				t.Errorf("%v: ViewByName errored with %v, want %v", tc.label, err, byname.err)
+			v, ok := FindView(byname.name)
+			if ok != byname.ok {
+				t.Errorf("%v: ViewByName(%q) = %v, want %v", tc.label, byname.name, ok, byname.ok)
 			}
 
 			wantV := views[byname.vID]
 			if v != wantV {
-				t.Errorf("%v: ViewByName = %v; want %v", tc.label, v, wantV)
+				t.Errorf("%v: ViewByName(%q) = %v; want %v", tc.label, byname.name, v, wantV)
 			}
 		}
 	}
