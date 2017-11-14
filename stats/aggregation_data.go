@@ -85,13 +85,13 @@ type DistributionData struct {
 	Mean            float64   // mean of the distribution
 	SumOfSquaredDev float64   // sum of the squared deviation from the mean
 	CountPerBucket  []int64   // number of occurrences per bucket
-	Bounds          []float64 // histogram distribution of the values
+	bounds          []float64 // histogram distribution of the values
 }
 
 func newDistributionData(bounds []float64) *DistributionData {
 	return &DistributionData{
 		CountPerBucket: make([]int64, len(bounds)+1),
-		Bounds:         bounds,
+		bounds:         bounds,
 		Min:            math.MaxFloat64,
 		Max:            math.SmallestNonzeroFloat64,
 	}
@@ -142,18 +142,18 @@ func (a *DistributionData) addSample(v interface{}) {
 }
 
 func (a *DistributionData) incrementBucketCount(f float64) {
-	if len(a.Bounds) == 0 {
+	if len(a.bounds) == 0 {
 		a.CountPerBucket[0]++
 		return
 	}
 
-	for i, b := range a.Bounds {
+	for i, b := range a.bounds {
 		if f < b {
 			a.CountPerBucket[i]++
 			return
 		}
 	}
-	a.CountPerBucket[len(a.Bounds)]++
+	a.CountPerBucket[len(a.bounds)]++
 }
 
 // DistributionData will not multiply by the fraction for this type
@@ -164,7 +164,7 @@ func (a *DistributionData) incrementBucketCount(f float64) {
 // and will create inconsistencies between sumOfSquaredDev, min, max and the
 // various buckets of the histogram.
 func (a *DistributionData) multiplyByFraction(fraction float64) AggregationData {
-	ret := newDistributionData(a.Bounds)
+	ret := newDistributionData(a.bounds)
 	for i, c := range a.CountPerBucket {
 		ret.CountPerBucket[i] = c
 	}

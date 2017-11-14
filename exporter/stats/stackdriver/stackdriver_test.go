@@ -38,7 +38,7 @@ func TestExporter_makeReq(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	distView := stats.NewView("distview", "desc", nil, m, stats.DistributionAggregation{}, stats.SlidingTimeWindow{})
+	distView := stats.NewView("distview", "desc", nil, m, stats.DistributionAggregation([]float64{2, 4, 7}), stats.SlidingTimeWindow{})
 	if err := stats.RegisterView(distView); err != nil {
 		t.Fatal(err)
 	}
@@ -204,7 +204,6 @@ func newTestDistViewData(v *stats.View, start, end time.Time) *stats.ViewData {
 				Mean:            3,
 				SumOfSquaredDev: 1.5,
 				CountPerBucket:  []int64{2, 2, 1},
-				Bounds:          []float64{2, 4, 7},
 			}},
 		},
 		Start: start,

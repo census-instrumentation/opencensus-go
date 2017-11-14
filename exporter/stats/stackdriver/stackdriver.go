@@ -140,7 +140,7 @@ func (e *Exporter) makeReq(vds []*stats.ViewData) *monitoringpb.CreateTimeSeries
 					Type:   "global",
 					Labels: map[string]string{"project_id": e.ProjectID},
 				},
-				Points: []*monitoringpb.Point{newPoint(row, vd.Start, vd.End)},
+				Points: []*monitoringpb.Point{newPoint(vd.View, row, vd.Start, vd.End)},
 			}
 			timeSeries = append(timeSeries, ts)
 		}
@@ -215,7 +215,7 @@ func (e *Exporter) createMeasure(ctx context.Context, vd *stats.ViewData) error 
 	return nil
 }
 
-func newPoint(row *stats.Row, start, end time.Time) *monitoringpb.Point {
+func newPoint(v *stats.View, row *stats.Row, start, end time.Time) *monitoringpb.Point {
 	return &monitoringpb.Point{
 		Interval: &monitoringpb.TimeInterval{
 			StartTime: &timestamp.Timestamp{
@@ -227,11 +227,11 @@ func newPoint(row *stats.Row, start, end time.Time) *monitoringpb.Point {
 				Nanos:   int32(end.Nanosecond()),
 			},
 		},
-		Value: newTypedValue(row),
+		Value: newTypedValue(v, row),
 	}
 }
 
-func newTypedValue(r *stats.Row) *monitoringpb.TypedValue {
+func newTypedValue(view *stats.View, r *stats.Row) *monitoringpb.TypedValue {
 	switch r.Data.(type) {
 	case *stats.CountData:
 		v := r.Data.(*stats.CountData)
@@ -240,6 +240,7 @@ func newTypedValue(r *stats.Row) *monitoringpb.TypedValue {
 		}}
 	case *stats.DistributionData:
 		v := r.Data.(*stats.DistributionData)
+		bounds := view.Aggregation().(stats.DistributionAggregation)
 		return &monitoringpb.TypedValue{Value: &monitoringpb.TypedValue_DistributionValue{
 			DistributionValue: &distributionpb.Distribution{
 				Count: v.Count,
@@ -252,7 +253,7 @@ func newTypedValue(r *stats.Row) *monitoringpb.TypedValue {
 				BucketOptions: &distributionpb.Distribution_BucketOptions{
 					Options: &distributionpb.Distribution_BucketOptions_ExplicitBuckets{
 						ExplicitBuckets: &distributionpb.Distribution_BucketOptions_Explicit{
-							Bounds: v.Bounds,
+							Bounds: []float64(bounds),
 						},
 					},
 				},
