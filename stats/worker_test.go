@@ -473,7 +473,7 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 
 	k1, _ := tag.NewKey("k1")
 	k2, _ := tag.NewKey("k2")
-	ts, err := tag.NewMap(nil,
+	ts, err := tag.NewMap(context.Background(),
 		tag.Insert(k1, "v1"),
 		tag.Insert(k2, "v2"),
 	)

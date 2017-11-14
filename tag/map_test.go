@@ -26,7 +26,7 @@ func TestContext(t *testing.T) {
 	k1, _ := NewKey("k1")
 	k2, _ := NewKey("k2")
 
-	want, _ := NewMap(nil,
+	want, _ := NewMap(context.Background(),
 		Insert(k1, "v1"),
 		Insert(k2, "v2"),
 	)
@@ -114,7 +114,8 @@ func TestNewMap(t *testing.T) {
 			Delete(k1),
 		}
 		mods = append(mods, tt.mods...)
-		got, err := NewMap(tt.initial, mods...)
+		ctx := NewContext(context.Background(), tt.initial)
+		got, err := NewMap(ctx, mods...)
 		if err != nil {
 			t.Errorf("%v: NewMap = %v", tt.name, err)
 		}

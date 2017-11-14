@@ -16,6 +16,7 @@
 package tag
 
 import (
+	"context"
 	"reflect"
 	"sort"
 	"testing"
@@ -79,7 +80,7 @@ func Test_EncodeDecode_Set(t *testing.T) {
 		for i, pair := range tc.pairs {
 			mods[i] = Upsert(pair.k, pair.v)
 		}
-		ts, err := NewMap(nil, mods...)
+		ts, err := NewMap(context.Background(), mods...)
 		if err != nil {
 			t.Errorf("%v: NewMap = %v", tc.label, err)
 		}

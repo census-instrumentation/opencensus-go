@@ -17,10 +17,13 @@ package stats
 import (
 	"testing"
 
+	"golang.org/x/net/context"
+
 	"go.opencensus.io/tag"
 )
 
 func TestEncodeDecodeTags(t *testing.T) {
+	ctx := context.Background()
 	type testData struct {
 		m    *tag.Map
 		keys []tag.Key
@@ -40,10 +43,10 @@ func TestEncodeDecodeTags(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	m1, _ := tag.NewMap(nil)
-	m2, _ := tag.NewMap(nil, tag.Insert(k2, "v2"))
-	m3, _ := tag.NewMap(nil, tag.Insert(k1, "v1"), tag.Insert(k2, "v2"))
-	m4, _ := tag.NewMap(nil, tag.Insert(k1, "v1"), tag.Insert(k2, "v2"), tag.Insert(k3, "v3"))
+	m1, _ := tag.NewMap(ctx)
+	m2, _ := tag.NewMap(ctx, tag.Insert(k2, "v2"))
+	m3, _ := tag.NewMap(ctx, tag.Insert(k1, "v1"), tag.Insert(k2, "v2"))
+	m4, _ := tag.NewMap(ctx, tag.Insert(k1, "v1"), tag.Insert(k2, "v2"), tag.Insert(k3, "v3"))
 
 	tests := []testData{
 		{

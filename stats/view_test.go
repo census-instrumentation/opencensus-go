@@ -19,6 +19,8 @@ import (
 	"testing"
 	"time"
 
+	"golang.org/x/net/context"
+
 	"go.opencensus.io/tag"
 )
 
@@ -159,7 +161,7 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowCumulative(t *testin
 			for _, t := range r.tags {
 				mods = append(mods, tag.Insert(t.k, t.v))
 			}
-			ts, err := tag.NewMap(nil, mods...)
+			ts, err := tag.NewMap(context.Background(), mods...)
 			if err != nil {
 				t.Errorf("%v: NewMap = %v", tc.label, err)
 			}
@@ -348,7 +350,7 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowSlidingTime(t *testi
 			for _, t := range r.tags {
 				mods = append(mods, tag.Insert(t.k, t.v))
 			}
-			ts, err := tag.NewMap(nil, mods...)
+			ts, err := tag.NewMap(context.Background(), mods...)
 			if err != nil {
 				t.Errorf("%v: NewMap = %v", tc.label, err)
 			}
@@ -555,7 +557,7 @@ func Test_View_MeasureFloat64_AggregationCount_WindowSlidingTime(t *testing.T) {
 			for _, t := range r.tags {
 				mods = append(mods, tag.Insert(t.k, t.v))
 			}
-			ts, err := tag.NewMap(nil, mods...)
+			ts, err := tag.NewMap(context.Background(), mods...)
 			if err != nil {
 				t.Errorf("%v: NewMap = %v", tc.label, err)
 			}
@@ -686,7 +688,7 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowSlidingCount(t *test
 			for _, t := range r.tags {
 				mods = append(mods, tag.Insert(t.k, t.v))
 			}
-			ts, err := tag.NewMap(nil, mods...)
+			ts, err := tag.NewMap(context.Background(), mods...)
 			if err != nil {
 				t.Logf("%v: NewMap failed with %v", tc.label, err)
 			}

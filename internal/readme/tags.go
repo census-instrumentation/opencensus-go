@@ -43,7 +43,7 @@ func tagsExamples() {
 		log.Fatal(err)
 	}
 
-	tagMap, err := tag.NewMap(nil,
+	tagMap, err := tag.NewMap(ctx,
 		tag.Insert(osKey, "macOS-10.12.5"),
 		tag.Upsert(userIDKey, "cde36753ed"),
 	)
@@ -57,8 +57,7 @@ func tagsExamples() {
 	// END newContext
 
 	// START replaceTagMap
-	oldTagMap := tag.FromContext(ctx)
-	tagMap, err = tag.NewMap(oldTagMap,
+	tagMap, err = tag.NewMap(ctx,
 		tag.Insert(key, "macOS-10.12.5"),
 		tag.Upsert(key, "macOS-10.12.7"),
 		tag.Upsert(userIDKey, "fff0989878"),
@@ -68,7 +67,5 @@ func tagsExamples() {
 	}
 	ctx = tag.NewContext(ctx, tagMap)
 	// END replaceTagMap
-
-	_ = oldTagMap
 
 }
