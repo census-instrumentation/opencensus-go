@@ -26,6 +26,8 @@ import (
 	"sync"
 	"time"
 
+	"go.opencensus.io/internal"
+
 	"go.opencensus.io/stats"
 
 	monitoring "cloud.google.com/go/monitoring/apiv3"
@@ -96,7 +98,8 @@ func (e *Exporter) onError(err error) {
 }
 
 func (e *Exporter) newClient() {
-	client, err := monitoring.NewMetricClient(context.Background(), e.ClientOptions...)
+	opts := append(e.ClientOptions, option.WithUserAgent(internal.UserAgent))
+	client, err := monitoring.NewMetricClient(context.Background(), opts...)
 	if err != nil {
 		e.OnError(err)
 		return
