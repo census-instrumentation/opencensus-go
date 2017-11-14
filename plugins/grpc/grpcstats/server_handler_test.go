@@ -384,6 +384,5 @@ func newDistributionData(bounds []float64, countPerBucket []int64, count int64, 
 		Mean:            mean,
 		SumOfSquaredDev: sumOfSquaredDev,
 		CountPerBucket:  countPerBucket,
-		Bounds:          bounds,
 	}
 }
