@@ -64,15 +64,10 @@ func statsExamples() {
 		Intervals: 5,
 	}
 
-	slidingCountWindow := stats.SlidingCountWindow{
-		Count:   100,
-		Subsets: 10,
-	}
-
 	cumWindow := stats.CumulativeWindow{}
 	// END windows
 
-	_, _, _ = slidingTimeWindow, slidingCountWindow, cumWindow
+	_, _ = slidingTimeWindow, cumWindow
 
 	// START view
 	view := stats.NewView(

@@ -38,7 +38,7 @@ func TestExporter_makeReq(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	distView := stats.NewView("distview", "desc", nil, m, stats.DistributionAggregation{}, stats.SlidingCountWindow{})
+	distView := stats.NewView("distview", "desc", nil, m, stats.DistributionAggregation{}, stats.SlidingTimeWindow{})
 	if err := stats.RegisterView(distView); err != nil {
 		t.Fatal(err)
 	}

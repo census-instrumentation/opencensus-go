@@ -88,10 +88,9 @@ provide a histogram of the values of the samples.
 
 ### Create an aggregation window
 
-Currently only 3 types of aggregation windows are supported. The CumulativeWindow
+Currently only two types of aggregation windows are supported. The CumulativeWindow
 is used to continuously aggregate the data received.
 The SlidingTimeWindow to aggregate the data received over the last specified time interval.
-The SlidingCountWindow to aggregate the data received over the last specified sample count.
 Currently all aggregation types are compatible with all aggregation windows.
 Later we might provide aggregation types that are incompatible with some windows.
 

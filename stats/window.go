@@ -46,16 +46,3 @@ func (w SlidingTimeWindow) isWindow() {}
 func (w SlidingTimeWindow) newAggregator(now time.Time, aggregationValueConstructor func() AggregationData) aggregator {
 	return newAggregatorSlidingTime(now, w.Duration, w.Intervals, aggregationValueConstructor)
 }
-
-// SlidingCountWindow indicates that the aggregation
-// occurs over a sliding number of samples.
-type SlidingCountWindow struct {
-	Count   uint64
-	Subsets int
-}
-
-func (w SlidingCountWindow) isWindow() {}
-
-func (w SlidingCountWindow) newAggregator(now time.Time, aggregationValueConstructor func() AggregationData) aggregator {
-	return newAggregatorSlidingCount(now, w.Count, w.Subsets, aggregationValueConstructor)
-}

@@ -191,8 +191,6 @@ func (e *Exporter) createMeasure(ctx context.Context, vd *stats.ViewData) error 
 	switch window.(type) {
 	case stats.CumulativeWindow:
 		metricKind = metricpb.MetricDescriptor_CUMULATIVE
-	case stats.SlidingCountWindow:
-		metricKind = metricpb.MetricDescriptor_DELTA
 	case stats.SlidingTimeWindow:
 		metricKind = metricpb.MetricDescriptor_DELTA
 	default:
