@@ -62,10 +62,13 @@ if err != nil {
 	log.Fatal(err)
 }
 
-tagMap := tag.NewMap(nil,
+tagMap, err := tag.NewMap(ctx,
 	tag.Insert(osKey, "macOS-10.12.5"),
 	tag.Upsert(userIDKey, "cde36753ed"),
 )
+if err != nil {
+	log.Fatal(err)
+}
 ```
 
 ### Propagating a tag map in a context
@@ -85,12 +88,14 @@ use NewMap and put the new tag map back to the context.
 
 [embedmd]:# (tags.go replaceTagMap)
 ```go
-oldTagMap := tag.FromContext(ctx)
-tagMap = tag.NewMap(oldTagMap,
+tagMap, err = tag.NewMap(ctx,
 	tag.Insert(key, "macOS-10.12.5"),
 	tag.Upsert(key, "macOS-10.12.7"),
 	tag.Upsert(userIDKey, "fff0989878"),
 )
+if err != nil {
+	log.Fatal(err)
+}
 ctx = tag.NewContext(ctx, tagMap)
 ```
 
