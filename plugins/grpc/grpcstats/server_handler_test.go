@@ -320,7 +320,7 @@ func TestServerDefaultCollections(t *testing.T) {
 			for _, t := range rpc.tags {
 				mods = append(mods, tag.Upsert(t.k, t.v))
 			}
-			ts, err := tag.NewMap(nil, mods...)
+			ts, err := tag.NewMap(context.Background(), mods...)
 			if err != nil {
 				t.Errorf("%q: NewMap = %v", tc.label, err)
 			}

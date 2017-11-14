@@ -85,7 +85,7 @@ func (ch clientHandler) TagRPC(ctx context.Context, info *stats.RPCTagInfo) cont
 	encoded := tag.Encode(ts)
 	ctx = stats.SetTags(ctx, encoded)
 
-	tagMap, err := tag.NewMap(ts,
+	tagMap, err := tag.NewMap(ctx,
 		tag.Upsert(keyService, serviceName),
 		tag.Upsert(keyMethod, methodName),
 	)
@@ -159,7 +159,7 @@ func (ch clientHandler) handleRPCEnd(ctx context.Context, s *stats.End) {
 
 	if s.Error != nil {
 		errorCode := s.Error.Error()
-		newTagMap, err := tag.NewMap(tag.FromContext(ctx),
+		newTagMap, err := tag.NewMap(ctx,
 			tag.Upsert(keyOpStatus, errorCode),
 		)
 		if err == nil {

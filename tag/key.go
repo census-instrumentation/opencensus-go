@@ -15,11 +15,6 @@
 
 package tag
 
-// Mutator modifies a tag map.
-type Mutator interface {
-	Mutate(t *Map) (*Map, error)
-}
-
 // Key represents a tag key. Keys with the same name will return
 // true when compared with the == operator.
 type Key struct {
@@ -36,83 +31,4 @@ func NewKey(name string) (Key, error) {
 // Name returns the name of the key.
 func (k Key) Name() string {
 	return k.name
-}
-
-type mutator struct {
-	fn func(t *Map) (*Map, error)
-}
-
-func (m *mutator) Mutate(t *Map) (*Map, error) {
-	return m.fn(t)
-}
-
-// Insert returns a mutator that inserts a
-// value associated with k. If k already exists in the tag map,
-// mutator doesn't update the value.
-func Insert(k Key, v string) Mutator {
-	return &mutator{
-		fn: func(m *Map) (*Map, error) {
-			m.insert(k, v)
-			return m, nil
-		},
-	}
-}
-
-// Update returns a mutator that updates the
-// value of the tag associated with k with v. If k doesn't
-// exists in the tag map, the mutator doesn't insert the value.
-func Update(k Key, v string) Mutator {
-	return &mutator{
-		fn: func(m *Map) (*Map, error) {
-			m.update(k, v)
-			return m, nil
-		},
-	}
-}
-
-// Upsert returns a mutator that upserts the
-// value of the tag associated with k with v. It inserts the
-// value if k doesn't exist already. It mutates the value
-// if k already exists.
-func Upsert(k Key, v string) Mutator {
-	return &mutator{
-		fn: func(m *Map) (*Map, error) {
-			m.upsert(k, v)
-			return m, nil
-		},
-	}
-}
-
-// Delete returns a mutator that deletes
-// the value associated with k.
-func Delete(k Key) Mutator {
-	return &mutator{
-		fn: func(m *Map) (*Map, error) {
-			m.delete(k)
-			return m, nil
-		},
-	}
-}
-
-// NewMap returns a new tag map originated from orig,
-// modified with the provided mutators.
-func NewMap(orig *Map, mutator ...Mutator) (*Map, error) {
-	// TODO(jbd): Implement validation of keys and values.
-	var m *Map
-	if orig == nil {
-		m = newMap(0)
-	} else {
-		m = newMap(len(orig.m))
-		for k, v := range orig.m {
-			m.insert(k, v)
-		}
-	}
-	var err error
-	for _, mod := range mutator {
-		m, err = mod.Mutate(m)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return m, nil
 }

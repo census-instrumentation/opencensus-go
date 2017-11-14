@@ -19,6 +19,8 @@ import (
 	"bytes"
 	"fmt"
 	"sort"
+
+	"golang.org/x/net/context"
 )
 
 // Tag is a key value pair that can be propagated on wire.
@@ -78,4 +80,86 @@ func (m *Map) delete(k Key) {
 
 func newMap(sizeHint int) *Map {
 	return &Map{m: make(map[Key]string, sizeHint)}
+}
+
+// Mutator modifies a tag map.
+type Mutator interface {
+	Mutate(t *Map) (*Map, error)
+}
+
+// Insert returns a mutator that inserts a
+// value associated with k. If k already exists in the tag map,
+// mutator doesn't update the value.
+func Insert(k Key, v string) Mutator {
+	return &mutator{
+		fn: func(m *Map) (*Map, error) {
+			m.insert(k, v)
+			return m, nil
+		},
+	}
+}
+
+// Update returns a mutator that updates the
+// value of the tag associated with k with v. If k doesn't
+// exists in the tag map, the mutator doesn't insert the value.
+func Update(k Key, v string) Mutator {
+	return &mutator{
+		fn: func(m *Map) (*Map, error) {
+			m.update(k, v)
+			return m, nil
+		},
+	}
+}
+
+// Upsert returns a mutator that upserts the
+// value of the tag associated with k with v. It inserts the
+// value if k doesn't exist already. It mutates the value
+// if k already exists.
+func Upsert(k Key, v string) Mutator {
+	return &mutator{
+		fn: func(m *Map) (*Map, error) {
+			m.upsert(k, v)
+			return m, nil
+		},
+	}
+}
+
+// Delete returns a mutator that deletes
+// the value associated with k.
+func Delete(k Key) Mutator {
+	return &mutator{
+		fn: func(m *Map) (*Map, error) {
+			m.delete(k)
+			return m, nil
+		},
+	}
+}
+
+// NewMap returns a new tag map originated from the incoming context
+// and modified with the provided mutators.
+func NewMap(ctx context.Context, mutator ...Mutator) (*Map, error) {
+	// TODO(jbd): Implement validation of keys and values.
+	m := newMap(0)
+	orig := FromContext(ctx)
+	if orig != nil {
+		for k, v := range orig.m {
+			m.insert(k, v)
+		}
+	}
+	var err error
+	for _, mod := range mutator {
+		m, err = mod.Mutate(m)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return m, nil
+}
+
+type mutator struct {
+	fn func(t *Map) (*Map, error)
+}
+
+func (m *mutator) Mutate(t *Map) (*Map, error) {
+	return m.fn(t)
 }

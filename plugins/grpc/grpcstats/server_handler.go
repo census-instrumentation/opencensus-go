@@ -163,7 +163,7 @@ func (sh serverHandler) handleRPCEnd(ctx context.Context, s *stats.End) {
 	measurements = append(measurements, RPCServerServerElapsedTime.M(float64(elapsedTime)/float64(time.Millisecond)))
 	if s.Error != nil {
 		errorCode := s.Error.Error()
-		tm, err := tag.NewMap(tag.FromContext(ctx),
+		tm, err := tag.NewMap(ctx,
 			tag.Upsert(keyOpStatus, errorCode),
 		)
 		if err == nil {
@@ -187,7 +187,7 @@ func (sh serverHandler) createTagMap(ctx context.Context, serviceName, methodNam
 		if err != nil {
 			return nil, fmt.Errorf("serverHandler.createTagMap failed to decode tagsBin %v: %v", tagsBin, err)
 		}
-		return tag.NewMap(old, mods...)
+		return tag.NewMap(tag.NewContext(ctx, old), mods...)
 	}
-	return tag.NewMap(nil, mods...)
+	return tag.NewMap(ctx, mods...)
 }
