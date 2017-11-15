@@ -23,20 +23,16 @@ import (
 )
 
 func TestBundling(t *testing.T) {
-	exporter, err := NewExporter(Options{
+	exporter := newExporter(Options{
 		ProjectID:            "fakeProjectID",
 		BundleDelayThreshold: time.Second / 10,
 		BundleCountThreshold: 10,
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	trace.RegisterExporter(exporter)
-
+	}, nil)
 	ch := make(chan []*trace.SpanData)
 	exporter.uploadFn = func(spans []*trace.SpanData) {
 		ch <- spans
 	}
+	trace.RegisterExporter(exporter)
 
 	trace.SetDefaultSampler(trace.AlwaysSample())
 	for i := 0; i < 35; i++ {

@@ -87,6 +87,10 @@ func NewExporter(o Options) (*Exporter, error) {
 	if err != nil {
 		return nil, fmt.Errorf("stackdriver: couldn't initialize client: %v", err)
 	}
+	return newExporter(o, client), nil
+}
+
+func newExporter(o Options, client *tracingclient.Client) *Exporter {
 	e := &Exporter{
 		projectID: o.ProjectID,
 		client:    client,
@@ -111,7 +115,7 @@ func NewExporter(o Options) (*Exporter, error) {
 
 	e.bundler = bundler
 	e.uploadFn = e.uploadToStackdriver
-	return e, nil
+	return e
 }
 
 // Export exports a SpanData to Stackdriver Trace.
