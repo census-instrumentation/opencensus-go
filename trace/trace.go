@@ -117,8 +117,8 @@ func FromContext(ctx context.Context) *Span {
 	return s
 }
 
-// WithSpan returns a new context with the given Span attached.
-func WithSpan(parent context.Context, s *Span) context.Context {
+// NewContext returns a new context with the given Span attached.
+func NewContext(parent context.Context, s *Span) context.Context {
 	return context.WithValue(parent, contextKey{}, s)
 }
 
@@ -140,7 +140,7 @@ type StartSpanOptions struct {
 // If there is no span in the context, creates a new trace and span.
 func StartSpan(ctx context.Context, name string) context.Context {
 	parentSpan, _ := ctx.Value(contextKey{}).(*Span)
-	return WithSpan(ctx, parentSpan.StartSpanWithOptions(name, StartSpanOptions{}))
+	return NewContext(ctx, parentSpan.StartSpanWithOptions(name, StartSpanOptions{}))
 }
 
 // StartSpanWithOptions starts a new child span of the current span in the context.
@@ -148,7 +148,7 @@ func StartSpan(ctx context.Context, name string) context.Context {
 // If there is no span in the context, creates a new trace and span.
 func StartSpanWithOptions(ctx context.Context, name string, o StartSpanOptions) context.Context {
 	parentSpan, _ := ctx.Value(contextKey{}).(*Span)
-	return WithSpan(ctx, parentSpan.StartSpanWithOptions(name, o))
+	return NewContext(ctx, parentSpan.StartSpanWithOptions(name, o))
 }
 
 // StartSpanWithRemoteParent starts a new child span with the given parent SpanContext.
@@ -156,7 +156,7 @@ func StartSpanWithOptions(ctx context.Context, name string, o StartSpanOptions) 
 // If there is an existing span in ctx, it is ignored -- the returned Span is a
 // child of the span specified by parent.
 func StartSpanWithRemoteParent(ctx context.Context, name string, parent SpanContext, o StartSpanOptions) context.Context {
-	return WithSpan(ctx, NewSpanWithRemoteParent(name, parent, o))
+	return NewContext(ctx, NewSpanWithRemoteParent(name, parent, o))
 }
 
 // StartSpan starts a new child span.
