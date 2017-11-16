@@ -76,7 +76,7 @@ func TestExportTrace(t *testing.T) {
 			trace.SetSpanAttributes(ctx2,
 				trace.StringAttribute{Key: "key1", Value: "value1"},
 				trace.StringAttribute{Key: "key2", Value: "value2"})
-			trace.SetSpanAttributes(ctx2, trace.IntAttribute{Key: "key1", Value: 100})
+			trace.SetSpanAttributes(ctx2, trace.Int64Attribute{Key: "key1", Value: 100})
 			trace.EndSpan(ctx2)
 		}
 		{

@@ -364,7 +364,7 @@ func copyAttributes(m map[string]interface{}, attributes []Attribute) {
 		switch a := a.(type) {
 		case BoolAttribute:
 			m[a.Key] = a.Value
-		case IntAttribute:
+		case Int64Attribute:
 			m[a.Key] = a.Value
 		case StringAttribute:
 			m[a.Key] = a.Value

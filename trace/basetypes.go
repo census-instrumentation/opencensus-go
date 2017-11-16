@@ -57,13 +57,13 @@ type BoolAttribute struct {
 
 func (b BoolAttribute) isAttribute() {}
 
-// IntAttribute represents an int64-valued attribute.
-type IntAttribute struct {
+// Int64Attribute represents an int64-valued attribute.
+type Int64Attribute struct {
 	Key   string
 	Value int64
 }
 
-func (i IntAttribute) isAttribute() {}
+func (i Int64Attribute) isAttribute() {}
 
 // StringAttribute represents a string-valued attribute.
 type StringAttribute struct {
