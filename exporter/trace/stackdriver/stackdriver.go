@@ -35,16 +35,14 @@ import (
 	"sync"
 	"time"
 
+	"go.opencensus.io/internal"
+
 	tracingclient "cloud.google.com/go/trace/apiv2"
 	"go.opencensus.io/trace"
 	"golang.org/x/net/context"
 	"google.golang.org/api/option"
 	"google.golang.org/api/support/bundler"
 	tracepb "google.golang.org/genproto/googleapis/devtools/cloudtrace/v2"
-)
-
-const (
-	userAgent = `opencensus-go-v0`
 )
 
 // Exporter is an implementation of trace.Exporter that uploads spans to
@@ -79,7 +77,7 @@ type Options struct {
 // to Stackdriver.
 func NewExporter(o Options) (*Exporter, error) {
 	co := []option.ClientOption{
-		option.WithUserAgent(userAgent),
+		option.WithUserAgent(internal.UserAgent),
 		// NB: NewClient below adds WithEndpoint, WithScopes options.
 	}
 	co = append(co, o.ClientOptions...)
