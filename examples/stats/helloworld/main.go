@@ -11,11 +11,9 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
 
-// Package stats contains an example program that collects data for
-// video size and spam video count over a time window. Collected data is
-// tagged with operating system and device ID.
+// Command helloworld is an example program that collects data for
+// video size over a time window.
 package main
 
 import (
@@ -29,6 +27,10 @@ import (
 
 func main() {
 	ctx := context.Background()
+
+	// Register an exporter to be able to retrieve
+	// the data from the subscribed views.
+	stats.RegisterExporter(&exporter{})
 
 	// Create measures. The program will record measures for the size of
 	// processed videos and the nubmer of videos marked as spam.
@@ -56,10 +58,6 @@ func main() {
 	if err := view.Subscribe(); err != nil {
 		log.Fatalf("Cannot subscribe to the view: %v", err)
 	}
-
-	// Register an exporter to be able to retrieve
-	// the data from the subscribed views.
-	stats.RegisterExporter(&exporter{})
 
 	// Record data points.
 	stats.Record(ctx, videoSize.M(25648), videoSize.M(48000), videoSize.M(128000))
