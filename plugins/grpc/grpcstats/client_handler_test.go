@@ -315,7 +315,7 @@ func TestClientDefaultCollections(t *testing.T) {
 			}
 		}
 
-		h := ClientStatsHandler()
+		h := NewClientStatsHandler()
 		for _, rpc := range tc.rpcs {
 			mods := []tag.Mutator{}
 			for _, t := range rpc.tags {

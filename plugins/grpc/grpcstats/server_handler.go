@@ -34,10 +34,10 @@ import (
 // interface to process lifecycle events from the GRPC server.
 type serverHandler struct{}
 
-// ServerStatsHandler returns a grpc/stats.Handler implementation
+// NewServerStatsHandler returns a grpc/stats.Handler implementation
 // that collects stats for a gRPC server. Predefined
 // measures and views can be used to access the collected data.
-func ServerStatsHandler() stats.Handler {
+func NewServerStatsHandler() stats.Handler {
 	return serverHandler{}
 }
 
