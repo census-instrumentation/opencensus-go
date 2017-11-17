@@ -40,9 +40,13 @@ func main() {
 	// to setup the authorization.
 	// See https://developers.google.com/identity/protocols/application-default-credentials
 	// for more details.
-	stats.RegisterExporter(&stackdriver.Exporter{
+	exporter, err := stackdriver.NewExporter(stackdriver.Options{
 		ProjectID: "project-id", // Google Cloud Console project ID.
 	})
+	if err != nil {
+		log.Fatal(err)
+	}
+	stats.RegisterExporter(exporter)
 
 	// Create measures. The program will record measures for the size of
 	// processed videos and the nubmer of videos marked as spam.

@@ -169,9 +169,7 @@ func TestExporter_makeReq(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			e := &Exporter{
-				ProjectID: tt.projID,
-			}
+			e := &Exporter{o: Options{ProjectID: tt.projID}}
 			if got := e.makeReq([]*stats.ViewData{tt.vd}); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("%v: Exporter.makeReq() = %v, want %v", tt.name, got, tt.want)
 			}

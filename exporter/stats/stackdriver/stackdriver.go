@@ -44,11 +44,22 @@ import (
 
 // Exporter exports stats to the Stackdriver Monitoring.
 type Exporter struct {
+	bundler *bundler.Bundler
+	o       Options
+
+	measuresMu sync.Mutex
+	measures   map[stats.Measure]struct{} // measures already created remotely
+
+	c *monitoring.MetricClient
+}
+
+// Options contains options for configuring the exporter.
+type Options struct {
 	// ProjectID is the identifier of the Stackdriver
 	// project the user is uploading the stats data to.
 	ProjectID string
 
-	// OnError is the hooked to be called when there is
+	// OnError is the hook to be called when there is
 	// an error occured when uploading the stats data.
 	// If no custom hook is set, errors are logged.
 	// Optional.
@@ -59,61 +70,64 @@ type Exporter struct {
 	// Optional.
 	ClientOptions []option.ClientOption
 
-	// ExportDelayThreshold determines the max amount of time
+	// BundleDelayThreshold determines the max amount of time
 	// the exporter can wait before uploading view data to
 	// the backend.
 	// Optional.
-	ExportDelayThreshold time.Duration
+	BundleDelayThreshold time.Duration
 
-	// ExportCountThreshold determines how many view data events
+	// BundleCountThreshold determines how many view data events
 	// can be buffered before batch uploading them to the backend.
 	// Optional.
-	ExportCountThreshold int
-
-	bundler *bundler.Bundler
-
-	measuresMu sync.Mutex
-	measures   map[stats.Measure]struct{} // measures already created remotely
-
-	once sync.Once
-	c    *monitoring.MetricClient
+	BundleCountThreshold int
 }
 
-// Export exports to the Stackdriver Monitoring if view data
-// has one or more rows.
-func (e *Exporter) Export(vd *stats.ViewData) {
-	e.once.Do(e.newClient)
-	if len(vd.Rows) == 0 {
-		return
-	}
-	e.bundler.Add(vd, 1)
-}
-
-func (e *Exporter) onError(err error) {
-	if e.OnError != nil {
-		e.OnError(err)
-		return
-	}
-	log.Printf("Failed to export to Stackdriver Monitoring: %v", err)
-}
-
-func (e *Exporter) newClient() {
-	opts := append(e.ClientOptions, option.WithUserAgent(internal.UserAgent))
+// NewExporter returns an exporter that uploads stats data to Stackdriver Monitoring.
+func NewExporter(o Options) (*Exporter, error) {
+	opts := append(o.ClientOptions, option.WithUserAgent(internal.UserAgent))
 	client, err := monitoring.NewMetricClient(context.Background(), opts...)
 	if err != nil {
-		e.OnError(err)
-		return
+		return nil, err
 	}
-	e.c = client
-	e.measures = make(map[stats.Measure]struct{})
+	e := &Exporter{
+		c:        client,
+		o:        o,
+		measures: make(map[stats.Measure]struct{}),
+	}
 	e.bundler = bundler.NewBundler((*stats.ViewData)(nil), func(bundle interface{}) {
 		vds := bundle.([]*stats.ViewData)
 		if err := e.upload(vds); err != nil {
 			e.onError(err)
 		}
 	})
-	e.bundler.DelayThreshold = e.ExportDelayThreshold
-	e.bundler.BundleCountThreshold = e.ExportCountThreshold
+	e.bundler.DelayThreshold = e.o.BundleDelayThreshold
+	e.bundler.BundleCountThreshold = e.o.BundleCountThreshold
+	return e, nil
+}
+
+// Export exports to the Stackdriver Monitoring if view data
+// has one or more rows.
+func (e *Exporter) Export(vd *stats.ViewData) {
+	if len(vd.Rows) == 0 {
+		return
+	}
+	e.bundler.Add(vd, 1)
+}
+
+// Flush waits for exported view data to be uploaded.
+//
+// This is useful if your program is ending and you do not
+// want to lose recent spans.
+func (e *Exporter) Flush() {
+	e.bundler.Flush()
+}
+
+func (e *Exporter) onError(err error) {
+	if e.o.OnError != nil {
+		e.o.OnError(err)
+		return
+	}
+	log.Printf("Failed to export to Stackdriver Monitoring: %v", err)
 }
 
 func (e *Exporter) upload(vds []*stats.ViewData) error {
@@ -141,7 +155,7 @@ func (e *Exporter) makeReq(vds []*stats.ViewData) *monitoringpb.CreateTimeSeries
 				},
 				Resource: &monitoredrespb.MonitoredResource{
 					Type:   "global",
-					Labels: map[string]string{"project_id": e.ProjectID},
+					Labels: map[string]string{"project_id": e.o.ProjectID},
 				},
 				Points: []*monitoringpb.Point{newPoint(vd.View, row, vd.Start, vd.End)},
 			}
@@ -149,7 +163,7 @@ func (e *Exporter) makeReq(vds []*stats.ViewData) *monitoringpb.CreateTimeSeries
 		}
 	}
 	return &monitoringpb.CreateTimeSeriesRequest{
-		Name:       monitoring.MetricProjectPath(e.ProjectID),
+		Name:       monitoring.MetricProjectPath(e.o.ProjectID),
 		TimeSeries: timeSeries,
 	}
 }
@@ -167,7 +181,7 @@ func (e *Exporter) createMeasure(ctx context.Context, vd *stats.ViewData) error 
 		return nil
 	}
 
-	name := monitoring.MetricMetricDescriptorPath(e.ProjectID, m.Name())
+	name := monitoring.MetricMetricDescriptorPath(e.o.ProjectID, m.Name())
 	_, err := e.c.GetMetricDescriptor(ctx, &monitoringpb.GetMetricDescriptorRequest{
 		Name: name,
 	})
@@ -201,7 +215,7 @@ func (e *Exporter) createMeasure(ctx context.Context, vd *stats.ViewData) error 
 	}
 
 	if _, err := e.c.CreateMetricDescriptor(ctx, &monitoringpb.CreateMetricDescriptorRequest{
-		Name: monitoring.MetricProjectPath(e.ProjectID),
+		Name: monitoring.MetricProjectPath(e.o.ProjectID),
 		MetricDescriptor: &metricpb.MetricDescriptor{
 			DisplayName: vd.View.Name(),
 			Description: m.Description(),
