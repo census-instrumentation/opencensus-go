@@ -255,11 +255,11 @@ func EndSpan(ctx context.Context) {
 	if !ok {
 		return
 	}
-	s.EndSpan()
+	s.End()
 }
 
-// EndSpan ends the span.
-func (s *Span) EndSpan() {
+// End ends the span.
+func (s *Span) End() {
 	if !s.IsRecordingEvents() {
 		return
 	}
@@ -319,11 +319,11 @@ func SetSpanStatus(ctx context.Context, status Status) {
 	if !ok {
 		return
 	}
-	s.SetSpanStatus(status)
+	s.SetStatus(status)
 }
 
-// SetSpanStatus sets the status of the span, if it is recording events.
-func (s *Span) SetSpanStatus(status Status) {
+// SetStatus sets the status of the span, if it is recording events.
+func (s *Span) SetStatus(status Status) {
 	if !s.IsRecordingEvents() {
 		return
 	}
@@ -340,13 +340,13 @@ func SetSpanAttributes(ctx context.Context, attributes ...Attribute) {
 	if !ok {
 		return
 	}
-	s.SetSpanAttributes(attributes...)
+	s.SetAttributes(attributes...)
 }
 
-// SetSpanAttributes sets attributes in the span.
+// SetAttributes sets attributes in the span.
 //
 // Existing attributes whose keys appear in the attributes parameter are overwritten.
-func (s *Span) SetSpanAttributes(attributes ...Attribute) {
+func (s *Span) SetAttributes(attributes ...Attribute) {
 	if !s.IsRecordingEvents() {
 		return
 	}
