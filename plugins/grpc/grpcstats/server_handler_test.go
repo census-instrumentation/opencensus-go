@@ -348,14 +348,14 @@ func TestServerDefaultCollections(t *testing.T) {
 			}
 
 			for _, gotRow := range gotRows {
-				if !istats.ContainsRow(wantData.rows, gotRow) {
+				if !containsRow(wantData.rows, gotRow) {
 					t.Errorf("%q: unwanted row for view %q: %v", tc.label, wantData.v().Name(), gotRow)
 					break
 				}
 			}
 
 			for _, wantRow := range wantData.rows {
-				if !istats.ContainsRow(gotRows, wantRow) {
+				if !containsRow(gotRows, wantRow) {
 					t.Errorf("%q: missing row for view %q: %v", tc.label, wantData.v().Name(), wantRow)
 					break
 				}

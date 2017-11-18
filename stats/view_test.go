@@ -170,14 +170,14 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowCumulative(t *testin
 
 		gotRows := vw1.collectedRows(time.Now())
 		for i, got := range gotRows {
-			if !ContainsRow(tc.wantRows, got) {
+			if !containsRow(tc.wantRows, got) {
 				t.Errorf("%v-%d: got row %v; want none", tc.label, i, got)
 				break
 			}
 		}
 
 		for i, want := range tc.wantRows {
-			if !ContainsRow(gotRows, want) {
+			if !containsRow(gotRows, want) {
 				t.Errorf("%v-%d: got none; want row %v", tc.label, i, want)
 				break
 			}
@@ -361,14 +361,14 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowSlidingTime(t *testi
 			gotRows := vw1.collectedRows(wantRows.retrieveTime)
 
 			for _, gotRow := range gotRows {
-				if !ContainsRow(wantRows.rows, gotRow) {
+				if !containsRow(wantRows.rows, gotRow) {
 					t.Errorf("got unexpected row '%v' for test case: '%v' with label '%v'", gotRow, tc.label, wantRows.label)
 					break
 				}
 			}
 
 			for _, wantRow := range wantRows.rows {
-				if !ContainsRow(gotRows, wantRow) {
+				if !containsRow(gotRows, wantRow) {
 					t.Errorf("want row '%v' for test case: '%v' with label '%v'. Not received", wantRow, tc.label, wantRows.label)
 					break
 				}
@@ -568,14 +568,14 @@ func Test_View_MeasureFloat64_AggregationCount_WindowSlidingTime(t *testing.T) {
 			gotRows := vw1.collectedRows(wantRows.retrieveTime)
 
 			for _, gotRow := range gotRows {
-				if !ContainsRow(wantRows.rows, gotRow) {
+				if !containsRow(wantRows.rows, gotRow) {
 					t.Errorf("got unexpected row '%v' for test case: '%v' with label '%v'", gotRow, tc.label, wantRows.label)
 					break
 				}
 			}
 
 			for _, wantRow := range wantRows.rows {
-				if !ContainsRow(gotRows, wantRow) {
+				if !containsRow(gotRows, wantRow) {
 					t.Errorf("want row '%v' for test case: '%v' with label '%v'. Not received", wantRow, tc.label, wantRows.label)
 					break
 				}
@@ -583,4 +583,14 @@ func Test_View_MeasureFloat64_AggregationCount_WindowSlidingTime(t *testing.T) {
 		}
 
 	}
+}
+
+// containsRow returns true if rows contain r.
+func containsRow(rows []*Row, r *Row) bool {
+	for _, x := range rows {
+		if r.Equal(x) {
+			return true
+		}
+	}
+	return false
 }

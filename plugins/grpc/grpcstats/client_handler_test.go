@@ -349,14 +349,14 @@ func TestClientDefaultCollections(t *testing.T) {
 			}
 
 			for _, gotRow := range gotRows {
-				if !istats.ContainsRow(wantData.rows, gotRow) {
+				if !containsRow(wantData.rows, gotRow) {
 					t.Errorf("%q: unwanted row for view %q = %v", tc.label, wantData.v().Name(), gotRow)
 					break
 				}
 			}
 
 			for _, wantRow := range wantData.rows {
-				if !istats.ContainsRow(gotRows, wantRow) {
+				if !containsRow(gotRows, wantRow) {
 					t.Errorf("%q: row missing for view %q; want %v", tc.label, wantData.v().Name(), wantRow)
 					break
 				}
@@ -370,4 +370,14 @@ func TestClientDefaultCollections(t *testing.T) {
 			}
 		}
 	}
+}
+
+// containsRow returns true if rows contain r.
+func containsRow(rows []*istats.Row, r *istats.Row) bool {
+	for _, x := range rows {
+		if r.Equal(x) {
+			return true
+		}
+	}
+	return false
 }
