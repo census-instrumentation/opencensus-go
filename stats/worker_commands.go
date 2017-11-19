@@ -33,13 +33,11 @@ type getMeasureByNameReq struct {
 }
 
 type getMeasureByNameResp struct {
-	m  Measure
-	ok bool
+	m Measure
 }
 
 func (cmd *getMeasureByNameReq) handleCommand(w *worker) {
-	m, ok := w.measuresByName[cmd.name]
-	cmd.c <- &getMeasureByNameResp{m, ok}
+	cmd.c <- &getMeasureByNameResp{w.measuresByName[cmd.name]}
 }
 
 // registerMeasureReq is the command to register a measure with the library.
@@ -87,13 +85,11 @@ type getViewByNameReq struct {
 }
 
 type getViewByNameResp struct {
-	v  *View
-	ok bool
+	v *View
 }
 
 func (cmd *getViewByNameReq) handleCommand(w *worker) {
-	v, ok := w.viewsByName[cmd.name]
-	cmd.c <- &getViewByNameResp{v, ok}
+	cmd.c <- &getViewByNameResp{w.viewsByName[cmd.name]}
 }
 
 // registerViewReq is the command to register a view with the library.
