@@ -77,7 +77,6 @@ func Test_Worker_FindMeasure(t *testing.T) {
 		label string
 		name  string
 		m     Measure
-		ok    bool
 	}
 
 	tcs := []testCase{
@@ -85,51 +84,41 @@ func Test_Worker_FindMeasure(t *testing.T) {
 			"0",
 			mf1.Name(),
 			mf1,
-			true,
 		},
 		{
 			"1",
 			"MF1",
 			mf1,
-			true,
 		},
 		{
 			"2",
 			mf2.Name(),
 			mf2,
-			true,
 		},
 		{
 			"3",
 			"MF2",
 			mf2,
-			true,
 		},
 		{
 			"4",
 			mi1.Name(),
 			mi1,
-			true,
 		},
 		{
 			"5",
 			"MI1",
 			mi1,
-			true,
 		},
 		{
 			"6",
 			"other",
 			nil,
-			false,
 		},
 	}
 
 	for _, tc := range tcs {
-		m, ok := FindMeasure(tc.name)
-		if ok != tc.ok {
-			t.Errorf("FindMeasure(%q) = %v, want %v", tc.label, ok, tc.ok)
-		}
+		m := FindMeasure(tc.name)
 		if m != tc.m {
 			t.Errorf("FindMeasure(%q) got measure %v; want %v", tc.label, m, tc.m)
 		}
@@ -221,9 +210,9 @@ func Test_Worker_MeasureDelete(t *testing.T) {
 		}
 
 		for _, r := range tc.registrations {
-			m, ok := FindMeasure(r.measureName)
-			if !ok {
-				t.Errorf("%v: FindMeasure(%q) = %v; want true", tc.label, r.measureName, ok)
+			m := FindMeasure(r.measureName)
+			if m == nil {
+				t.Errorf("%v: FindMeasure(%q) = nil; want non-nil measure", tc.label, r.measureName)
 				continue
 			}
 			if err := r.regFunc(m); err != nil {
@@ -233,13 +222,13 @@ func Test_Worker_MeasureDelete(t *testing.T) {
 		}
 
 		for _, d := range tc.deletions {
-			m, ok := FindMeasure(d.name)
-			if ok != d.findOk {
-				t.Errorf("%v: FindMeasure = %v; want %v", tc.label, ok, d.findOk)
+			m := FindMeasure(d.name)
+			if m == nil && d.findOk {
+				t.Errorf("%v: FindMeasure = nil; want non-nil measure", tc.label)
 				continue
 			}
 
-			if !ok {
+			if m == nil {
 				// ok was expected to be true
 				continue
 			}
@@ -254,7 +243,7 @@ func Test_Worker_MeasureDelete(t *testing.T) {
 				deleted = true
 			}
 
-			if _, ok := FindMeasure(d.name); deleted && ok {
+			if m := FindMeasure(d.name); deleted && m != nil {
 				t.Errorf("%v: Measure %q shouldn't exist after deletion but exists", tc.label, d.name)
 				continue
 			}
@@ -449,9 +438,9 @@ func Test_Worker_ViewRegistration(t *testing.T) {
 		}
 
 		for _, byname := range tc.bynames {
-			v, ok := FindView(byname.name)
-			if ok != byname.ok {
-				t.Errorf("%v: ViewByName(%q) = %v, want %v", tc.label, byname.name, ok, byname.ok)
+			v := FindView(byname.name)
+			if v == nil && byname.ok {
+				t.Errorf("%v: ViewByName(%q) = nil, want non-nil view", tc.label, byname.name)
 			}
 
 			wantV := views[byname.vID]
