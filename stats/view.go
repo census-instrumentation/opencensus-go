@@ -163,13 +163,3 @@ func (r *Row) Equal(other *Row) bool {
 
 	return reflect.DeepEqual(r.Tags, other.Tags) && r.Data.equal(other.Data)
 }
-
-// ContainsRow returns true if rows contain r.
-func ContainsRow(rows []*Row, r *Row) bool {
-	for _, x := range rows {
-		if r.Equal(x) {
-			return true
-		}
-	}
-	return false
-}

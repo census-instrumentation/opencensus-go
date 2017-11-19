@@ -578,13 +578,13 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 				t.Fatalf("%v: RetrieveData(%v) = %v; want no errors", tc.label, w.v.Name(), err)
 			}
 			for _, got := range gotRows {
-				if !ContainsRow(w.rows, got) {
+				if !containsRow(w.rows, got) {
 					t.Errorf("%v: got row %v; want none", tc.label, got)
 					break
 				}
 			}
 			for _, want := range w.rows {
-				if !ContainsRow(gotRows, want) {
+				if !containsRow(gotRows, want) {
 					t.Errorf("%v: got none; want %v'", tc.label, want)
 					break
 				}
