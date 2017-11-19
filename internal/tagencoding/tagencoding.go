@@ -13,6 +13,8 @@
 // limitations under the License.
 //
 
+// Package tagencoding contains the tag encoding
+// used interally by the stats collector.
 package tagencoding
 
 import (
