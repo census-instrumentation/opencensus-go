@@ -17,6 +17,13 @@ package stats
 
 import "time"
 
+// aggregator represents the interface for the aggregators for the various windows.
+type aggregator interface {
+	isAggregator() bool
+	addSample(v interface{}, now time.Time)
+	retrieveCollected(now time.Time) AggregationData
+}
+
 // Window represents a time interval or samples count over
 // which the aggregation occurs.
 type Window interface {
