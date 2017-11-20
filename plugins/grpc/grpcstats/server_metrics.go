@@ -16,7 +16,7 @@
 package grpcstats
 
 import (
-	"fmt"
+	"log"
 
 	"go.opencensus.io/stats"
 	"go.opencensus.io/tag"
@@ -71,29 +71,28 @@ func defaultServerMeasures() {
 
 	// Creating server measures
 	if RPCServerErrorCount, err = stats.NewMeasureInt64("/grpc.io/server/error_count", "RPC Errors", unitCount); err != nil {
-		panic(fmt.Sprintf("createDefaultMeasuresServer failed for measure /grpc.io/server/error_count. %v", err))
+		log.Fatalf("Cannot create measure /grpc.io/server/error_count: %v", err)
 	}
 	if RPCServerServerElapsedTime, err = stats.NewMeasureFloat64("/grpc.io/server/server_elapsed_time", "Server elapsed time in msecs", unitMillisecond); err != nil {
-		panic(fmt.Sprintf("createDefaultMeasuresServer failed for measure /grpc.io/server/server_elapsed_time. %v", err))
+		log.Fatalf("Cannot create measure /grpc.io/server/server_elapsed_time: %v", err)
 	}
 	if RPCServerRequestBytes, err = stats.NewMeasureInt64("/grpc.io/server/request_bytes", "Request bytes", unitByte); err != nil {
-		panic(fmt.Sprintf("createDefaultMeasuresServer failed for measure /grpc.io/server/request_bytes. %v", err))
+		log.Fatalf("Cannot create measure /grpc.io/server/request_bytes: %v", err)
 	}
 	if RPCServerResponseBytes, err = stats.NewMeasureInt64("/grpc.io/server/response_bytes", "Response bytes", unitByte); err != nil {
-		panic(fmt.Sprintf("createDefaultMeasuresServer failed for measure /grpc.io/server/response_bytes. %v", err))
+		log.Fatalf("Cannot create measure /grpc.io/server/response_bytes: %v", err)
 	}
 	if RPCServerStartedCount, err = stats.NewMeasureInt64("/grpc.io/server/started_count", "Number of server RPCs (streams) started", unitCount); err != nil {
-		panic(fmt.Sprintf("createDefaultMeasuresServer failed for measure rpc/server/started_count. %v", err))
+		log.Fatalf("Cannot create measure /grpc.io/server/started_count: %v", err)
 	}
 	if RPCServerFinishedCount, err = stats.NewMeasureInt64("/grpc.io/server/finished_count", "Number of server RPCs (streams) finished", unitCount); err != nil {
-		panic(fmt.Sprintf("createDefaultMeasuresServer failed for measure /grpc.io/server/finished_count. %v", err))
+		log.Fatalf("Cannot create measure /grpc.io/server/finished_count: %v", err)
 	}
-
 	if RPCServerRequestCount, err = stats.NewMeasureInt64("/grpc.io/server/request_count", "Number of server RPC request messages", unitCount); err != nil {
-		panic(fmt.Sprintf("createDefaultMeasuresServer failed for measure rpc/server/request_count. %v", err))
+		log.Fatalf("Cannot create measure /grpc.io/server/request_count: %v", err)
 	}
 	if RPCServerResponseCount, err = stats.NewMeasureInt64("/grpc.io/server/response_count", "Number of server RPC response messages", unitCount); err != nil {
-		panic(fmt.Sprintf("createDefaultMeasuresServer failed for measure /grpc.io/server/response_count. %v", err))
+		log.Fatalf("Cannot create measure /grpc.io/server/response_count: %v", err)
 	}
 }
 

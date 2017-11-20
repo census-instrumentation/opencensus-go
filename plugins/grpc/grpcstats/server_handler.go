@@ -59,12 +59,6 @@ func (sh serverHandler) HandleConn(ctx context.Context, s stats.ConnStats) {
 // returns the new ctx.
 func (sh serverHandler) TagRPC(ctx context.Context, info *stats.RPCTagInfo) context.Context {
 	startTime := time.Now()
-	if ctx == nil {
-		if glog.V(2) {
-			glog.Infoln("serverHandler.TagRPC called with nil context")
-		}
-		return ctx
-	}
 	if info == nil {
 		if glog.V(2) {
 			glog.Infof("serverHandler.TagRPC called with nil info.", info.FullMethodName)

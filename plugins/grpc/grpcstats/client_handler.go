@@ -54,13 +54,6 @@ func (ch clientHandler) HandleConn(ctx context.Context, s stats.ConnStats) {
 // its tags into the GRPC metadata in order to be sent to the server.
 func (ch clientHandler) TagRPC(ctx context.Context, info *stats.RPCTagInfo) context.Context {
 	startTime := time.Now()
-	if ctx == nil {
-		if glog.V(2) {
-			glog.Infoln("clientHandler.TagRPC called with nil context")
-		}
-		return ctx
-	}
-
 	if info == nil {
 		if glog.V(2) {
 			glog.Infof("clientHandler.TagRPC called with nil info.", info.FullMethodName)

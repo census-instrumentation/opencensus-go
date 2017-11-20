@@ -16,7 +16,7 @@
 package grpcstats
 
 import (
-	"fmt"
+	"log"
 
 	"go.opencensus.io/stats"
 	"go.opencensus.io/tag"
@@ -71,29 +71,28 @@ func defaultClientMeasures() {
 
 	// Creating client measures
 	if RPCClientErrorCount, err = stats.NewMeasureInt64("/grpc.io/client/error_count", "RPC Errors", unitCount); err != nil {
-		panic(fmt.Sprintf("createDefaultMeasuresClient failed for measure grpc.io/client/error_count. %v", err))
+		log.Fatalf("Cannot create measure /grpc.io/client/error_count: %v", err)
 	}
 	if RPCClientRoundTripLatency, err = stats.NewMeasureFloat64("/grpc.io/client/roundtrip_latency", "RPC roundtrip latency in msecs", unitMillisecond); err != nil {
-		panic(fmt.Sprintf("createDefaultMeasuresClient failed for measure grpc.io/client/roundtrip_latency. %v", err))
+		log.Fatalf("Cannot create measure /grpc.io/client/roundtrip_latency: %v", err)
 	}
 	if RPCClientRequestBytes, err = stats.NewMeasureInt64("/grpc.io/client/request_bytes", "Request bytes", unitByte); err != nil {
-		panic(fmt.Sprintf("createDefaultMeasuresClient failed for measure grpc.io/client/request_bytes. %v", err))
+		log.Fatalf("Cannot create measure /grpc.io/client/request_bytes: %v", err)
 	}
 	if RPCClientResponseBytes, err = stats.NewMeasureInt64("/grpc.io/client/response_bytes", "Response bytes", unitByte); err != nil {
-		panic(fmt.Sprintf("createDefaultMeasuresClient failed for measure grpc.io/client/response_bytes. %v", err))
+		log.Fatalf("Cannot create measure /grpc.io/client/response_bytes: %v", err)
 	}
 	if RPCClientStartedCount, err = stats.NewMeasureInt64("/grpc.io/client/started_count", "Number of client RPCs (streams) started", unitCount); err != nil {
-		panic(fmt.Sprintf("createDefaultMeasuresClient failed for measure rpc/client/started_count. %v", err))
+		log.Fatalf("Cannot create measure /grpc.io/client/started_count: %v", err)
 	}
 	if RPCClientFinishedCount, err = stats.NewMeasureInt64("/grpc.io/client/finished_count", "Number of client RPCs (streams) finished", unitCount); err != nil {
-		panic(fmt.Sprintf("createDefaultMeasuresClient failed for measure /grpc.io/client/finished_count. %v", err))
+		log.Fatalf("Cannot create measure /grpc.io/client/finished_count: %v", err)
 	}
-
 	if RPCClientRequestCount, err = stats.NewMeasureInt64("/grpc.io/client/request_count", "Number of client RPC request messages", unitCount); err != nil {
-		panic(fmt.Sprintf("createDefaultMeasuresClient failed for measure rpc/client/request_count. %v", err))
+		log.Fatalf("Cannot create measure /grpc.io/client/request_count: %v", err)
 	}
 	if RPCClientResponseCount, err = stats.NewMeasureInt64("/grpc.io/client/response_count", "Number of client RPC response messages", unitCount); err != nil {
-		panic(fmt.Sprintf("createDefaultMeasuresClient failed for measure /grpc.io/client/response_count. %v", err))
+		log.Fatalf("Cannot create measure /grpc.io/client/response_count: %v", err)
 	}
 }
 
