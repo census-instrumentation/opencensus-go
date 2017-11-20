@@ -134,11 +134,20 @@ func (e *Exporter) upload(vds []*stats.ViewData) error {
 	ctx := context.Background()
 
 	for _, vd := range vds {
+		if _, ok := vd.View.Window().(stats.CumulativeWindow); !ok {
+			// TODO(jbd): Only Cumulative window will be exported to Stackdriver in this version.
+			// Support others when custom delta metrics are supported.
+			continue
+		}
 		if err := e.createMeasure(ctx, vd); err != nil {
 			return err
 		}
 	}
-	if err := e.c.CreateTimeSeries(ctx, e.makeReq(vds)); err != nil {
+	req := e.makeReq(vds)
+	if req == nil {
+		return nil
+	}
+	if err := e.c.CreateTimeSeries(ctx, req); err != nil {
 		return err
 	}
 	return nil
@@ -147,6 +156,11 @@ func (e *Exporter) upload(vds []*stats.ViewData) error {
 func (e *Exporter) makeReq(vds []*stats.ViewData) *monitoringpb.CreateTimeSeriesRequest {
 	var timeSeries []*monitoringpb.TimeSeries
 	for _, vd := range vds {
+		if _, ok := vd.View.Window().(stats.CumulativeWindow); !ok {
+			// TODO(jbd): Only Cumulative window will be exported to Stackdriver in this version.
+			// Support others when custom delta metrics are supported.
+			continue
+		}
 		for _, row := range vd.Rows {
 			ts := &monitoringpb.TimeSeries{
 				Metric: &metricpb.Metric{
@@ -161,6 +175,9 @@ func (e *Exporter) makeReq(vds []*stats.ViewData) *monitoringpb.CreateTimeSeries
 			}
 			timeSeries = append(timeSeries, ts)
 		}
+	}
+	if len(timeSeries) == 0 {
+		return nil
 	}
 	return &monitoringpb.CreateTimeSeriesRequest{
 		Name:       monitoring.MetricProjectPath(e.o.ProjectID),
@@ -223,6 +240,7 @@ func (e *Exporter) createMeasure(ctx context.Context, vd *stats.ViewData) error 
 			Type:        path.Join("custom.googleapis.com", m.Name()),
 			MetricKind:  metricKind,
 			ValueType:   valueType,
+			Labels:      nil, // TODO(jbd): Add labels.
 		},
 	}); err != nil {
 		return err
