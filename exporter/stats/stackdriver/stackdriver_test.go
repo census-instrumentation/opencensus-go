@@ -23,7 +23,6 @@ import (
 
 	monitoring "cloud.google.com/go/monitoring/apiv3"
 	timestamp "github.com/golang/protobuf/ptypes/timestamp"
-	distributionpb "google.golang.org/genproto/googleapis/api/distribution"
 	metricpb "google.golang.org/genproto/googleapis/api/metric"
 	monitoredrespb "google.golang.org/genproto/googleapis/api/monitoredres"
 	monitoringpb "google.golang.org/genproto/googleapis/monitoring/v3"
@@ -118,53 +117,7 @@ func TestExporter_makeReq(t *testing.T) {
 			name:   "dist agg + time window",
 			projID: "proj-id",
 			vd:     newTestDistViewData(distView, start, end),
-			want: &monitoringpb.CreateTimeSeriesRequest{
-				Name: monitoring.MetricProjectPath("proj-id"),
-				TimeSeries: []*monitoringpb.TimeSeries{
-					{
-						Metric: &metricpb.Metric{
-							Type: "custom.googleapis.com/test-measure",
-						},
-						Resource: &monitoredrespb.MonitoredResource{
-							Type:   "global",
-							Labels: map[string]string{"project_id": "proj-id"},
-						},
-						Points: []*monitoringpb.Point{
-							{
-								Interval: &monitoringpb.TimeInterval{
-									StartTime: &timestamp.Timestamp{
-										Seconds: start.Unix(),
-										Nanos:   int32(start.Nanosecond()),
-									},
-									EndTime: &timestamp.Timestamp{
-										Seconds: end.Unix(),
-										Nanos:   int32(end.Nanosecond()),
-									},
-								},
-								Value: &monitoringpb.TypedValue{Value: &monitoringpb.TypedValue_DistributionValue{
-									DistributionValue: &distributionpb.Distribution{
-										Count: 5,
-										Mean:  3,
-										SumOfSquaredDeviation: 1.5,
-										Range: &distributionpb.Distribution_Range{
-											Min: 1,
-											Max: 7,
-										},
-										BucketOptions: &distributionpb.Distribution_BucketOptions{
-											Options: &distributionpb.Distribution_BucketOptions_ExplicitBuckets{
-												ExplicitBuckets: &distributionpb.Distribution_BucketOptions_Explicit{
-													Bounds: []float64{2, 4, 7},
-												},
-											},
-										},
-										BucketCounts: []int64{2, 2, 1},
-									},
-								}},
-							},
-						},
-					},
-				},
-			},
+			want:   nil,
 		},
 	}
 	for _, tt := range tests {
