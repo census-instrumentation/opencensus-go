@@ -47,7 +47,7 @@ func main() {
 		nil,
 		videoSize,
 		stats.DistributionAggregation([]float64{0, 1 << 16, 1 << 32}),
-		stats.SlidingTimeWindow{Duration: 10 * time.Second, Intervals: 10},
+		stats.Interval{Duration: 10 * time.Second, Intervals: 10},
 	)
 
 	// Set reporting period to report data at every second.

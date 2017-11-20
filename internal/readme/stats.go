@@ -60,15 +60,15 @@ func statsExamples() {
 	_, _ = distAgg, countAgg
 
 	// START windows
-	slidingTimeWindow := stats.SlidingTimeWindow{
+	interval := stats.Interval{
 		Duration:  10 * time.Second,
 		Intervals: 5,
 	}
 
-	cumWindow := stats.CumulativeWindow{}
+	cum := stats.Cumulative{}
 	// END windows
 
-	_, _ = slidingTimeWindow, cumWindow
+	_, _ = interval, cum
 
 	// START view
 	view := stats.NewView(
@@ -77,7 +77,7 @@ func statsExamples() {
 		nil,
 		videoSize,
 		distAgg,
-		cumWindow,
+		cum,
 	)
 	if err := stats.RegisterView(view); err != nil {
 		log.Fatal(err)

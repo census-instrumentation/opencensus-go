@@ -90,9 +90,9 @@ func (a *aggregatorCumulative) retrieveCollected(now time.Time) AggregationData 
 	return a.av
 }
 
-// aggregatorSlidingTime indicates that the aggregation occurs over a sliding
-// window of time: i.e. last n seconds, minutes, hours...
-type aggregatorSlidingTime struct {
+// aggregatorInterval indicates that the aggregation occurs over a
+// window of time.
+type aggregatorInterval struct {
 	// keptDuration is the full duration that needs to be kept in memory in
 	// order to retrieve the aggregated data whenever it is requested. Its size
 	// is subDuration*len(entries+1). The actual desiredDuration interval is
@@ -106,8 +106,8 @@ type aggregatorSlidingTime struct {
 	idx             int
 }
 
-// newAggregatorSlidingTime creates an aggregatorSlidingTime.
-func newAggregatorSlidingTime(now time.Time, d time.Duration, subIntervalsCount int, newAggregationValue func() AggregationData) *aggregatorSlidingTime {
+// newAggregatorInterval creates an aggregatorSlidingTime.
+func newAggregatorInterval(now time.Time, d time.Duration, subIntervalsCount int, newAggregationValue func() AggregationData) *aggregatorInterval {
 	subDuration := d / time.Duration(subIntervalsCount)
 	start := now.Add(-subDuration * time.Duration(subIntervalsCount))
 	var entries []*timeSerieEntry
@@ -121,7 +121,7 @@ func newAggregatorSlidingTime(now time.Time, d time.Duration, subIntervalsCount 
 		start = start.Add(subDuration)
 	}
 
-	return &aggregatorSlidingTime{
+	return &aggregatorInterval{
 		keptDuration:    subDuration * time.Duration(len(entries)),
 		desiredDuration: subDuration * time.Duration(len(entries)-1), // this is equal to d
 		subDuration:     subDuration,
@@ -130,17 +130,17 @@ func newAggregatorSlidingTime(now time.Time, d time.Duration, subIntervalsCount 
 	}
 }
 
-func (a *aggregatorSlidingTime) isAggregator() bool {
+func (a *aggregatorInterval) isAggregator() bool {
 	return true
 }
 
-func (a *aggregatorSlidingTime) addSample(v interface{}, now time.Time) {
+func (a *aggregatorInterval) addSample(v interface{}, now time.Time) {
 	a.moveToCurrentEntry(now)
 	e := a.entries[a.idx]
 	e.av.addSample(v)
 }
 
-func (a *aggregatorSlidingTime) retrieveCollected(now time.Time) AggregationData {
+func (a *aggregatorInterval) retrieveCollected(now time.Time) AggregationData {
 	a.moveToCurrentEntry(now)
 
 	e := a.entries[a.idx]
@@ -158,7 +158,7 @@ func (a *aggregatorSlidingTime) retrieveCollected(now time.Time) AggregationData
 	return ret
 }
 
-func (a *aggregatorSlidingTime) moveToCurrentEntry(now time.Time) {
+func (a *aggregatorInterval) moveToCurrentEntry(now time.Time) {
 	e := a.entries[a.idx]
 	for {
 		if e.endTime.After(now) {

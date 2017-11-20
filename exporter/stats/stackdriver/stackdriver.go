@@ -134,7 +134,7 @@ func (e *Exporter) upload(vds []*stats.ViewData) error {
 	ctx := context.Background()
 
 	for _, vd := range vds {
-		if _, ok := vd.View.Window().(stats.CumulativeWindow); !ok {
+		if _, ok := vd.View.Window().(stats.Cumulative); !ok {
 			// TODO(jbd): Only Cumulative window will be exported to Stackdriver in this version.
 			// Support others when custom delta metrics are supported.
 			continue
@@ -156,7 +156,7 @@ func (e *Exporter) upload(vds []*stats.ViewData) error {
 func (e *Exporter) makeReq(vds []*stats.ViewData) *monitoringpb.CreateTimeSeriesRequest {
 	var timeSeries []*monitoringpb.TimeSeries
 	for _, vd := range vds {
-		if _, ok := vd.View.Window().(stats.CumulativeWindow); !ok {
+		if _, ok := vd.View.Window().(stats.Cumulative); !ok {
 			// TODO(jbd): Only Cumulative window will be exported to Stackdriver in this version.
 			// Support others when custom delta metrics are supported.
 			continue
@@ -223,9 +223,9 @@ func (e *Exporter) createMeasure(ctx context.Context, vd *stats.ViewData) error 
 	}
 
 	switch window.(type) {
-	case stats.CumulativeWindow:
+	case stats.Cumulative:
 		metricKind = metricpb.MetricDescriptor_CUMULATIVE
-	case stats.SlidingTimeWindow:
+	case stats.Interval:
 		metricKind = metricpb.MetricDescriptor_DELTA
 	default:
 		return fmt.Errorf("unsupported window type: %T", window)

@@ -31,25 +31,25 @@ type Window interface {
 	newAggregator(now time.Time, aggregationValueConstructor func() AggregationData) aggregator
 }
 
-// CumulativeWindow indicates that the aggregation occurs over the lifetime of
-// the view.
-type CumulativeWindow struct{}
+// Cumulative is a window that indicates that the aggregation occurs
+// over the lifetime of the view.
+type Cumulative struct{}
 
-func (w CumulativeWindow) isWindow() {}
+func (w Cumulative) isWindow() {}
 
-func (w CumulativeWindow) newAggregator(now time.Time, aggregationValueConstructor func() AggregationData) aggregator {
+func (w Cumulative) newAggregator(now time.Time, aggregationValueConstructor func() AggregationData) aggregator {
 	return newAggregatorCumulative(now, aggregationValueConstructor)
 }
 
-// SlidingTimeWindow indicates that the aggregation occurs over a sliding
+// Interval is a window that indicates that the aggregation occurs over a sliding
 // window of time: last n seconds, minutes, hours.
-type SlidingTimeWindow struct {
+type Interval struct {
 	Duration  time.Duration
 	Intervals int
 }
 
-func (w SlidingTimeWindow) isWindow() {}
+func (w Interval) isWindow() {}
 
-func (w SlidingTimeWindow) newAggregator(now time.Time, aggregationValueConstructor func() AggregationData) aggregator {
-	return newAggregatorSlidingTime(now, w.Duration, w.Intervals, aggregationValueConstructor)
+func (w Interval) newAggregator(now time.Time, aggregationValueConstructor func() AggregationData) aggregator {
+	return newAggregatorInterval(now, w.Duration, w.Intervals, aggregationValueConstructor)
 }

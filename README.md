@@ -148,20 +148,20 @@ countAgg := stats.CountAggregation{}
 
 ### Create an aggregation window
 
-Currently only two types of aggregation windows are supported. The CumulativeWindow
+Currently only two types of aggregation windows are supported. The Cumulative
 is used to continuously aggregate the data received.
-The SlidingTimeWindow to aggregate the data received over the last specified time interval.
+The Interval window is used to aggregate the data received over the last specified time interval.
 Currently all aggregation types are compatible with all aggregation windows.
 Later we might provide aggregation types that are incompatible with some windows.
 
 [embedmd]:# (stats.go windows)
 ```go
-slidingTimeWindow := stats.SlidingTimeWindow{
+interval := stats.Interval{
 	Duration:  10 * time.Second,
 	Intervals: 5,
 }
 
-cumWindow := stats.CumulativeWindow{}
+cum := stats.Cumulative{}
 ```
 
 ### Creating, registering and unregistering a view
@@ -176,7 +176,7 @@ view := stats.NewView(
 	nil,
 	videoSize,
 	distAgg,
-	cumWindow,
+	cum,
 )
 if err := stats.RegisterView(view); err != nil {
 	log.Fatal(err)

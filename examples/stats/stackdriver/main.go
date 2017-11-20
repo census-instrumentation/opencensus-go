@@ -62,7 +62,7 @@ func main() {
 		nil,
 		videoSize,
 		stats.DistributionAggregation([]float64{0, 1 << 16, 1 << 32}),
-		stats.CumulativeWindow{},
+		stats.Cumulative{},
 	)
 
 	// Set reporting period to report data at every second.

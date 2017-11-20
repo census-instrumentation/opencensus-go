@@ -471,8 +471,8 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 	}
 	ctx := tag.NewContext(context.Background(), ts)
 
-	v1 := NewView("VF1", "desc VF1", []tag.Key{k1, k2}, m, CountAggregation{}, CumulativeWindow{})
-	v2 := NewView("VF2", "desc VF2", []tag.Key{k1, k2}, m, CountAggregation{}, CumulativeWindow{})
+	v1 := NewView("VF1", "desc VF1", []tag.Key{k1, k2}, m, CountAggregation{}, Cumulative{})
+	v2 := NewView("VF2", "desc VF2", []tag.Key{k1, k2}, m, CountAggregation{}, Cumulative{})
 
 	type want struct {
 		v    *View

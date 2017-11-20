@@ -39,7 +39,7 @@ func Example_view() {
 	}
 
 	agg := stats.DistributionAggregation([]float64{0, 1000, 2000})
-	window := stats.SlidingTimeWindow{Duration: time.Second}
+	window := stats.Interval{Duration: time.Second}
 	view := stats.NewView("my.org/views/openconns", "open connections distribution over one second time window", nil, m, agg, window)
 
 	if err := view.Subscribe(); err != nil {
