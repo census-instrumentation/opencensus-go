@@ -29,7 +29,7 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowCumulative(t *testin
 	k2, _ := tag.NewKey("k2")
 	k3, _ := tag.NewKey("k3")
 	agg1 := DistributionAggregation([]float64{2})
-	vw1 := NewView("VF1", "desc VF1", []tag.Key{k1, k2}, nil, agg1, CumulativeWindow{})
+	vw1 := NewView("VF1", "desc VF1", []tag.Key{k1, k2}, nil, agg1, Cumulative{})
 
 	type tagString struct {
 		k tag.Key
@@ -191,7 +191,7 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowSlidingTime(t *testi
 	k1, _ := tag.NewKey("k1")
 	k2, _ := tag.NewKey("k2")
 	agg1 := DistributionAggregation([]float64{2})
-	vw1 := NewView("VF1", "desc VF1", []tag.Key{k1, k2}, nil, agg1, SlidingTimeWindow{10 * time.Second, 5})
+	vw1 := NewView("VF1", "desc VF1", []tag.Key{k1, k2}, nil, agg1, Interval{10 * time.Second, 5})
 
 	type tagString struct {
 		k tag.Key
@@ -384,7 +384,7 @@ func Test_View_MeasureFloat64_AggregationCount_WindowSlidingTime(t *testing.T) {
 	k1, _ := tag.NewKey("k1")
 	k2, _ := tag.NewKey("k2")
 	agg1 := CountAggregation{}
-	vw1 := NewView("VF1", "desc VF1", []tag.Key{k1, k2}, nil, agg1, SlidingTimeWindow{10 * time.Second, 5})
+	vw1 := NewView("VF1", "desc VF1", []tag.Key{k1, k2}, nil, agg1, Interval{10 * time.Second, 5})
 
 	type tagString struct {
 		k tag.Key
