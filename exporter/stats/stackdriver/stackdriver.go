@@ -22,6 +22,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/url"
 	"path"
 	"sync"
 	"time"
@@ -164,7 +165,7 @@ func (e *Exporter) makeReq(vds []*stats.ViewData) *monitoringpb.CreateTimeSeries
 		for _, row := range vd.Rows {
 			ts := &monitoringpb.TimeSeries{
 				Metric: &metricpb.Metric{
-					Type: path.Join("custom.googleapis.com", vd.View.Measure().Name()),
+					Type: namespacedViewName(vd.View.Name()),
 					// TODO(jbd): Add labels.
 				},
 				Resource: &monitoredrespb.MonitoredResource{
@@ -198,7 +199,7 @@ func (e *Exporter) createMeasure(ctx context.Context, vd *stats.ViewData) error 
 		return nil
 	}
 
-	name := monitoring.MetricMetricDescriptorPath(e.o.ProjectID, m.Name())
+	name := monitoring.MetricMetricDescriptorPath(e.o.ProjectID, namespacedViewName(vd.View.Name()))
 	_, err := e.c.GetMetricDescriptor(ctx, &monitoringpb.GetMetricDescriptorRequest{
 		Name: name,
 	})
@@ -237,7 +238,7 @@ func (e *Exporter) createMeasure(ctx context.Context, vd *stats.ViewData) error 
 			DisplayName: vd.View.Name(),
 			Description: m.Description(),
 			Unit:        m.Unit(),
-			Type:        path.Join("custom.googleapis.com", m.Name()),
+			Type:        namespacedViewName(vd.View.Name()),
 			MetricKind:  metricKind,
 			ValueType:   valueType,
 			Labels:      nil, // TODO(jbd): Add labels.
@@ -297,4 +298,9 @@ func newTypedValue(view *stats.View, r *stats.Row) *monitoringpb.TypedValue {
 		}}
 	}
 	return nil
+}
+
+func namespacedViewName(v string) string {
+	p := path.Join("opencensus", v)
+	return path.Join("custom.googleapis.com", url.PathEscape(p))
 }
