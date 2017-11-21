@@ -56,7 +56,7 @@ func main() {
 	}
 
 	// Create view to see the processed video size cumulatively.
-	view := stats.NewView(
+	view, err := stats.NewView(
 		"my.org/views/video_size_cum",
 		"processed video size over time",
 		nil,
@@ -64,6 +64,9 @@ func main() {
 		stats.DistributionAggregation([]float64{0, 1 << 16, 1 << 32}),
 		stats.Cumulative{},
 	)
+	if err != nil {
+		log.Fatalf("Cannot create view: %v", err)
+	}
 
 	// Set reporting period to report data at every second.
 	stats.SetReportingPeriod(1 * time.Second)

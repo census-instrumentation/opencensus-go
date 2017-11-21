@@ -132,10 +132,16 @@ func Test_Worker_MeasureDelete(t *testing.T) {
 		return func(m Measure) error {
 			switch x := m.(type) {
 			case *MeasureInt64:
-				v := NewView(viewName, "", nil, x, nil, nil)
+				v, err := NewView(viewName, "", nil, x, nil, nil)
+				if err != nil {
+					return err
+				}
 				return RegisterView(v)
 			case *MeasureFloat64:
-				v := NewView(viewName, "", nil, x, nil, nil)
+				v, err := NewView(viewName, "", nil, x, nil, nil)
+				if err != nil {
+					return err
+				}
 				return RegisterView(v)
 			default:
 				return fmt.Errorf("cannot create view '%v' with measure '%v'", viewName, m.Name())
@@ -405,18 +411,22 @@ func Test_Worker_ViewRegistration(t *testing.T) {
 		mf1, _ := NewMeasureFloat64("MF1", "desc MF1", "unit")
 		mf2, _ := NewMeasureFloat64("MF2", "desc MF2", "unit")
 
-		views := make(map[string]*View)
-		views["v1ID"] = NewView("VF1", "desc VF1", nil, mf1, nil, nil)
-		views["v1SameNameID"] = NewView("VF1", "desc duplicate name VF1.", nil, mf1, nil, nil)
-		views["v2ID"] = NewView("VF2", "desc VF2", nil, mf2, nil, nil)
-		views["vNilID"] = nil
+		v1, _ := NewView("VF1", "desc VF1", nil, mf1, nil, nil)
+		v11, _ := NewView("VF1", "desc duplicate name VF1", nil, mf1, nil, nil)
+		v2, _ := NewView("VF2", "desc VF2", nil, mf2, nil, nil)
+
+		views := map[string]*View{
+			"v1ID":         v1,
+			"v1SameNameID": v11,
+			"v2ID":         v2,
+			"vNilID":       nil,
+		}
 
 		for _, reg := range tc.regs {
 			v := views[reg.vID]
-
 			err := RegisterView(v)
 			if (err != nil) != (reg.err != nil) {
-				t.Errorf("RegisterView. got error %v, want %v. Test case: %v", err, reg.err, tc.label)
+				t.Errorf("%v: RegisterView() = %v, want %v", tc.label, err, reg.err)
 			}
 			v.subscribe()
 		}
@@ -425,7 +435,7 @@ func Test_Worker_ViewRegistration(t *testing.T) {
 			v := views[s.vID]
 			err := v.Subscribe()
 			if (err != nil) != (s.err != nil) {
-				t.Errorf("Subscribe. got error %v, want %v. Test case: %v", err, s.err, tc.label)
+				t.Errorf("%v: Subscribe() = %v, want %v", tc.label, err, s.err)
 			}
 		}
 
@@ -433,7 +443,7 @@ func Test_Worker_ViewRegistration(t *testing.T) {
 			v := views[unreg.vID]
 			err := v.Unregister()
 			if (err != nil) != (unreg.err != nil) {
-				t.Errorf("Unregister errored = %v; want %v. Test case: %v", err, unreg.err, tc.label)
+				t.Errorf("%v: Unregister() = %v; want %v", tc.label, err, unreg.err)
 			}
 		}
 
@@ -471,8 +481,14 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 	}
 	ctx := tag.NewContext(context.Background(), ts)
 
-	v1 := NewView("VF1", "desc VF1", []tag.Key{k1, k2}, m, CountAggregation{}, Cumulative{})
-	v2 := NewView("VF2", "desc VF2", []tag.Key{k1, k2}, m, CountAggregation{}, Cumulative{})
+	v1, err := NewView("VF1", "desc VF1", []tag.Key{k1, k2}, m, CountAggregation{}, Cumulative{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	v2, err := NewView("VF2", "desc VF2", []tag.Key{k1, k2}, m, CountAggregation{}, Cumulative{})
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	type want struct {
 		v    *View

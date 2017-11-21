@@ -47,6 +47,9 @@ var defaultReportingDuration = 10 * time.Second
 // NewMeasureFloat64 creates a new measure of type MeasureFloat64. It returns
 // an error if a measure with the same name already exists.
 func NewMeasureFloat64(name, description, unit string) (*MeasureFloat64, error) {
+	if err := checkMeasureName(name); err != nil {
+		return nil, err
+	}
 	m := &MeasureFloat64{
 		name:        name,
 		description: description,
@@ -69,6 +72,9 @@ func NewMeasureFloat64(name, description, unit string) (*MeasureFloat64, error) 
 // NewMeasureInt64 creates a new measure of type MeasureInt64. It returns an
 // error if a measure with the same name already exists.
 func NewMeasureInt64(name, description, unit string) (*MeasureInt64, error) {
+	if err := checkMeasureName(name); err != nil {
+		return nil, err
+	}
 	m := &MeasureInt64{
 		name:        name,
 		description: description,

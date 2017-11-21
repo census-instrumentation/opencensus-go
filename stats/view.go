@@ -57,7 +57,10 @@ type View struct {
 // Views need to be subscribed toin order to retrieve collection data.
 //
 // Once the view is no longer required, the view can be unregistered.
-func NewView(name, description string, keys []tag.Key, measure Measure, agg Aggregation, window Window) *View {
+func NewView(name, description string, keys []tag.Key, measure Measure, agg Aggregation, window Window) (*View, error) {
+	if err := checkViewName(name); err != nil {
+		return nil, err
+	}
 	return &View{
 		name:        name,
 		description: description,
@@ -65,7 +68,7 @@ func NewView(name, description string, keys []tag.Key, measure Measure, agg Aggr
 		m:           measure,
 		start:       time.Time{},
 		collector:   &collector{make(map[string]aggregator), agg, window},
-	}
+	}, nil
 }
 
 // Name returns the name of the view.
