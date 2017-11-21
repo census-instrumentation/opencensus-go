@@ -38,10 +38,17 @@ func Example_view() {
 		log.Fatal(err)
 	}
 
-	agg := stats.DistributionAggregation([]float64{0, 1000, 2000})
-	window := stats.Interval{Duration: time.Second}
-	view := stats.NewView("my.org/views/openconns", "open connections distribution over one second time window", nil, m, agg, window)
-
+	view, err := stats.NewView(
+		"my.org/views/openconns",
+		"open connections distribution over one second time window",
+		nil,
+		m,
+		stats.DistributionAggregation([]float64{0, 1000, 2000}),
+		stats.Interval{Duration: time.Second},
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
 	if err := view.Subscribe(); err != nil {
 		log.Fatal(err)
 	}

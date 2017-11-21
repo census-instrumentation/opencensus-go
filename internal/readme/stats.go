@@ -71,7 +71,7 @@ func statsExamples() {
 	_, _ = interval, cum
 
 	// START view
-	view := stats.NewView(
+	view, err := stats.NewView(
 		"my.org/video_size_distribution",
 		"distribution of processed video size over time",
 		nil,
@@ -79,6 +79,9 @@ func statsExamples() {
 		distAgg,
 		cum,
 	)
+	if err != nil {
+		log.Fatalf("cannot create view: %v", err)
+	}
 	if err := stats.RegisterView(view); err != nil {
 		log.Fatal(err)
 	}

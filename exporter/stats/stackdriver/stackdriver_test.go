@@ -29,15 +29,24 @@ import (
 )
 
 func TestExporter_makeReq(t *testing.T) {
-	m, _ := stats.NewMeasureFloat64("test-measure", "measure desc", "unit")
+	m, err := stats.NewMeasureFloat64("test-measure", "measure desc", "unit")
+	if err != nil {
+		t.Fatal(err)
+	}
 	defer stats.DeleteMeasure(m)
 
-	cumView := stats.NewView("cumview", "desc", nil, m, stats.CountAggregation{}, stats.Cumulative{})
+	cumView, err := stats.NewView("cumview", "desc", nil, m, stats.CountAggregation{}, stats.Cumulative{})
+	if err != nil {
+		t.Fatal(err)
+	}
 	if err := stats.RegisterView(cumView); err != nil {
 		t.Fatal(err)
 	}
 
-	distView := stats.NewView("distview", "desc", nil, m, stats.DistributionAggregation([]float64{2, 4, 7}), stats.Interval{})
+	distView, err := stats.NewView("distview", "desc", nil, m, stats.DistributionAggregation([]float64{2, 4, 7}), stats.Interval{})
+	if err != nil {
+		t.Fatal(err)
+	}
 	if err := stats.RegisterView(distView); err != nil {
 		t.Fatal(err)
 	}

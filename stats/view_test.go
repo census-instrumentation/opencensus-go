@@ -29,7 +29,10 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowCumulative(t *testin
 	k2, _ := tag.NewKey("k2")
 	k3, _ := tag.NewKey("k3")
 	agg1 := DistributionAggregation([]float64{2})
-	vw1 := NewView("VF1", "desc VF1", []tag.Key{k1, k2}, nil, agg1, Cumulative{})
+	view, err := NewView("VF1", "desc VF1", []tag.Key{k1, k2}, nil, agg1, Cumulative{})
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	type tagString struct {
 		k tag.Key
@@ -154,8 +157,8 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowCumulative(t *testin
 	}
 
 	for _, tc := range tcs {
-		vw1.clearRows()
-		vw1.subscribe()
+		view.clearRows()
+		view.subscribe()
 		for _, r := range tc.records {
 			mods := []tag.Mutator{}
 			for _, t := range r.tags {
@@ -165,10 +168,10 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowCumulative(t *testin
 			if err != nil {
 				t.Errorf("%v: NewMap = %v", tc.label, err)
 			}
-			vw1.addSample(ts, r.f, time.Now())
+			view.addSample(ts, r.f, time.Now())
 		}
 
-		gotRows := vw1.collectedRows(time.Now())
+		gotRows := view.collectedRows(time.Now())
 		for i, got := range gotRows {
 			if !containsRow(tc.wantRows, got) {
 				t.Errorf("%v-%d: got row %v; want none", tc.label, i, got)
@@ -191,7 +194,10 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowSlidingTime(t *testi
 	k1, _ := tag.NewKey("k1")
 	k2, _ := tag.NewKey("k2")
 	agg1 := DistributionAggregation([]float64{2})
-	vw1 := NewView("VF1", "desc VF1", []tag.Key{k1, k2}, nil, agg1, Interval{10 * time.Second, 5})
+	view, err := NewView("VF1", "desc VF1", []tag.Key{k1, k2}, nil, agg1, Interval{10 * time.Second, 5})
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	type tagString struct {
 		k tag.Key
@@ -343,8 +349,8 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowSlidingTime(t *testi
 	}
 
 	for _, tc := range tcs {
-		vw1.clearRows()
-		vw1.subscribe()
+		view.clearRows()
+		view.subscribe()
 		for _, r := range tc.records {
 			mods := []tag.Mutator{}
 			for _, t := range r.tags {
@@ -354,11 +360,11 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowSlidingTime(t *testi
 			if err != nil {
 				t.Errorf("%v: NewMap = %v", tc.label, err)
 			}
-			vw1.addSample(ts, r.f, r.now)
+			view.addSample(ts, r.f, r.now)
 		}
 
 		for _, wantRows := range tc.wantRows {
-			gotRows := vw1.collectedRows(wantRows.retrieveTime)
+			gotRows := view.collectedRows(wantRows.retrieveTime)
 
 			for _, gotRow := range gotRows {
 				if !containsRow(wantRows.rows, gotRow) {
@@ -384,7 +390,10 @@ func Test_View_MeasureFloat64_AggregationCount_WindowSlidingTime(t *testing.T) {
 	k1, _ := tag.NewKey("k1")
 	k2, _ := tag.NewKey("k2")
 	agg1 := CountAggregation{}
-	vw1 := NewView("VF1", "desc VF1", []tag.Key{k1, k2}, nil, agg1, Interval{10 * time.Second, 5})
+	view, err := NewView("VF1", "desc VF1", []tag.Key{k1, k2}, nil, agg1, Interval{10 * time.Second, 5})
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	type tagString struct {
 		k tag.Key
@@ -550,8 +559,8 @@ func Test_View_MeasureFloat64_AggregationCount_WindowSlidingTime(t *testing.T) {
 	}
 
 	for _, tc := range tcs {
-		vw1.clearRows()
-		vw1.subscribe()
+		view.clearRows()
+		view.subscribe()
 		for _, r := range tc.records {
 			mods := []tag.Mutator{}
 			for _, t := range r.tags {
@@ -561,11 +570,11 @@ func Test_View_MeasureFloat64_AggregationCount_WindowSlidingTime(t *testing.T) {
 			if err != nil {
 				t.Errorf("%v: NewMap = %v", tc.label, err)
 			}
-			vw1.addSample(ts, r.f, r.now)
+			view.addSample(ts, r.f, r.now)
 		}
 
 		for _, wantRows := range tc.wantRows {
-			gotRows := vw1.collectedRows(wantRows.retrieveTime)
+			gotRows := view.collectedRows(wantRows.retrieveTime)
 
 			for _, gotRow := range gotRows {
 				if !containsRow(wantRows.rows, gotRow) {

@@ -41,7 +41,7 @@ func main() {
 
 	// Create view to see the processed video size
 	// distribution over 10 seconds.
-	view := stats.NewView(
+	view, err := stats.NewView(
 		"my.org/views/video_size",
 		"processed video size over time",
 		nil,
@@ -49,6 +49,9 @@ func main() {
 		stats.DistributionAggregation([]float64{0, 1 << 16, 1 << 32}),
 		stats.Interval{Duration: 10 * time.Second, Intervals: 10},
 	)
+	if err != nil {
+		log.Fatalf("Cannot create view: %v", err)
+	}
 
 	// Set reporting period to report data at every second.
 	stats.SetReportingPeriod(1 * time.Second)
