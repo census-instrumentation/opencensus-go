@@ -165,7 +165,7 @@ func (e *Exporter) makeReq(vds []*stats.ViewData) *monitoringpb.CreateTimeSeries
 		for _, row := range vd.Rows {
 			ts := &monitoringpb.TimeSeries{
 				Metric: &metricpb.Metric{
-					Type: namespacedViewName(vd.View.Name()),
+					Type: namespacedViewName(vd.View.Name(), false),
 					// TODO(jbd): Add labels.
 				},
 				Resource: &monitoredrespb.MonitoredResource{
@@ -199,7 +199,7 @@ func (e *Exporter) createMeasure(ctx context.Context, vd *stats.ViewData) error 
 		return nil
 	}
 
-	name := monitoring.MetricMetricDescriptorPath(e.o.ProjectID, namespacedViewName(vd.View.Name()))
+	name := monitoring.MetricMetricDescriptorPath(e.o.ProjectID, namespacedViewName(vd.View.Name(), true))
 	_, err := e.c.GetMetricDescriptor(ctx, &monitoringpb.GetMetricDescriptorRequest{
 		Name: name,
 	})
@@ -238,7 +238,7 @@ func (e *Exporter) createMeasure(ctx context.Context, vd *stats.ViewData) error 
 			DisplayName: vd.View.Name(),
 			Description: m.Description(),
 			Unit:        m.Unit(),
-			Type:        namespacedViewName(vd.View.Name()),
+			Type:        namespacedViewName(vd.View.Name(), false),
 			MetricKind:  metricKind,
 			ValueType:   valueType,
 			Labels:      nil, // TODO(jbd): Add labels.
@@ -300,7 +300,10 @@ func newTypedValue(view *stats.View, r *stats.Row) *monitoringpb.TypedValue {
 	return nil
 }
 
-func namespacedViewName(v string) string {
+func namespacedViewName(v string, escaped bool) string {
 	p := path.Join("opencensus", v)
-	return path.Join("custom.googleapis.com", url.PathEscape(p))
+	if escaped {
+		p = url.PathEscape(p)
+	}
+	return path.Join("custom.googleapis.com", p)
 }
