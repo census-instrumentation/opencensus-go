@@ -69,7 +69,7 @@ func TestExporter_makeReq(t *testing.T) {
 				TimeSeries: []*monitoringpb.TimeSeries{
 					{
 						Metric: &metricpb.Metric{
-							Type: "custom.googleapis.com/opencensus%2Fcumview",
+							Type: "custom.googleapis.com/opencensus/cumview",
 						},
 						Resource: &monitoredrespb.MonitoredResource{
 							Type:   "global",
@@ -95,7 +95,7 @@ func TestExporter_makeReq(t *testing.T) {
 					},
 					{
 						Metric: &metricpb.Metric{
-							Type: "custom.googleapis.com/opencensus%2Fcumview",
+							Type: "custom.googleapis.com/opencensus/cumview",
 						},
 						Resource: &monitoredrespb.MonitoredResource{
 							Type:   "global",
