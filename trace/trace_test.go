@@ -43,7 +43,7 @@ func TestStrings(t *testing.T) {
 
 func TestFromContext(t *testing.T) {
 	want := &Span{}
-	ctx := WithSpan(context.Background(), want)
+	ctx := NewContext(context.Background(), want)
 	got := FromContext(ctx)
 	if got != want {
 		t.Errorf("got Span pointer %p want %p", got, want)
