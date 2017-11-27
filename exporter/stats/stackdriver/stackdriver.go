@@ -20,10 +20,12 @@ package stackdriver
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"net/url"
 	"path"
+	"reflect"
 	"sync"
 	"time"
 
@@ -52,7 +54,7 @@ type Exporter struct {
 	o       Options
 
 	createdViewsMu sync.Mutex
-	createdViews   map[string]struct{} // Views already created remotely
+	createdViews   map[string]*metricpb.MetricDescriptor // Views already created remotely
 
 	c *monitoring.MetricClient
 }
@@ -96,7 +98,7 @@ func NewExporter(o Options) (*Exporter, error) {
 	e := &Exporter{
 		c:            client,
 		o:            o,
-		createdViews: make(map[string]struct{}),
+		createdViews: make(map[string]*metricpb.MetricDescriptor),
 	}
 	e.bundler = bundler.NewBundler((*stats.ViewData)(nil), func(bundle interface{}) {
 		vds := bundle.([]*stats.ViewData)
@@ -189,6 +191,9 @@ func (e *Exporter) makeReq(vds []*stats.ViewData) *monitoringpb.CreateTimeSeries
 	}
 }
 
+// createMeasure creates a MetricDescriptor for the given view data in Stackdriver Monitoring.
+// An error will be returned if there is already a metric descriptor created with the same name
+// but it has a different aggregation, window or keys.
 func (e *Exporter) createMeasure(ctx context.Context, vd *stats.ViewData) error {
 	e.createdViewsMu.Lock()
 	defer e.createdViewsMu.Unlock()
@@ -196,19 +201,26 @@ func (e *Exporter) createMeasure(ctx context.Context, vd *stats.ViewData) error 
 	m := vd.View.Measure()
 	agg := vd.View.Aggregation()
 	window := vd.View.Window()
+	tagKeys := vd.View.TagKeys()
 	viewName := vd.View.Name()
 
-	_, ok := e.createdViews[viewName]
-	if ok {
+	if md, ok := e.createdViews[viewName]; ok {
+		// Check agg, window and keys.
+		if err := equalAggWindowTagKeys(md, agg, window, tagKeys); err != nil {
+			return err
+		}
 		return nil
 	}
 
-	merticName := monitoring.MetricMetricDescriptorPath(e.o.ProjectID, namespacedViewName(viewName, true))
-	_, err := e.c.GetMetricDescriptor(ctx, &monitoringpb.GetMetricDescriptorRequest{
-		Name: merticName,
+	metricName := monitoring.MetricMetricDescriptorPath(e.o.ProjectID, namespacedViewName(viewName, true))
+	md, err := e.c.GetMetricDescriptor(ctx, &monitoringpb.GetMetricDescriptorRequest{
+		Name: metricName,
 	})
+	if err := equalAggWindowTagKeys(md, agg, window, tagKeys); err != nil {
+		return err
+	}
 	if err == nil {
-		e.createdViews[viewName] = struct{}{}
+		e.createdViews[viewName] = md
 		return nil
 	}
 	if grpc.Code(err) != codes.NotFound {
@@ -236,7 +248,7 @@ func (e *Exporter) createMeasure(ctx context.Context, vd *stats.ViewData) error 
 		return fmt.Errorf("unsupported window type: %T", window)
 	}
 
-	if _, err := e.c.CreateMetricDescriptor(ctx, &monitoringpb.CreateMetricDescriptorRequest{
+	md, err = e.c.CreateMetricDescriptor(ctx, &monitoringpb.CreateMetricDescriptorRequest{
 		Name: monitoring.MetricProjectPath(e.o.ProjectID),
 		MetricDescriptor: &metricpb.MetricDescriptor{
 			DisplayName: viewName,
@@ -247,11 +259,12 @@ func (e *Exporter) createMeasure(ctx context.Context, vd *stats.ViewData) error 
 			ValueType:   valueType,
 			Labels:      newLabelDescriptors(vd.View.TagKeys()),
 		},
-	}); err != nil {
+	})
+	if err != nil {
 		return err
 	}
 
-	e.createdViews[viewName] = struct{}{}
+	e.createdViews[viewName] = md
 	return nil
 }
 
@@ -332,4 +345,56 @@ func newLabelDescriptors(keys []tag.Key) []*labelpb.LabelDescriptor {
 			})
 	}
 	return labelDescriptors
+}
+
+func equalAggWindowTagKeys(md *metricpb.MetricDescriptor, agg stats.Aggregation, window stats.Window, keys []tag.Key) error {
+	var w stats.Window
+	var a stats.Aggregation
+
+	switch md.MetricKind {
+	case metricpb.MetricDescriptor_DELTA:
+		w = stats.Interval{}
+	case metricpb.MetricDescriptor_CUMULATIVE:
+		w = stats.Cumulative{}
+	}
+
+	switch md.ValueType {
+	case metricpb.MetricDescriptor_INT64:
+		a = stats.CountAggregation{}
+	case metricpb.MetricDescriptor_DISTRIBUTION:
+		a = stats.DistributionAggregation{}
+	}
+
+	aggType := reflect.TypeOf(agg)
+	if aggType.Kind() == reflect.Ptr { // if pointer, find out the concrete type
+		aggType = reflect.ValueOf(agg).Elem().Type()
+	}
+	if aggType != reflect.TypeOf(a) {
+		return fmt.Errorf("stackdriver metric descriptor was not created with aggregation type %T", a)
+	}
+
+	winType := reflect.TypeOf(window)
+	if winType.Kind() == reflect.Ptr { // if pointer, find out the concrete type
+		winType = reflect.ValueOf(window).Elem().Type()
+	}
+	if winType != reflect.TypeOf(w) {
+		return fmt.Errorf("stackdriver metric descriptor was not created with window type %T", w)
+	}
+
+	if len(md.Labels) != len(keys) {
+		return errors.New("stackdriver metric descriptor was not created with the view labels")
+	}
+
+	labels := make(map[string]struct{}, len(keys))
+	for _, k := range keys {
+		labels[k.Name()] = struct{}{}
+	}
+
+	for _, k := range md.Labels {
+		if _, ok := labels[k.Key]; !ok {
+			return fmt.Errorf("stackdriver metric descriptor was not created with label %q", k)
+		}
+	}
+
+	return nil
 }
