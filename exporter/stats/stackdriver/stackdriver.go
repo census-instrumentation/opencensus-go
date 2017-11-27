@@ -38,7 +38,7 @@ import (
 	"google.golang.org/api/option"
 	"google.golang.org/api/support/bundler"
 	distributionpb "google.golang.org/genproto/googleapis/api/distribution"
-	labeldescriptorpb "google.golang.org/genproto/googleapis/api/label"
+	labelpb "google.golang.org/genproto/googleapis/api/label"
 	metricpb "google.golang.org/genproto/googleapis/api/metric"
 	monitoredrespb "google.golang.org/genproto/googleapis/api/monitoredres"
 	monitoringpb "google.golang.org/genproto/googleapis/monitoring/v3"
@@ -321,14 +321,14 @@ func newLabels(tags []tag.Tag) map[string]string {
 	return labels
 }
 
-func newLabelDescriptors(keys []tag.Key) []*labeldescriptorpb.LabelDescriptor {
-	labelDescriptors := make([]*labeldescriptorpb.LabelDescriptor, len(keys))
+func newLabelDescriptors(keys []tag.Key) []*labelpb.LabelDescriptor {
+	labelDescriptors := make([]*labelpb.LabelDescriptor, len(keys))
 	for _, key := range keys {
 		labelDescriptors = append(
 			labelDescriptors,
-			&labeldescriptorpb.LabelDescriptor{
+			&labelpb.LabelDescriptor{
 				Key:         key.Name(),
-				ValueType:   labeldescriptorpb.LabelDescriptor_STRING, // We only use string tags
+				ValueType:   labelpb.LabelDescriptor_STRING, // We only use string tags
 				Description: "OpenCensus TagKey",
 			})
 	}
