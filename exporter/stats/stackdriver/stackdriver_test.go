@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"go.opencensus.io/stats"
+	"go.opencensus.io/tag"
 
 	monitoring "cloud.google.com/go/monitoring/apiv3"
 	timestamp "github.com/golang/protobuf/ptypes/timestamp"
@@ -35,7 +36,13 @@ func TestExporter_makeReq(t *testing.T) {
 	}
 	defer stats.DeleteMeasure(m)
 
-	cumView, err := stats.NewView("cumview", "desc", nil, m, stats.CountAggregation{}, stats.Cumulative{})
+	key, err := tag.NewKey("test-key")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer tag.Delete(key)
+
+	cumView, err := stats.NewView("cumview", "desc", []tag.Key{key}, m, stats.CountAggregation{}, stats.Cumulative{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -69,7 +76,8 @@ func TestExporter_makeReq(t *testing.T) {
 				TimeSeries: []*monitoringpb.TimeSeries{
 					{
 						Metric: &metricpb.Metric{
-							Type: "custom.googleapis.com/opencensus/cumview",
+							Type:   "custom.googleapis.com/opencensus/cumview",
+							Labels: map[string]string{"test-key": "test-value-1"},
 						},
 						Resource: &monitoredrespb.MonitoredResource{
 							Type:   "global",
@@ -95,7 +103,8 @@ func TestExporter_makeReq(t *testing.T) {
 					},
 					{
 						Metric: &metricpb.Metric{
-							Type: "custom.googleapis.com/opencensus/cumview",
+							Type:   "custom.googleapis.com/opencensus/cumview",
+							Labels: map[string]string{"test-key": "test-value-2"},
 						},
 						Resource: &monitoredrespb.MonitoredResource{
 							Type:   "global",
@@ -142,11 +151,20 @@ func TestExporter_makeReq(t *testing.T) {
 func newTestCumViewData(v *stats.View, start, end time.Time) *stats.ViewData {
 	count1 := stats.CountData(10)
 	count2 := stats.CountData(16)
+	key, _ := tag.NewKey("test-key")
+	tag1 := tag.Tag{Key: key, Value: "test-value-1"}
+	tag2 := tag.Tag{Key: key, Value: "test-value-2"}
 	return &stats.ViewData{
 		View: v,
 		Rows: []*stats.Row{
-			{Data: &count1},
-			{Data: &count2},
+			{
+				Tags: []tag.Tag{tag1},
+				Data: &count1,
+			},
+			{
+				Tags: []tag.Tag{tag2},
+				Data: &count2,
+			},
 		},
 		Start: start,
 		End:   end,
