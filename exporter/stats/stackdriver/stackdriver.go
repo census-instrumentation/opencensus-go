@@ -48,8 +48,8 @@ type Exporter struct {
 	bundler *bundler.Bundler
 	o       Options
 
-	measuresMu sync.Mutex
-	measures   map[stats.Measure]struct{} // measures already created remotely
+	viewMu          sync.Mutex
+	registeredViews map[string]stats.View // Views already created remotely
 
 	c *monitoring.MetricClient
 }
@@ -91,9 +91,9 @@ func NewExporter(o Options) (*Exporter, error) {
 		return nil, err
 	}
 	e := &Exporter{
-		c:        client,
-		o:        o,
-		measures: make(map[stats.Measure]struct{}),
+		c:               client,
+		o:               o,
+		registeredViews: make(map[string]stats.View),
 	}
 	e.bundler = bundler.NewBundler((*stats.ViewData)(nil), func(bundle interface{}) {
 		vds := bundle.([]*stats.ViewData)
@@ -187,14 +187,14 @@ func (e *Exporter) makeReq(vds []*stats.ViewData) *monitoringpb.CreateTimeSeries
 }
 
 func (e *Exporter) createMeasure(ctx context.Context, vd *stats.ViewData) error {
-	e.measuresMu.Lock()
-	defer e.measuresMu.Unlock()
+	e.viewMu.Lock()
+	defer e.viewMu.Unlock()
 
 	m := vd.View.Measure()
 	agg := vd.View.Aggregation()
 	window := vd.View.Window()
 
-	_, ok := e.measures[m]
+	_, ok := e.registeredViews[vd.View.Name()]
 	if ok {
 		return nil
 	}
@@ -204,7 +204,7 @@ func (e *Exporter) createMeasure(ctx context.Context, vd *stats.ViewData) error 
 		Name: name,
 	})
 	if err == nil {
-		e.measures[m] = struct{}{}
+		e.registeredViews[vd.View.Name()] = *vd.View
 		return nil
 	}
 	if grpc.Code(err) != codes.NotFound {
@@ -247,7 +247,7 @@ func (e *Exporter) createMeasure(ctx context.Context, vd *stats.ViewData) error 
 		return err
 	}
 
-	e.measures[m] = struct{}{}
+	e.registeredViews[vd.View.Name()] = *vd.View
 	return nil
 }
 
