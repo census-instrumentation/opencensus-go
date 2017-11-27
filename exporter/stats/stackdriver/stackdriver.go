@@ -282,10 +282,11 @@ func newTypedValue(view *stats.View, r *stats.Row) *monitoringpb.TypedValue {
 				Count: v.Count,
 				Mean:  v.Mean,
 				SumOfSquaredDeviation: v.SumOfSquaredDev,
-				Range: &distributionpb.Distribution_Range{
-					Min: v.Min,
-					Max: v.Max,
-				},
+				// TODO(songya): uncomment this once Stackdriver supports min/max.
+				// Range: &distributionpb.Distribution_Range{
+				// 	Min: v.Min,
+				// 	Max: v.Max,
+				// },
 				BucketOptions: &distributionpb.Distribution_BucketOptions{
 					Options: &distributionpb.Distribution_BucketOptions_ExplicitBuckets{
 						ExplicitBuckets: &distributionpb.Distribution_BucketOptions_Explicit{
