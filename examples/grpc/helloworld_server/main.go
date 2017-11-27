@@ -22,8 +22,8 @@ import (
 
 	"go.opencensus.io/examples/grpc/exporter"
 	pb "go.opencensus.io/examples/grpc/proto"
-	ocgrpc "go.opencensus.io/plugins/grpc"
-	"go.opencensus.io/plugins/grpc/grpcstats"
+	ocgrpc "go.opencensus.io/plugin/grpc"
+	"go.opencensus.io/plugin/grpc/grpcstats"
 	"go.opencensus.io/stats"
 	"go.opencensus.io/trace"
 	"golang.org/x/net/context"
