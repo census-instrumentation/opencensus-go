@@ -19,6 +19,7 @@ import (
 	"errors"
 	"fmt"
 	"testing"
+	"time"
 
 	"go.opencensus.io/tag"
 
@@ -616,4 +617,23 @@ func restart() {
 	defaultWorker.stop()
 	defaultWorker = newWorker()
 	go defaultWorker.start()
+}
+
+func Test_SetReportingPeriodReqNeverBlocks(t *testing.T) {
+	t.Parallel()
+
+	worker := newWorker()
+
+	durations := []time.Duration{-1, 0, 10, 100 * time.Millisecond}
+	for i, duration := range durations {
+		ackChan := make(chan bool, 1)
+		cmd := &setReportingPeriodReq{c: ackChan, d: duration}
+		cmd.handleCommand(worker)
+
+		select {
+		case <-ackChan:
+		case <-time.After(500 * time.Millisecond): // Arbitrarily using 500ms as the timeout duration.
+			t.Errorf("#%d: duration %v blocks", i, duration)
+		}
+	}
 }
