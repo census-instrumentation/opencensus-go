@@ -48,8 +48,8 @@ type Exporter struct {
 	bundler *bundler.Bundler
 	o       Options
 
-	viewMu       sync.Mutex
-	createdViews map[string]struct{} // Views already created remotely
+	createdViewsMu sync.Mutex
+	createdViews   map[string]struct{} // Views already created remotely
 
 	c *monitoring.MetricClient
 }
@@ -187,8 +187,8 @@ func (e *Exporter) makeReq(vds []*stats.ViewData) *monitoringpb.CreateTimeSeries
 }
 
 func (e *Exporter) createMeasure(ctx context.Context, vd *stats.ViewData) error {
-	e.viewMu.Lock()
-	defer e.viewMu.Unlock()
+	e.createdViewsMu.Lock()
+	defer e.createdViewsMu.Unlock()
 
 	m := vd.View.Measure()
 	agg := vd.View.Aggregation()
