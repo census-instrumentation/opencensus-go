@@ -14,7 +14,7 @@
 //
 
 // Package grpcstats provides OpenCensus stats support for gRPC clients and servers.
-package grpcstats // import "go.opencensus.io/plugins/grpc/grpcstats"
+package grpcstats // import "go.opencensus.io/plugin/grpc/grpcstats"
 
 import (
 	"log"

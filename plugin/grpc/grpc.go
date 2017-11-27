@@ -19,8 +19,8 @@ package grpc
 import (
 	"golang.org/x/net/context"
 
-	"go.opencensus.io/plugins/grpc/grpcstats"
-	"go.opencensus.io/plugins/grpc/grpctrace"
+	"go.opencensus.io/plugin/grpc/grpcstats"
+	"go.opencensus.io/plugin/grpc/grpctrace"
 
 	"google.golang.org/grpc/stats"
 )
