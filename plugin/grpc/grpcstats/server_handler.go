@@ -23,9 +23,9 @@ import (
 
 	"golang.org/x/net/context"
 
-	"github.com/golang/glog"
 	istats "go.opencensus.io/stats"
 	"go.opencensus.io/tag"
+	"google.golang.org/grpc/grpclog"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/stats"
 )
@@ -60,15 +60,15 @@ func (sh serverHandler) HandleConn(ctx context.Context, s stats.ConnStats) {
 func (sh serverHandler) TagRPC(ctx context.Context, info *stats.RPCTagInfo) context.Context {
 	startTime := time.Now()
 	if info == nil {
-		if glog.V(2) {
-			glog.Infof("serverHandler.TagRPC called with nil info.", info.FullMethodName)
+		if grpclog.V(2) {
+			grpclog.Infof("serverHandler.TagRPC called with nil info.", info.FullMethodName)
 		}
 		return ctx
 	}
 	names := strings.Split(info.FullMethodName, "/")
 	if len(names) != 3 {
-		if glog.V(2) {
-			glog.Infof("serverHandler.TagRPC called with info.FullMethodName bad format. got %v, want '/$service/$method/'", info.FullMethodName)
+		if grpclog.V(2) {
+			grpclog.Infof("serverHandler.TagRPC called with info.FullMethodName bad format. got %v, want '/$service/$method/'", info.FullMethodName)
 		}
 		return ctx
 	}
@@ -102,7 +102,7 @@ func (sh serverHandler) HandleRPC(ctx context.Context, s stats.RPCStats) {
 	case *stats.End:
 		sh.handleRPCEnd(ctx, st)
 	default:
-		glog.Infof("unexpected stats: %T", st)
+		grpclog.Infof("unexpected stats: %T", st)
 	}
 }
 
@@ -117,8 +117,8 @@ func (sh serverHandler) GenerateServerTrailer(ctx context.Context) (metadata.MD,
 func (sh serverHandler) handleRPCInPayload(ctx context.Context, s *stats.InPayload) {
 	d, ok := ctx.Value(grpcServerRPCKey).(*rpcData)
 	if !ok {
-		if glog.V(2) {
-			glog.Infoln("serverHandler.handleRPCInPayload failed to retrieve *rpcData from context")
+		if grpclog.V(2) {
+			grpclog.Infoln("serverHandler.handleRPCInPayload failed to retrieve *rpcData from context")
 		}
 		return
 	}
@@ -130,8 +130,8 @@ func (sh serverHandler) handleRPCInPayload(ctx context.Context, s *stats.InPaylo
 func (sh serverHandler) handleRPCOutPayload(ctx context.Context, s *stats.OutPayload) {
 	d, ok := ctx.Value(grpcServerRPCKey).(*rpcData)
 	if !ok {
-		if glog.V(2) {
-			glog.Infoln("serverHandler.handleRPCOutPayload failed to retrieve *rpcData from context")
+		if grpclog.V(2) {
+			grpclog.Infoln("serverHandler.handleRPCOutPayload failed to retrieve *rpcData from context")
 		}
 		return
 	}
@@ -143,8 +143,8 @@ func (sh serverHandler) handleRPCOutPayload(ctx context.Context, s *stats.OutPay
 func (sh serverHandler) handleRPCEnd(ctx context.Context, s *stats.End) {
 	d, ok := ctx.Value(grpcServerRPCKey).(*rpcData)
 	if !ok {
-		if glog.V(2) {
-			glog.Infoln("serverHandler.handleRPCEnd failed to retrieve *rpcData from context")
+		if grpclog.V(2) {
+			grpclog.Infoln("serverHandler.handleRPCEnd failed to retrieve *rpcData from context")
 		}
 		return
 	}
