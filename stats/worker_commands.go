@@ -235,10 +235,10 @@ type setReportingPeriodReq struct {
 
 func (cmd *setReportingPeriodReq) handleCommand(w *worker) {
 	w.timer.Stop()
-	if cmd.d <= 0*time.Second {
+	if cmd.d <= 0 {
 		w.timer = time.NewTicker(defaultReportingDuration)
-		return
+	} else {
+		w.timer = time.NewTicker(cmd.d)
 	}
-	w.timer = time.NewTicker(cmd.d)
 	cmd.c <- true
 }
