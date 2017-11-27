@@ -48,8 +48,8 @@ type Exporter struct {
 	bundler *bundler.Bundler
 	o       Options
 
-	measuresMu sync.Mutex
-	measures   map[stats.Measure]struct{} // measures already created remotely
+	createdViewsMu sync.Mutex
+	createdViews   map[string]struct{} // Views already created remotely
 
 	c *monitoring.MetricClient
 }
@@ -91,9 +91,9 @@ func NewExporter(o Options) (*Exporter, error) {
 		return nil, err
 	}
 	e := &Exporter{
-		c:        client,
-		o:        o,
-		measures: make(map[stats.Measure]struct{}),
+		c:            client,
+		o:            o,
+		createdViews: make(map[string]struct{}),
 	}
 	e.bundler = bundler.NewBundler((*stats.ViewData)(nil), func(bundle interface{}) {
 		vds := bundle.([]*stats.ViewData)
@@ -187,24 +187,25 @@ func (e *Exporter) makeReq(vds []*stats.ViewData) *monitoringpb.CreateTimeSeries
 }
 
 func (e *Exporter) createMeasure(ctx context.Context, vd *stats.ViewData) error {
-	e.measuresMu.Lock()
-	defer e.measuresMu.Unlock()
+	e.createdViewsMu.Lock()
+	defer e.createdViewsMu.Unlock()
 
 	m := vd.View.Measure()
 	agg := vd.View.Aggregation()
 	window := vd.View.Window()
+	viewName := vd.View.Name()
 
-	_, ok := e.measures[m]
+	_, ok := e.createdViews[viewName]
 	if ok {
 		return nil
 	}
 
-	name := monitoring.MetricMetricDescriptorPath(e.o.ProjectID, namespacedViewName(vd.View.Name(), true))
+	merticName := monitoring.MetricMetricDescriptorPath(e.o.ProjectID, namespacedViewName(viewName, true))
 	_, err := e.c.GetMetricDescriptor(ctx, &monitoringpb.GetMetricDescriptorRequest{
-		Name: name,
+		Name: merticName,
 	})
 	if err == nil {
-		e.measures[m] = struct{}{}
+		e.createdViews[viewName] = struct{}{}
 		return nil
 	}
 	if grpc.Code(err) != codes.NotFound {
@@ -235,10 +236,10 @@ func (e *Exporter) createMeasure(ctx context.Context, vd *stats.ViewData) error 
 	if _, err := e.c.CreateMetricDescriptor(ctx, &monitoringpb.CreateMetricDescriptorRequest{
 		Name: monitoring.MetricProjectPath(e.o.ProjectID),
 		MetricDescriptor: &metricpb.MetricDescriptor{
-			DisplayName: vd.View.Name(),
+			DisplayName: viewName,
 			Description: m.Description(),
 			Unit:        m.Unit(),
-			Type:        namespacedViewName(vd.View.Name(), false),
+			Type:        namespacedViewName(viewName, false),
 			MetricKind:  metricKind,
 			ValueType:   valueType,
 			Labels:      nil, // TODO(jbd): Add labels.
@@ -247,7 +248,7 @@ func (e *Exporter) createMeasure(ctx context.Context, vd *stats.ViewData) error 
 		return err
 	}
 
-	e.measures[m] = struct{}{}
+	e.createdViews[viewName] = struct{}{}
 	return nil
 }
 
