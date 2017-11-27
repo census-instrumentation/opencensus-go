@@ -34,7 +34,7 @@ type rpcData struct {
 	// beginning of an RPC. It is an appoximation of the time when the
 	// application code invoked GRPC code.
 	startTime           time.Time
-	reqCount, respCount uint64
+	reqCount, respCount int64 // access atomically
 }
 
 // The following variables define the default hard-coded auxiliary data used by

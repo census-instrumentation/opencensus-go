@@ -124,7 +124,7 @@ func (sh serverHandler) handleRPCInPayload(ctx context.Context, s *stats.InPaylo
 	}
 
 	istats.Record(ctx, RPCServerRequestBytes.M(int64(s.Length)))
-	atomic.AddUint64(&d.reqCount, 1)
+	atomic.AddInt64(&d.reqCount, 1)
 }
 
 func (sh serverHandler) handleRPCOutPayload(ctx context.Context, s *stats.OutPayload) {
@@ -137,7 +137,7 @@ func (sh serverHandler) handleRPCOutPayload(ctx context.Context, s *stats.OutPay
 	}
 
 	istats.Record(ctx, RPCServerResponseBytes.M(int64(s.Length)))
-	atomic.AddUint64(&d.respCount, 1)
+	atomic.AddInt64(&d.respCount, 1)
 }
 
 func (sh serverHandler) handleRPCEnd(ctx context.Context, s *stats.End) {
@@ -150,11 +150,14 @@ func (sh serverHandler) handleRPCEnd(ctx context.Context, s *stats.End) {
 	}
 	elapsedTime := time.Since(d.startTime)
 
-	var measurements []istats.Measurement
-	measurements = append(measurements, RPCServerRequestCount.M(int64(d.reqCount)))
-	measurements = append(measurements, RPCServerResponseCount.M(int64(d.respCount)))
-	measurements = append(measurements, RPCServerFinishedCount.M(1))
-	measurements = append(measurements, RPCServerServerElapsedTime.M(float64(elapsedTime)/float64(time.Millisecond)))
+	reqCount := atomic.LoadInt64(&d.reqCount)
+	respCount := atomic.LoadInt64(&d.respCount)
+
+	var m []istats.Measurement
+	m = append(m, RPCServerRequestCount.M(reqCount))
+	m = append(m, RPCServerResponseCount.M(respCount))
+	m = append(m, RPCServerFinishedCount.M(1))
+	m = append(m, RPCServerServerElapsedTime.M(float64(elapsedTime)/float64(time.Millisecond)))
 	if s.Error != nil {
 		errorCode := s.Error.Error()
 		tm, err := tag.NewMap(ctx,
@@ -163,10 +166,10 @@ func (sh serverHandler) handleRPCEnd(ctx context.Context, s *stats.End) {
 		if err == nil {
 			ctx = tag.NewContext(ctx, tm)
 		}
-		measurements = append(measurements, RPCServerErrorCount.M(1))
+		m = append(m, RPCServerErrorCount.M(1))
 	}
 
-	istats.Record(ctx, measurements...)
+	istats.Record(ctx, m...)
 }
 
 // createTagMap creates a new tag map containing the tags extracted from the

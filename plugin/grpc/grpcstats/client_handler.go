@@ -118,7 +118,7 @@ func (ch clientHandler) handleRPCOutPayload(ctx context.Context, s *stats.OutPay
 	}
 
 	istats.Record(ctx, RPCClientRequestBytes.M(int64(s.Length)))
-	atomic.AddUint64(&d.reqCount, 1)
+	atomic.AddInt64(&d.reqCount, 1)
 }
 
 func (ch clientHandler) handleRPCInPayload(ctx context.Context, s *stats.InPayload) {
@@ -131,7 +131,7 @@ func (ch clientHandler) handleRPCInPayload(ctx context.Context, s *stats.InPaylo
 	}
 
 	istats.Record(ctx, RPCClientResponseBytes.M(int64(s.Length)))
-	atomic.AddUint64(&d.respCount, 1)
+	atomic.AddInt64(&d.respCount, 1)
 }
 
 func (ch clientHandler) handleRPCEnd(ctx context.Context, s *stats.End) {
@@ -144,11 +144,14 @@ func (ch clientHandler) handleRPCEnd(ctx context.Context, s *stats.End) {
 	}
 	elapsedTime := time.Since(d.startTime)
 
-	var measurements []istats.Measurement
-	measurements = append(measurements, RPCClientRequestCount.M(int64(d.reqCount)))
-	measurements = append(measurements, RPCClientResponseCount.M(int64(d.respCount)))
-	measurements = append(measurements, RPCClientFinishedCount.M(1))
-	measurements = append(measurements, RPCClientRoundTripLatency.M(float64(elapsedTime)/float64(time.Millisecond)))
+	reqCount := atomic.LoadInt64(&d.reqCount)
+	respCount := atomic.LoadInt64(&d.respCount)
+
+	var m []istats.Measurement
+	m = append(m, RPCClientRequestCount.M(reqCount))
+	m = append(m, RPCClientResponseCount.M(respCount))
+	m = append(m, RPCClientFinishedCount.M(1))
+	m = append(m, RPCClientRoundTripLatency.M(float64(elapsedTime)/float64(time.Millisecond)))
 
 	if s.Error != nil {
 		errorCode := s.Error.Error()
@@ -158,8 +161,8 @@ func (ch clientHandler) handleRPCEnd(ctx context.Context, s *stats.End) {
 		if err == nil {
 			ctx = tag.NewContext(ctx, newTagMap)
 		}
-		measurements = append(measurements, RPCClientErrorCount.M(1))
+		m = append(m, RPCClientErrorCount.M(1))
 	}
 
-	istats.Record(ctx, measurements...)
+	istats.Record(ctx, m...)
 }
