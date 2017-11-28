@@ -80,7 +80,6 @@ func TestExporter_makeReq(t *testing.T) {
 						},
 						Resource: &monitoredrespb.MonitoredResource{
 							Type:   "global",
-							Labels: map[string]string{"project_id": "proj-id"},
 						},
 						Points: []*monitoringpb.Point{
 							{
@@ -107,7 +106,6 @@ func TestExporter_makeReq(t *testing.T) {
 						},
 						Resource: &monitoredrespb.MonitoredResource{
 							Type:   "global",
-							Labels: map[string]string{"project_id": "proj-id"},
 						},
 						Points: []*monitoringpb.Point{
 							{
