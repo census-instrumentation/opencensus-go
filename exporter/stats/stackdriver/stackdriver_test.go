@@ -19,6 +19,8 @@ import (
 	"testing"
 	"time"
 
+	"google.golang.org/genproto/googleapis/api/label"
+
 	"go.opencensus.io/stats"
 	"go.opencensus.io/tag"
 
@@ -141,6 +143,108 @@ func TestExporter_makeReq(t *testing.T) {
 			if got := e.makeReq([]*stats.ViewData{tt.vd}); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("%v: Exporter.makeReq() = %v, want %v", tt.name, got, tt.want)
 			}
+		})
+	}
+}
+
+func TestEqualAggWindowTagKeys(t *testing.T) {
+	key1, _ := tag.NewKey("test-key-one")
+	key2, _ := tag.NewKey("test-key-two")
+	tests := []struct {
+		name    string
+		md      *metricpb.MetricDescriptor
+		agg     stats.Aggregation
+		keys    []tag.Key
+		window  stats.Window
+		wantErr bool
+	}{
+		{
+			name: "count agg + cum",
+			md: &metricpb.MetricDescriptor{
+				MetricKind: metricpb.MetricDescriptor_CUMULATIVE,
+				ValueType:  metricpb.MetricDescriptor_INT64,
+			},
+			agg:     stats.CountAggregation{},
+			window:  stats.Cumulative{},
+			wantErr: false,
+		},
+		{
+			name: "distribution agg + cum - mismatch",
+			md: &metricpb.MetricDescriptor{
+				MetricKind: metricpb.MetricDescriptor_CUMULATIVE,
+				ValueType:  metricpb.MetricDescriptor_DISTRIBUTION,
+			},
+			agg:     stats.CountAggregation{},
+			window:  stats.Cumulative{},
+			wantErr: true,
+		},
+		{
+			name: "distribution agg + delta",
+			md: &metricpb.MetricDescriptor{
+				MetricKind: metricpb.MetricDescriptor_DELTA,
+				ValueType:  metricpb.MetricDescriptor_DISTRIBUTION,
+			},
+			agg:     stats.DistributionAggregation{},
+			window:  stats.Interval{},
+			wantErr: false,
+		},
+		{
+			name: "distribution agg + cum",
+			md: &metricpb.MetricDescriptor{
+				MetricKind: metricpb.MetricDescriptor_CUMULATIVE,
+				ValueType:  metricpb.MetricDescriptor_DISTRIBUTION,
+			},
+			agg:     stats.DistributionAggregation{},
+			window:  stats.Interval{},
+			wantErr: true,
+		},
+		{
+			name: "distribution agg + cum with keys",
+			md: &metricpb.MetricDescriptor{
+				MetricKind: metricpb.MetricDescriptor_CUMULATIVE,
+				ValueType:  metricpb.MetricDescriptor_DISTRIBUTION,
+				Labels: []*label.LabelDescriptor{
+					{Key: "test-key-one"},
+					{Key: "test-key-two"},
+				},
+			},
+			agg:     stats.DistributionAggregation{},
+			window:  stats.Cumulative{},
+			keys:    []tag.Key{key1, key2},
+			wantErr: false,
+		},
+		{
+			name: "distribution agg + cum with keys -- mismatch",
+			md: &metricpb.MetricDescriptor{
+				MetricKind: metricpb.MetricDescriptor_CUMULATIVE,
+				ValueType:  metricpb.MetricDescriptor_DISTRIBUTION,
+			},
+			agg:     stats.DistributionAggregation{},
+			window:  stats.Cumulative{},
+			keys:    []tag.Key{key1, key2},
+			wantErr: true,
+		},
+		{
+			name: "count agg + cum with pointers",
+			md: &metricpb.MetricDescriptor{
+				MetricKind: metricpb.MetricDescriptor_CUMULATIVE,
+				ValueType:  metricpb.MetricDescriptor_INT64,
+			},
+			agg:     &stats.CountAggregation{},
+			window:  &stats.Cumulative{},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := equalAggWindowTagKeys(tt.md, tt.agg, tt.window, tt.keys)
+			if err != nil && !tt.wantErr {
+				t.Errorf("equalAggWindowTagKeys() = %q; want no error", err)
+			}
+			if err == nil && tt.wantErr {
+				t.Errorf("equalAggWindowTagKeys() = %q; want error", err)
+			}
+
 		})
 	}
 }
