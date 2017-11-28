@@ -407,9 +407,11 @@ func sanitize(s string) string {
 	return strings.Map(sanitizeRune, s)
 }
 
+// converts anything that is not a letter or digit to an underscore
 func sanitizeRune(r rune) rune {
-	if unicode.IsLetter(r) || unicode.IsDigit(r) || r == 95 {
+	if unicode.IsLetter(r) || unicode.IsDigit(r) {
 		return r
 	}
-	return 95 // Sanitize everything that is not letter, digit or underscore to underscore
+	// Everything else turns into an underscore
+	return '_'
 }
