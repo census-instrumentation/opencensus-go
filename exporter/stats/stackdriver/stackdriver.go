@@ -328,20 +328,18 @@ func namespacedViewName(v string, escaped bool) string {
 func newLabels(tags []tag.Tag) map[string]string {
 	labels := make(map[string]string)
 	for _, tag := range tags {
-		labels[tag.Key.Name()] = tag.Value
+		labels[internal.Sanitize(tag.Key.Name())] = tag.Value
 	}
 	return labels
 }
 
 func newLabelDescriptors(keys []tag.Key) []*labelpb.LabelDescriptor {
 	labelDescriptors := make([]*labelpb.LabelDescriptor, len(keys))
-	for _, key := range keys {
-		labelDescriptors = append(
-			labelDescriptors,
-			&labelpb.LabelDescriptor{
-				Key:       key.Name(),
-				ValueType: labelpb.LabelDescriptor_STRING, // We only use string tags
-			})
+	for i, key := range keys {
+		labelDescriptors[i] = &labelpb.LabelDescriptor{
+			Key:       internal.Sanitize(key.Name()),
+			ValueType: labelpb.LabelDescriptor_STRING, // We only use string tags
+		}
 	}
 	return labelDescriptors
 }

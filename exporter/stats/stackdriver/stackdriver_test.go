@@ -38,7 +38,7 @@ func TestExporter_makeReq(t *testing.T) {
 	}
 	defer stats.DeleteMeasure(m)
 
-	key, err := tag.NewKey("test-key")
+	key, err := tag.NewKey("test_key")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -78,10 +78,10 @@ func TestExporter_makeReq(t *testing.T) {
 					{
 						Metric: &metricpb.Metric{
 							Type:   "custom.googleapis.com/opencensus/cumview",
-							Labels: map[string]string{"test-key": "test-value-1"},
+							Labels: map[string]string{"test_key": "test-value-1"},
 						},
 						Resource: &monitoredrespb.MonitoredResource{
-							Type:   "global",
+							Type: "global",
 						},
 						Points: []*monitoringpb.Point{
 							{
@@ -104,10 +104,10 @@ func TestExporter_makeReq(t *testing.T) {
 					{
 						Metric: &metricpb.Metric{
 							Type:   "custom.googleapis.com/opencensus/cumview",
-							Labels: map[string]string{"test-key": "test-value-2"},
+							Labels: map[string]string{"test_key": "test-value-2"},
 						},
 						Resource: &monitoredrespb.MonitoredResource{
-							Type:   "global",
+							Type: "global",
 						},
 						Points: []*monitoringpb.Point{
 							{
@@ -148,8 +148,8 @@ func TestExporter_makeReq(t *testing.T) {
 }
 
 func TestEqualAggWindowTagKeys(t *testing.T) {
-	key1, _ := tag.NewKey("test-key-one")
-	key2, _ := tag.NewKey("test-key-two")
+	key1, _ := tag.NewKey("test_key_one")
+	key2, _ := tag.NewKey("test_key_two")
 	tests := []struct {
 		name    string
 		md      *metricpb.MetricDescriptor
@@ -204,8 +204,8 @@ func TestEqualAggWindowTagKeys(t *testing.T) {
 				MetricKind: metricpb.MetricDescriptor_CUMULATIVE,
 				ValueType:  metricpb.MetricDescriptor_DISTRIBUTION,
 				Labels: []*label.LabelDescriptor{
-					{Key: "test-key-one"},
-					{Key: "test-key-two"},
+					{Key: "test_key_one"},
+					{Key: "test_key_two"},
 				},
 			},
 			agg:     stats.DistributionAggregation{},
