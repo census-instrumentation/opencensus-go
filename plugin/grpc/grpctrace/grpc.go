@@ -26,17 +26,13 @@ import (
 	"google.golang.org/grpc/stats"
 )
 
-// ClientStatsHandler is a an implementation of grpc.StatsHandler.
-type ClientStatsHandler struct {
-}
+// ClientStatsHandler is a an implementation of grpc.StatsHandler
+// that can be passed to grpc.Dial
+// using grpc.WithStatsHandler to enable trace context propagation and
+// automatic span creation for outgoing gRPC requests.
+type ClientStatsHandler struct{}
 
 var _ stats.Handler = &ClientStatsHandler{}
-
-// ServerStatsHandler is a an implementation of grpc.StatsHandler.
-type ServerStatsHandler struct {
-}
-
-var _ stats.Handler = &ServerStatsHandler{}
 
 // NewClientStatsHandler returns a StatsHandler that can be passed to grpc.Dial
 // using grpc.WithStatsHandler to enable trace context propagation and
@@ -45,12 +41,23 @@ func NewClientStatsHandler() *ClientStatsHandler {
 	return &ClientStatsHandler{}
 }
 
+// TODO(jbd): Remove NewClientStatsHandler and NewServerStatsHandler
+// given they are not doing anything than returning a zero value pointer.
+
+// ServerStatsHandler is a an implementation of grpc.StatsHandler
+// that can be passed to grpc.NewServer using grpc.StatsHandler
+// to enable trace context propagation and automatic span creation
+// for incoming gRPC requests..
+type ServerStatsHandler struct{}
+
 // NewServerStatsHandler returns a StatsHandler that can be passed to
 // grpc.NewServer using grpc.StatsHandler to enable trace context propagation
 // and automatic span creation for incoming gRPC requests.
 func NewServerStatsHandler() *ServerStatsHandler {
 	return &ServerStatsHandler{}
 }
+
+var _ stats.Handler = &ServerStatsHandler{}
 
 const traceContextKey = "grpc-trace-bin"
 

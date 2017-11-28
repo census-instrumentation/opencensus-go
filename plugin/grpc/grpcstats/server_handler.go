@@ -26,38 +26,38 @@ import (
 	istats "go.opencensus.io/stats"
 	"go.opencensus.io/tag"
 	"google.golang.org/grpc/grpclog"
-	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/stats"
 )
 
-// serverHandler is the type implementing the "google.golang.org/grpc/stats.Handler"
-// interface to process lifecycle events from the GRPC server.
-type serverHandler struct{}
-
-// NewServerStatsHandler returns a grpc/stats.Handler implementation
+// ServerStatsHandler is a stats.Handler implementation
 // that collects stats for a gRPC server. Predefined
 // measures and views can be used to access the collected data.
-func NewServerStatsHandler() stats.Handler {
-	return serverHandler{}
+type ServerStatsHandler struct{}
+
+var _ stats.Handler = &ServerStatsHandler{}
+
+// NewServerStatsHandler returns a stats.Handler implementation
+// that collects stats for a gRPC server. Predefined
+// measures and views can be used to access the collected data.
+func NewServerStatsHandler() *ServerStatsHandler {
+	return &ServerStatsHandler{}
 }
 
 // TagConn adds connection related data to the given context and returns the
 // new context.
-func (sh serverHandler) TagConn(ctx context.Context, info *stats.ConnTagInfo) context.Context {
+func (h *ServerStatsHandler) TagConn(ctx context.Context, info *stats.ConnTagInfo) context.Context {
 	// Do nothing. This is here to satisfy the interface "google.golang.org/grpc/stats.Handler"
 	return ctx
 }
 
 // HandleConn processes the connection events.
-func (sh serverHandler) HandleConn(ctx context.Context, s stats.ConnStats) {
+func (h *ServerStatsHandler) HandleConn(ctx context.Context, s stats.ConnStats) {
 	// Do nothing. This is here to satisfy the interface "google.golang.org/grpc/stats.Handler"
 }
 
-// TagRPC gets the metadata from GRPC context, extracts the encoded tags from
-// it, creates a new tag.Map,
-// adds it to the local context using tagging.NewContextWithTagsSet and finally
-// returns the new ctx.
-func (sh serverHandler) TagRPC(ctx context.Context, info *stats.RPCTagInfo) context.Context {
+// TagRPC gets the metadata from gRPC context, extracts the encoded tags from
+// it and creates a new tag.Map and puts them into the returned context.
+func (h *ServerStatsHandler) TagRPC(ctx context.Context, info *stats.RPCTagInfo) context.Context {
 	startTime := time.Now()
 	if info == nil {
 		if grpclog.V(2) {
@@ -79,7 +79,7 @@ func (sh serverHandler) TagRPC(ctx context.Context, info *stats.RPCTagInfo) cont
 		startTime: startTime,
 	}
 
-	ts, err := sh.createTagMap(ctx, serviceName, methodName)
+	ts, err := h.createTagMap(ctx, serviceName, methodName)
 	if err != nil {
 		return ctx
 	}
@@ -90,31 +90,23 @@ func (sh serverHandler) TagRPC(ctx context.Context, info *stats.RPCTagInfo) cont
 }
 
 // HandleRPC processes the RPC events.
-func (sh serverHandler) HandleRPC(ctx context.Context, s stats.RPCStats) {
+func (h *ServerStatsHandler) HandleRPC(ctx context.Context, s stats.RPCStats) {
 	switch st := s.(type) {
 	case *stats.Begin, *stats.InHeader, *stats.InTrailer, *stats.OutHeader, *stats.OutTrailer:
 		// Do nothing for server
 	case *stats.InPayload:
-		sh.handleRPCInPayload(ctx, st)
+		h.handleRPCInPayload(ctx, st)
 	case *stats.OutPayload:
 		// For stream it can be called multiple times per RPC.
-		sh.handleRPCOutPayload(ctx, st)
+		h.handleRPCOutPayload(ctx, st)
 	case *stats.End:
-		sh.handleRPCEnd(ctx, st)
+		h.handleRPCEnd(ctx, st)
 	default:
 		grpclog.Infof("unexpected stats: %T", st)
 	}
 }
 
-// GenerateServerTrailer is intended to be called in server interceptor.
-// TODO(acetechnologist): could eventually be used to record the elapsed time
-// of the RPC on the server side and generate the server trailer metadata that
-// needs to be sent to the client.
-func (sh serverHandler) GenerateServerTrailer(ctx context.Context) (metadata.MD, error) {
-	return nil, nil
-}
-
-func (sh serverHandler) handleRPCInPayload(ctx context.Context, s *stats.InPayload) {
+func (h *ServerStatsHandler) handleRPCInPayload(ctx context.Context, s *stats.InPayload) {
 	d, ok := ctx.Value(grpcServerRPCKey).(*rpcData)
 	if !ok {
 		if grpclog.V(2) {
@@ -127,7 +119,7 @@ func (sh serverHandler) handleRPCInPayload(ctx context.Context, s *stats.InPaylo
 	atomic.AddInt64(&d.reqCount, 1)
 }
 
-func (sh serverHandler) handleRPCOutPayload(ctx context.Context, s *stats.OutPayload) {
+func (h *ServerStatsHandler) handleRPCOutPayload(ctx context.Context, s *stats.OutPayload) {
 	d, ok := ctx.Value(grpcServerRPCKey).(*rpcData)
 	if !ok {
 		if grpclog.V(2) {
@@ -140,7 +132,7 @@ func (sh serverHandler) handleRPCOutPayload(ctx context.Context, s *stats.OutPay
 	atomic.AddInt64(&d.respCount, 1)
 }
 
-func (sh serverHandler) handleRPCEnd(ctx context.Context, s *stats.End) {
+func (h *ServerStatsHandler) handleRPCEnd(ctx context.Context, s *stats.End) {
 	d, ok := ctx.Value(grpcServerRPCKey).(*rpcData)
 	if !ok {
 		if grpclog.V(2) {
@@ -174,7 +166,7 @@ func (sh serverHandler) handleRPCEnd(ctx context.Context, s *stats.End) {
 
 // createTagMap creates a new tag map containing the tags extracted from the
 // gRPC metadata.
-func (sh serverHandler) createTagMap(ctx context.Context, serviceName, methodName string) (*tag.Map, error) {
+func (h *ServerStatsHandler) createTagMap(ctx context.Context, serviceName, methodName string) (*tag.Map, error) {
 	mods := []tag.Mutator{
 		tag.Upsert(keyService, serviceName),
 		tag.Upsert(keyMethod, methodName),
