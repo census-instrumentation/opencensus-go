@@ -34,7 +34,6 @@ func (s *testServer) Single(ctx context.Context, in *testpb.FooRequest) (*testpb
 	if in.Fail {
 		return nil, fmt.Errorf("request failed")
 	}
-
 	return &testpb.FooResponse{}, nil
 }
 
@@ -62,12 +61,12 @@ func newTestClientAndServer() (client testpb.FooClient, server *grpc.Server, cle
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("net.Listen: %v", err)
 	}
-	server = grpc.NewServer(grpc.StatsHandler(grpctrace.NewServerStatsHandler()))
+	server = grpc.NewServer(grpc.StatsHandler(&grpctrace.ServerStatsHandler{}))
 	testpb.RegisterFooServer(server, &testServer{})
 	go server.Serve(listener)
 
 	// initialize client
-	clientConn, err := grpc.Dial(listener.Addr().String(), grpc.WithInsecure(), grpc.WithStatsHandler(grpctrace.NewClientStatsHandler()), grpc.WithBlock())
+	clientConn, err := grpc.Dial(listener.Addr().String(), grpc.WithInsecure(), grpc.WithStatsHandler(&grpctrace.ClientStatsHandler{}), grpc.WithBlock())
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("grpc.Dial: %v", err)
 	}
