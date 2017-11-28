@@ -40,7 +40,6 @@ func TestExporter_makeReq(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer tag.Delete(key)
 
 	cumView, err := stats.NewView("cumview", "desc", []tag.Key{key}, m, stats.CountAggregation{}, stats.Cumulative{})
 	if err != nil {

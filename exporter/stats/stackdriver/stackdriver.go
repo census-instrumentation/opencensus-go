@@ -327,9 +327,8 @@ func newLabelDescriptors(keys []tag.Key) []*labelpb.LabelDescriptor {
 		labelDescriptors = append(
 			labelDescriptors,
 			&labelpb.LabelDescriptor{
-				Key:         key.Name(),
-				ValueType:   labelpb.LabelDescriptor_STRING, // We only use string tags
-				Description: "OpenCensus TagKey",
+				Key:       key.Name(),
+				ValueType: labelpb.LabelDescriptor_STRING, // We only use string tags
 			})
 	}
 	return labelDescriptors
