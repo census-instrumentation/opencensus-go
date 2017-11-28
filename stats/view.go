@@ -99,6 +99,11 @@ func (v *View) clearRows() {
 	v.collector.clearRows()
 }
 
+// TagKeys returns the list of tag keys assoicated with this view.
+func (v *View) TagKeys() []tag.Key {
+	return v.tagKeys
+}
+
 // Window returns the timing window being used to collect
 // metrics from this view.
 func (v *View) Window() Window {

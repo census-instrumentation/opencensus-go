@@ -27,6 +27,8 @@ import (
 	"sync"
 	"time"
 
+	"go.opencensus.io/tag"
+
 	"go.opencensus.io/internal"
 
 	"go.opencensus.io/stats"
@@ -36,6 +38,7 @@ import (
 	"google.golang.org/api/option"
 	"google.golang.org/api/support/bundler"
 	distributionpb "google.golang.org/genproto/googleapis/api/distribution"
+	labelpb "google.golang.org/genproto/googleapis/api/label"
 	metricpb "google.golang.org/genproto/googleapis/api/metric"
 	monitoredrespb "google.golang.org/genproto/googleapis/api/monitoredres"
 	monitoringpb "google.golang.org/genproto/googleapis/monitoring/v3"
@@ -165,8 +168,8 @@ func (e *Exporter) makeReq(vds []*stats.ViewData) *monitoringpb.CreateTimeSeries
 		for _, row := range vd.Rows {
 			ts := &monitoringpb.TimeSeries{
 				Metric: &metricpb.Metric{
-					Type: namespacedViewName(vd.View.Name(), false),
-					// TODO(jbd): Add labels.
+					Type:   namespacedViewName(vd.View.Name(), false),
+					Labels: newLabels(row.Tags),
 				},
 				Resource: &monitoredrespb.MonitoredResource{
 					Type:   "global",
@@ -242,7 +245,7 @@ func (e *Exporter) createMeasure(ctx context.Context, vd *stats.ViewData) error 
 			Type:        namespacedViewName(viewName, false),
 			MetricKind:  metricKind,
 			ValueType:   valueType,
-			Labels:      nil, // TODO(jbd): Add labels.
+			Labels:      newLabelDescriptors(vd.View.TagKeys()),
 		},
 	}); err != nil {
 		return err
@@ -308,4 +311,25 @@ func namespacedViewName(v string, escaped bool) string {
 		p = url.PathEscape(p)
 	}
 	return path.Join("custom.googleapis.com", p)
+}
+
+func newLabels(tags []tag.Tag) map[string]string {
+	labels := make(map[string]string)
+	for _, tag := range tags {
+		labels[tag.Key.Name()] = tag.Value
+	}
+	return labels
+}
+
+func newLabelDescriptors(keys []tag.Key) []*labelpb.LabelDescriptor {
+	labelDescriptors := make([]*labelpb.LabelDescriptor, len(keys))
+	for _, key := range keys {
+		labelDescriptors = append(
+			labelDescriptors,
+			&labelpb.LabelDescriptor{
+				Key:       key.Name(),
+				ValueType: labelpb.LabelDescriptor_STRING, // We only use string tags
+			})
+	}
+	return labelDescriptors
 }
