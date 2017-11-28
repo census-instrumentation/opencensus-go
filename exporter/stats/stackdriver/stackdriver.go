@@ -26,10 +26,8 @@ import (
 	"net/url"
 	"path"
 	"reflect"
-	"strings"
 	"sync"
 	"time"
-	"unicode"
 
 	"go.opencensus.io/tag"
 
@@ -89,8 +87,6 @@ type Options struct {
 	// Optional.
 	BundleCountThreshold int
 }
-
-const labelKeySizeLimit = 100
 
 // NewExporter returns an exporter that uploads stats data to Stackdriver Monitoring.
 func NewExporter(o Options) (*Exporter, error) {
@@ -332,7 +328,7 @@ func namespacedViewName(v string, escaped bool) string {
 func newLabels(tags []tag.Tag) map[string]string {
 	labels := make(map[string]string)
 	for _, tag := range tags {
-		labels[sanitize(tag.Key.Name())] = tag.Value
+		labels[internal.Sanitize(tag.Key.Name())] = tag.Value
 	}
 	return labels
 }
@@ -341,7 +337,7 @@ func newLabelDescriptors(keys []tag.Key) []*labelpb.LabelDescriptor {
 	labelDescriptors := make([]*labelpb.LabelDescriptor, len(keys))
 	for i, key := range keys {
 		labelDescriptors[i] = &labelpb.LabelDescriptor{
-			Key:       sanitize(key.Name()),
+			Key:       internal.Sanitize(key.Name()),
 			ValueType: labelpb.LabelDescriptor_STRING, // We only use string tags
 		}
 	}
@@ -398,20 +394,4 @@ func equalAggWindowTagKeys(md *metricpb.MetricDescriptor, agg stats.Aggregation,
 	}
 
 	return nil
-}
-
-func sanitize(s string) string {
-	if len(s) > labelKeySizeLimit {
-		s = s[:labelKeySizeLimit]
-	}
-	return strings.Map(sanitizeRune, s)
-}
-
-// converts anything that is not a letter or digit to an underscore
-func sanitizeRune(r rune) rune {
-	if unicode.IsLetter(r) || unicode.IsDigit(r) {
-		return r
-	}
-	// Everything else turns into an underscore
-	return '_'
 }

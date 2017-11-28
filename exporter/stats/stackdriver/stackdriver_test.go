@@ -16,7 +16,6 @@ package stackdriver
 
 import (
 	"reflect"
-	"strings"
 	"testing"
 	"time"
 
@@ -246,38 +245,6 @@ func TestEqualAggWindowTagKeys(t *testing.T) {
 				t.Errorf("equalAggWindowTagKeys() = %q; want error", err)
 			}
 
-		})
-	}
-}
-
-func TestSanitize(t *testing.T) {
-	tests := []struct {
-		name  string
-		input string
-		want  string
-	}{
-		{
-			name:  "trunacate long string",
-			input: strings.Repeat("a", 101),
-			want:  strings.Repeat("a", 100),
-		},
-		{
-			name:  "replace character",
-			input: "test/key-1",
-			want:  "test_key_1",
-		},
-		{
-			name:  "don't modify alphanumeric string",
-			input: "0123456789_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz",
-			want:  "0123456789_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got, want := sanitize(tt.input), tt.want; got != want {
-				t.Errorf("sanitize() = %q; want %q", got, want)
-			}
 		})
 	}
 }
