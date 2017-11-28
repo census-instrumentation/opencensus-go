@@ -16,6 +16,7 @@ package stackdriver
 
 import (
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 
@@ -38,7 +39,7 @@ func TestExporter_makeReq(t *testing.T) {
 	}
 	defer stats.DeleteMeasure(m)
 
-	key, err := tag.NewKey("test-key")
+	key, err := tag.NewKey("test_key")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -78,10 +79,10 @@ func TestExporter_makeReq(t *testing.T) {
 					{
 						Metric: &metricpb.Metric{
 							Type:   "custom.googleapis.com/opencensus/cumview",
-							Labels: map[string]string{"test-key": "test-value-1"},
+							Labels: map[string]string{"test_key": "test-value-1"},
 						},
 						Resource: &monitoredrespb.MonitoredResource{
-							Type:   "global",
+							Type: "global",
 						},
 						Points: []*monitoringpb.Point{
 							{
@@ -104,10 +105,10 @@ func TestExporter_makeReq(t *testing.T) {
 					{
 						Metric: &metricpb.Metric{
 							Type:   "custom.googleapis.com/opencensus/cumview",
-							Labels: map[string]string{"test-key": "test-value-2"},
+							Labels: map[string]string{"test_key": "test-value-2"},
 						},
 						Resource: &monitoredrespb.MonitoredResource{
-							Type:   "global",
+							Type: "global",
 						},
 						Points: []*monitoringpb.Point{
 							{
@@ -148,8 +149,8 @@ func TestExporter_makeReq(t *testing.T) {
 }
 
 func TestEqualAggWindowTagKeys(t *testing.T) {
-	key1, _ := tag.NewKey("test-key-one")
-	key2, _ := tag.NewKey("test-key-two")
+	key1, _ := tag.NewKey("test_key_one")
+	key2, _ := tag.NewKey("test_key_two")
 	tests := []struct {
 		name    string
 		md      *metricpb.MetricDescriptor
@@ -204,8 +205,8 @@ func TestEqualAggWindowTagKeys(t *testing.T) {
 				MetricKind: metricpb.MetricDescriptor_CUMULATIVE,
 				ValueType:  metricpb.MetricDescriptor_DISTRIBUTION,
 				Labels: []*label.LabelDescriptor{
-					{Key: "test-key-one"},
-					{Key: "test-key-two"},
+					{Key: "test_key_one"},
+					{Key: "test_key_two"},
 				},
 			},
 			agg:     stats.DistributionAggregation{},
@@ -245,6 +246,39 @@ func TestEqualAggWindowTagKeys(t *testing.T) {
 				t.Errorf("equalAggWindowTagKeys() = %q; want error", err)
 			}
 
+		})
+	}
+}
+
+func TestSanitize(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{
+			name:     "trunacate long string",
+			input:    strings.Repeat("a", 101),
+			expected: strings.Repeat("a", 100),
+		},
+		{
+			name:     "replace character",
+			input:    "test/key-1",
+			expected: "test_key_1",
+		},
+		{
+			name:     "don't modify alphanumeric string",
+			input:    "testkey1",
+			expected: "testkey1",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			actual := sanitize(tt.input)
+			if actual != tt.expected {
+				t.Errorf("sanitize() = %s; want %s", actual, tt.expected)
+			}
 		})
 	}
 }

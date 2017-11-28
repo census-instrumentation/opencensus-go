@@ -26,8 +26,10 @@ import (
 	"net/url"
 	"path"
 	"reflect"
+	"strings"
 	"sync"
 	"time"
+	"unicode"
 
 	"go.opencensus.io/tag"
 
@@ -87,6 +89,8 @@ type Options struct {
 	// Optional.
 	BundleCountThreshold int
 }
+
+const labelKeySizeLimit = 100
 
 // NewExporter returns an exporter that uploads stats data to Stackdriver Monitoring.
 func NewExporter(o Options) (*Exporter, error) {
@@ -328,18 +332,18 @@ func namespacedViewName(v string, escaped bool) string {
 func newLabels(tags []tag.Tag) map[string]string {
 	labels := make(map[string]string)
 	for _, tag := range tags {
-		labels[tag.Key.Name()] = tag.Value
+		labels[sanitize(tag.Key.Name())] = tag.Value
 	}
 	return labels
 }
 
 func newLabelDescriptors(keys []tag.Key) []*labelpb.LabelDescriptor {
-	labelDescriptors := make([]*labelpb.LabelDescriptor, len(keys))
+	labelDescriptors := make([]*labelpb.LabelDescriptor, 0, len(keys))
 	for _, key := range keys {
 		labelDescriptors = append(
 			labelDescriptors,
 			&labelpb.LabelDescriptor{
-				Key:       key.Name(),
+				Key:       sanitize(key.Name()),
 				ValueType: labelpb.LabelDescriptor_STRING, // We only use string tags
 			})
 	}
@@ -396,4 +400,18 @@ func equalAggWindowTagKeys(md *metricpb.MetricDescriptor, agg stats.Aggregation,
 	}
 
 	return nil
+}
+
+func sanitize(s string) string {
+	if len(s) > labelKeySizeLimit {
+		s = s[:labelKeySizeLimit]
+	}
+	return strings.Map(sanitizeRune, s)
+}
+
+func sanitizeRune(r rune) rune {
+	if !(unicode.IsLetter(r) || unicode.IsDigit(r) || r == 95) {
+		r = 95 // Sanitize everything that is not letter, digit or underscore to underscore
+	}
+	return r
 }
