@@ -172,8 +172,7 @@ func (e *Exporter) makeReq(vds []*stats.ViewData) *monitoringpb.CreateTimeSeries
 					Labels: newLabels(row.Tags),
 				},
 				Resource: &monitoredrespb.MonitoredResource{
-					Type:   "global",
-					Labels: map[string]string{"project_id": e.o.ProjectID},
+					Type: "global",
 				},
 				Points: []*monitoringpb.Point{newPoint(vd.View, row, vd.Start, vd.End)},
 			}
