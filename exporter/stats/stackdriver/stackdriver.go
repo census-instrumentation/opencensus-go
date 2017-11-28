@@ -338,14 +338,12 @@ func newLabels(tags []tag.Tag) map[string]string {
 }
 
 func newLabelDescriptors(keys []tag.Key) []*labelpb.LabelDescriptor {
-	labelDescriptors := make([]*labelpb.LabelDescriptor, 0, len(keys))
-	for _, key := range keys {
-		labelDescriptors = append(
-			labelDescriptors,
-			&labelpb.LabelDescriptor{
-				Key:       sanitize(key.Name()),
-				ValueType: labelpb.LabelDescriptor_STRING, // We only use string tags
-			})
+	labelDescriptors := make([]*labelpb.LabelDescriptor, len(keys))
+	for i, key := range keys {
+		labelDescriptors[i] = &labelpb.LabelDescriptor{
+			Key:       sanitize(key.Name()),
+			ValueType: labelpb.LabelDescriptor_STRING, // We only use string tags
+		}
 	}
 	return labelDescriptors
 }
@@ -410,8 +408,8 @@ func sanitize(s string) string {
 }
 
 func sanitizeRune(r rune) rune {
-	if !(unicode.IsLetter(r) || unicode.IsDigit(r) || r == 95) {
-		r = 95 // Sanitize everything that is not letter, digit or underscore to underscore
+	if unicode.IsLetter(r) || unicode.IsDigit(r) || r == 95 {
+		return r
 	}
-	return r
+	return 95 // Sanitize everything that is not letter, digit or underscore to underscore
 }

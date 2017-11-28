@@ -252,32 +252,31 @@ func TestEqualAggWindowTagKeys(t *testing.T) {
 
 func TestSanitize(t *testing.T) {
 	tests := []struct {
-		name     string
-		input    string
-		expected string
+		name  string
+		input string
+		want  string
 	}{
 		{
-			name:     "trunacate long string",
-			input:    strings.Repeat("a", 101),
-			expected: strings.Repeat("a", 100),
+			name:  "trunacate long string",
+			input: strings.Repeat("a", 101),
+			want:  strings.Repeat("a", 100),
 		},
 		{
-			name:     "replace character",
-			input:    "test/key-1",
-			expected: "test_key_1",
+			name:  "replace character",
+			input: "test/key-1",
+			want:  "test_key_1",
 		},
 		{
-			name:     "don't modify alphanumeric string",
-			input:    "testkey1",
-			expected: "testkey1",
+			name:  "don't modify alphanumeric string",
+			input: "0123456789_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz",
+			want:  "0123456789_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			actual := sanitize(tt.input)
-			if actual != tt.expected {
-				t.Errorf("sanitize() = %s; want %s", actual, tt.expected)
+			if got, want := sanitize(tt.input), tt.want; got != want {
+				t.Errorf("sanitize() = %q; want %q", got, want)
 			}
 		})
 	}
