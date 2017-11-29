@@ -588,8 +588,7 @@ func Test_View_MeasureFloat64_AggregationSum_WindowCumulative(t *testing.T) {
 	k1, _ := tag.NewKey("k1")
 	k2, _ := tag.NewKey("k2")
 	k3, _ := tag.NewKey("k3")
-	agg1 := SumAggregation{}
-	view, err := NewView("VF1", "desc VF1", []tag.Key{k1, k2}, nil, agg1, Cumulative{})
+	view, err := NewView("VF1", "desc VF1", []tag.Key{k1, k2}, nil, SumAggregation{}, Cumulative{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -603,13 +602,11 @@ func Test_View_MeasureFloat64_AggregationSum_WindowCumulative(t *testing.T) {
 		tags []tagString
 	}
 
-	type testCase struct {
+	tcs := []struct {
 		label    string
 		records  []record
 		wantRows []*Row
-	}
-
-	tcs := []testCase{
+	}{
 		{
 			"1",
 			[]record{
@@ -668,60 +665,34 @@ func Test_View_MeasureFloat64_AggregationSum_WindowCumulative(t *testing.T) {
 				},
 			},
 		},
-		{
-			"4",
-			[]record{
-				{1, []tagString{{k1, "v1 is a very long value key"}}},
-				{5, []tagString{{k1, "v1 is a very long value key"}, {k3, "v3"}}},
-				{1, []tagString{{k1, "v1 is another very long value key"}}},
-				{1, []tagString{{k1, "v1 is a very long value key"}, {k2, "v2 is a very long value key"}}},
-				{5, []tagString{{k1, "v1 is a very long value key"}, {k2, "v2 is a very long value key"}}},
-				{3, []tagString{{k1, "v1 is a very long value key"}, {k2, "v2 is a very long value key"}}},
-				{3, []tagString{{k1, "v1 is a very long value key"}, {k2, "v2 is a very long value key"}}},
-			},
-			[]*Row{
-				{
-					[]tag.Tag{{Key: k1, Value: "v1 is a very long value key"}},
-					newSumData(6),
-				},
-				{
-					[]tag.Tag{{Key: k1, Value: "v1 is another very long value key"}},
-					newSumData(1),
-				},
-				{
-					[]tag.Tag{{Key: k1, Value: "v1 is a very long value key"}, {Key: k2, Value: "v2 is a very long value key"}},
-					newSumData(12),
-				},
-			},
-		},
 	}
 
-	for _, tc := range tcs {
+	for _, tt := range tcs {
 		view.clearRows()
 		view.subscribe()
-		for _, r := range tc.records {
+		for _, r := range tt.records {
 			mods := []tag.Mutator{}
 			for _, t := range r.tags {
 				mods = append(mods, tag.Insert(t.k, t.v))
 			}
 			ts, err := tag.NewMap(context.Background(), mods...)
 			if err != nil {
-				t.Errorf("%v: NewMap = %v", tc.label, err)
+				t.Errorf("%v: NewMap = %v", tt.label, err)
 			}
 			view.addSample(ts, r.f, time.Now())
 		}
 
 		gotRows := view.collectedRows(time.Now())
 		for i, got := range gotRows {
-			if !containsRow(tc.wantRows, got) {
-				t.Errorf("%v-%d: got row %v; want none", tc.label, i, got)
+			if !containsRow(tt.wantRows, got) {
+				t.Errorf("%v-%d: got row %v; want none", tt.label, i, got)
 				break
 			}
 		}
 
-		for i, want := range tc.wantRows {
+		for i, want := range tt.wantRows {
 			if !containsRow(gotRows, want) {
-				t.Errorf("%v-%d: got none; want row %v", tc.label, i, want)
+				t.Errorf("%v-%d: got none; want row %v", tt.label, i, want)
 				break
 			}
 		}
@@ -732,8 +703,7 @@ func Test_View_MeasureFloat64_AggregationMean_WindowCumulative(t *testing.T) {
 	k1, _ := tag.NewKey("k1")
 	k2, _ := tag.NewKey("k2")
 	k3, _ := tag.NewKey("k3")
-	agg1 := MeanAggregation{}
-	view, err := NewView("VF1", "desc VF1", []tag.Key{k1, k2}, nil, agg1, Cumulative{})
+	view, err := NewView("VF1", "desc VF1", []tag.Key{k1, k2}, nil, MeanAggregation{}, Cumulative{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -747,13 +717,11 @@ func Test_View_MeasureFloat64_AggregationMean_WindowCumulative(t *testing.T) {
 		tags []tagString
 	}
 
-	type testCase struct {
+	tcs := []struct {
 		label    string
 		records  []record
 		wantRows []*Row
-	}
-
-	tcs := []testCase{
+	}{
 		{
 			"1",
 			[]record{
@@ -814,60 +782,34 @@ func Test_View_MeasureFloat64_AggregationMean_WindowCumulative(t *testing.T) {
 				},
 			},
 		},
-		{
-			"4",
-			[]record{
-				{1, []tagString{{k1, "v1 is a very long value key"}}},
-				{5, []tagString{{k1, "v1 is a very long value key"}, {k3, "v3"}}},
-				{1, []tagString{{k1, "v1 is another very long value key"}}},
-				{1, []tagString{{k1, "v1 is a very long value key"}, {k2, "v2 is a very long value key"}}},
-				{5, []tagString{{k1, "v1 is a very long value key"}, {k2, "v2 is a very long value key"}}},
-				{3, []tagString{{k1, "v1 is a very long value key"}, {k2, "v2 is a very long value key"}}},
-				{3, []tagString{{k1, "v1 is a very long value key"}, {k2, "v2 is a very long value key"}}},
-			},
-			[]*Row{
-				{
-					[]tag.Tag{{Key: k1, Value: "v1 is a very long value key"}},
-					newMeanData(3, 2),
-				},
-				{
-					[]tag.Tag{{Key: k1, Value: "v1 is another very long value key"}},
-					newMeanData(1, 1),
-				},
-				{
-					[]tag.Tag{{Key: k1, Value: "v1 is a very long value key"}, {Key: k2, Value: "v2 is a very long value key"}},
-					newMeanData(3, 4),
-				},
-			},
-		},
 	}
 
-	for _, tc := range tcs {
+	for _, tt := range tcs {
 		view.clearRows()
 		view.subscribe()
-		for _, r := range tc.records {
+		for _, r := range tt.records {
 			mods := []tag.Mutator{}
 			for _, t := range r.tags {
 				mods = append(mods, tag.Insert(t.k, t.v))
 			}
 			ts, err := tag.NewMap(context.Background(), mods...)
 			if err != nil {
-				t.Errorf("%v: NewMap = %v", tc.label, err)
+				t.Errorf("%v: NewMap = %v", tt.label, err)
 			}
 			view.addSample(ts, r.f, time.Now())
 		}
 
 		gotRows := view.collectedRows(time.Now())
 		for i, got := range gotRows {
-			if !containsRow(tc.wantRows, got) {
-				t.Errorf("%v-%d: got row %v; want none", tc.label, i, got)
+			if !containsRow(tt.wantRows, got) {
+				t.Errorf("%v-%d: got row %v; want none", tt.label, i, got)
 				break
 			}
 		}
 
-		for i, want := range tc.wantRows {
+		for i, want := range tt.wantRows {
 			if !containsRow(gotRows, want) {
-				t.Errorf("%v-%d: got none; want row %v", tc.label, i, want)
+				t.Errorf("%v-%d: got none; want row %v", tt.label, i, want)
 				break
 			}
 		}
