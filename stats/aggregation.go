@@ -19,7 +19,8 @@ import "time"
 
 // Aggregation represents a data aggregation method. There are several
 // aggregation methods made available in the package such as
-// CountAggregation and DistributionAggregation.
+// CountAggregation, SumAggregation, MeanAggregation and
+// DistributionAggregation.
 type Aggregation interface {
 	isAggregation() bool
 	newData() func() AggregationData
@@ -35,6 +36,30 @@ func (a CountAggregation) isAggregation() bool { return true }
 
 func (a CountAggregation) newData() func() AggregationData {
 	return func() AggregationData { return newCountData(0) }
+}
+
+// SumAggregation indicates that data collected and aggregated
+// with this method will be summed up.
+// For example, accumulated request bytes can be aggregated by using
+// SumAggregation.
+type SumAggregation struct{}
+
+func (a SumAggregation) isAggregation() bool { return true }
+
+func (a SumAggregation) newData() func() AggregationData {
+	return func() AggregationData { return newSumData(0) }
+}
+
+// MeanAggregation indicates that collect and aggregate data and maintain
+// the mean value.
+// For example, average latency in milliseconds can be aggregated by using
+// MeanAggregation.
+type MeanAggregation struct{}
+
+func (a MeanAggregation) isAggregation() bool { return true }
+
+func (a MeanAggregation) newData() func() AggregationData {
+	return func() AggregationData { return newMeanData(0, 0) }
 }
 
 // DistributionAggregation indicates that the desired aggregation is

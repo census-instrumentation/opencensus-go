@@ -74,6 +74,137 @@ func (a *CountData) equal(other AggregationData) bool {
 	return int64(*a) == int64(*a2)
 }
 
+// SumData is the aggregated data for a SumAggregation.
+// A sum aggregation processes data and sums up the recordings.
+//
+// Most users won't directly access sum data.
+type SumData float64
+
+func newSumData(v float64) *SumData {
+	tmp := SumData(v)
+	return &tmp
+}
+
+func (a *SumData) isAggregate() bool { return true }
+
+func (a *SumData) addSample(v interface{}) {
+	// Both float64 and int64 values will be wrapped to float64
+	var f float64
+	switch x := v.(type) {
+	case int64:
+		f = float64(x)
+		break
+	case float64:
+		f = x
+		break
+	default:
+		return
+	}
+	*a = SumData(float64(*a) + f)
+}
+
+func (a *SumData) multiplyByFraction(fraction float64) AggregationData {
+	return newSumData(float64(*a) * fraction)
+}
+
+func (a *SumData) addToIt(av AggregationData) {
+	other, ok := av.(*SumData)
+	if !ok {
+		return
+	}
+	*a = *a + *other
+}
+
+func (a *SumData) clear() {
+	*a = 0
+}
+
+func (a *SumData) equal(other AggregationData) bool {
+	a2, ok := other.(*SumData)
+	if !ok {
+		return false
+	}
+
+	epsilon := math.Pow10(-9)
+	return math.Pow(float64(*a)-float64(*a2), 2) < epsilon
+}
+
+// MeanData is the aggregated data for a MeanAggregation.
+// A mean aggregation processes data and maintains the mean value.
+//
+// Most users won't directly access mean data.
+type MeanData struct {
+	Count int64   // number of data points aggregated
+	Mean  float64 // mean of all data points
+}
+
+func newMeanData(mean float64, count int64) *MeanData {
+	return &MeanData{
+		Mean:  mean,
+		Count: count,
+	}
+}
+
+// Sum returns the sum of all samples collected.
+func (a *MeanData) Sum() float64 { return a.Mean * float64(a.Count) }
+
+func (a *MeanData) isAggregate() bool { return true }
+
+func (a *MeanData) addSample(v interface{}) {
+	var f float64
+	switch x := v.(type) {
+	case int64:
+		f = float64(x)
+		break
+	case float64:
+		f = x
+		break
+	default:
+		return
+	}
+
+	a.Count++
+	if a.Count == 1 {
+		a.Mean = f
+		return
+	}
+	a.Mean = a.Mean + (f-a.Mean)/float64(a.Count)
+}
+
+// Only Mean will be mutiplied by the fraction, Count will remain the same.
+func (a *MeanData) multiplyByFraction(fraction float64) AggregationData {
+	return newMeanData(a.Mean*fraction, a.Count)
+}
+
+func (a *MeanData) addToIt(av AggregationData) {
+	other, ok := av.(*MeanData)
+	if !ok {
+		return
+	}
+
+	if other.Count == 0 {
+		return
+	}
+
+	a.Mean = (a.Sum() + other.Sum()) / float64(a.Count+other.Count)
+	a.Count = a.Count + other.Count
+}
+
+func (a *MeanData) clear() {
+	a.Count = 0
+	a.Mean = 0
+}
+
+func (a *MeanData) equal(other AggregationData) bool {
+	a2, ok := other.(*MeanData)
+	if !ok {
+		return false
+	}
+
+	epsilon := math.Pow10(-9)
+	return a.Count == a2.Count && math.Pow(a.Mean-a2.Mean, 2) < epsilon
+}
+
 // DistributionData is the aggregated data for an
 // DistributionAggregation.
 //
