@@ -284,14 +284,12 @@ func newPoint(v *stats.View, row *stats.Row, start, end time.Time) *monitoringpb
 }
 
 func newTypedValue(view *stats.View, r *stats.Row) *monitoringpb.TypedValue {
-	switch r.Data.(type) {
+	switch v := r.Data.(type) {
 	case *stats.CountData:
-		v := r.Data.(*stats.CountData)
 		return &monitoringpb.TypedValue{Value: &monitoringpb.TypedValue_Int64Value{
 			Int64Value: int64(*v),
 		}}
 	case *stats.DistributionData:
-		v := r.Data.(*stats.DistributionData)
 		bounds := view.Aggregation().(stats.DistributionAggregation)
 		return &monitoringpb.TypedValue{Value: &monitoringpb.TypedValue_DistributionValue{
 			DistributionValue: &distributionpb.Distribution{
