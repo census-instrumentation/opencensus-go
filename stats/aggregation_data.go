@@ -93,10 +93,8 @@ func (a *SumData) addSample(v interface{}) {
 	switch x := v.(type) {
 	case int64:
 		f = float64(x)
-		break
 	case float64:
 		f = x
-		break
 	default:
 		return
 	}
@@ -155,10 +153,8 @@ func (a *MeanData) addSample(v interface{}) {
 	switch x := v.(type) {
 	case int64:
 		f = float64(x)
-		break
 	case float64:
 		f = x
-		break
 	default:
 		return
 	}
@@ -245,10 +241,8 @@ func (a *DistributionData) addSample(v interface{}) {
 	switch x := v.(type) {
 	case int64:
 		f = float64(x)
-		break
 	case float64:
 		f = x
-		break
 	default:
 		return
 	}
