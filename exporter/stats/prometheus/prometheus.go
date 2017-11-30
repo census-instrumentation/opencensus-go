@@ -55,6 +55,9 @@ type Options struct {
 
 // NewExporter returns an exporter that exports stats to Prometheus.
 func NewExporter(o Options) (*Exporter, error) {
+	if o.Namespace == "" {
+		o.Namespace = defaultNamespace
+	}
 	reg := prometheus.NewRegistry()
 	collector := newCollector(o, reg)
 	e := &Exporter{
@@ -267,10 +270,6 @@ func tagsToLabels(tags []tag.Tag) []string {
 }
 
 func newCollector(opts Options, registrar *prometheus.Registry) *collector {
-	namespace := opts.Namespace
-	if namespace == "" {
-		namespace = defaultNamespace
-	}
 	return &collector{
 		reg:             registrar,
 		opts:            opts,
