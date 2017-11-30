@@ -39,17 +39,17 @@ func main() {
 
 	// Create measures. The program will record measures for the size of
 	// processed videos and the nubmer of videos marked as spam.
-	videoSize, err := stats.NewMeasureInt64("my.org/measures/video_size", "size of processed videos", "MBy")
+	videoCount, err := stats.NewMeasureInt64("my.org/measures/video_count", "number of processed videos", "")
 	if err != nil {
 		log.Fatalf("Video size measure not created: %v", err)
 	}
 
 	// Create view to see the processed video size cumulatively.
 	view, err := stats.NewView(
-		"video_size_cum",
+		"video_count",
 		"processed video size over time",
 		nil,
-		videoSize,
+		videoCount,
 		stats.CountAggregation{},
 		stats.Cumulative{},
 	)
@@ -69,7 +69,7 @@ func main() {
 	go func() {
 		for {
 			// Record some data points.
-			stats.Record(ctx, videoSize.M(rand.Int63()))
+			stats.Record(ctx, videoCount.M(1))
 			<-time.After(time.Millisecond * time.Duration(1+rand.Intn(400)))
 		}
 	}()
