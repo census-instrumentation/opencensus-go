@@ -24,6 +24,15 @@ const labelKeySizeLimit = 100
 // Sanitize returns a string that is trunacated to 100 characters if it's too
 // long, and replaces non-alphanumeric characters to underscores.
 func Sanitize(s string) string {
+	if len(s) == 0 {
+		return s
+	}
+	if unicode.IsDigit(rune(s[0])) {
+		s = "key_" + s
+	}
+	if s[0] == '_' {
+		s = "key" + s
+	}
 	if len(s) > labelKeySizeLimit {
 		s = s[:labelKeySizeLimit]
 	}
