@@ -67,7 +67,6 @@ func main() {
 	}
 
 	go func() {
-		ctx := context.Background()
 		for {
 			// Record some data points.
 			stats.Record(ctx, videoSize.M(rand.Int63()))
