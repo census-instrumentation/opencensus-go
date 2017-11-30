@@ -48,6 +48,8 @@ import (
 	"google.golang.org/grpc/codes"
 )
 
+const maxTimeSeriesPerUpload = 200
+
 // Exporter exports stats to the Stackdriver Monitoring.
 type Exporter struct {
 	bundler *bundler.Bundler
@@ -149,18 +151,19 @@ func (e *Exporter) upload(vds []*stats.ViewData) error {
 			return err
 		}
 	}
-	req := e.makeReq(vds)
-	if req == nil {
-		return nil
-	}
-	if err := e.c.CreateTimeSeries(ctx, req); err != nil {
-		return err
+	for _, req := range e.makeReq(vds, maxTimeSeriesPerUpload) {
+		if err := e.c.CreateTimeSeries(ctx, req); err != nil {
+			// TODO(jbd): Don't fail fast here, batch errors?
+			return err
+		}
 	}
 	return nil
 }
 
-func (e *Exporter) makeReq(vds []*stats.ViewData) *monitoringpb.CreateTimeSeriesRequest {
+func (e *Exporter) makeReq(vds []*stats.ViewData, limit int) []*monitoringpb.CreateTimeSeriesRequest {
+	var reqs []*monitoringpb.CreateTimeSeriesRequest
 	var timeSeries []*monitoringpb.TimeSeries
+
 	for _, vd := range vds {
 		if _, ok := vd.View.Window().(stats.Cumulative); !ok {
 			// TODO(jbd): Only Cumulative window will be exported to Stackdriver in this version.
@@ -179,15 +182,22 @@ func (e *Exporter) makeReq(vds []*stats.ViewData) *monitoringpb.CreateTimeSeries
 				Points: []*monitoringpb.Point{newPoint(vd.View, row, vd.Start, vd.End)},
 			}
 			timeSeries = append(timeSeries, ts)
+			if len(timeSeries) == limit {
+				reqs = append(reqs, &monitoringpb.CreateTimeSeriesRequest{
+					Name:       monitoring.MetricProjectPath(e.o.ProjectID),
+					TimeSeries: timeSeries,
+				})
+				timeSeries = []*monitoringpb.TimeSeries{}
+			}
 		}
 	}
-	if len(timeSeries) == 0 {
-		return nil
+	if len(timeSeries) > 0 {
+		reqs = append(reqs, &monitoringpb.CreateTimeSeriesRequest{
+			Name:       monitoring.MetricProjectPath(e.o.ProjectID),
+			TimeSeries: timeSeries,
+		})
 	}
-	return &monitoringpb.CreateTimeSeriesRequest{
-		Name:       monitoring.MetricProjectPath(e.o.ProjectID),
-		TimeSeries: timeSeries,
-	}
+	return reqs
 }
 
 // createMeasure creates a MetricDescriptor for the given view data in Stackdriver Monitoring.

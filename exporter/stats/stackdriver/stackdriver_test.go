@@ -50,6 +50,7 @@ func TestExporter_makeReq(t *testing.T) {
 	if err := stats.RegisterView(cumView); err != nil {
 		t.Fatal(err)
 	}
+	defer cumView.Unregister()
 
 	distView, err := stats.NewView("distview", "desc", nil, m, stats.DistributionAggregation([]float64{2, 4, 7}), stats.Interval{})
 	if err != nil {
@@ -58,6 +59,7 @@ func TestExporter_makeReq(t *testing.T) {
 	if err := stats.RegisterView(distView); err != nil {
 		t.Fatal(err)
 	}
+	defer distView.Unregister()
 
 	start := time.Now()
 	end := start.Add(time.Minute)
@@ -66,13 +68,13 @@ func TestExporter_makeReq(t *testing.T) {
 		name   string
 		projID string
 		vd     *stats.ViewData
-		want   *monitoringpb.CreateTimeSeriesRequest
+		want   []*monitoringpb.CreateTimeSeriesRequest
 	}{
 		{
 			name:   "count agg + cum timeline",
 			projID: "proj-id",
 			vd:     newTestCumViewData(cumView, start, end),
-			want: &monitoringpb.CreateTimeSeriesRequest{
+			want: []*monitoringpb.CreateTimeSeriesRequest{{
 				Name: monitoring.MetricProjectPath("proj-id"),
 				TimeSeries: []*monitoringpb.TimeSeries{
 					{
@@ -128,22 +130,102 @@ func TestExporter_makeReq(t *testing.T) {
 						},
 					},
 				},
-			},
+			}},
 		},
 		{
 			name:   "dist agg + time window",
 			projID: "proj-id",
 			vd:     newTestDistViewData(distView, start, end),
-			want:   nil,
+			want:   []*monitoringpb.CreateTimeSeriesRequest{},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			e := &Exporter{o: Options{ProjectID: tt.projID}}
-			if got := e.makeReq([]*stats.ViewData{tt.vd}); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("%v: Exporter.makeReq() = %v, want %v", tt.name, got, tt.want)
+			resps := e.makeReq([]*stats.ViewData{tt.vd}, maxTimeSeriesPerUpload)
+			if got, want := len(resps), len(tt.want); got != want {
+				t.Fatalf("%v: Exporter.makeReq() returned %d responses; want %d", tt.name, got, want)
+			}
+			if len(tt.want) == 0 {
+				return
+			}
+			if !reflect.DeepEqual(resps, tt.want) {
+				t.Errorf("%v: Exporter.makeReq() = %v, want %v", tt.name, resps, tt.want)
 			}
 		})
+	}
+}
+
+func TestExporter_makeReq_batching(t *testing.T) {
+	m, err := stats.NewMeasureFloat64("test-measure", "measure desc", "unit")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer stats.DeleteMeasure(m)
+
+	key, err := tag.NewKey("test_key")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	view, err := stats.NewView("view", "desc", []tag.Key{key}, m, stats.CountAggregation{}, stats.Cumulative{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := stats.RegisterView(view); err != nil {
+		t.Fatal(err)
+	}
+	defer view.Unregister()
+
+	tests := []struct {
+		name      string
+		iter      int
+		limit     int
+		wantReqs  int
+		wantTotal int
+	}{
+		{
+			name:      "4 vds; 3 limit",
+			iter:      2,
+			limit:     3,
+			wantReqs:  2,
+			wantTotal: 4,
+		},
+		{
+			name:      "4 vds; 4 limit",
+			iter:      2,
+			limit:     4,
+			wantReqs:  1,
+			wantTotal: 4,
+		},
+		{
+			name:      "4 vds; 5 limit",
+			iter:      2,
+			limit:     5,
+			wantReqs:  1,
+			wantTotal: 4,
+		},
+	}
+
+	for _, tt := range tests {
+		var vds []*stats.ViewData
+		for i := 0; i < tt.iter; i++ {
+			vds = append(vds, newTestCumViewData(view, time.Now(), time.Now()))
+		}
+
+		e := &Exporter{}
+		resps := e.makeReq(vds, tt.limit)
+		if len(resps) != tt.wantReqs {
+			t.Errorf("%v: got %v; want %d requests", tt.name, resps, tt.wantReqs)
+		}
+
+		var total int
+		for _, resp := range resps {
+			total += len(resp.TimeSeries)
+		}
+		if got, want := total, tt.wantTotal; got != want {
+			t.Errorf("%v: len(resps[...].TimeSeries) = %d; want %d", tt.name, got, want)
+		}
 	}
 }
 
