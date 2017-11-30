@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"math/rand"
 	"net/http"
 	"time"
 
@@ -65,8 +66,14 @@ func main() {
 		log.Fatalf("Cannot subscribe to the view: %v", err)
 	}
 
-	// Record data points.
-	stats.Record(ctx, videoSize.M(25648))
+	go func() {
+		ctx := context.Background()
+		for {
+			// Record some data points.
+			stats.Record(ctx, videoSize.M(rand.Int63()))
+			<-time.After(time.Millisecond * time.Duration(1+rand.Intn(400)))
+		}
+	}()
 
 	// Wait for a duration longer than reporting duration to ensure the stats
 	// library reports the collected data.
