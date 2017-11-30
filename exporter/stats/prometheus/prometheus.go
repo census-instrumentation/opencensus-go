@@ -19,6 +19,7 @@
 package prometheus
 
 import (
+	"bytes"
 	"fmt"
 	"log"
 	"net/http"
@@ -69,37 +70,32 @@ var _ http.Handler = (*Exporter)(nil)
 var _ stats.Exporter = (*Exporter)(nil)
 
 func (c *collector) registerViews(views ...*stats.View) {
-	if len(views) == 0 {
-		return
-	}
-
-	newViewCount := 0
+	count := 0
 	for _, view := range views {
-		if _, registered := c.registeredViews[view]; !registered {
+		sig := viewSignature(c.opts.Namespace, view)
+		c.registeredViewsMu.Lock()
+		_, ok := c.registeredViews[sig]
+		c.registeredViewsMu.Unlock()
+
+		if !ok {
 			desc := prometheus.NewDesc(
-				internal.Sanitize(c.namespace+"_"+view.Name()),
+				viewName(c.opts.Namespace, view),
 				view.Description(),
 				tagKeysToLabels(view.TagKeys()),
 				nil,
 			)
-			c.mu.Lock()
-			c.registeredViews[view] = true
-			c.descs = append(c.descs, desc)
-			c.mu.Unlock()
-			newViewCount += 1
+			c.registeredViewsMu.Lock()
+			c.registeredViews[sig] = desc
+			c.registeredViewsMu.Unlock()
+			count++
 		}
 	}
-
-	if newViewCount == 0 {
+	if count == 0 {
 		return
 	}
 
-	c.mu.Lock()
-	reg := c.reg
-	c.mu.Unlock()
-
-	reg.Unregister(c)
-	if err := reg.Register(c); err != nil {
+	c.reg.Unregister(c)
+	if err := c.reg.Register(c); err != nil {
 		c.opts.onError(fmt.Errorf("cannot register the collector: %v", err))
 	}
 }
@@ -117,7 +113,6 @@ func (e *Exporter) Export(vd *stats.ViewData) {
 	if len(vd.Rows) == 0 {
 		return
 	}
-
 	e.c.addViewData(vd)
 }
 
@@ -134,27 +129,15 @@ type collector struct {
 	// reg helps collector register views dyanmically.
 	reg *prometheus.Registry
 
-	// views are accumulated and atomically
+	// viewData are accumulated and atomically
 	// appended to on every Export invocation, from
 	// stats. These views are cleared out when
 	// Collect is invoked and the cycle is repeated.
-	views []*stats.ViewData
+	viewData []*stats.ViewData
 
-	// descs contains the one-time listing of all
-	// descriptions that are retrieved after converting
-	// each view into a prometheus.Metric.
-	//
-	// Note: We use slices here because trying to use channels
-	// with Prometheus.Collector Describe and Collect methods
-	// is quite hairy, moreover for methods that are run once,
-	// yet the count of elements to be collected is unknown
-	// trying to drain our input channel could potential block forever.
-	descs []*prometheus.Desc
-
-	namespace string
-
-	// registeredViews ensures that any new view is added only once.
-	registeredViews map[*stats.View]bool
+	registeredViewsMu sync.Mutex
+	// registeredViews maps a view to a prometheus desc.
+	registeredViews map[string]*prometheus.Desc
 
 	// seenMetrics maps from the metric's rawType to the actual Metric.
 	// It is an interface to interface mapping
@@ -162,15 +145,23 @@ type collector struct {
 	seenMetrics map[stats.AggregationData]prometheus.Metric
 }
 
-var _ prometheus.Collector = (*collector)(nil)
+func (c *collector) addViewData(vd *stats.ViewData) {
+	c.registerViews(vd.View)
+
+	c.mu.Lock()
+	c.viewData = append(c.viewData, vd)
+	c.mu.Unlock()
+}
 
 func (c *collector) Describe(ch chan<- *prometheus.Desc) {
-	c.mu.Lock()
-	descs := make([]*prometheus.Desc, len(c.descs))
-	copy(descs, c.descs)
-	c.mu.Unlock()
+	c.registeredViewsMu.Lock()
+	registered := make(map[string]*prometheus.Desc)
+	for k, desc := range c.registeredViews {
+		registered[k] = desc
+	}
+	c.registeredViewsMu.Unlock()
 
-	for _, desc := range descs {
+	for _, desc := range registered {
 		ch <- desc
 	}
 }
@@ -194,34 +185,22 @@ func (c *collector) memoizeMetric(key stats.AggregationData, value prometheus.Me
 // for example when the HTTP endpoint is invoked by Prometheus.
 func (c *collector) Collect(ch chan<- prometheus.Metric) {
 	c.mu.Lock()
-	// Get the last views
-	views := c.views
-	// Now clear them out for the next accumulation
-	c.views = c.views[:0]
-	c.mu.Unlock()
+	defer c.mu.Unlock()
 
-	if len(views) == 0 {
-		return
-	}
-
-	// seen is necessary because within each Collect cycle
-	// if a Metric is sent to Prometheus with the same make up
-	// that is "name" and "labels", it will error out.
-	seen := make(map[prometheus.Metric]bool)
-
-	for _, vd := range views {
+	for _, vd := range c.viewData {
 		for _, row := range vd.Rows {
-			metric := c.toMetric(vd.View, row)
-			if _, ok := seen[metric]; !ok && metric != nil {
+			metric, err := c.toMetric(vd.View, row)
+			if err != nil {
+				c.opts.onError(err)
+			} else {
 				ch <- metric
-				seen[metric] = true
 			}
 		}
 	}
 }
 
-func (c *collector) toMetric(view *stats.View, row *stats.Row) prometheus.Metric {
-	switch aggregation := view.Aggregation().(type) {
+func (c *collector) toMetric(view *stats.View, row *stats.Row) (prometheus.Metric, error) {
+	switch agg := view.Aggregation().(type) {
 	case stats.CountAggregation:
 		data := row.Data.(*stats.CountData)
 		var key *stats.CountData
@@ -230,32 +209,36 @@ func (c *collector) toMetric(view *stats.View, row *stats.Row) prometheus.Metric
 			sc = prometheus.NewCounter(prometheus.CounterOpts{
 				Name:      internal.Sanitize(view.Name()),
 				Help:      view.Description(),
-				Namespace: c.namespace,
+				Namespace: c.opts.Namespace,
 			})
 			c.memoizeMetric(key, sc)
 		}
 		counter := sc.(prometheus.Counter)
 		counter.Add(float64(*data))
-		return counter
+		return counter, nil
 
 	case stats.DistributionAggregation:
-		var key *stats.DistributionData
-		hm, ok := c.lookupMetric(key)
-		if !ok {
-			hOpts := prometheus.HistogramOpts{
-				Name:        internal.Sanitize(view.Name()),
-				Help:        view.Description(),
-				Namespace:   c.namespace,
-				ConstLabels: tagsToLabels(row.Tags),
-			}
-			hm = prometheus.NewHistogram(hOpts)
-			c.memoizeMetric(key, hm)
+		data := row.Data.(*stats.DistributionData)
+		sig := viewSignature(c.opts.Namespace, view)
+
+		c.registeredViewsMu.Lock()
+		desc := c.registeredViews[sig]
+		c.registeredViewsMu.Unlock()
+
+		var tagValues []string
+		for _, t := range row.Tags {
+			tagValues = append(tagValues, t.Value)
 		}
-		histogram := hm.(prometheus.Histogram)
-		for _, point := range aggregation {
-			histogram.Observe(float64(point))
+
+		points := make(map[float64]uint64)
+		for i, b := range agg {
+			points[b] = uint64(data.CountPerBucket[i])
 		}
-		return histogram
+		hist, err := prometheus.NewConstHistogram(desc, uint64(data.Count), data.Sum(), points, tagValues...)
+		if err != nil {
+			return nil, err
+		}
+		return hist, nil
 
 	case stats.SumAggregation:
 		panic("stats.SumData not supported yet")
@@ -264,8 +247,7 @@ func (c *collector) toMetric(view *stats.View, row *stats.Row) prometheus.Metric
 		panic("stats.MeanData ont supported yet")
 
 	default:
-		c.opts.onError(fmt.Errorf("aggregation %T is not yet supported", view.Aggregation()))
-		return nil
+		return nil, fmt.Errorf("aggregation %T is not yet supported", view.Aggregation())
 	}
 }
 
@@ -276,12 +258,12 @@ func tagKeysToLabels(keys []tag.Key) (labels []string) {
 	return labels
 }
 
-func tagsToLabels(tags []tag.Tag) map[string]string {
-	m := make(map[string]string)
+func tagsToLabels(tags []tag.Tag) []string {
+	var names []string
 	for _, tag := range tags {
-		m[internal.Sanitize(tag.Key.Name())] = tag.Value
+		names = append(names, internal.Sanitize(tag.Key.Name()))
 	}
-	return m
+	return names
 }
 
 func newCollector(opts Options, registrar *prometheus.Registry) *collector {
@@ -292,16 +274,20 @@ func newCollector(opts Options, registrar *prometheus.Registry) *collector {
 	return &collector{
 		reg:             registrar,
 		opts:            opts,
-		namespace:       namespace,
-		registeredViews: make(map[*stats.View]bool),
+		registeredViews: make(map[string]*prometheus.Desc),
 		seenMetrics:     make(map[stats.AggregationData]prometheus.Metric),
 	}
 }
 
-func (c *collector) addViewData(vd *stats.ViewData) {
-	c.registerViews(vd.View)
+func viewName(namespace string, v *stats.View) string {
+	return namespace + "_" + internal.Sanitize(v.Name())
+}
 
-	c.mu.Lock()
-	c.views = append(c.views, vd)
-	c.mu.Unlock()
+func viewSignature(namespace string, v *stats.View) string {
+	var buf bytes.Buffer
+	buf.WriteString(viewName(namespace, v))
+	for _, k := range v.TagKeys() {
+		buf.WriteString("-" + k.Name())
+	}
+	return buf.String()
 }
