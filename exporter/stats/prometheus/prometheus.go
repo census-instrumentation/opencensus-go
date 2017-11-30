@@ -136,7 +136,7 @@ type collector struct {
 	// appended to on every Export invocation, from
 	// stats. These views are cleared out when
 	// Collect is invoked and the cycle is repeated.
-	viewData []*stats.ViewData
+	viewData map[string]*stats.ViewData
 
 	registeredViewsMu sync.Mutex
 	// registeredViews maps a view to a prometheus desc.
@@ -150,9 +150,10 @@ type collector struct {
 
 func (c *collector) addViewData(vd *stats.ViewData) {
 	c.registerViews(vd.View)
+	sig := viewSignature(c.opts.Namespace, vd.View)
 
 	c.mu.Lock()
-	c.viewData = append(c.viewData, vd)
+	c.viewData[sig] = vd
 	c.mu.Unlock()
 }
 
@@ -188,9 +189,13 @@ func (c *collector) memoizeMetric(key stats.AggregationData, value prometheus.Me
 // for example when the HTTP endpoint is invoked by Prometheus.
 func (c *collector) Collect(ch chan<- prometheus.Metric) {
 	c.mu.Lock()
-	defer c.mu.Unlock()
+	views := make(map[string]*stats.ViewData, len(c.viewData))
+	for i, vd := range c.viewData {
+		views[i] = vd
+	}
+	c.mu.Unlock()
 
-	for _, vd := range c.viewData {
+	for _, vd := range views {
 		for _, row := range vd.Rows {
 			metric, err := c.toMetric(vd.View, row)
 			if err != nil {
@@ -200,6 +205,7 @@ func (c *collector) Collect(ch chan<- prometheus.Metric) {
 			}
 		}
 	}
+
 }
 
 func (c *collector) toMetric(view *stats.View, row *stats.Row) (prometheus.Metric, error) {
@@ -275,6 +281,7 @@ func newCollector(opts Options, registrar *prometheus.Registry) *collector {
 		opts:            opts,
 		registeredViews: make(map[string]*prometheus.Desc),
 		seenMetrics:     make(map[stats.AggregationData]prometheus.Metric),
+		viewData:        make(map[string]*stats.ViewData),
 	}
 }
 
