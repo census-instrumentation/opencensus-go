@@ -272,6 +272,7 @@ func (w *worker) tryRegisterView(v *View) error {
 
 	w.viewsByName[v.Name()] = v
 	w.views[v] = true
+
 	v.Measure().addView(v)
 	return nil
 }
