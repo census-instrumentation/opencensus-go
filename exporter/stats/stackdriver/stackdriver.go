@@ -382,7 +382,7 @@ func equalAggWindowTagKeys(md *metricpb.MetricDescriptor, agg stats.Aggregation,
 
 	labels := make(map[string]struct{}, len(keys))
 	for _, k := range keys {
-		labels[k.Name()] = struct{}{}
+		labels[internal.Sanitize(k.Name())] = struct{}{}
 	}
 
 	for _, k := range md.Labels {

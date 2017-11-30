@@ -148,8 +148,8 @@ func TestExporter_makeReq(t *testing.T) {
 }
 
 func TestEqualAggWindowTagKeys(t *testing.T) {
-	key1, _ := tag.NewKey("test_key_one")
-	key2, _ := tag.NewKey("test_key_two")
+	key1, _ := tag.NewKey("test-key-one")
+	key2, _ := tag.NewKey("test-key-two")
 	tests := []struct {
 		name    string
 		md      *metricpb.MetricDescriptor
