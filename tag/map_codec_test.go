@@ -22,6 +22,8 @@ import (
 	"testing"
 )
 
+var keys []Key
+
 func Test_EncodeDecode_Set(t *testing.T) {
 	k1, _ := NewKey("k1")
 	k2, _ := NewKey("k2")

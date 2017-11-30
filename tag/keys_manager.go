@@ -16,35 +16,20 @@
 package tag
 
 import (
-	"fmt"
 	"sync"
 )
 
 var km = newKeysManager()
 
-// TODO(jbd): Guard keys.
-
-var keys []Key
-
-const (
-	// maxKeyLength is the maximum value able to be encoded in a 2-byte varint.
-	maxKeyLength = 1<<14 - 1
-
-	// validKeys are restricted to US-ASCII subset (range 0x20 (' ') to 0x7e ('~')).
-	validKeysMin = 0x20
-	validKeysMax = 0x7e
-)
-
 type keysManager struct {
-	*sync.Mutex
+	sync.Mutex
 	keys      map[string]Key
 	nextKeyID uint16
 }
 
 func newKeysManager() *keysManager {
 	return &keysManager{
-		keys:  make(map[string]Key),
-		Mutex: &sync.Mutex{},
+		keys: make(map[string]Key),
 	}
 }
 
@@ -52,9 +37,6 @@ func newKeysManager() *keysManager {
 // set to the input argument name. Returns an error if a key with the same name
 // exists and is of a different type.
 func (km *keysManager) newStringKey(name string) (Key, error) {
-	if !validateKeyName(name) {
-		return Key{}, fmt.Errorf("key name %v is invalid", name)
-	}
 	km.Lock()
 	defer km.Unlock()
 
@@ -84,16 +66,4 @@ func (km *keysManager) clear() {
 	for k := range km.keys {
 		delete(km.keys, k)
 	}
-}
-
-func validateKeyName(name string) bool {
-	if len(name) >= maxKeyLength {
-		return false
-	}
-	for _, c := range name {
-		if (c < validKeysMin) || (c > validKeysMax) {
-			return false
-		}
-	}
-	return true
 }
