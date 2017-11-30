@@ -31,6 +31,8 @@ type AggregationData interface {
 	clear()
 }
 
+const epsilon = 1e-9
+
 // CountData is the aggregated data for a CountAggregation.
 // A count aggregation processes data and counts the recordings.
 //
@@ -88,7 +90,7 @@ func newSumData(v float64) *SumData {
 func (a *SumData) isAggregate() bool { return true }
 
 func (a *SumData) addSample(v interface{}) {
-	// Both float64 and int64 values will be wrapped to float64
+	// Both float64 and int64 values will be cast to float64
 	var f float64
 	switch x := v.(type) {
 	case int64:
@@ -98,7 +100,7 @@ func (a *SumData) addSample(v interface{}) {
 	default:
 		return
 	}
-	*a = SumData(float64(*a) + f)
+	*a += SumData(f)
 }
 
 func (a *SumData) multiplyByFraction(fraction float64) AggregationData {
@@ -122,8 +124,6 @@ func (a *SumData) equal(other AggregationData) bool {
 	if !ok {
 		return false
 	}
-
-	epsilon := math.Pow10(-9)
 	return math.Pow(float64(*a)-float64(*a2), 2) < epsilon
 }
 
@@ -132,11 +132,11 @@ func (a *SumData) equal(other AggregationData) bool {
 //
 // Most users won't directly access mean data.
 type MeanData struct {
-	Count int64   // number of data points aggregated
+	Count float64 // number of data points aggregated
 	Mean  float64 // mean of all data points
 }
 
-func newMeanData(mean float64, count int64) *MeanData {
+func newMeanData(mean float64, count float64) *MeanData {
 	return &MeanData{
 		Mean:  mean,
 		Count: count,
@@ -167,9 +167,9 @@ func (a *MeanData) addSample(v interface{}) {
 	a.Mean = a.Mean + (f-a.Mean)/float64(a.Count)
 }
 
-// Only Mean will be mutiplied by the fraction, Count will remain the same.
+// Only Count will be mutiplied by the fraction, Mean will remain the same.
 func (a *MeanData) multiplyByFraction(fraction float64) AggregationData {
-	return newMeanData(a.Mean*fraction, a.Count)
+	return newMeanData(a.Mean, a.Count*fraction)
 }
 
 func (a *MeanData) addToIt(av AggregationData) {
@@ -182,7 +182,7 @@ func (a *MeanData) addToIt(av AggregationData) {
 		return
 	}
 
-	a.Mean = (a.Sum() + other.Sum()) / float64(a.Count+other.Count)
+	a.Mean = (a.Sum() + other.Sum()) / (a.Count + other.Count)
 	a.Count = a.Count + other.Count
 }
 
@@ -196,8 +196,6 @@ func (a *MeanData) equal(other AggregationData) bool {
 	if !ok {
 		return false
 	}
-
-	epsilon := math.Pow10(-9)
 	return a.Count == a2.Count && math.Pow(a.Mean-a2.Mean, 2) < epsilon
 }
 
@@ -352,6 +350,5 @@ func (a *DistributionData) equal(other AggregationData) bool {
 			return false
 		}
 	}
-	epsilon := math.Pow10(-9)
 	return a.Count == a2.Count && a.Min == a2.Min && a.Max == a2.Max && math.Pow(a.Mean-a2.Mean, 2) < epsilon && math.Pow(a.variance()-a2.variance(), 2) < epsilon
 }
