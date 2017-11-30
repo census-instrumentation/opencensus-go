@@ -91,10 +91,9 @@ func main() {
 	// Set reporting period to report data at every second.
 	stats.SetReportingPeriod(1 * time.Second)
 
-	// Goroutine to record some data points.
+	// Record some data points...
 	go func() {
 		for {
-			// Record some data points.
 			stats.Record(ctx, videoCount.M(1))
 			stats.Record(ctx, videoSize.M(rand.Int63()))
 			<-time.After(time.Millisecond * time.Duration(1+rand.Intn(400)))

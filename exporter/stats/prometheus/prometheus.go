@@ -19,6 +19,7 @@
 package prometheus
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"sync"
@@ -66,51 +67,27 @@ func NewExporter(o Options) (*Exporter, error) {
 
 var _ http.Handler = (*Exporter)(nil)
 var _ stats.Exporter = (*Exporter)(nil)
-var _ stats.ViewRegistrar = (*Exporter)(nil)
-
-// RegisterView is the hook that's run either intentionally
-// by the client or the stat's library will automatically invoke
-// it everytime that a new view is added.
-func (e *Exporter) RegisterView(view *stats.View) {
-	e.c.registerViews(view)
-}
-
-func (e *Exporter) UnregisterView(view *stats.View) {
-	// TODO: (@rakyll, @odeke-em) implement UnregisterView.
-}
-
-func (c *collector) namespace() string {
-	c.mu.RLock()
-	ns := c.opts.Namespace
-	if ns == "" {
-		ns = defaultNamespace
-	}
-	c.mu.RUnlock()
-	return ns
-}
 
 func (c *collector) registerViews(views ...*stats.View) {
 	if len(views) == 0 {
 		return
 	}
 
-	namespace := c.namespace()
-
 	newViewCount := 0
 	for _, view := range views {
-		c.mu.Lock()
 		if _, registered := c.registeredViews[view]; !registered {
 			desc := prometheus.NewDesc(
-				internal.Sanitize(namespace+"_"+view.Name()),
+				internal.Sanitize(c.namespace+"_"+view.Name()),
 				view.Description(),
 				tagKeysToLabels(view.TagKeys()),
 				nil,
 			)
+			c.mu.Lock()
 			c.registeredViews[view] = true
 			c.descs = append(c.descs, desc)
+			c.mu.Unlock()
 			newViewCount += 1
 		}
-		c.mu.Unlock()
 	}
 
 	if newViewCount == 0 {
@@ -121,20 +98,18 @@ func (c *collector) registerViews(views ...*stats.View) {
 	reg := c.reg
 	c.mu.Unlock()
 
-	if ok := reg.Unregister(c); !ok {
-		log.Printf("unregister could not unregister: %v", c)
-	}
+	reg.Unregister(c)
 	if err := reg.Register(c); err != nil {
-		log.Printf("register err: %v", err)
+		c.opts.onError(fmt.Errorf("cannot register the collector: %v", err))
 	}
 }
 
-func (e *Exporter) onError(err error) {
-	if e.opts.OnError != nil {
-		e.opts.OnError(err)
-		return
+func (o *Options) onError(err error) {
+	if o.OnError != nil {
+		o.OnError(err)
+	} else {
+		log.Printf("Failed to export to Prometheus: %v", err)
 	}
-	log.Printf("Failed to export to Prometheus: %v", err)
 }
 
 // Export exports to the Prometheus if view data has one or more rows.
@@ -154,14 +129,9 @@ func (e *Exporter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 // collector implements prometheus.Collector
 type collector struct {
 	opts Options
-	mu   sync.RWMutex
+	mu   sync.Mutex // mu guards all the fields.
 
-	// reg helps us keep a reference to our registrar
-	// so that when views are dynamically added, we'll
-	// able to register again without having to expose
-	// an ugly API for the client in which they'll have
-	// to invoke RegisterView for every single view that
-	// they create.
+	// reg helps collector register views dyanmically.
 	reg *prometheus.Registry
 
 	// views are accumulated and atomically
@@ -174,40 +144,45 @@ type collector struct {
 	// descriptions that are retrieved after converting
 	// each view into a prometheus.Metric.
 	//
-	// Note: we use slices here because trying to use channels
+	// Note: We use slices here because trying to use channels
 	// with Prometheus.Collector Describe and Collect methods
 	// is quite hairy, moreover for methods that are run once,
 	// yet the count of elements to be collected is unknown
 	// trying to drain our input channel could potential block forever.
 	descs []*prometheus.Desc
 
+	namespace string
+
+	// registeredViews ensures that any new view is added only once.
 	registeredViews map[*stats.View]bool
 
 	// seenMetrics maps from the metric's rawType to the actual Metric.
 	// It is an interface to interface mapping
 	// but the key is the zero value while the value is the instance.
-	seenMetrics map[interface{}]prometheus.Metric
+	seenMetrics map[stats.AggregationData]prometheus.Metric
 }
 
 var _ prometheus.Collector = (*collector)(nil)
 
 func (c *collector) Describe(ch chan<- *prometheus.Desc) {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
+	c.mu.Lock()
+	descs := make([]*prometheus.Desc, len(c.descs))
+	copy(descs, c.descs)
+	c.mu.Unlock()
 
-	for _, desc := range c.descs {
+	for _, desc := range descs {
 		ch <- desc
 	}
 }
 
-func (c *collector) lookupMetric(key interface{}) (prometheus.Metric, bool) {
-	c.mu.RLock()
+func (c *collector) lookupMetric(key stats.AggregationData) (prometheus.Metric, bool) {
+	c.mu.Lock()
 	value, ok := c.seenMetrics[key]
-	c.mu.RUnlock()
+	c.mu.Unlock()
 	return value, ok
 }
 
-func (c *collector) memoizeMetric(key interface{}, value prometheus.Metric) {
+func (c *collector) memoizeMetric(key stats.AggregationData, value prometheus.Metric) {
 	c.mu.Lock()
 	c.seenMetrics[key] = value
 	c.mu.Unlock()
@@ -229,7 +204,11 @@ func (c *collector) Collect(ch chan<- prometheus.Metric) {
 		return
 	}
 
+	// seen is necessary because within each Collect cycle
+	// if a Metric is sent to Prometheus with the same make up
+	// that is "name" and "labels", it will error out.
 	seen := make(map[prometheus.Metric]bool)
+
 	for _, vd := range views {
 		for _, row := range vd.Rows {
 			metric := c.toMetric(vd.View, row)
@@ -247,12 +226,11 @@ func (c *collector) toMetric(view *stats.View, row *stats.Row) prometheus.Metric
 		data := row.Data.(*stats.CountData)
 		var key *stats.CountData
 		sc, ok := c.lookupMetric(key)
-		firstTime := !ok
-		if firstTime {
+		if !ok {
 			sc = prometheus.NewCounter(prometheus.CounterOpts{
 				Name:      internal.Sanitize(view.Name()),
 				Help:      view.Description(),
-				Namespace: c.namespace(),
+				Namespace: c.namespace,
 			})
 			c.memoizeMetric(key, sc)
 		}
@@ -263,12 +241,11 @@ func (c *collector) toMetric(view *stats.View, row *stats.Row) prometheus.Metric
 	case stats.DistributionAggregation:
 		var key *stats.DistributionData
 		hm, ok := c.lookupMetric(key)
-		firstTime := !ok
-		if firstTime {
+		if !ok {
 			hOpts := prometheus.HistogramOpts{
 				Name:        internal.Sanitize(view.Name()),
 				Help:        view.Description(),
-				Namespace:   c.namespace(),
+				Namespace:   c.namespace,
 				ConstLabels: tagsToLabels(row.Tags),
 			}
 			hm = prometheus.NewHistogram(hOpts)
@@ -281,19 +258,20 @@ func (c *collector) toMetric(view *stats.View, row *stats.Row) prometheus.Metric
 		return histogram
 
 	case stats.SumAggregation:
-		panic("stats.SumData:: unimplemented")
+		panic("stats.SumData not supported yet")
 
 	case *stats.MeanAggregation:
-		panic("stats.MeanData:: unimplemented")
+		panic("stats.MeanData ont supported yet")
 
 	default:
-		panic("default: Unknown")
+		c.opts.onError(fmt.Errorf("aggregation %T is not yet supported", view.Aggregation()))
+		return nil
 	}
 }
 
 func tagKeysToLabels(keys []tag.Key) (labels []string) {
 	for _, key := range keys {
-		labels = append(labels, key.Name())
+		labels = append(labels, internal.Sanitize(key.Name()))
 	}
 	return labels
 }
@@ -301,22 +279,28 @@ func tagKeysToLabels(keys []tag.Key) (labels []string) {
 func tagsToLabels(tags []tag.Tag) map[string]string {
 	m := make(map[string]string)
 	for _, tag := range tags {
-		m[tag.Key.Name()] = tag.Value
+		m[internal.Sanitize(tag.Key.Name())] = tag.Value
 	}
 	return m
 }
 
 func newCollector(opts Options, registrar *prometheus.Registry) *collector {
+	namespace := opts.Namespace
+	if namespace == "" {
+		namespace = defaultNamespace
+	}
 	return &collector{
-		reg:  registrar,
-		opts: opts,
-
+		reg:             registrar,
+		opts:            opts,
+		namespace:       namespace,
 		registeredViews: make(map[*stats.View]bool),
-		seenMetrics:     make(map[interface{}]prometheus.Metric),
+		seenMetrics:     make(map[stats.AggregationData]prometheus.Metric),
 	}
 }
 
 func (c *collector) addViewData(vd *stats.ViewData) {
+	c.registerViews(vd.View)
+
 	c.mu.Lock()
 	c.views = append(c.views, vd)
 	c.mu.Unlock()
