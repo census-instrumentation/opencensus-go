@@ -46,6 +46,11 @@ func TestSanitize(t *testing.T) {
 			want:  "key_0123456789",
 		},
 		{
+			name:  "starts with _ after sanitization",
+			input: "/0123456789",
+			want:  "key_0123456789",
+		},
+		{
 			name:  "valid input",
 			input: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_0123456789",
 			want:  "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_0123456789",

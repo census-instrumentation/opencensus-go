@@ -27,16 +27,17 @@ func Sanitize(s string) string {
 	if len(s) == 0 {
 		return s
 	}
+	if len(s) > labelKeySizeLimit {
+		s = s[:labelKeySizeLimit]
+	}
+	s = strings.Map(sanitizeRune, s)
 	if unicode.IsDigit(rune(s[0])) {
 		s = "key_" + s
 	}
 	if s[0] == '_' {
 		s = "key" + s
 	}
-	if len(s) > labelKeySizeLimit {
-		s = s[:labelKeySizeLimit]
-	}
-	return strings.Map(sanitizeRune, s)
+	return s
 }
 
 // converts anything that is not a letter or digit to an underscore
