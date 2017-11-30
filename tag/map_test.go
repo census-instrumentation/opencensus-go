@@ -102,6 +102,25 @@ func TestNewMap(t *testing.T) {
 			},
 			want: makeTestTagMap(4, 5),
 		},
+		{
+			name:    "from empty; invalid",
+			initial: nil,
+			mods: []Mutator{
+				Insert(k5, "v\x19"),
+				Upsert(k5, "v\x19"),
+				Update(k5, "v\x19"),
+			},
+			want: nil,
+		},
+		{
+			name:    "from empty; no partial",
+			initial: nil,
+			mods: []Mutator{
+				Insert(k5, "v1"),
+				Update(k5, "v\x19"),
+			},
+			want: nil,
+		},
 	}
 
 	for _, tt := range tests {
@@ -116,7 +135,7 @@ func TestNewMap(t *testing.T) {
 		mods = append(mods, tt.mods...)
 		ctx := NewContext(context.Background(), tt.initial)
 		got, err := NewMap(ctx, mods...)
-		if err != nil {
+		if tt.want != nil && err != nil {
 			t.Errorf("%v: NewMap = %v", tt.name, err)
 		}
 

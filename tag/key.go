@@ -25,6 +25,9 @@ type Key struct {
 // NewKey creates or retrieves a string key identified by name.
 // Calling NewKey consequently with the same name returns the same key.
 func NewKey(name string) (Key, error) {
+	if !checkKeyName(name) {
+		return Key{}, errInvalid
+	}
 	return km.newStringKey(name)
 }
 

@@ -93,6 +93,9 @@ type Mutator interface {
 func Insert(k Key, v string) Mutator {
 	return &mutator{
 		fn: func(m *Map) (*Map, error) {
+			if !checkValue(v) {
+				return nil, errInvalid
+			}
 			m.insert(k, v)
 			return m, nil
 		},
@@ -105,6 +108,9 @@ func Insert(k Key, v string) Mutator {
 func Update(k Key, v string) Mutator {
 	return &mutator{
 		fn: func(m *Map) (*Map, error) {
+			if !checkValue(v) {
+				return nil, errInvalid
+			}
 			m.update(k, v)
 			return m, nil
 		},
@@ -118,6 +124,9 @@ func Update(k Key, v string) Mutator {
 func Upsert(k Key, v string) Mutator {
 	return &mutator{
 		fn: func(m *Map) (*Map, error) {
+			if !checkValue(v) {
+				return nil, errInvalid
+			}
 			m.upsert(k, v)
 			return m, nil
 		},

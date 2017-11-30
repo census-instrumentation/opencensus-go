@@ -22,10 +22,12 @@ import (
 	"testing"
 )
 
+var keys []Key
+
 func Test_EncodeDecode_Set(t *testing.T) {
 	k1, _ := NewKey("k1")
 	k2, _ := NewKey("k2")
-	k3, _ := NewKey("k3 is very weird <>.,?/'\";:`~!@#$%^&*()_-+={[}]|\\")
+	k3, _ := NewKey("k3_")
 	k4, _ := NewKey("k4")
 
 	type pair struct {
@@ -70,7 +72,7 @@ func Test_EncodeDecode_Set(t *testing.T) {
 				{k1, "v1"},
 				{k2, "v2"},
 				{k3, "v3"},
-				{k4, "v4 is very weird <>.,?/'\";:`~!@#$%^&*()_-+={[}]|\\"},
+				{k4, "v4_"},
 			},
 		},
 	}
