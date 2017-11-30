@@ -18,7 +18,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"math/rand"
 	"net/http"
@@ -38,16 +37,16 @@ func main() {
 	stats.RegisterExporter(exporter)
 
 	// Create measures. The program will record measures for the size of
-	// processed videos and the nubmer of videos marked as spam.
+	// processed videos and the number of videos marked as spam.
 	videoCount, err := stats.NewMeasureInt64("my.org/measures/video_count", "number of processed videos", "")
 	if err != nil {
-		log.Fatalf("Video size measure not created: %v", err)
+		log.Fatalf("Video count measure not created: %v", err)
 	}
 
-	// Create view to see the processed video size cumulatively.
-	view, err := stats.NewView(
+	// 1. Create view to see the number of processed videos cumulatively.
+	viewCount, err := stats.NewView(
 		"video_count",
-		"processed video size over time",
+		"number of videos processed processed over time",
 		nil,
 		videoCount,
 		stats.CountAggregation{},
@@ -57,27 +56,53 @@ func main() {
 		log.Fatalf("Cannot create view: %v", err)
 	}
 
-	// Set reporting period to report data at every second.
-	stats.SetReportingPeriod(1 * time.Second)
-
 	// Subscribe will allow view data to be exported.
 	// Once no longer need, you can unsubscribe from the view.
-	if err := view.Subscribe(); err != nil {
+	if err := viewCount.Subscribe(); err != nil {
 		log.Fatalf("Cannot subscribe to the view: %v", err)
 	}
 
+	// Create measures. The program will record measures for the size of
+	// processed videos and the number of videos marked as spam.
+	videoSize, err := stats.NewMeasureInt64("my.org/measures/video_size_cum", "size of processed video", "MBy")
+	if err != nil {
+		log.Fatalf("Video size measure not created: %v", err)
+	}
+
+	// 2. Create view to see the amount of video processed
+	viewSize, err := stats.NewView(
+		"video_cum",
+		"processed video size over time",
+		nil,
+		videoSize,
+		stats.DistributionAggregation([]float64{0, 1 << 16, 1 << 32}),
+		stats.Cumulative{},
+	)
+	if err != nil {
+		log.Fatalf("Cannot create view: %v", err)
+	}
+
+	// Subscribe will allow view data to be exported.
+	// Once no longer need, you can unsubscribe from the view.
+	if err := viewSize.Subscribe(); err != nil {
+		log.Fatalf("Cannot subscribe to the view: %v", err)
+	}
+
+	// Set reporting period to report data at every second.
+	stats.SetReportingPeriod(1 * time.Second)
+
+	// Goroutine to record some data points.
 	go func() {
 		for {
 			// Record some data points.
 			stats.Record(ctx, videoCount.M(1))
+			stats.Record(ctx, videoSize.M(rand.Int63()))
 			<-time.After(time.Millisecond * time.Duration(1+rand.Intn(400)))
 		}
 	}()
 
-	// Wait for a duration longer than reporting duration to ensure the stats
-	// library reports the collected data.
-	fmt.Println("Wait longer than the reporting duration...")
-
+	addr := ":9999"
+	log.Printf("Serving at %s", addr)
 	http.Handle("/metrics", exporter)
-	log.Fatal(http.ListenAndServe(":9999", nil))
+	log.Fatal(http.ListenAndServe(addr, nil))
 }

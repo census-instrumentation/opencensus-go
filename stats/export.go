@@ -17,7 +17,7 @@ package stats
 import "sync"
 
 var (
-	exportersMu sync.Mutex // guards exporters
+	exportersMu sync.RWMutex // guards exporters
 	exporters   = make(map[Exporter]struct{})
 )
 

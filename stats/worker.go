@@ -272,8 +272,26 @@ func (w *worker) tryRegisterView(v *View) error {
 
 	w.viewsByName[v.Name()] = v
 	w.views[v] = true
+
+	// If any exporter implements ViewRegistrar, broadcast to it
+	go w.broadcastViewToExporters(v)
+
 	v.Measure().addView(v)
 	return nil
+}
+
+type ViewRegistrar interface {
+	RegisterView(*View)
+}
+
+func (w *worker) broadcastViewToExporters(v *View) {
+	exportersMu.RLock()
+	for e := range exporters {
+		if vr, ok := e.(ViewRegistrar); ok {
+			vr.RegisterView(v)
+		}
+	}
+	exportersMu.RUnlock()
 }
 
 func (w *worker) reportUsage(now time.Time) {
