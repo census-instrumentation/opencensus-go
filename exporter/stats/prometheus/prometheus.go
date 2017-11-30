@@ -24,7 +24,6 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"go.opencensus.io/internal"
 	"go.opencensus.io/stats"
 )
 
@@ -32,9 +31,10 @@ import (
 // to register the exporter as an http.Handler to be
 // able to export.
 type Exporter struct {
-	opts Options
-	g    prometheus.Gatherer
-	c    *collector
+	opts    Options
+	g       prometheus.Gatherer
+	c       *collector
+	handler http.Handler
 }
 
 // Options contains options for configuring the exporter.
@@ -43,29 +43,27 @@ type Options struct {
 }
 
 type collector struct {
-	descCh   chan *prometheus.Desc
-	metricCh chan prometheus.Metric
+	descs   []*prometheus.Desc
+	metrics []prometheus.Metric
 }
 
 func (c *collector) Describe(ch chan<- *prometheus.Desc) {
-	ch <- <-c.descCh
+	panic("not implemented")
 }
 
 func (c *collector) Collect(ch chan<- prometheus.Metric) {
-	ch <- <-c.metricCh
+	panic("not implemented")
 }
 
 // NewExporter returns an exporter that exports stats to Prometheus.
 func NewExporter(o Options) (*Exporter, error) {
 	r := prometheus.NewRegistry()
-	collector := &collector{
-		descCh:   make(chan *prometheus.Desc),
-		metricCh: make(chan prometheus.Metric),
-	}
+	collector := &collector{}
 	e := &Exporter{
-		opts: o,
-		g:    r,
-		c:    collector,
+		opts:    o,
+		g:       r,
+		c:       collector,
+		handler: promhttp.HandlerFor(r, promhttp.HandlerOpts{}),
 	}
 	go func() {
 		if err := r.Register(collector); err != nil {
@@ -91,26 +89,10 @@ func (e *Exporter) Export(vd *stats.ViewData) {
 	}
 	// TODO(jbd,odeke-em): Make sure Export is not blocking
 	// for a long period of time.
-
-	view := vd.View
-	for _, r := range vd.Rows {
-		var labels []string
-		for _, t := range r.Tags {
-			labels = append(labels, internal.Sanitize(t.Key.Name()))
-		}
-		// Sanitize the view name.
-		desc := prometheus.NewDesc(view.Name(), view.Description(), labels, nil)
-		e.c.descCh <- desc
-
-		// TODO(jbd): Support other metric types.
-		switch v := r.Data.(type) {
-		case *stats.CountData:
-			e.c.metricCh <- prometheus.MustNewConstMetric(desc, prometheus.CounterValue, float64(*v))
-		}
-	}
+	panic("not implemented")
 }
 
 // ServeHTTP serves the Prometheus endpoint.
 func (e *Exporter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	promhttp.HandlerFor(e.g, promhttp.HandlerOpts{}).ServeHTTP(w, r)
+	e.handler.ServeHTTP(w, r)
 }
