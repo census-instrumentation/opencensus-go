@@ -89,7 +89,10 @@ func (e *Exporter) Export(vd *stats.ViewData) {
 	if len(vd.Rows) == 0 {
 		return
 	}
+	go e.export(vd)
+}
 
+func (e *Exporter) export(vd *stats.ViewData) {
 	view := vd.View
 	for _, r := range vd.Rows {
 		var labels []string
