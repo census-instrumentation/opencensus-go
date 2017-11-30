@@ -89,10 +89,9 @@ func (e *Exporter) Export(vd *stats.ViewData) {
 	if len(vd.Rows) == 0 {
 		return
 	}
-	go e.export(vd)
-}
+	// TODO(jbd,odeke-em): Make sure Export is not blocking
+	// for a long period of time.
 
-func (e *Exporter) export(vd *stats.ViewData) {
 	view := vd.View
 	for _, r := range vd.Rows {
 		var labels []string
