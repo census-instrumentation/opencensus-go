@@ -294,7 +294,12 @@ func (w *worker) reportUsage(now time.Time) {
 			e.Export(viewData)
 		}
 		exportersMu.Unlock()
-		if _, ok := v.Window().(*Cumulative); !ok {
+		switch v.Window().(type) {
+		case *Cumulative:
+			// noop
+		case Cumulative:
+			// noop
+		default:
 			v.clearRows()
 		}
 	}
