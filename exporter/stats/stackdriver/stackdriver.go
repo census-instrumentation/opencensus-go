@@ -225,10 +225,10 @@ func (e *Exporter) createMeasure(ctx context.Context, vd *stats.ViewData) error 
 	md, err := e.c.GetMetricDescriptor(ctx, &monitoringpb.GetMetricDescriptorRequest{
 		Name: metricName,
 	})
-	if err := equalAggWindowTagKeys(md, agg, window, tagKeys); err != nil {
-		return err
-	}
 	if err == nil {
+		if err := equalAggWindowTagKeys(md, agg, window, tagKeys); err != nil {
+			return err
+		}
 		e.createdViews[viewName] = md
 		return nil
 	}
