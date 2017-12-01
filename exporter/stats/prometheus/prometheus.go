@@ -141,11 +141,6 @@ type collector struct {
 	registeredViewsMu sync.Mutex
 	// registeredViews maps a view to a prometheus desc.
 	registeredViews map[string]*prometheus.Desc
-
-	// seenMetrics maps from the metric's rawType to the actual Metric.
-	// It is an interface to interface mapping
-	// but the key is the zero value while the value is the instance.
-	seenMetrics map[stats.AggregationData]prometheus.Metric
 }
 
 func (c *collector) addViewData(vd *stats.ViewData) {
@@ -170,19 +165,6 @@ func (c *collector) Describe(ch chan<- *prometheus.Desc) {
 	}
 }
 
-func (c *collector) lookupMetric(key stats.AggregationData) (prometheus.Metric, bool) {
-	c.mu.Lock()
-	value, ok := c.seenMetrics[key]
-	c.mu.Unlock()
-	return value, ok
-}
-
-func (c *collector) memoizeMetric(key stats.AggregationData, value prometheus.Metric) {
-	c.mu.Lock()
-	c.seenMetrics[key] = value
-	c.mu.Unlock()
-}
-
 // Collect fetches the statistics from OpenCensus
 // and delivers them as Prometheus Metrics.
 // Collect is invoked everytime a prometheus.Gatherer is run
@@ -195,9 +177,14 @@ func (c *collector) Collect(ch chan<- prometheus.Metric) {
 	}
 	c.mu.Unlock()
 
-	for _, vd := range views {
+	for _, vd := range c.viewData {
+		sig := viewSignature(c.opts.Namespace, vd.View)
+		c.registeredViewsMu.Lock()
+		desc := c.registeredViews[sig]
+		c.registeredViewsMu.Unlock()
+
 		for _, row := range vd.Rows {
-			metric, err := c.toMetric(vd.View, row)
+			metric, err := c.toMetric(desc, vd.View, row)
 			if err != nil {
 				c.opts.onError(err)
 			} else {
@@ -208,42 +195,19 @@ func (c *collector) Collect(ch chan<- prometheus.Metric) {
 
 }
 
-func (c *collector) toMetric(view *stats.View, row *stats.Row) (prometheus.Metric, error) {
+func (c *collector) toMetric(desc *prometheus.Desc, view *stats.View, row *stats.Row) (prometheus.Metric, error) {
 	switch agg := view.Aggregation().(type) {
 	case stats.CountAggregation:
 		data := row.Data.(*stats.CountData)
-		var key *stats.CountData
-		sc, ok := c.lookupMetric(key)
-		if !ok {
-			sc = prometheus.NewCounter(prometheus.CounterOpts{
-				Name:      internal.Sanitize(view.Name()),
-				Help:      view.Description(),
-				Namespace: c.opts.Namespace,
-			})
-			c.memoizeMetric(key, sc)
-		}
-		counter := sc.(prometheus.Counter)
-		counter.Add(float64(*data))
-		return counter, nil
+		return prometheus.NewConstMetric(desc, prometheus.CounterValue, float64(*data), tagValues(row.Tags)...)
 
 	case stats.DistributionAggregation:
 		data := row.Data.(*stats.DistributionData)
-		sig := viewSignature(c.opts.Namespace, view)
-
-		c.registeredViewsMu.Lock()
-		desc := c.registeredViews[sig]
-		c.registeredViewsMu.Unlock()
-
-		var tagValues []string
-		for _, t := range row.Tags {
-			tagValues = append(tagValues, t.Value)
-		}
-
 		points := make(map[float64]uint64)
 		for i, b := range agg {
 			points[b] = uint64(data.CountPerBucket[i])
 		}
-		hist, err := prometheus.NewConstHistogram(desc, uint64(data.Count), data.Sum(), points, tagValues...)
+		hist, err := prometheus.NewConstHistogram(desc, uint64(data.Count), data.Sum(), points, tagValues(row.Tags)...)
 		if err != nil {
 			return nil, err
 		}
@@ -280,9 +244,16 @@ func newCollector(opts Options, registrar *prometheus.Registry) *collector {
 		reg:             registrar,
 		opts:            opts,
 		registeredViews: make(map[string]*prometheus.Desc),
-		seenMetrics:     make(map[stats.AggregationData]prometheus.Metric),
 		viewData:        make(map[string]*stats.ViewData),
 	}
+}
+
+func tagValues(t []tag.Tag) []string {
+	var values []string
+	for _, t := range t {
+		values = append(values, t.Value)
+	}
+	return values
 }
 
 func viewName(namespace string, v *stats.View) string {
