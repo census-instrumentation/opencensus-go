@@ -30,6 +30,7 @@
 package stackdriver
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"sync"
@@ -39,7 +40,6 @@ import (
 
 	tracingclient "cloud.google.com/go/trace/apiv2"
 	"go.opencensus.io/trace"
-	"golang.org/x/net/context"
 	"google.golang.org/api/option"
 	"google.golang.org/api/support/bundler"
 	tracepb "google.golang.org/genproto/googleapis/devtools/cloudtrace/v2"
