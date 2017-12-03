@@ -15,8 +15,7 @@
 
 package tag
 
-// Key represents a tag key. Keys with the same name will return
-// true when compared with the == operator.
+// Key represents a tag key.
 type Key struct {
 	id   uint16
 	name string
