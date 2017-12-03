@@ -68,13 +68,14 @@ func (cmd *deleteMeasureReq) handleCommand(w *worker) {
 		return
 	}
 
-	if c := m.viewsCount(); c > 0 {
+	if c := w.viewsCount(m); c > 0 {
 		cmd.err <- fmt.Errorf("cannot delete; measure %q used by %v registered views", cmd.m.Name(), c)
 		return
 	}
 
 	delete(w.measuresByName, cmd.m.Name())
 	delete(w.measures, cmd.m)
+	delete(w.measureToViews, cmd.m)
 	cmd.err <- nil
 }
 
@@ -124,7 +125,7 @@ func (cmd *unregisterViewReq) handleCommand(w *worker) {
 	}
 	delete(w.viewsByName, cmd.v.Name())
 	delete(w.views, cmd.v)
-	cmd.v.Measure().removeView(v)
+	w.removeViewFromMeasure(cmd.v)
 	cmd.err <- nil
 }
 
@@ -214,15 +215,18 @@ func (cmd *recordReq) handleCommand(w *worker) {
 	for _, m := range cmd.ms {
 		switch measurement := m.(type) {
 		case *measurementFloat64:
-			for v := range measurement.m.views {
-				v.addSample(cmd.tm, measurement.v, cmd.now)
-			}
+			cmd.addSamplesForMeasure(w, measurement.m)
 		case *measurementInt64:
-			for v := range measurement.m.views {
-				v.addSample(cmd.tm, measurement.v, cmd.now)
-			}
+			cmd.addSamplesForMeasure(w, measurement.m)
 		default:
 		}
+	}
+}
+
+func (cmd *recordReq) addSamplesForMeasure(w *worker, m Measure) {
+	vm := w.measureToViews[m]
+	for v := range vm {
+		v.addSample(cmd.tm, v, cmd.now)
 	}
 }
 

@@ -35,6 +35,9 @@ type worker struct {
 	viewsByName    map[string]*View
 	views          map[*View]bool
 
+	// measureToViews tracks which views use a Measure.
+	measureToViews map[Measure]map[*View]bool
+
 	timer      *time.Ticker
 	c          chan command
 	quit, done chan bool
@@ -54,7 +57,6 @@ func NewMeasureFloat64(name, description, unit string) (*MeasureFloat64, error) 
 		name:        name,
 		description: description,
 		unit:        unit,
-		views:       make(map[*View]bool),
 	}
 
 	req := &registerMeasureReq{
@@ -79,7 +81,6 @@ func NewMeasureInt64(name, description, unit string) (*MeasureInt64, error) {
 		name:        name,
 		description: description,
 		unit:        unit,
-		views:       make(map[*View]bool),
 	}
 
 	req := &registerMeasureReq{
@@ -205,6 +206,7 @@ func SetReportingPeriod(d time.Duration) {
 func newWorker() *worker {
 	return &worker{
 		measuresByName: make(map[string]Measure),
+		measureToViews: make(map[Measure]map[*View]bool),
 		measures:       make(map[Measure]bool),
 		viewsByName:    make(map[string]*View),
 		views:          make(map[*View]bool),
@@ -213,6 +215,28 @@ func newWorker() *worker {
 		quit:           make(chan bool),
 		done:           make(chan bool),
 	}
+}
+
+func (w *worker) viewsCount(m Measure) int {
+	return len(w.measureToViews[m])
+}
+
+func (w *worker) removeViewFromMeasure(v *View) {
+	m := v.Measure()
+	vm := w.measureToViews[m]
+	if vm != nil {
+		delete(vm, v)
+	}
+}
+
+func (w *worker) addViewToMeasure(v *View) {
+	m := v.Measure()
+	vm := w.measureToViews[m]
+	if vm == nil {
+		vm = make(map[*View]bool)
+	}
+	vm[v] = true
+	w.measureToViews[m] = vm
 }
 
 func (w *worker) start() {
@@ -272,8 +296,7 @@ func (w *worker) tryRegisterView(v *View) error {
 
 	w.viewsByName[v.Name()] = v
 	w.views[v] = true
-
-	v.Measure().addView(v)
+	w.addViewToMeasure(v)
 	return nil
 }
 
