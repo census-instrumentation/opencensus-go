@@ -376,6 +376,11 @@ func newCountData(v int) *istats.CountData {
 	return &cav
 }
 
+func newMeanData(count, mean float64) *istats.MeanData {
+	mav := istats.MeanData{Count: count, Mean: mean}
+	return &mav
+}
+
 func newDistributionData(bounds []float64, countPerBucket []int64, count int64, min, max, mean, sumOfSquaredDev float64) *istats.DistributionData {
 	return &istats.DistributionData{
 		Count:           count,

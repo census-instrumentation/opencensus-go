@@ -56,6 +56,7 @@ var (
 	rpcCountBucketBoundaries  = []float64{0, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65536}
 
 	aggCount      = istats.CountAggregation{}
+	aggMean       = istats.MeanAggregation{}
 	aggDistBytes  = istats.DistributionAggregation(rpcBytesBucketBoundaries)
 	aggDistMillis = istats.DistributionAggregation(rpcMillisBucketBoundaries)
 	aggDistCounts = istats.DistributionAggregation(rpcCountBucketBoundaries)
