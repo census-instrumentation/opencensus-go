@@ -207,17 +207,15 @@ func (c *collector) toMetric(desc *prometheus.Desc, view *stats.View, row *stats
 		for i, b := range agg {
 			points[b] = uint64(data.CountPerBucket[i])
 		}
-		hist, err := prometheus.NewConstHistogram(desc, uint64(data.Count), data.Sum(), points, tagValues(row.Tags)...)
-		if err != nil {
-			return nil, err
-		}
-		return hist, nil
+		return prometheus.NewConstHistogram(desc, uint64(data.Count), data.Sum(), points, tagValues(row.Tags)...)
+
+	case stats.MeanAggregation:
+		data := row.Data.(*stats.MeanData)
+		return prometheus.NewConstMetric(desc, prometheus.GaugeValue, data.Mean, tagValues(row.Tags)...)
 
 	case stats.SumAggregation:
-		panic("stats.SumData not supported yet")
-
-	case *stats.MeanAggregation:
-		panic("stats.MeanData ont supported yet")
+		data := row.Data.(*stats.SumData)
+		return prometheus.NewConstMetric(desc, prometheus.GaugeValue, float64(*data), tagValues(row.Tags)...)
 
 	default:
 		return nil, fmt.Errorf("aggregation %T is not yet supported", view.Aggregation())
