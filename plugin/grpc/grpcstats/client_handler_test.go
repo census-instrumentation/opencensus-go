@@ -160,7 +160,7 @@ func TestClientDefaultCollections(t *testing.T) {
 								{Key: keyOpStatus, Value: "someError"},
 								{Key: keyService, Value: "package.service"},
 							},
-							newCountData(1),
+							newMeanData(1, 1),
 						},
 					},
 				},
@@ -243,7 +243,7 @@ func TestClientDefaultCollections(t *testing.T) {
 								{Key: keyOpStatus, Value: "someError1"},
 								{Key: keyService, Value: "package.service"},
 							},
-							newCountData(1),
+							newMeanData(1, 1),
 						},
 						{
 							[]tag.Tag{
@@ -251,7 +251,7 @@ func TestClientDefaultCollections(t *testing.T) {
 								{Key: keyOpStatus, Value: "someError2"},
 								{Key: keyService, Value: "package.service"},
 							},
-							newCountData(1),
+							newMeanData(1, 1),
 						},
 					},
 				},
