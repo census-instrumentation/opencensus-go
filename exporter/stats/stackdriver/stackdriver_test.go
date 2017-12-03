@@ -470,7 +470,7 @@ func TestEqualAggWindowTagKeys(t *testing.T) {
 	}
 }
 
-func newTestCumViewData(v *stats.View, start, end time.Time, data1 stats.AggregationData, data2 stats.AggregationData) *stats.ViewData {
+func newTestCumViewData(v *stats.View, start, end time.Time, data1, data2 stats.AggregationData) *stats.ViewData {
 	key, _ := tag.NewKey("test-key")
 	tag1 := tag.Tag{Key: key, Value: "test-value-1"}
 	tag2 := tag.Tag{Key: key, Value: "test-value-2"}
