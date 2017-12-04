@@ -242,6 +242,10 @@ func (e *Exporter) createMeasure(ctx context.Context, vd *stats.ViewData) error 
 	switch agg.(type) {
 	case stats.CountAggregation:
 		valueType = metricpb.MetricDescriptor_INT64
+	case stats.SumAggregation:
+		valueType = metricpb.MetricDescriptor_DOUBLE
+	case stats.MeanAggregation:
+		valueType = metricpb.MetricDescriptor_DOUBLE
 	case stats.DistributionAggregation:
 		valueType = metricpb.MetricDescriptor_DISTRIBUTION
 	default:
@@ -298,6 +302,14 @@ func newTypedValue(view *stats.View, r *stats.Row) *monitoringpb.TypedValue {
 	case *stats.CountData:
 		return &monitoringpb.TypedValue{Value: &monitoringpb.TypedValue_Int64Value{
 			Int64Value: int64(*v),
+		}}
+	case *stats.SumData:
+		return &monitoringpb.TypedValue{Value: &monitoringpb.TypedValue_DoubleValue{
+			DoubleValue: float64(*v),
+		}}
+	case *stats.MeanData:
+		return &monitoringpb.TypedValue{Value: &monitoringpb.TypedValue_DoubleValue{
+			DoubleValue: v.Mean,
 		}}
 	case *stats.DistributionData:
 		bounds := view.Aggregation().(stats.DistributionAggregation)

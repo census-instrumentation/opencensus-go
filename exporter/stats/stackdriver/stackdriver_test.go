@@ -63,6 +63,18 @@ func TestExporter_makeReq(t *testing.T) {
 
 	start := time.Now()
 	end := start.Add(time.Minute)
+	count1 := stats.CountData(10)
+	count2 := stats.CountData(16)
+	sum1 := stats.SumData(5.5)
+	sum2 := stats.SumData(-11.1)
+	mean1 := stats.MeanData{
+		Mean:  3.3,
+		Count: 7,
+	}
+	mean2 := stats.MeanData{
+		Mean:  -7.7,
+		Count: 5,
+	}
 
 	tests := []struct {
 		name   string
@@ -73,7 +85,7 @@ func TestExporter_makeReq(t *testing.T) {
 		{
 			name:   "count agg + cum timeline",
 			projID: "proj-id",
-			vd:     newTestCumViewData(cumView, start, end),
+			vd:     newTestCumViewData(cumView, start, end, &count1, &count2),
 			want: []*monitoringpb.CreateTimeSeriesRequest{{
 				Name: monitoring.MetricProjectPath("proj-id"),
 				TimeSeries: []*monitoringpb.TimeSeries{
@@ -125,6 +137,130 @@ func TestExporter_makeReq(t *testing.T) {
 								},
 								Value: &monitoringpb.TypedValue{Value: &monitoringpb.TypedValue_Int64Value{
 									Int64Value: 16,
+								}},
+							},
+						},
+					},
+				},
+			}},
+		},
+		{
+			name:   "sum agg + cum timeline",
+			projID: "proj-id",
+			vd:     newTestCumViewData(cumView, start, end, &sum1, &sum2),
+			want: []*monitoringpb.CreateTimeSeriesRequest{{
+				Name: monitoring.MetricProjectPath("proj-id"),
+				TimeSeries: []*monitoringpb.TimeSeries{
+					{
+						Metric: &metricpb.Metric{
+							Type:   "custom.googleapis.com/opencensus/cumview",
+							Labels: map[string]string{"test_key": "test-value-1"},
+						},
+						Resource: &monitoredrespb.MonitoredResource{
+							Type: "global",
+						},
+						Points: []*monitoringpb.Point{
+							{
+								Interval: &monitoringpb.TimeInterval{
+									StartTime: &timestamp.Timestamp{
+										Seconds: start.Unix(),
+										Nanos:   int32(start.Nanosecond()),
+									},
+									EndTime: &timestamp.Timestamp{
+										Seconds: end.Unix(),
+										Nanos:   int32(end.Nanosecond()),
+									},
+								},
+								Value: &monitoringpb.TypedValue{Value: &monitoringpb.TypedValue_DoubleValue{
+									DoubleValue: 5.5,
+								}},
+							},
+						},
+					},
+					{
+						Metric: &metricpb.Metric{
+							Type:   "custom.googleapis.com/opencensus/cumview",
+							Labels: map[string]string{"test_key": "test-value-2"},
+						},
+						Resource: &monitoredrespb.MonitoredResource{
+							Type: "global",
+						},
+						Points: []*monitoringpb.Point{
+							{
+								Interval: &monitoringpb.TimeInterval{
+									StartTime: &timestamp.Timestamp{
+										Seconds: start.Unix(),
+										Nanos:   int32(start.Nanosecond()),
+									},
+									EndTime: &timestamp.Timestamp{
+										Seconds: end.Unix(),
+										Nanos:   int32(end.Nanosecond()),
+									},
+								},
+								Value: &monitoringpb.TypedValue{Value: &monitoringpb.TypedValue_DoubleValue{
+									DoubleValue: -11.1,
+								}},
+							},
+						},
+					},
+				},
+			}},
+		},
+		{
+			name:   "mean agg + cum timeline",
+			projID: "proj-id",
+			vd:     newTestCumViewData(cumView, start, end, &mean1, &mean2),
+			want: []*monitoringpb.CreateTimeSeriesRequest{{
+				Name: monitoring.MetricProjectPath("proj-id"),
+				TimeSeries: []*monitoringpb.TimeSeries{
+					{
+						Metric: &metricpb.Metric{
+							Type:   "custom.googleapis.com/opencensus/cumview",
+							Labels: map[string]string{"test_key": "test-value-1"},
+						},
+						Resource: &monitoredrespb.MonitoredResource{
+							Type: "global",
+						},
+						Points: []*monitoringpb.Point{
+							{
+								Interval: &monitoringpb.TimeInterval{
+									StartTime: &timestamp.Timestamp{
+										Seconds: start.Unix(),
+										Nanos:   int32(start.Nanosecond()),
+									},
+									EndTime: &timestamp.Timestamp{
+										Seconds: end.Unix(),
+										Nanos:   int32(end.Nanosecond()),
+									},
+								},
+								Value: &monitoringpb.TypedValue{Value: &monitoringpb.TypedValue_DoubleValue{
+									DoubleValue: 3.3,
+								}},
+							},
+						},
+					},
+					{
+						Metric: &metricpb.Metric{
+							Type:   "custom.googleapis.com/opencensus/cumview",
+							Labels: map[string]string{"test_key": "test-value-2"},
+						},
+						Resource: &monitoredrespb.MonitoredResource{
+							Type: "global",
+						},
+						Points: []*monitoringpb.Point{
+							{
+								Interval: &monitoringpb.TimeInterval{
+									StartTime: &timestamp.Timestamp{
+										Seconds: start.Unix(),
+										Nanos:   int32(start.Nanosecond()),
+									},
+									EndTime: &timestamp.Timestamp{
+										Seconds: end.Unix(),
+										Nanos:   int32(end.Nanosecond()),
+									},
+								},
+								Value: &monitoringpb.TypedValue{Value: &monitoringpb.TypedValue_DoubleValue{
+									DoubleValue: -7.7,
 								}},
 							},
 						},
@@ -207,10 +343,13 @@ func TestExporter_makeReq_batching(t *testing.T) {
 		},
 	}
 
+	count1 := stats.CountData(10)
+	count2 := stats.CountData(16)
+
 	for _, tt := range tests {
 		var vds []*stats.ViewData
 		for i := 0; i < tt.iter; i++ {
-			vds = append(vds, newTestCumViewData(view, time.Now(), time.Now()))
+			vds = append(vds, newTestCumViewData(view, time.Now(), time.Now(), &count1, &count2))
 		}
 
 		e := &Exporter{}
@@ -331,9 +470,7 @@ func TestEqualAggWindowTagKeys(t *testing.T) {
 	}
 }
 
-func newTestCumViewData(v *stats.View, start, end time.Time) *stats.ViewData {
-	count1 := stats.CountData(10)
-	count2 := stats.CountData(16)
+func newTestCumViewData(v *stats.View, start, end time.Time, data1, data2 stats.AggregationData) *stats.ViewData {
 	key, _ := tag.NewKey("test-key")
 	tag1 := tag.Tag{Key: key, Value: "test-value-1"}
 	tag2 := tag.Tag{Key: key, Value: "test-value-2"}
@@ -342,11 +479,11 @@ func newTestCumViewData(v *stats.View, start, end time.Time) *stats.ViewData {
 		Rows: []*stats.Row{
 			{
 				Tags: []tag.Tag{tag1},
-				Data: &count1,
+				Data: data1,
 			},
 			{
 				Tags: []tag.Tag{tag2},
-				Data: &count2,
+				Data: data2,
 			},
 		},
 		Start: start,
