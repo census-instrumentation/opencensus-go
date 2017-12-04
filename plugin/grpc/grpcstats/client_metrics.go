@@ -99,7 +99,7 @@ func defaultClientMeasures() {
 func defaultClientViews() {
 	// Use the Java implementation as a reference at
 	// https://github.com/census-instrumentation/opencensus-java/blob/2b464864e3dd3f80e8e4c9dc72fccc225444a939/contrib/grpc_metrics/src/main/java/io/opencensus/contrib/grpc/metrics/RpcViewConstants.java#L113-L658
-	RPCClientErrorCountView, _ = stats.NewView(" rpc.io/client/error_count/cumulative", "RPC Errors", []tag.Key{keyOpStatus, keyService, keyMethod}, RPCClientErrorCount, aggMean, windowCumulative)
+	RPCClientErrorCountView, _ = stats.NewView("grpc.io/client/error_count/cumulative", "RPC Errors", []tag.Key{keyOpStatus, keyService, keyMethod}, RPCClientErrorCount, aggMean, windowCumulative)
 	clientViews = append(clientViews, RPCClientErrorCountView)
 	RPCClientRoundTripLatencyView, _ = stats.NewView("grpc.io/client/roundtrip_latency/cumulative", "Latency in msecs", []tag.Key{keyService, keyMethod}, RPCClientRoundTripLatency, aggDistMillis, windowCumulative)
 	clientViews = append(clientViews, RPCClientRoundTripLatencyView)

@@ -63,3 +63,41 @@ func TestViewsAggregationsConform(t *testing.T) {
 	assertTypeOf(RPCClientRequestCountHourView, stats.MeanAggregation{})
 	assertTypeOf(RPCClientResponseCountHourView, stats.MeanAggregation{})
 }
+
+func TestStrictViewNames(t *testing.T) {
+	alreadySeen := make(map[string]int)
+	assertName := func(v *stats.View, want string) {
+		_, _, line, _ := runtime.Caller(1)
+		if prevLine, ok := alreadySeen[v.Name()]; ok {
+			t.Errorf("Item's Name on line %d was already used on line %d", line, prevLine)
+			return
+		}
+		if got := v.Name(); got != want {
+			t.Errorf("Item on line: %d got %q want %q", line, got, want)
+		}
+		alreadySeen[v.Name()] = line
+	}
+
+	assertName(RPCClientErrorCountView, "grpc.io/client/error_count/cumulative")
+	assertName(RPCClientRoundTripLatencyView, "grpc.io/client/roundtrip_latency/cumulative")
+	assertName(RPCClientRequestBytesView, "grpc.io/client/request_bytes/cumulative")
+	assertName(RPCClientResponseBytesView, "grpc.io/client/response_bytes/cumulative")
+	assertName(RPCClientRequestCountView, "grpc.io/client/request_count/cumulative")
+	assertName(RPCClientResponseCountView, "grpc.io/client/response_count/cumulative")
+	assertName(RPCClientRoundTripLatencyMinuteView, "grpc.io/client/roundtrip_latency/minute")
+	assertName(RPCClientRequestBytesMinuteView, "grpc.io/client/request_bytes/minute")
+	assertName(RPCClientResponseBytesMinuteView, "grpc.io/client/response_bytes/minute")
+	assertName(RPCClientErrorCountMinuteView, "grpc.io/client/error_count/minute")
+	assertName(RPCClientStartedCountMinuteView, "grpc.io/client/started_count/minute")
+	assertName(RPCClientFinishedCountMinuteView, "grpc.io/client/finished_count/minute")
+	assertName(RPCClientRequestCountMinuteView, "grpc.io/client/request_count/minute")
+	assertName(RPCClientResponseCountMinuteView, "grpc.io/client/response_count/minute")
+	assertName(RPCClientRoundTripLatencyHourView, "grpc.io/client/roundtrip_latency/hour")
+	assertName(RPCClientRequestBytesHourView, "grpc.io/client/request_bytes/hour")
+	assertName(RPCClientResponseBytesHourView, "grpc.io/client/response_bytes/hour")
+	assertName(RPCClientErrorCountHourView, "grpc.io/client/error_count/hour")
+	assertName(RPCClientStartedCountHourView, "grpc.io/client/started_count/hour")
+	assertName(RPCClientFinishedCountHourView, "grpc.io/client/finished_count/hour")
+	assertName(RPCClientRequestCountHourView, "grpc.io/client/request_count/hour")
+	assertName(RPCClientResponseCountHourView, "grpc.io/client/response_count/hour")
+}
