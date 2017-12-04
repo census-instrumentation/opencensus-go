@@ -19,6 +19,7 @@ import (
 	"testing"
 	"time"
 
+	distributionpb "google.golang.org/genproto/googleapis/api/distribution"
 	"google.golang.org/genproto/googleapis/api/label"
 
 	"go.opencensus.io/stats"
@@ -233,8 +234,12 @@ func TestExporter_makeReq(t *testing.T) {
 										Nanos:   int32(end.Nanosecond()),
 									},
 								},
-								Value: &monitoringpb.TypedValue{Value: &monitoringpb.TypedValue_DoubleValue{
-									DoubleValue: 3.3,
+								Value: &monitoringpb.TypedValue{Value: &monitoringpb.TypedValue_DistributionValue{
+									DistributionValue: &distributionpb.Distribution{
+										Count: 7,
+										Mean:  3.3,
+										SumOfSquaredDeviation: 0,
+									},
 								}},
 							},
 						},
@@ -259,8 +264,12 @@ func TestExporter_makeReq(t *testing.T) {
 										Nanos:   int32(end.Nanosecond()),
 									},
 								},
-								Value: &monitoringpb.TypedValue{Value: &monitoringpb.TypedValue_DoubleValue{
-									DoubleValue: -7.7,
+								Value: &monitoringpb.TypedValue{Value: &monitoringpb.TypedValue_DistributionValue{
+									DistributionValue: &distributionpb.Distribution{
+										Count: 5,
+										Mean:  -7.7,
+										SumOfSquaredDeviation: 0,
+									},
 								}},
 							},
 						},

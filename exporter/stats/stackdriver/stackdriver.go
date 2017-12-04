@@ -245,7 +245,7 @@ func (e *Exporter) createMeasure(ctx context.Context, vd *stats.ViewData) error 
 	case stats.SumAggregation:
 		valueType = metricpb.MetricDescriptor_DOUBLE
 	case stats.MeanAggregation:
-		valueType = metricpb.MetricDescriptor_DOUBLE
+		valueType = metricpb.MetricDescriptor_DISTRIBUTION
 	case stats.DistributionAggregation:
 		valueType = metricpb.MetricDescriptor_DISTRIBUTION
 	default:
@@ -308,8 +308,12 @@ func newTypedValue(view *stats.View, r *stats.Row) *monitoringpb.TypedValue {
 			DoubleValue: float64(*v),
 		}}
 	case *stats.MeanData:
-		return &monitoringpb.TypedValue{Value: &monitoringpb.TypedValue_DoubleValue{
-			DoubleValue: v.Mean,
+		return &monitoringpb.TypedValue{Value: &monitoringpb.TypedValue_DistributionValue{
+			DistributionValue: &distributionpb.Distribution{
+				Count: int64(v.Count),
+				Mean:  v.Mean,
+				SumOfSquaredDeviation: 0,
+			},
 		}}
 	case *stats.DistributionData:
 		bounds := view.Aggregation().(stats.DistributionAggregation)
