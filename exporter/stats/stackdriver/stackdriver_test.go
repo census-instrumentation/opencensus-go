@@ -399,12 +399,42 @@ func TestEqualAggWindowTagKeys(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name: "sum agg + cum",
+			md: &metricpb.MetricDescriptor{
+				MetricKind: metricpb.MetricDescriptor_CUMULATIVE,
+				ValueType:  metricpb.MetricDescriptor_DOUBLE,
+			},
+			agg:     stats.SumAggregation{},
+			window:  stats.Cumulative{},
+			wantErr: false,
+		},
+		{
+			name: "mean agg + cum",
+			md: &metricpb.MetricDescriptor{
+				MetricKind: metricpb.MetricDescriptor_CUMULATIVE,
+				ValueType:  metricpb.MetricDescriptor_DISTRIBUTION,
+			},
+			agg:     stats.MeanAggregation{},
+			window:  stats.Cumulative{},
+			wantErr: false,
+		},
+		{
 			name: "distribution agg + cum - mismatch",
 			md: &metricpb.MetricDescriptor{
 				MetricKind: metricpb.MetricDescriptor_CUMULATIVE,
 				ValueType:  metricpb.MetricDescriptor_DISTRIBUTION,
 			},
 			agg:     stats.CountAggregation{},
+			window:  stats.Cumulative{},
+			wantErr: true,
+		},
+		{
+			name: "mean agg + cum - mismatch",
+			md: &metricpb.MetricDescriptor{
+				MetricKind: metricpb.MetricDescriptor_CUMULATIVE,
+				ValueType:  metricpb.MetricDescriptor_DOUBLE,
+			},
+			agg:     stats.MeanAggregation{},
 			window:  stats.Cumulative{},
 			wantErr: true,
 		},

@@ -370,7 +370,6 @@ func newLabelDescriptors(keys []tag.Key) []*labelpb.LabelDescriptor {
 
 func equalAggWindowTagKeys(md *metricpb.MetricDescriptor, agg stats.Aggregation, window stats.Window, keys []tag.Key) error {
 	var w stats.Window
-	var a stats.Aggregation
 
 	switch md.MetricKind {
 	case metricpb.MetricDescriptor_DELTA:
@@ -379,19 +378,22 @@ func equalAggWindowTagKeys(md *metricpb.MetricDescriptor, agg stats.Aggregation,
 		w = stats.Cumulative{}
 	}
 
-	switch md.ValueType {
-	case metricpb.MetricDescriptor_INT64:
-		a = stats.CountAggregation{}
-	case metricpb.MetricDescriptor_DISTRIBUTION:
-		a = stats.DistributionAggregation{}
-	}
-
 	aggType := reflect.TypeOf(agg)
 	if aggType.Kind() == reflect.Ptr { // if pointer, find out the concrete type
 		aggType = reflect.ValueOf(agg).Elem().Type()
 	}
-	if aggType != reflect.TypeOf(a) {
-		return fmt.Errorf("stackdriver metric descriptor was not created with aggregation type %T", a)
+	var aggTypeMatch bool
+	switch md.ValueType {
+	case metricpb.MetricDescriptor_INT64:
+		aggTypeMatch = aggType == reflect.TypeOf(stats.CountAggregation{})
+	case metricpb.MetricDescriptor_DOUBLE:
+		aggTypeMatch = aggType == reflect.TypeOf(stats.SumAggregation{})
+	case metricpb.MetricDescriptor_DISTRIBUTION:
+		aggTypeMatch = aggType == reflect.TypeOf(stats.MeanAggregation{}) || aggType == reflect.TypeOf(stats.DistributionAggregation{})
+	}
+
+	if !aggTypeMatch {
+		return fmt.Errorf("stackdriver metric descriptor was not created with aggregation type %T", aggType)
 	}
 
 	winType := reflect.TypeOf(window)
