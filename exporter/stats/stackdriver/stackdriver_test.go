@@ -19,6 +19,7 @@ import (
 	"testing"
 	"time"
 
+	distributionpb "google.golang.org/genproto/googleapis/api/distribution"
 	"google.golang.org/genproto/googleapis/api/label"
 
 	"go.opencensus.io/stats"
@@ -233,8 +234,20 @@ func TestExporter_makeReq(t *testing.T) {
 										Nanos:   int32(end.Nanosecond()),
 									},
 								},
-								Value: &monitoringpb.TypedValue{Value: &monitoringpb.TypedValue_DoubleValue{
-									DoubleValue: 3.3,
+								Value: &monitoringpb.TypedValue{Value: &monitoringpb.TypedValue_DistributionValue{
+									DistributionValue: &distributionpb.Distribution{
+										Count: 7,
+										Mean:  3.3,
+										SumOfSquaredDeviation: 0,
+										BucketOptions: &distributionpb.Distribution_BucketOptions{
+											Options: &distributionpb.Distribution_BucketOptions_ExplicitBuckets{
+												ExplicitBuckets: &distributionpb.Distribution_BucketOptions_Explicit{
+													Bounds: []float64{0},
+												},
+											},
+										},
+										BucketCounts: []int64{0, 7},
+									},
 								}},
 							},
 						},
@@ -259,8 +272,20 @@ func TestExporter_makeReq(t *testing.T) {
 										Nanos:   int32(end.Nanosecond()),
 									},
 								},
-								Value: &monitoringpb.TypedValue{Value: &monitoringpb.TypedValue_DoubleValue{
-									DoubleValue: -7.7,
+								Value: &monitoringpb.TypedValue{Value: &monitoringpb.TypedValue_DistributionValue{
+									DistributionValue: &distributionpb.Distribution{
+										Count: 5,
+										Mean:  -7.7,
+										SumOfSquaredDeviation: 0,
+										BucketOptions: &distributionpb.Distribution_BucketOptions{
+											Options: &distributionpb.Distribution_BucketOptions_ExplicitBuckets{
+												ExplicitBuckets: &distributionpb.Distribution_BucketOptions_Explicit{
+													Bounds: []float64{0},
+												},
+											},
+										},
+										BucketCounts: []int64{0, 5},
+									},
 								}},
 							},
 						},
@@ -390,12 +415,42 @@ func TestEqualAggWindowTagKeys(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name: "sum agg + cum",
+			md: &metricpb.MetricDescriptor{
+				MetricKind: metricpb.MetricDescriptor_CUMULATIVE,
+				ValueType:  metricpb.MetricDescriptor_DOUBLE,
+			},
+			agg:     stats.SumAggregation{},
+			window:  stats.Cumulative{},
+			wantErr: false,
+		},
+		{
+			name: "mean agg + cum",
+			md: &metricpb.MetricDescriptor{
+				MetricKind: metricpb.MetricDescriptor_CUMULATIVE,
+				ValueType:  metricpb.MetricDescriptor_DISTRIBUTION,
+			},
+			agg:     stats.MeanAggregation{},
+			window:  stats.Cumulative{},
+			wantErr: false,
+		},
+		{
 			name: "distribution agg + cum - mismatch",
 			md: &metricpb.MetricDescriptor{
 				MetricKind: metricpb.MetricDescriptor_CUMULATIVE,
 				ValueType:  metricpb.MetricDescriptor_DISTRIBUTION,
 			},
 			agg:     stats.CountAggregation{},
+			window:  stats.Cumulative{},
+			wantErr: true,
+		},
+		{
+			name: "mean agg + cum - mismatch",
+			md: &metricpb.MetricDescriptor{
+				MetricKind: metricpb.MetricDescriptor_CUMULATIVE,
+				ValueType:  metricpb.MetricDescriptor_DOUBLE,
+			},
+			agg:     stats.MeanAggregation{},
 			window:  stats.Cumulative{},
 			wantErr: true,
 		},
