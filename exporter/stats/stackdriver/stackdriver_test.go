@@ -239,6 +239,14 @@ func TestExporter_makeReq(t *testing.T) {
 										Count: 7,
 										Mean:  3.3,
 										SumOfSquaredDeviation: 0,
+										BucketOptions: &distributionpb.Distribution_BucketOptions{
+											Options: &distributionpb.Distribution_BucketOptions_ExplicitBuckets{
+												ExplicitBuckets: &distributionpb.Distribution_BucketOptions_Explicit{
+													Bounds: []float64{0},
+												},
+											},
+										},
+										BucketCounts: []int64{0, 7},
 									},
 								}},
 							},
@@ -269,6 +277,14 @@ func TestExporter_makeReq(t *testing.T) {
 										Count: 5,
 										Mean:  -7.7,
 										SumOfSquaredDeviation: 0,
+										BucketOptions: &distributionpb.Distribution_BucketOptions{
+											Options: &distributionpb.Distribution_BucketOptions_ExplicitBuckets{
+												ExplicitBuckets: &distributionpb.Distribution_BucketOptions_Explicit{
+													Bounds: []float64{0},
+												},
+											},
+										},
+										BucketCounts: []int64{0, 5},
 									},
 								}},
 							},

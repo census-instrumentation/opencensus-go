@@ -313,6 +313,14 @@ func newTypedValue(view *stats.View, r *stats.Row) *monitoringpb.TypedValue {
 				Count: int64(v.Count),
 				Mean:  v.Mean,
 				SumOfSquaredDeviation: 0,
+				BucketOptions: &distributionpb.Distribution_BucketOptions{
+					Options: &distributionpb.Distribution_BucketOptions_ExplicitBuckets{
+						ExplicitBuckets: &distributionpb.Distribution_BucketOptions_Explicit{
+							Bounds: []float64{0},
+						},
+					},
+				},
+				BucketCounts: []int64{0, int64(v.Count)},
 			},
 		}}
 	case *stats.DistributionData:
