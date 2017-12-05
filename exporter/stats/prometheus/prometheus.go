@@ -170,14 +170,14 @@ func (c *collector) Describe(ch chan<- *prometheus.Desc) {
 // Collect is invoked everytime a prometheus.Gatherer is run
 // for example when the HTTP endpoint is invoked by Prometheus.
 func (c *collector) Collect(ch chan<- prometheus.Metric) {
-	c.mu.Lock()
-	views := make(map[string]*stats.ViewData, len(c.viewData))
-	for i, vd := range c.viewData {
-		views[i] = vd
-	}
-	c.mu.Unlock()
-
 	for _, vd := range c.viewData {
+		if _, ok := vd.View.Window().(stats.Cumulative); !ok {
+			// TODO: (@rakyll, @odeke-em): Only the cumulative window will
+			// be exported in this version. Support others in the future.
+			// See Issue https://github.com/census-instrumentation/opencensus-go/issues/214
+			continue
+		}
+
 		sig := viewSignature(c.opts.Namespace, vd.View)
 		c.registeredViewsMu.Lock()
 		desc := c.registeredViews[sig]
