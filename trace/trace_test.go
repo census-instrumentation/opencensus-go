@@ -15,11 +15,12 @@
 package trace
 
 import (
-	"context"
 	"fmt"
 	"reflect"
 	"testing"
 	"time"
+
+	"golang.org/x/net/context"
 )
 
 var (

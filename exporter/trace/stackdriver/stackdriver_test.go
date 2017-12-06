@@ -15,9 +15,10 @@
 package stackdriver
 
 import (
-	"context"
 	"testing"
 	"time"
+
+	"golang.org/x/net/context"
 
 	"go.opencensus.io/trace"
 )

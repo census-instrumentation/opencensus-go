@@ -17,11 +17,12 @@
 package main
 
 import (
-	"context"
 	"log"
 	"math/rand"
 	"net/http"
 	"time"
+
+	"golang.org/x/net/context"
 
 	"go.opencensus.io/exporter/stats/prometheus"
 	"go.opencensus.io/stats"

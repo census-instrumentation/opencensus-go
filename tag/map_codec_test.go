@@ -16,24 +16,25 @@
 package tag
 
 import (
-	"context"
 	"reflect"
 	"sort"
 	"testing"
+
+	"golang.org/x/net/context"
 )
 
 var keys []Key
+
+type pair struct {
+	k Key
+	v string
+}
 
 func Test_EncodeDecode_Set(t *testing.T) {
 	k1, _ := NewKey("k1")
 	k2, _ := NewKey("k2")
 	k3, _ := NewKey("k3 is very weird <>.,?/'\";:`~!@#$%^&*()_-+={[}]|\\")
 	k4, _ := NewKey("k4")
-
-	type pair struct {
-		k Key
-		v string
-	}
 
 	type testCase struct {
 		label string
@@ -99,11 +100,19 @@ func Test_EncodeDecode_Set(t *testing.T) {
 		}
 		want := tc.pairs
 
-		sort.Slice(got, func(i, j int) bool { return got[i].k.name < got[j].k.name })
-		sort.Slice(want, func(i, j int) bool { return got[i].k.name < got[j].k.name })
+		sort.Sort(pairs(got))
+		sort.Sort(pairs(want))
 
-		if !reflect.DeepEqual(got, tc.pairs) {
+		if !reflect.DeepEqual(got, want) {
 			t.Errorf("%v: decoded tag map = %#v; want %#v", tc.label, got, want)
 		}
 	}
 }
+
+type pairs []pair
+
+func (ps pairs) Len() int           { return len(ps) }
+func (ps pairs) Swap(i, j int)      { ps[i], ps[j] = ps[j], ps[i] }
+func (ps pairs) Less(i, j int) bool { return ps[i].k.name < ps[j].k.name }
+
+var _ sort.Interface = (pairs)(nil)

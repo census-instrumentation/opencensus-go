@@ -16,10 +16,11 @@
 package tag
 
 import (
-	"context"
 	"fmt"
 	"reflect"
 	"testing"
+
+	"golang.org/x/net/context"
 )
 
 func TestContext(t *testing.T) {
