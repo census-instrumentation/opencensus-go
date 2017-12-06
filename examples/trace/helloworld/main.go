@@ -16,9 +16,10 @@
 package main
 
 import (
-	"context"
 	"log"
 	"time"
+
+	"golang.org/x/net/context"
 
 	"go.opencensus.io/trace"
 )

@@ -19,15 +19,14 @@
 package stackdriver
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"log"
-	"net/url"
-	"path"
 	"reflect"
 	"sync"
 	"time"
+
+	"golang.org/x/net/context"
 
 	"go.opencensus.io/tag"
 
@@ -350,11 +349,7 @@ func newTypedValue(view *stats.View, r *stats.Row) *monitoringpb.TypedValue {
 }
 
 func namespacedViewName(v string, escaped bool) string {
-	p := path.Join("opencensus", v)
-	if escaped {
-		p = url.PathEscape(p)
-	}
-	return path.Join("custom.googleapis.com", p)
+	return internal.NamespacedViewName(v, escaped)
 }
 
 func newLabels(tags []tag.Tag) map[string]string {

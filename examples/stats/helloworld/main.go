@@ -17,10 +17,11 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"time"
+
+	"golang.org/x/net/context"
 
 	"go.opencensus.io/stats"
 )

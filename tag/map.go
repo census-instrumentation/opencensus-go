@@ -17,9 +17,9 @@ package tag
 
 import (
 	"bytes"
-	"context"
 	"fmt"
-	"sort"
+
+	"golang.org/x/net/context"
 )
 
 // Tag is a key value pair that can be propagated on wire.
@@ -45,7 +45,7 @@ func (m *Map) String() string {
 	for k := range m.m {
 		keys = append(keys, k)
 	}
-	sort.Slice(keys, func(i, j int) bool { return keys[i].Name() < keys[j].Name() })
+	SortKeysByName(keys)
 
 	var buffer bytes.Buffer
 	buffer.WriteString("{ ")

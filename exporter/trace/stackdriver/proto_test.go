@@ -15,7 +15,6 @@
 package stackdriver
 
 import (
-	"context"
 	"fmt"
 	"math/big"
 	"reflect"
@@ -23,6 +22,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"golang.org/x/net/context"
 
 	"github.com/golang/protobuf/proto"
 	timestamppb "github.com/golang/protobuf/ptypes/timestamp"

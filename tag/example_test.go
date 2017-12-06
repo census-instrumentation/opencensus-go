@@ -16,8 +16,9 @@
 package tag_test
 
 import (
-	"context"
 	"log"
+
+	"golang.org/x/net/context"
 
 	"go.opencensus.io/tag"
 )

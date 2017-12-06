@@ -30,7 +30,6 @@
 package stackdriver
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"sync"
@@ -39,6 +38,7 @@ import (
 	"go.opencensus.io/internal"
 
 	tracingclient "cloud.google.com/go/trace/apiv2"
+	"golang.org/x/net/context"
 	"go.opencensus.io/trace"
 	"google.golang.org/api/option"
 	"google.golang.org/api/support/bundler"
