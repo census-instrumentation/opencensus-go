@@ -15,16 +15,27 @@
 package trace_test
 
 import (
-	"context"
+	"fmt"
 
 	"go.opencensus.io/trace"
+	"golang.org/x/net/context"
 )
 
 // This example shows how to use StartSpan and EndSpan to capture
 // a function execution in a Span. It assumes that the function
 // has a context.Context argument.
-func ExampleStartSpan(ctx context.Context) {
-	ctx = trace.StartSpan(ctx, "my/package.Function")
-	defer trace.EndSpan(ctx)
-	// TODO: body of function
+func ExampleStartSpan() {
+	printEvens := func(ctx context.Context) {
+		ctx = trace.StartSpan(ctx, "my/package.Function")
+		defer trace.EndSpan(ctx)
+
+		for i := 0; i < 10; i++ {
+			if i%2 == 0 {
+				fmt.Printf("Even!\n")
+			}
+		}
+	}
+
+	ctx := context.Background()
+	printEvens(ctx)
 }
