@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package trace contains types for representing trace information, and
-// functions for global configuration of tracing.
 package trace
 
 import (
