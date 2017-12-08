@@ -6,7 +6,7 @@ clone_folder: c:\gopath\src\go.opencensus.io
 
 environment:
   GOPATH: c:\gopath
-  GOVERSION: 1.8
+  GOVERSION: 1.6
 
 install:
   - set PATH=%GOPATH%\bin;c:\go\bin;%PATH%

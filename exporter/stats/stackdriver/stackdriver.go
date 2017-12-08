@@ -19,7 +19,6 @@
 package stackdriver
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"log"
@@ -28,6 +27,8 @@ import (
 	"reflect"
 	"sync"
 	"time"
+
+	"golang.org/x/net/context"
 
 	"go.opencensus.io/tag"
 

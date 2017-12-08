@@ -15,7 +15,6 @@
 package trace
 
 import (
-	"context"
 	crand "crypto/rand"
 	"encoding/binary"
 	"fmt"
@@ -23,6 +22,8 @@ import (
 	"runtime"
 	"sync"
 	"time"
+
+	"golang.org/x/net/context"
 )
 
 // Span represents a span of a trace.  It has an associated SpanContext, and
@@ -696,15 +697,4 @@ func newSpanIDLocked() SpanID {
 	var sid SpanID
 	binary.LittleEndian.PutUint64(sid[:], id)
 	return sid
-}
-
-// newTraceIDLocked returns a non-zero TraceID from a randomly-chosen sequence.
-// mu should be held while this function is called.
-func newTraceIDLocked() TraceID {
-	var tid TraceID
-	// Construct the trace ID from two outputs of traceIDRand, with a constant
-	// added to each half for additional entropy.
-	binary.LittleEndian.PutUint64(tid[0:8], traceIDRand.Uint64()+traceIDAdd[0])
-	binary.LittleEndian.PutUint64(tid[8:16], traceIDRand.Uint64()+traceIDAdd[1])
-	return tid
 }

@@ -15,8 +15,9 @@
 package stats
 
 import (
-	"context"
 	"testing"
+
+	"golang.org/x/net/context"
 
 	"go.opencensus.io/tag"
 )
