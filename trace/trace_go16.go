@@ -16,23 +16,8 @@
 
 package trace
 
-import (
-	"encoding/binary"
-)
-
-// newTraceIDLocked returns a non-zero TraceID from a randomly-chosen sequence.
-// mu should be held while this function is called.
-func newTraceIDLocked() TraceID {
-	var tid TraceID
-	// Construct the trace ID from two outputs of traceIDRand, with a constant
-	// added to each half for additional entropy.
-	binary.LittleEndian.PutUint64(tid[0:8], randUint64()+traceIDAdd[0])
-	binary.LittleEndian.PutUint64(tid[8:16], randUint64()+traceIDAdd[1])
-	return tid
-}
-
 func randUint64() uint64 {
-	// Copied from later Go version after 1.6
+	// Copied from later Go version after 1.6 since 1.6 doesn't have it
 	// https://github.com/golang/go/blob/70f441bc49afa4e9d10c27d7ed5733c4df7bddd3/src/math/rand/rand.go#L87-L93
 	return uint64(traceIDRand.Int63())>>31 | uint64(traceIDRand.Int63())<<32
 }

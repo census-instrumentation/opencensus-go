@@ -698,3 +698,14 @@ func newSpanIDLocked() SpanID {
 	binary.LittleEndian.PutUint64(sid[:], id)
 	return sid
 }
+
+// newTraceIDLocked returns a non-zero TraceID from a randomly-chosen sequence.
+// mu should be held while this function is called.
+func newTraceIDLocked() TraceID {
+	var tid TraceID
+	// Construct the trace ID from two outputs of traceIDRand, with a constant
+	// added to each half for additional entropy.
+	binary.LittleEndian.PutUint64(tid[0:8], randUint64()+traceIDAdd[0])
+	binary.LittleEndian.PutUint64(tid[8:16], randUint64()+traceIDAdd[1])
+	return tid
+}
