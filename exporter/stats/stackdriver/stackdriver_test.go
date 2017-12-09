@@ -304,10 +304,11 @@ func TestExporter_makeReq(t *testing.T) {
 		e := &Exporter{o: Options{ProjectID: tt.projID}}
 		resps := e.makeReq([]*stats.ViewData{tt.vd}, maxTimeSeriesPerUpload)
 		if got, want := len(resps), len(tt.want); got != want {
-			t.Fatalf("%v: Exporter.makeReq() returned %d responses; want %d", tt.name, got, want)
+			t.Errorf("%v: Exporter.makeReq() returned %d responses; want %d", tt.name, got, want)
+			continue
 		}
 		if len(tt.want) == 0 {
-			return
+			continue
 		}
 		if !reflect.DeepEqual(resps, tt.want) {
 			t.Errorf("%v: Exporter.makeReq() = %v, want %v", tt.name, resps, tt.want)

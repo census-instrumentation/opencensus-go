@@ -26,6 +26,9 @@ func NamespacedViewName(v string, escaped bool) string {
 	return path.Join("custom.googleapis.com", p)
 }
 
+// The code from here and below is copied from Go after
+// version 1.8 since net/url.PathEscape was implemented in 1.8
+// Source https://github.com/golang/go/blob/29cb57c5bda37f1c5a58b315fc5619835cc53467/src/net/url/url.go#L273-L314
 type encoding int
 
 const (
@@ -79,6 +82,9 @@ func escape(s string, mode encoding) string {
 	return string(t)
 }
 
+// shouldEscape is copied from the Go tree >= 1.8 from source:
+//  https://github.com/golang/go/blob/29cb57c5bda37f1c5a58b315fc5619835cc53467/src/net/url/url.go#L97-L164
+//
 // Return true if the specified character should be escaped when
 // appearing in a URL string, according to RFC 3986.
 //
