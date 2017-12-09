@@ -23,13 +23,17 @@ const defaultSamplingProbability = 1e-4
 var defaultSampler Sampler
 
 func init() {
-	defaultSampler = ProbabilitySampler(defaultSamplingProbability)
+	defaultSampler = newDefaultSampler()
+}
+
+func newDefaultSampler() Sampler {
+	return ProbabilitySampler(defaultSamplingProbability)
 }
 
 // SetDefaultSampler sets the default sampler used when creating new spans.
 func SetDefaultSampler(sampler Sampler) {
 	if sampler == nil {
-		sampler = NeverSample()
+		sampler = newDefaultSampler()
 	}
 	mu.Lock()
 	defaultSampler = sampler
