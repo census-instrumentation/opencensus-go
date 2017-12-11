@@ -16,10 +16,11 @@
 package stats
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"time"
+
+	"golang.org/x/net/context"
 
 	"go.opencensus.io/tag"
 )

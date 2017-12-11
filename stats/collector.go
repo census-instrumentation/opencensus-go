@@ -16,7 +16,6 @@
 package stats
 
 import (
-	"sort"
 	"time"
 
 	"go.opencensus.io/internal/tagencoding"
@@ -83,6 +82,6 @@ func decodeTags(buf []byte, keys []tag.Key) []tag.Tag {
 		}
 	}
 	vb.ReadIndex = 0
-	sort.Slice(tags, func(i, j int) bool { return tags[i].Key.Name() < tags[j].Key.Name() })
+	tag.SortTagsByKeyName(tags)
 	return tags
 }

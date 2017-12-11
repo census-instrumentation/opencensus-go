@@ -301,19 +301,18 @@ func TestExporter_makeReq(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			e := &Exporter{o: Options{ProjectID: tt.projID}}
-			resps := e.makeReq([]*stats.ViewData{tt.vd}, maxTimeSeriesPerUpload)
-			if got, want := len(resps), len(tt.want); got != want {
-				t.Fatalf("%v: Exporter.makeReq() returned %d responses; want %d", tt.name, got, want)
-			}
-			if len(tt.want) == 0 {
-				return
-			}
-			if !reflect.DeepEqual(resps, tt.want) {
-				t.Errorf("%v: Exporter.makeReq() = %v, want %v", tt.name, resps, tt.want)
-			}
-		})
+		e := &Exporter{o: Options{ProjectID: tt.projID}}
+		resps := e.makeReq([]*stats.ViewData{tt.vd}, maxTimeSeriesPerUpload)
+		if got, want := len(resps), len(tt.want); got != want {
+			t.Errorf("%v: Exporter.makeReq() returned %d responses; want %d", tt.name, got, want)
+			continue
+		}
+		if len(tt.want) == 0 {
+			continue
+		}
+		if !reflect.DeepEqual(resps, tt.want) {
+			t.Errorf("%v: Exporter.makeReq() = %v, want %v", tt.name, resps, tt.want)
+		}
 	}
 }
 
@@ -512,16 +511,13 @@ func TestEqualAggWindowTagKeys(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			err := equalAggWindowTagKeys(tt.md, tt.agg, tt.window, tt.keys)
-			if err != nil && !tt.wantErr {
-				t.Errorf("equalAggWindowTagKeys() = %q; want no error", err)
-			}
-			if err == nil && tt.wantErr {
-				t.Errorf("equalAggWindowTagKeys() = %q; want error", err)
-			}
-
-		})
+		err := equalAggWindowTagKeys(tt.md, tt.agg, tt.window, tt.keys)
+		if err != nil && !tt.wantErr {
+			t.Errorf("%s:: equalAggWindowTagKeys() = %q; want no error", tt.name, err)
+		}
+		if err == nil && tt.wantErr {
+			t.Errorf("%s:: equalAggWindowTagKeys() = %q; want error", tt.name, err)
+		}
 	}
 }
 

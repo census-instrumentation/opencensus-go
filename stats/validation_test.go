@@ -42,11 +42,9 @@ func Test_checkViewName(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if err := checkViewName(tt.view); (err != nil) != tt.wantErr {
-				t.Errorf("checkViewName() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
+		if err := checkViewName(tt.view); (err != nil) != tt.wantErr {
+			t.Errorf("%s::checkViewName() error = %v, wantErr %v", tt.name, err, tt.wantErr)
+		}
 	}
 }
 
@@ -73,10 +71,8 @@ func TestCheckMeasureName(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if err := checkMeasureName(tt.view); (err != nil) != tt.wantErr {
-				t.Errorf("checkMeasureName() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
+		if err := checkMeasureName(tt.view); (err != nil) != tt.wantErr {
+			t.Errorf("%s::checkMeasureName() error = %v, wantErr %v", tt.name, err, tt.wantErr)
+		}
 	}
 }
