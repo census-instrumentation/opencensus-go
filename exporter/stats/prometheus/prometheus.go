@@ -72,9 +72,20 @@ func NewExporter(o Options) (*Exporter, error) {
 var _ http.Handler = (*Exporter)(nil)
 var _ stats.Exporter = (*Exporter)(nil)
 
+func allowedWindowType(v *stats.View) bool {
+	// TODO: (@rakyll, @odeke-em): Only the cumulative window will
+	// be exported in this version. Support others in the future.
+	// See Issue https://github.com/census-instrumentation/opencensus-go/issues/214
+	_, ok := v.Window().(stats.Cumulative)
+	return ok
+}
+
 func (c *collector) registerViews(views ...*stats.View) {
 	count := 0
 	for _, view := range views {
+		if !allowedWindowType(view) {
+			continue
+		}
 		sig := viewSignature(c.opts.Namespace, view)
 		c.registeredViewsMu.Lock()
 		_, ok := c.registeredViews[sig]
@@ -171,10 +182,7 @@ func (c *collector) Describe(ch chan<- *prometheus.Desc) {
 // for example when the HTTP endpoint is invoked by Prometheus.
 func (c *collector) Collect(ch chan<- prometheus.Metric) {
 	for _, vd := range c.viewData {
-		if _, ok := vd.View.Window().(stats.Cumulative); !ok {
-			// TODO: (@rakyll, @odeke-em): Only the cumulative window will
-			// be exported in this version. Support others in the future.
-			// See Issue https://github.com/census-instrumentation/opencensus-go/issues/214
+		if !allowedWindowType(vd.View) {
 			continue
 		}
 
