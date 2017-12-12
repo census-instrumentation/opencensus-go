@@ -80,9 +80,11 @@ another measure with the same name):
 
 ### Creating an aggregation
 
-Currently only 2 types of aggregations are supported. The CountAggregation is used to count
+Currently 4 types of aggregations are supported. The CountAggregation is used to count
 the number of times a sample was recorded. The DistributionAggregation is used to
-provide a histogram of the values of the samples.
+provide a histogram of the values of the samples. The SumAggregation is used to
+sum up all sample values. The MeanAggregation is used to calculate the mean of
+sample values.
 
 [embedmd]:# (stats.go aggs)
 

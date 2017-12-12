@@ -136,14 +136,18 @@ if err := stats.DeleteMeasure(m); err != nil {
 
 ### Creating an aggregation
 
-Currently only 2 types of aggregations are supported. The CountAggregation is used to count
+Currently 4 types of aggregations are supported. The CountAggregation is used to count
 the number of times a sample was recorded. The DistributionAggregation is used to
-provide a histogram of the values of the samples.
+provide a histogram of the values of the samples. The SumAggregation is used to
+sum up all sample values. The MeanAggregation is used to calculate the mean of
+sample values.
 
 [embedmd]:# (stats.go aggs)
 ```go
 distAgg := stats.DistributionAggregation([]float64{0, 1 << 32, 2 << 32, 3 << 32})
 countAgg := stats.CountAggregation{}
+sumAgg := stats.SumAggregation{}
+meanAgg := stats.MeanAggregation{}
 ```
 
 ### Create an aggregation window
@@ -170,7 +174,7 @@ Create and register a view:
 
 [embedmd]:# (stats.go view)
 ```go
-view := stats.NewView(
+view, err := stats.NewView(
 	"my.org/video_size_distribution",
 	"distribution of processed video size over time",
 	nil,
@@ -178,6 +182,9 @@ view := stats.NewView(
 	distAgg,
 	cum,
 )
+if err != nil {
+	log.Fatalf("cannot create view: %v", err)
+}
 if err := stats.RegisterView(view); err != nil {
 	log.Fatal(err)
 }

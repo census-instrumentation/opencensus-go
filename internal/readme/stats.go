@@ -55,9 +55,11 @@ func statsExamples() {
 	// START aggs
 	distAgg := stats.DistributionAggregation([]float64{0, 1 << 32, 2 << 32, 3 << 32})
 	countAgg := stats.CountAggregation{}
+	sumAgg := stats.SumAggregation{}
+	meanAgg := stats.MeanAggregation{}
 	// END aggs
 
-	_, _ = distAgg, countAgg
+	_, _, _, _ = distAgg, countAgg, sumAgg, meanAgg
 
 	// START windows
 	interval := stats.Interval{
