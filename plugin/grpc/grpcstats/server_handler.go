@@ -27,6 +27,7 @@ import (
 	"go.opencensus.io/tag"
 	"google.golang.org/grpc/grpclog"
 	"google.golang.org/grpc/stats"
+	"google.golang.org/grpc/status"
 )
 
 // ServerStatsHandler is a stats.Handler implementation
@@ -151,12 +152,14 @@ func (h *ServerStatsHandler) handleRPCEnd(ctx context.Context, s *stats.End) {
 	m = append(m, RPCServerFinishedCount.M(1))
 	m = append(m, RPCServerServerElapsedTime.M(float64(elapsedTime)/float64(time.Millisecond)))
 	if s.Error != nil {
-		errorCode := s.Error.Error()
-		tm, err := tag.NewMap(ctx,
-			tag.Upsert(keyOpStatus, errorCode),
-		)
-		if err == nil {
-			ctx = tag.NewContext(ctx, tm)
+		s, ok := status.FromError(s.Error)
+		if ok {
+			newTagMap, err := tag.NewMap(ctx,
+				tag.Upsert(keyStatus, s.Code().String()),
+			)
+			if err == nil {
+				ctx = tag.NewContext(ctx, newTagMap)
+			}
 		}
 		m = append(m, RPCServerErrorCount.M(1))
 	}

@@ -99,7 +99,7 @@ func defaultServerViews() {
 	RPCServerErrorCountView, _ = stats.NewView(
 		"grpc.io/server/error_count/cumulative",
 		"RPC Errors",
-		[]tag.Key{keyMethod, keyOpStatus, keyService},
+		[]tag.Key{keyMethod, keyStatus, keyService},
 		RPCServerErrorCount,
 		aggCount,
 		windowCumulative)

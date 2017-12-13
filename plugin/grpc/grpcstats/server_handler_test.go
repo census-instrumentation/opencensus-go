@@ -16,7 +16,6 @@
 package grpcstats
 
 import (
-	"errors"
 	"testing"
 
 	"golang.org/x/net/context"
@@ -24,7 +23,9 @@ import (
 	istats "go.opencensus.io/stats"
 	"go.opencensus.io/tag"
 
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/stats"
+	"google.golang.org/grpc/status"
 )
 
 func TestServerDefaultCollections(t *testing.T) {
@@ -147,7 +148,7 @@ func TestServerDefaultCollections(t *testing.T) {
 						{Length: 10},
 						{Length: 10},
 					},
-					&stats.End{Error: errors.New("someError")},
+					&stats.End{Error: status.Error(codes.Canceled, "canceled")},
 				},
 			},
 			[]*wantData{
@@ -156,8 +157,8 @@ func TestServerDefaultCollections(t *testing.T) {
 					[]*istats.Row{
 						{
 							[]tag.Tag{
+								{Key: keyStatus, Value: "Canceled"},
 								{Key: keyMethod, Value: "method"},
-								{Key: keyOpStatus, Value: "someError"},
 								{Key: keyService, Value: "package.service"},
 							},
 							newCountData(1),
@@ -216,7 +217,7 @@ func TestServerDefaultCollections(t *testing.T) {
 						{Length: 4096},
 						{Length: 16384},
 					},
-					&stats.End{Error: errors.New("someError1")},
+					&stats.End{Error: status.Error(codes.Aborted, "aborted")},
 				},
 				{
 					[]tagPair{{k1, "v11"}, {k2, "v22"}},
@@ -230,7 +231,7 @@ func TestServerDefaultCollections(t *testing.T) {
 						{Length: 4096},
 						{Length: 16384},
 					},
-					&stats.End{Error: errors.New("someError2")},
+					&stats.End{Error: status.Error(codes.Canceled, "canceled")},
 				},
 			},
 			[]*wantData{
@@ -239,16 +240,16 @@ func TestServerDefaultCollections(t *testing.T) {
 					[]*istats.Row{
 						{
 							[]tag.Tag{
+								{Key: keyStatus, Value: "Canceled"},
 								{Key: keyMethod, Value: "method"},
-								{Key: keyOpStatus, Value: "someError1"},
 								{Key: keyService, Value: "package.service"},
 							},
 							newCountData(1),
 						},
 						{
 							[]tag.Tag{
+								{Key: keyStatus, Value: "Aborted"},
 								{Key: keyMethod, Value: "method"},
-								{Key: keyOpStatus, Value: "someError2"},
 								{Key: keyService, Value: "package.service"},
 							},
 							newCountData(1),
@@ -332,11 +333,9 @@ func TestServerDefaultCollections(t *testing.T) {
 			for _, in := range rpc.inPayloads {
 				h.HandleRPC(ctx, in)
 			}
-
 			for _, out := range rpc.outPayloads {
 				h.HandleRPC(ctx, out)
 			}
-
 			h.HandleRPC(ctx, rpc.end)
 		}
 

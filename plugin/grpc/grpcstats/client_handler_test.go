@@ -16,8 +16,10 @@
 package grpcstats
 
 import (
-	"errors"
 	"testing"
+
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"golang.org/x/net/context"
 
@@ -147,7 +149,7 @@ func TestClientDefaultCollections(t *testing.T) {
 						{Length: 10},
 						{Length: 10},
 					},
-					&stats.End{Error: errors.New("someError")},
+					&stats.End{Error: status.Error(codes.Canceled, "canceled")},
 				},
 			},
 			[]*wantData{
@@ -156,8 +158,8 @@ func TestClientDefaultCollections(t *testing.T) {
 					[]*istats.Row{
 						{
 							[]tag.Tag{
+								{Key: keyStatus, Value: "Canceled"},
 								{Key: keyMethod, Value: "method"},
-								{Key: keyOpStatus, Value: "someError"},
 								{Key: keyService, Value: "package.service"},
 							},
 							newMeanData(1, 1),
@@ -216,7 +218,7 @@ func TestClientDefaultCollections(t *testing.T) {
 						{Length: 4096},
 						{Length: 16384},
 					},
-					&stats.End{Error: errors.New("someError1")},
+					&stats.End{Error: status.Error(codes.Canceled, "canceled")},
 				},
 				{
 					[]tagPair{{k1, "v11"}, {k2, "v22"}},
@@ -230,7 +232,7 @@ func TestClientDefaultCollections(t *testing.T) {
 						{Length: 4096},
 						{Length: 16384},
 					},
-					&stats.End{Error: errors.New("someError2")},
+					&stats.End{Error: status.Error(codes.Aborted, "aborted")},
 				},
 			},
 			[]*wantData{
@@ -239,16 +241,16 @@ func TestClientDefaultCollections(t *testing.T) {
 					[]*istats.Row{
 						{
 							[]tag.Tag{
+								{Key: keyStatus, Value: "Canceled"},
 								{Key: keyMethod, Value: "method"},
-								{Key: keyOpStatus, Value: "someError1"},
 								{Key: keyService, Value: "package.service"},
 							},
 							newMeanData(1, 1),
 						},
 						{
 							[]tag.Tag{
+								{Key: keyStatus, Value: "Aborted"},
 								{Key: keyMethod, Value: "method"},
-								{Key: keyOpStatus, Value: "someError2"},
 								{Key: keyService, Value: "package.service"},
 							},
 							newMeanData(1, 1),
@@ -327,17 +329,13 @@ func TestClientDefaultCollections(t *testing.T) {
 			}
 			encoded := tag.Encode(tm)
 			ctx := stats.SetTags(context.Background(), encoded)
-
 			ctx = h.TagRPC(ctx, rpc.tagInfo)
-
 			for _, out := range rpc.outPayloads {
 				h.HandleRPC(ctx, out)
 			}
-
 			for _, in := range rpc.inPayloads {
 				h.HandleRPC(ctx, in)
 			}
-
 			h.HandleRPC(ctx, rpc.end)
 		}
 
