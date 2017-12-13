@@ -69,85 +69,226 @@ var (
 func defaultServerMeasures() {
 	var err error
 
-	// Creating server measures
-	if RPCServerErrorCount, err = stats.NewMeasureInt64("/grpc.io/server/error_count", "RPC Errors", unitCount); err != nil {
-		log.Fatalf("Cannot create measure /grpc.io/server/error_count: %v", err)
+	if RPCServerErrorCount, err = stats.NewMeasureInt64("grpc.io/server/error_count", "RPC Errors", unitCount); err != nil {
+		log.Fatalf("Cannot create measure grpc.io/server/error_count: %v", err)
 	}
-	if RPCServerServerElapsedTime, err = stats.NewMeasureFloat64("/grpc.io/server/server_elapsed_time", "Server elapsed time in msecs", unitMillisecond); err != nil {
-		log.Fatalf("Cannot create measure /grpc.io/server/server_elapsed_time: %v", err)
+	if RPCServerServerElapsedTime, err = stats.NewMeasureFloat64("grpc.io/server/server_elapsed_time", "Server elapsed time in msecs", unitMillisecond); err != nil {
+		log.Fatalf("Cannot create measure grpc.io/server/server_elapsed_time: %v", err)
 	}
-	if RPCServerRequestBytes, err = stats.NewMeasureInt64("/grpc.io/server/request_bytes", "Request bytes", unitByte); err != nil {
-		log.Fatalf("Cannot create measure /grpc.io/server/request_bytes: %v", err)
+	if RPCServerRequestBytes, err = stats.NewMeasureInt64("grpc.io/server/request_bytes", "Request bytes", unitByte); err != nil {
+		log.Fatalf("Cannot create measure grpc.io/server/request_bytes: %v", err)
 	}
-	if RPCServerResponseBytes, err = stats.NewMeasureInt64("/grpc.io/server/response_bytes", "Response bytes", unitByte); err != nil {
-		log.Fatalf("Cannot create measure /grpc.io/server/response_bytes: %v", err)
+	if RPCServerResponseBytes, err = stats.NewMeasureInt64("grpc.io/server/response_bytes", "Response bytes", unitByte); err != nil {
+		log.Fatalf("Cannot create measure grpc.io/server/response_bytes: %v", err)
 	}
-	if RPCServerStartedCount, err = stats.NewMeasureInt64("/grpc.io/server/started_count", "Number of server RPCs (streams) started", unitCount); err != nil {
-		log.Fatalf("Cannot create measure /grpc.io/server/started_count: %v", err)
+	if RPCServerStartedCount, err = stats.NewMeasureInt64("grpc.io/server/started_count", "Number of server RPCs (streams) started", unitCount); err != nil {
+		log.Fatalf("Cannot create measure grpc.io/server/started_count: %v", err)
 	}
-	if RPCServerFinishedCount, err = stats.NewMeasureInt64("/grpc.io/server/finished_count", "Number of server RPCs (streams) finished", unitCount); err != nil {
-		log.Fatalf("Cannot create measure /grpc.io/server/finished_count: %v", err)
+	if RPCServerFinishedCount, err = stats.NewMeasureInt64("grpc.io/server/finished_count", "Number of server RPCs (streams) finished", unitCount); err != nil {
+		log.Fatalf("Cannot create measure grpc.io/server/finished_count: %v", err)
 	}
-	if RPCServerRequestCount, err = stats.NewMeasureInt64("/grpc.io/server/request_count", "Number of server RPC request messages", unitCount); err != nil {
-		log.Fatalf("Cannot create measure /grpc.io/server/request_count: %v", err)
+	if RPCServerRequestCount, err = stats.NewMeasureInt64("grpc.io/server/request_count", "Number of server RPC request messages", unitCount); err != nil {
+		log.Fatalf("Cannot create measure grpc.io/server/request_count: %v", err)
 	}
-	if RPCServerResponseCount, err = stats.NewMeasureInt64("/grpc.io/server/response_count", "Number of server RPC response messages", unitCount); err != nil {
-		log.Fatalf("Cannot create measure /grpc.io/server/response_count: %v", err)
+	if RPCServerResponseCount, err = stats.NewMeasureInt64("grpc.io/server/response_count", "Number of server RPC response messages", unitCount); err != nil {
+		log.Fatalf("Cannot create measure grpc.io/server/response_count: %v", err)
 	}
 }
 
-func defaultServerserverViews() {
-	RPCServerErrorCountView, _ = stats.NewView("grpc.io/server/error_count/cumulative", "RPC Errors", []tag.Key{keyMethod, keyOpStatus, keyService}, RPCServerErrorCount, aggCount, windowCumulative)
-	serverViews = append(serverViews, RPCServerErrorCountView)
-	RPCServerServerElapsedTimeView, _ = stats.NewView("grpc.io/server/server_elapsed_time/cumulative", "Server elapsed time in msecs", []tag.Key{keyService, keyMethod}, RPCServerServerElapsedTime, aggDistMillis, windowCumulative)
-	serverViews = append(serverViews, RPCServerServerElapsedTimeView)
-	RPCServerRequestBytesView, _ = stats.NewView("grpc.io/server/request_bytes/cumulative", "Request bytes", []tag.Key{keyService, keyMethod}, RPCServerRequestBytes, aggDistBytes, windowCumulative)
-	serverViews = append(serverViews, RPCServerRequestBytesView)
-	RPCServerResponseBytesView, _ = stats.NewView("grpc.io/server/response_bytes/cumulative", "Response bytes", []tag.Key{keyService, keyMethod}, RPCServerResponseBytes, aggDistBytes, windowCumulative)
-	serverViews = append(serverViews, RPCServerResponseBytesView)
-	RPCServerRequestCountView, _ = stats.NewView("grpc.io/server/request_count/cumulative", "Count of request messages per server RPC", []tag.Key{keyService, keyMethod}, RPCServerRequestCount, aggDistCounts, windowCumulative)
-	serverViews = append(serverViews, RPCServerRequestCountView)
-	RPCServerResponseCountView, _ = stats.NewView("grpc.io/server/response_count/cumulative", "Count of response messages per server RPC", []tag.Key{keyService, keyMethod}, RPCServerResponseCount, aggDistCounts, windowCumulative)
-	serverViews = append(serverViews, RPCServerResponseCountView)
+func defaultServerViews() {
+	RPCServerErrorCountView, _ = stats.NewView(
+		"grpc.io/server/error_count/cumulative",
+		"RPC Errors",
+		[]tag.Key{keyMethod, keyOpStatus, keyService},
+		RPCServerErrorCount,
+		aggCount,
+		windowCumulative)
+	RPCServerServerElapsedTimeView, _ = stats.NewView(
+		"grpc.io/server/server_elapsed_time/cumulative",
+		"Server elapsed time in msecs",
+		[]tag.Key{keyService, keyMethod},
+		RPCServerServerElapsedTime,
+		aggDistMillis,
+		windowCumulative)
+	RPCServerRequestBytesView, _ = stats.NewView(
+		"grpc.io/server/request_bytes/cumulative",
+		"Request bytes",
+		[]tag.Key{keyService, keyMethod},
+		RPCServerRequestBytes,
+		aggDistBytes,
+		windowCumulative)
+	RPCServerResponseBytesView, _ = stats.NewView(
+		"grpc.io/server/response_bytes/cumulative",
+		"Response bytes",
+		[]tag.Key{keyService, keyMethod},
+		RPCServerResponseBytes,
+		aggDistBytes,
+		windowCumulative)
+	RPCServerRequestCountView, _ = stats.NewView(
+		"grpc.io/server/request_count/cumulative",
+		"Count of request messages per server RPC",
+		[]tag.Key{keyService, keyMethod},
+		RPCServerRequestCount,
+		aggDistCounts,
+		windowCumulative)
+	RPCServerResponseCountView, _ = stats.NewView(
+		"grpc.io/server/response_count/cumulative",
+		"Count of response messages per server RPC",
+		[]tag.Key{keyService, keyMethod},
+		RPCServerResponseCount,
+		aggDistCounts,
+		windowCumulative)
 
-	RPCServerServerElapsedTimeMinuteView, _ = stats.NewView("grpc.io/server/server_elapsed_time/minute", "Minute stats for server elapsed time in msecs", []tag.Key{keyService, keyMethod}, RPCServerServerElapsedTime, aggDistMillis, windowSlidingMinute)
-	serverViews = append(serverViews, RPCServerServerElapsedTimeMinuteView)
-	RPCServerRequestBytesMinuteView, _ = stats.NewView("grpc.io/server/request_bytes/minute", "Minute stats for request size in bytes", []tag.Key{keyService, keyMethod}, RPCServerRequestBytes, aggCount, windowSlidingMinute)
-	serverViews = append(serverViews, RPCServerRequestBytesMinuteView)
-	RPCServerResponseBytesMinuteView, _ = stats.NewView("grpc.io/server/response_bytes/minute", "Minute stats for response size in bytes", []tag.Key{keyService, keyMethod}, RPCServerResponseBytes, aggCount, windowSlidingMinute)
-	serverViews = append(serverViews, RPCServerResponseBytesMinuteView)
-	RPCServerErrorCountMinuteView, _ = stats.NewView("grpc.io/server/error_count/minute", "Minute stats for rpc errors", []tag.Key{keyService, keyMethod}, RPCServerErrorCount, aggCount, windowSlidingMinute)
-	serverViews = append(serverViews, RPCServerErrorCountMinuteView)
-	RPCServerStartedCountMinuteView, _ = stats.NewView("grpc.io/server/started_count/minute", "Minute stats on the number of server RPCs started", []tag.Key{keyService, keyMethod}, RPCServerStartedCount, aggCount, windowSlidingMinute)
-	serverViews = append(serverViews, RPCServerStartedCountMinuteView)
-	RPCServerFinishedCountMinuteView, _ = stats.NewView("grpc.io/server/finished_count/minute", "Minute stats on the number of server RPCs finished", []tag.Key{keyService, keyMethod}, RPCServerFinishedCount, aggCount, windowSlidingMinute)
-	serverViews = append(serverViews, RPCServerFinishedCountMinuteView)
-	RPCServerRequestCountMinuteView, _ = stats.NewView("grpc.io/server/request_count/minute", "Minute stats on the count of request messages per server RPC", []tag.Key{keyService, keyMethod}, RPCServerRequestCount, aggCount, windowSlidingMinute)
-	serverViews = append(serverViews, RPCServerRequestCountMinuteView)
-	RPCServerResponseCountMinuteView, _ = stats.NewView("grpc.io/server/response_count/minute", "Minute stats on the count of response messages per server RPC", []tag.Key{keyService, keyMethod}, RPCServerResponseCount, aggCount, windowSlidingMinute)
-	serverViews = append(serverViews, RPCServerResponseCountMinuteView)
+	serverViews = append(serverViews,
+		RPCServerErrorCountView,
+		RPCServerServerElapsedTimeView,
+		RPCServerRequestBytesView,
+		RPCServerResponseBytesView,
+		RPCServerRequestCountView,
+		RPCServerResponseCountView)
 
-	RPCServerServerElapsedTimeHourView, _ = stats.NewView("grpc.io/server/server_elapsed_time/hour", "Hour stats for server elapsed time in msecs", []tag.Key{keyService, keyMethod}, RPCServerServerElapsedTime, aggDistMillis, windowSlidingHour)
-	serverViews = append(serverViews, RPCServerServerElapsedTimeHourView)
-	RPCServerRequestBytesHourView, _ = stats.NewView("grpc.io/server/request_bytes/hour", "Hour stats for request size in bytes", []tag.Key{keyService, keyMethod}, RPCServerRequestBytes, aggCount, windowSlidingHour)
-	serverViews = append(serverViews, RPCServerRequestBytesHourView)
-	RPCServerResponseBytesHourView, _ = stats.NewView("grpc.io/server/response_bytes/hour", "Hour stats for response size in bytes", []tag.Key{keyService, keyMethod}, RPCServerResponseBytes, aggCount, windowSlidingHour)
-	serverViews = append(serverViews, RPCServerResponseBytesHourView)
-	RPCServerErrorCountHourView, _ = stats.NewView("grpc.io/server/error_count/hour", "Hour stats for rpc errors", []tag.Key{keyService, keyMethod}, RPCServerErrorCount, aggCount, windowSlidingHour)
-	serverViews = append(serverViews, RPCServerErrorCountHourView)
-	RPCServerStartedCountHourView, _ = stats.NewView("grpc.io/server/started_count/hour", "Hour stats on the number of server RPCs started", []tag.Key{keyService, keyMethod}, RPCServerStartedCount, aggCount, windowSlidingHour)
-	serverViews = append(serverViews, RPCServerStartedCountHourView)
-	RPCServerFinishedCountHourView, _ = stats.NewView("grpc.io/server/finished_count/hour", "Hour stats on the number of server RPCs finished", []tag.Key{keyService, keyMethod}, RPCServerFinishedCount, aggCount, windowSlidingHour)
-	serverViews = append(serverViews, RPCServerFinishedCountHourView)
-	RPCServerRequestCountHourView, _ = stats.NewView("grpc.io/server/request_count/hour", "Hour stats on the count of request messages per server RPC", []tag.Key{keyService, keyMethod}, RPCServerRequestCount, aggCount, windowSlidingHour)
-	serverViews = append(serverViews, RPCServerRequestCountHourView)
-	RPCServerResponseCountHourView, _ = stats.NewView("grpc.io/server/response_count/hour", "Hour stats on the count of response messages per server RPC", []tag.Key{keyService, keyMethod}, RPCServerResponseCount, aggCount, windowSlidingHour)
-	serverViews = append(serverViews, RPCServerResponseCountHourView)
+	// TODO(jbd): Add roundtrip_latency, uncompressed_request_bytes, uncompressed_response_bytes, request_count, response_count.
+
+	RPCServerServerElapsedTimeMinuteView, _ = stats.NewView(
+		"grpc.io/server/server_elapsed_time/minute",
+		"Minute stats for server elapsed time in msecs",
+		[]tag.Key{keyService, keyMethod},
+		RPCServerServerElapsedTime,
+		aggDistMillis,
+		windowSlidingMinute)
+	RPCServerRequestBytesMinuteView, _ = stats.NewView(
+		"grpc.io/server/request_bytes/minute",
+		"Minute stats for request size in bytes",
+		[]tag.Key{keyService, keyMethod},
+		RPCServerRequestBytes,
+		aggCount,
+		windowSlidingMinute)
+	RPCServerResponseBytesMinuteView, _ = stats.NewView(
+		"grpc.io/server/response_bytes/minute",
+		"Minute stats for response size in bytes",
+		[]tag.Key{keyService, keyMethod},
+		RPCServerResponseBytes,
+		aggCount,
+		windowSlidingMinute)
+	RPCServerErrorCountMinuteView, _ = stats.NewView(
+		"grpc.io/server/error_count/minute",
+		"Minute stats for rpc errors",
+		[]tag.Key{keyService, keyMethod},
+		RPCServerErrorCount,
+		aggCount,
+		windowSlidingMinute)
+	RPCServerStartedCountMinuteView, _ = stats.NewView(
+		"grpc.io/server/started_count/minute",
+		"Minute stats on the number of server RPCs started",
+		[]tag.Key{keyService, keyMethod},
+		RPCServerStartedCount,
+		aggCount,
+		windowSlidingMinute)
+	RPCServerFinishedCountMinuteView, _ = stats.NewView(
+		"grpc.io/server/finished_count/minute",
+		"Minute stats on the number of server RPCs finished",
+		[]tag.Key{keyService, keyMethod},
+		RPCServerFinishedCount,
+		aggCount,
+		windowSlidingMinute)
+	RPCServerRequestCountMinuteView, _ = stats.NewView(
+		"grpc.io/server/request_count/minute",
+		"Minute stats on the count of request messages per server RPC",
+		[]tag.Key{keyService, keyMethod},
+		RPCServerRequestCount,
+		aggCount,
+		windowSlidingMinute)
+	RPCServerResponseCountMinuteView, _ = stats.NewView(
+		"grpc.io/server/response_count/minute",
+		"Minute stats on the count of response messages per server RPC",
+		[]tag.Key{keyService, keyMethod},
+		RPCServerResponseCount,
+		aggCount,
+		windowSlidingMinute)
+
+	serverViews = append(serverViews,
+		RPCServerServerElapsedTimeMinuteView,
+		RPCServerRequestBytesMinuteView,
+		RPCServerResponseBytesMinuteView,
+		RPCServerErrorCountMinuteView,
+		RPCServerStartedCountMinuteView,
+		RPCServerFinishedCountMinuteView,
+		RPCServerRequestCountMinuteView,
+		RPCServerResponseCountMinuteView,
+	)
+
+	RPCServerServerElapsedTimeHourView, _ = stats.NewView(
+		"grpc.io/server/server_elapsed_time/hour",
+		"Hour stats for server elapsed time in msecs",
+		[]tag.Key{keyService, keyMethod},
+		RPCServerServerElapsedTime,
+		aggDistMillis,
+		windowSlidingHour)
+	RPCServerRequestBytesHourView, _ = stats.NewView(
+		"grpc.io/server/request_bytes/hour",
+		"Hour stats for request size in bytes",
+		[]tag.Key{keyService, keyMethod},
+		RPCServerRequestBytes,
+		aggCount,
+		windowSlidingHour)
+	RPCServerResponseBytesHourView, _ = stats.NewView(
+		"grpc.io/server/response_bytes/hour",
+		"Hour stats for response size in bytes",
+		[]tag.Key{keyService, keyMethod},
+		RPCServerResponseBytes,
+		aggCount,
+		windowSlidingHour)
+	RPCServerErrorCountHourView, _ = stats.NewView(
+		"grpc.io/server/error_count/hour",
+		"Hour stats for rpc errors",
+		[]tag.Key{keyService, keyMethod},
+		RPCServerErrorCount,
+		aggCount,
+		windowSlidingHour)
+	RPCServerStartedCountHourView, _ = stats.NewView(
+		"grpc.io/server/started_count/hour",
+		"Hour stats on the number of server RPCs started",
+		[]tag.Key{keyService, keyMethod},
+		RPCServerStartedCount,
+		aggCount,
+		windowSlidingHour)
+	RPCServerFinishedCountHourView, _ = stats.NewView(
+		"grpc.io/server/finished_count/hour",
+		"Hour stats on the number of server RPCs finished",
+		[]tag.Key{keyService, keyMethod},
+		RPCServerFinishedCount,
+		aggCount,
+		windowSlidingHour)
+	RPCServerRequestCountHourView, _ = stats.NewView(
+		"grpc.io/server/request_count/hour",
+		"Hour stats on the count of request messages per server RPC",
+		[]tag.Key{keyService, keyMethod},
+		RPCServerRequestCount,
+		aggCount,
+		windowSlidingHour)
+	RPCServerResponseCountHourView, _ = stats.NewView(
+		"grpc.io/server/response_count/hour",
+		"Hour stats on the count of response messages per server RPC",
+		[]tag.Key{keyService, keyMethod},
+		RPCServerResponseCount,
+		aggCount,
+		windowSlidingHour)
+
+	serverViews = append(serverViews,
+		RPCServerResponseCountHourView,
+		RPCServerServerElapsedTimeHourView,
+		RPCServerRequestBytesHourView,
+		RPCServerResponseBytesHourView,
+		RPCServerErrorCountHourView,
+		RPCServerStartedCountHourView,
+		RPCServerFinishedCountHourView,
+		RPCServerRequestCountHourView,
+	)
 }
 
 func initServer() {
 	defaultServerMeasures()
-	defaultServerserverViews()
+	defaultServerViews()
 }
 
 var serverViews []*stats.View
