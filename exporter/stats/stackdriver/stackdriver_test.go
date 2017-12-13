@@ -581,13 +581,13 @@ func TestExporter_createMeasure(t *testing.T) {
 		t.Errorf("Exporter.createMeasure() error = %v", err)
 	}
 	if count := getCalls; count != 1 {
-		t.Errorf("getMetricDescriptor needs to be called for twice; called %v times", count)
-	}
-	if count := createCalls; count != 1 {
 		t.Errorf("getMetricDescriptor needs to be called for once; called %v times", count)
 	}
+	if count := createCalls; count != 1 {
+		t.Errorf("createMetricDescriptor needs to be called for once; called %v times", count)
+	}
 	if count := len(e.createdViews); count != 1 {
-		t.Errorf("len(e.createdViews) = %v; want &v", count)
+		t.Errorf("len(e.createdViews) = %v; want 1", count)
 	}
 }
 
