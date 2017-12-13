@@ -104,9 +104,7 @@ func NewExporter(o Options) (*Exporter, error) {
 	}
 	e.bundler = bundler.NewBundler((*stats.ViewData)(nil), func(bundle interface{}) {
 		vds := bundle.([]*stats.ViewData)
-		if err := e.upload(vds); err != nil {
-			e.onError(err)
-		}
+		e.handleUpload(vds...)
 	})
 	e.bundler.DelayThreshold = e.o.BundleDelayThreshold
 	e.bundler.BundleCountThreshold = e.o.BundleCountThreshold
@@ -119,7 +117,25 @@ func (e *Exporter) Export(vd *stats.ViewData) {
 	if len(vd.Rows) == 0 {
 		return
 	}
-	e.bundler.Add(vd, 1)
+	err := e.bundler.Add(vd, 1)
+	switch err {
+	case nil:
+		return
+	case bundler.ErrOversizedItem:
+		go e.handleUpload(vd)
+	case bundler.ErrOverflow:
+		e.onError(errors.New("failed to upload: buffer full"))
+	default:
+		e.onError(err)
+	}
+}
+
+// handleUpload handles uploading a slice
+// of ViewData, as well as error handling.
+func (e *Exporter) handleUpload(vds ...*stats.ViewData) {
+	if err := e.upload(vds); err != nil {
+		e.onError(err)
+	}
 }
 
 // Flush waits for exported view data to be uploaded.
