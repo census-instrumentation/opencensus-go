@@ -18,10 +18,10 @@
 package tagencoding
 
 import (
-	"unsafe"
+	"encoding/binary"
 )
 
-var sizeOfUint16 = (int)(unsafe.Sizeof(uint16(0)))
+var sizeOfUint16 = 2 // 2 bytes
 
 type Values struct {
 	Buffer     []byte
@@ -41,12 +41,9 @@ func (vb *Values) WriteValue(v []byte) {
 	length := len(v)
 	vb.growIfRequired(sizeOfUint16 + length)
 
-	// writing length of v
-	bytes := *(*[2]byte)(unsafe.Pointer(&length))
-	vb.Buffer[vb.WriteIndex] = bytes[0]
-	vb.WriteIndex++
-	vb.Buffer[vb.WriteIndex] = bytes[1]
-	vb.WriteIndex++
+	lbytes := vb.Buffer[vb.WriteIndex : vb.WriteIndex+sizeOfUint16]
+	binary.LittleEndian.PutUint16(lbytes, uint16(length))
+	vb.WriteIndex += sizeOfUint16
 
 	if length == 0 {
 		// No value was encoded for this key
@@ -61,8 +58,10 @@ func (vb *Values) WriteValue(v []byte) {
 // ReadValue is the helper method to read the values when decoding valuesBytes to a map[Key][]byte.
 func (vb *Values) ReadValue() []byte {
 	// read length of v
-	length := (int)(*(*uint16)(unsafe.Pointer(&vb.Buffer[vb.ReadIndex])))
+	lbytes := vb.Buffer[vb.ReadIndex : vb.ReadIndex+sizeOfUint16]
+	length := int(binary.LittleEndian.Uint16(lbytes))
 	vb.ReadIndex += sizeOfUint16
+
 	if length == 0 {
 		// No value was encoded for this key
 		return nil
