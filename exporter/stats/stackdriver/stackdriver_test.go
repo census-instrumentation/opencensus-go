@@ -15,21 +15,23 @@
 package stackdriver
 
 import (
+	"context"
 	"reflect"
 	"testing"
 	"time"
 
-	distributionpb "google.golang.org/genproto/googleapis/api/distribution"
-	"google.golang.org/genproto/googleapis/api/label"
-
-	"go.opencensus.io/stats"
-	"go.opencensus.io/tag"
-
 	monitoring "cloud.google.com/go/monitoring/apiv3"
 	timestamp "github.com/golang/protobuf/ptypes/timestamp"
+	"go.opencensus.io/stats"
+	"go.opencensus.io/tag"
+	distributionpb "google.golang.org/genproto/googleapis/api/distribution"
+	"google.golang.org/genproto/googleapis/api/label"
+	"google.golang.org/genproto/googleapis/api/metric"
 	metricpb "google.golang.org/genproto/googleapis/api/metric"
 	monitoredrespb "google.golang.org/genproto/googleapis/api/monitoredres"
 	monitoringpb "google.golang.org/genproto/googleapis/monitoring/v3"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 func TestExporter_makeReq(t *testing.T) {
@@ -522,6 +524,70 @@ func TestEqualAggWindowTagKeys(t *testing.T) {
 			}
 
 		})
+	}
+}
+
+func TestExporter_createMeasure(t *testing.T) {
+	oldGetMetricDescriptor := getMetricDescriptor
+	oldCreateMetricDescriptor := createMetricDescriptor
+
+	defer func() {
+		getMetricDescriptor = oldGetMetricDescriptor
+		createMetricDescriptor = oldCreateMetricDescriptor
+	}()
+
+	key, _ := tag.NewKey("test-key-one")
+	m, err := stats.NewMeasureFloat64("test-measure", "measure desc", "unit")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer stats.DeleteMeasure(m)
+
+	view, err := stats.NewView("cumview", "desc", []tag.Key{key}, m, stats.CountAggregation{}, stats.Cumulative{})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	data := stats.CountData(0)
+	vd := newTestCumViewData(view, time.Now(), time.Now(), &data, &data)
+
+	e := &Exporter{
+		createdViews: make(map[string]*metricpb.MetricDescriptor),
+	}
+
+	var getCalls, createCalls int
+	getMetricDescriptor = func(ctx context.Context, c *monitoring.MetricClient, mdr *monitoringpb.GetMetricDescriptorRequest) (*metric.MetricDescriptor, error) {
+		getCalls++
+		return nil, status.Error(codes.NotFound, "")
+	}
+	createMetricDescriptor = func(ctx context.Context, c *monitoring.MetricClient, mdr *monitoringpb.CreateMetricDescriptorRequest) (*metric.MetricDescriptor, error) {
+		createCalls++
+		return &metric.MetricDescriptor{
+			DisplayName: "display",
+			Description: "desc",
+			Unit:        "unit",
+			Type:        "hello",
+			MetricKind:  metricpb.MetricDescriptor_CUMULATIVE,
+			ValueType:   metricpb.MetricDescriptor_INT64,
+			Labels:      newLabelDescriptors(vd.View.TagKeys()),
+		}, nil
+	}
+
+	ctx := context.Background()
+	if err := e.createMeasure(ctx, vd); err != nil {
+		t.Errorf("Exporter.createMeasure() error = %v", err)
+	}
+	if err := e.createMeasure(ctx, vd); err != nil {
+		t.Errorf("Exporter.createMeasure() error = %v", err)
+	}
+	if count := getCalls; count != 1 {
+		t.Errorf("getMetricDescriptor needs to be called for once; called %v times", count)
+	}
+	if count := createCalls; count != 1 {
+		t.Errorf("createMetricDescriptor needs to be called for once; called %v times", count)
+	}
+	if count := len(e.createdViews); count != 1 {
+		t.Errorf("len(e.createdViews) = %v; want 1", count)
 	}
 }
 
