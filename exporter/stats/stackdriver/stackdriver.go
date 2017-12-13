@@ -264,7 +264,7 @@ func (e *Exporter) createMeasure(ctx context.Context, vd *stats.ViewData) error 
 	md, err = e.c.CreateMetricDescriptor(ctx, &monitoringpb.CreateMetricDescriptorRequest{
 		Name: monitoring.MetricProjectPath(e.o.ProjectID),
 		MetricDescriptor: &metricpb.MetricDescriptor{
-			DisplayName: viewName,
+			DisplayName: path.Join("OpenCensus", viewName),
 			Description: m.Description(),
 			Unit:        m.Unit(),
 			Type:        namespacedViewName(viewName, false),
