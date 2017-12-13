@@ -29,11 +29,9 @@ import (
 	"sync"
 	"time"
 
-	"go.opencensus.io/tag"
-
 	"go.opencensus.io/internal"
-
 	"go.opencensus.io/stats"
+	"go.opencensus.io/tag"
 
 	monitoring "cloud.google.com/go/monitoring/apiv3"
 	timestamp "github.com/golang/protobuf/ptypes/timestamp"
@@ -41,6 +39,7 @@ import (
 	"google.golang.org/api/support/bundler"
 	distributionpb "google.golang.org/genproto/googleapis/api/distribution"
 	labelpb "google.golang.org/genproto/googleapis/api/label"
+	"google.golang.org/genproto/googleapis/api/metric"
 	metricpb "google.golang.org/genproto/googleapis/api/metric"
 	monitoredrespb "google.golang.org/genproto/googleapis/api/monitoredres"
 	monitoringpb "google.golang.org/genproto/googleapis/monitoring/v3"
@@ -222,7 +221,7 @@ func (e *Exporter) createMeasure(ctx context.Context, vd *stats.ViewData) error 
 	}
 
 	metricName := monitoring.MetricMetricDescriptorPath(e.o.ProjectID, namespacedViewName(viewName, true))
-	md, err := e.c.GetMetricDescriptor(ctx, &monitoringpb.GetMetricDescriptorRequest{
+	md, err := getMetricDescriptor(ctx, e.c, &monitoringpb.GetMetricDescriptorRequest{
 		Name: metricName,
 	})
 	if err == nil {
@@ -261,7 +260,7 @@ func (e *Exporter) createMeasure(ctx context.Context, vd *stats.ViewData) error 
 		return fmt.Errorf("unsupported window type: %T", window)
 	}
 
-	md, err = e.c.CreateMetricDescriptor(ctx, &monitoringpb.CreateMetricDescriptorRequest{
+	md, err = createMetricDescriptor(ctx, e.c, &monitoringpb.CreateMetricDescriptorRequest{
 		Name: monitoring.MetricProjectPath(e.o.ProjectID),
 		MetricDescriptor: &metricpb.MetricDescriptor{
 			DisplayName: path.Join("OpenCensus", viewName),
@@ -428,4 +427,12 @@ func equalAggWindowTagKeys(md *metricpb.MetricDescriptor, agg stats.Aggregation,
 	}
 
 	return nil
+}
+
+var createMetricDescriptor = func(ctx context.Context, c *monitoring.MetricClient, mdr *monitoringpb.CreateMetricDescriptorRequest) (*metric.MetricDescriptor, error) {
+	return c.CreateMetricDescriptor(ctx, mdr)
+}
+
+var getMetricDescriptor = func(ctx context.Context, c *monitoring.MetricClient, mdr *monitoringpb.GetMetricDescriptorRequest) (*metric.MetricDescriptor, error) {
+	return c.GetMetricDescriptor(ctx, mdr)
 }
