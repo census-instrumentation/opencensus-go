@@ -189,7 +189,7 @@ func Decode(bytes []byte) (*Map, error) {
 
 	version := eg.readByte()
 	if version > tagsVersionID {
-		return nil, fmt.Errorf("decode failed; unsupported version: %q; supports only up to: %q", version, tagsVersionID)
+		return nil, fmt.Errorf("cannot decode: unsupported version: %q; supports only up to: %q", version, tagsVersionID)
 	}
 
 	for !eg.readEnded() {
@@ -199,7 +199,7 @@ func Decode(bytes []byte) (*Map, error) {
 		case keyTypeString:
 			break
 		default:
-			return nil, fmt.Errorf("decode failed; invalid key type: %q", typ)
+			return nil, fmt.Errorf("cannot decode: invalid key type: %q", typ)
 		}
 
 		k, err := eg.readBytesWithVarintLen()
@@ -214,11 +214,13 @@ func Decode(bytes []byte) (*Map, error) {
 
 		key, err := NewKey(string(k))
 		if err != nil {
-			// TODO(acetechnologist): log that key received on the wire and its value was ignored
-			continue
+			return nil, err // no partial failures
 		}
-		ts.upsert(key, string(v))
+		val := string(v)
+		if !checkValue(val) {
+			return nil, errInvalid // no partial failures
+		}
+		ts.upsert(key, val)
 	}
-
 	return ts, nil
 }
