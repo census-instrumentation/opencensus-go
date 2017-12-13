@@ -654,7 +654,7 @@ func TestReportUsage(t *testing.T) {
 			t.Fatalf("%v: cannot subscribe: %v", tt.name, err)
 		}
 
-		e := &testExporter{}
+		e := &countExporter{}
 		RegisterExporter(e)
 
 		Record(ctx, m.M(1))
@@ -685,7 +685,6 @@ func Test_SetReportingPeriodReqNeverBlocks(t *testing.T) {
 	t.Parallel()
 
 	worker := newWorker()
-
 	durations := []time.Duration{-1, 0, 10, 100 * time.Millisecond}
 	for i, duration := range durations {
 		ackChan := make(chan bool, 1)
@@ -700,12 +699,65 @@ func Test_SetReportingPeriodReqNeverBlocks(t *testing.T) {
 	}
 }
 
-type testExporter struct {
+func TestWorkerCumStarttime(t *testing.T) {
+	restart()
+
+	ctx := context.Background()
+	m, err := NewMeasureInt64("measure", "desc", "unit")
+	if err != nil {
+		t.Fatalf("NewMeasureInt64() = %v", err)
+	}
+	view, err := NewView("cum", "", nil, m, CountAggregation{}, Cumulative{})
+	if err != nil {
+		t.Fatalf("NewView() = %v", err)
+	}
+
+	SetReportingPeriod(25 * time.Millisecond)
+	if err := view.Subscribe(); err != nil {
+		t.Fatalf("cannot subscribe to %v: %v", view.Name(), err)
+	}
+
+	e := &vdExporter{}
+	RegisterExporter(e)
+	defer UnregisterExporter(e)
+
+	Record(ctx, m.M(1))
+	Record(ctx, m.M(1))
+	Record(ctx, m.M(1))
+	Record(ctx, m.M(1))
+
+	time.Sleep(50 * time.Millisecond)
+
+	Record(ctx, m.M(1))
+	Record(ctx, m.M(1))
+	Record(ctx, m.M(1))
+	Record(ctx, m.M(1))
+
+	time.Sleep(50 * time.Millisecond)
+
+	e.Lock()
+	if len(e.vds) == 0 {
+		t.Fatal("Got no view data; want at least one")
+	}
+
+	var start time.Time
+	for _, vd := range e.vds {
+		if start.IsZero() {
+			start = vd.Start
+		}
+		if !vd.Start.Equal(start) {
+			t.Errorf("Cumulative view data start time = %v; want %v", vd.Start, start)
+		}
+	}
+	e.Unlock()
+}
+
+type countExporter struct {
 	sync.Mutex
 	count int64
 }
 
-func (e *testExporter) Export(vd *ViewData) {
+func (e *countExporter) Export(vd *ViewData) {
 	if len(vd.Rows) == 0 {
 		return
 	}
@@ -714,6 +766,18 @@ func (e *testExporter) Export(vd *ViewData) {
 	e.Lock()
 	defer e.Unlock()
 	e.count = int64(*d)
+}
+
+type vdExporter struct {
+	sync.Mutex
+	vds []*ViewData
+}
+
+func (e *vdExporter) Export(vd *ViewData) {
+	e.Lock()
+	defer e.Unlock()
+
+	e.vds = append(e.vds, vd)
 }
 
 // restart stops the current processors and creates a new one.

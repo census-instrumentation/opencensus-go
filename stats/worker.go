@@ -30,10 +30,9 @@ func init() {
 }
 
 type worker struct {
-	measuresByName map[string]Measure
-	measures       map[Measure]bool
-	viewsByName    map[string]*View
-	views          map[*View]bool
+	measures   map[string]Measure
+	views      map[string]*View
+	startTimes map[*View]time.Time
 
 	timer      *time.Ticker
 	c          chan command
@@ -204,14 +203,13 @@ func SetReportingPeriod(d time.Duration) {
 
 func newWorker() *worker {
 	return &worker{
-		measuresByName: make(map[string]Measure),
-		measures:       make(map[Measure]bool),
-		viewsByName:    make(map[string]*View),
-		views:          make(map[*View]bool),
-		timer:          time.NewTicker(defaultReportingDuration),
-		c:              make(chan command),
-		quit:           make(chan bool),
-		done:           make(chan bool),
+		measures:   make(map[string]Measure),
+		views:      make(map[string]*View),
+		startTimes: make(map[*View]time.Time),
+		timer:      time.NewTicker(defaultReportingDuration),
+		c:          make(chan command),
+		quit:       make(chan bool),
+		done:       make(chan bool),
 	}
 }
 
@@ -239,7 +237,7 @@ func (w *worker) stop() {
 }
 
 func (w *worker) tryRegisterMeasure(m Measure) error {
-	if x, ok := w.measuresByName[m.Name()]; ok {
+	if x, ok := w.measures[m.Name()]; ok {
 		if x != m {
 			return fmt.Errorf("cannot register measure %q; another measure with the same name is already registered", m.Name())
 		}
@@ -248,13 +246,12 @@ func (w *worker) tryRegisterMeasure(m Measure) error {
 		return nil
 	}
 
-	w.measuresByName[m.Name()] = m
-	w.measures[m] = true
+	w.measures[m.Name()] = m
 	return nil
 }
 
 func (w *worker) tryRegisterView(v *View) error {
-	if x, ok := w.viewsByName[v.Name()]; ok {
+	if x, ok := w.views[v.Name()]; ok {
 		if x != v {
 			return fmt.Errorf("cannot register view %q; another view with the same name is already registered", v.Name())
 		}
@@ -270,22 +267,29 @@ func (w *worker) tryRegisterView(v *View) error {
 		return fmt.Errorf("cannot register view %q: %v", v.Name(), err)
 	}
 
-	w.viewsByName[v.Name()] = v
-	w.views[v] = true
+	w.views[v.Name()] = v
 
 	v.Measure().addView(v)
 	return nil
 }
 
-func (w *worker) reportUsage(now time.Time) {
-	for v := range w.views {
+func (w *worker) reportUsage(start time.Time) {
+	for _, v := range w.views {
 		if !v.isSubscribed() {
 			continue
 		}
-		rows := v.collectedRows(now)
+		rows := v.collectedRows(start)
+		if isCumulative(v) {
+			s, ok := w.startTimes[v]
+			if !ok {
+				w.startTimes[v] = start
+			} else {
+				start = s
+			}
+		}
 		viewData := &ViewData{
 			View:  v,
-			Start: now,
+			Start: start,
 			End:   time.Now(),
 			Rows:  rows,
 		}
@@ -294,13 +298,18 @@ func (w *worker) reportUsage(now time.Time) {
 			e.Export(viewData)
 		}
 		exportersMu.Unlock()
-		switch v.Window().(type) {
-		case *Cumulative:
-			// noop
-		case Cumulative:
-			// noop
-		default:
+		if !isCumulative(v) {
 			v.clearRows()
 		}
 	}
+}
+
+func isCumulative(v *View) bool {
+	switch v.Window().(type) {
+	case *Cumulative:
+		return true
+	case Cumulative:
+		return true
+	}
+	return false
 }
