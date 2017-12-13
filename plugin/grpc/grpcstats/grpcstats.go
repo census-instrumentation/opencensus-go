@@ -18,6 +18,7 @@ package grpcstats // import "go.opencensus.io/plugin/grpc/grpcstats"
 
 import (
 	"log"
+	"strings"
 	"time"
 
 	istats "go.opencensus.io/stats"
@@ -65,16 +66,12 @@ var (
 	windowSlidingHour   = istats.Interval{Duration: 1 * time.Hour, Intervals: 6}
 	windowSlidingMinute = istats.Interval{Duration: 1 * time.Minute, Intervals: 6}
 
-	keyService tag.Key
-	keyMethod  tag.Key
-	keyStatus  tag.Key
+	keyMethod tag.Key
+	keyStatus tag.Key
 )
 
 func init() {
 	var err error
-	if keyService, err = tag.NewKey("service"); err != nil {
-		log.Fatalf("Cannot create service key: %v", err)
-	}
 	if keyMethod, err = tag.NewKey("method"); err != nil {
 		log.Fatalf("Cannot create method key: %v", err)
 	}
@@ -90,3 +87,7 @@ var (
 	grpcServerRPCKey  = grpcInstrumentationKey("server-rpc")
 	grpcClientRPCKey  = grpcInstrumentationKey("client-rpc")
 )
+
+func methodName(fullname string) string {
+	return strings.TrimLeft(fullname, "/")
+}

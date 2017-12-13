@@ -16,7 +16,6 @@
 package grpcstats
 
 import (
-	"strings"
 	"sync/atomic"
 	"time"
 
@@ -67,27 +66,13 @@ func (h *ClientStatsHandler) TagRPC(ctx context.Context, info *stats.RPCTagInfo)
 		}
 		return ctx
 	}
-	names := strings.Split(info.FullMethodName, "/")
-	if len(names) != 3 {
-		if grpclog.V(2) {
-			grpclog.Infof("clientHandler.TagRPC called with info.FullMethodName bad format. got %v, want '/$service/$method/'", info.FullMethodName)
-		}
-		return ctx
-	}
-	serviceName := names[1]
-	methodName := names[2]
 
-	d := &rpcData{
-		startTime: startTime,
-	}
-
+	d := &rpcData{startTime: startTime}
 	ts := tag.FromContext(ctx)
 	encoded := tag.Encode(ts)
 	ctx = stats.SetTags(ctx, encoded)
-
 	tagMap, err := tag.NewMap(ctx,
-		tag.Upsert(keyService, serviceName),
-		tag.Upsert(keyMethod, methodName),
+		tag.Upsert(keyMethod, methodName(info.FullMethodName)),
 	)
 	if err == nil {
 		ctx = tag.NewContext(ctx, tagMap)
