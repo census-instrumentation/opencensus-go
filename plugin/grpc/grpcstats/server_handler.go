@@ -17,7 +17,6 @@ package grpcstats
 
 import (
 	"fmt"
-	"strings"
 	"sync/atomic"
 	"time"
 
@@ -66,21 +65,8 @@ func (h *ServerStatsHandler) TagRPC(ctx context.Context, info *stats.RPCTagInfo)
 		}
 		return ctx
 	}
-	names := strings.Split(info.FullMethodName, "/")
-	if len(names) != 3 {
-		if grpclog.V(2) {
-			grpclog.Infof("serverHandler.TagRPC called with info.FullMethodName bad format. got %v, want '/$service/$method/'", info.FullMethodName)
-		}
-		return ctx
-	}
-	serviceName := names[1]
-	methodName := names[2]
-
-	d := &rpcData{
-		startTime: startTime,
-	}
-
-	ts, err := h.createTagMap(ctx, serviceName, methodName)
+	d := &rpcData{startTime: startTime}
+	ts, err := h.createTagMap(ctx, info.FullMethodName)
 	if err != nil {
 		return ctx
 	}
@@ -169,10 +155,9 @@ func (h *ServerStatsHandler) handleRPCEnd(ctx context.Context, s *stats.End) {
 
 // createTagMap creates a new tag map containing the tags extracted from the
 // gRPC metadata.
-func (h *ServerStatsHandler) createTagMap(ctx context.Context, serviceName, methodName string) (*tag.Map, error) {
+func (h *ServerStatsHandler) createTagMap(ctx context.Context, fullinfo string) (*tag.Map, error) {
 	mods := []tag.Mutator{
-		tag.Upsert(keyService, serviceName),
-		tag.Upsert(keyMethod, methodName),
+		tag.Upsert(keyMethod, methodName(fullinfo)),
 	}
 	if tagsBin := stats.Tags(ctx); tagsBin != nil {
 		old, err := tag.Decode([]byte(tagsBin))
