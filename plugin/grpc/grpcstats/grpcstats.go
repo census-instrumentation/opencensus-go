@@ -65,21 +65,21 @@ var (
 	windowSlidingHour   = istats.Interval{Duration: 1 * time.Hour, Intervals: 6}
 	windowSlidingMinute = istats.Interval{Duration: 1 * time.Minute, Intervals: 6}
 
-	keyService  tag.Key
-	keyMethod   tag.Key
-	keyOpStatus tag.Key
+	keyService tag.Key
+	keyMethod  tag.Key
+	keyStatus  tag.Key
 )
 
 func init() {
 	var err error
-	if keyService, err = tag.NewKey("grpc.service"); err != nil {
-		log.Fatalf("Cannot create grpc.service key: %v", err)
+	if keyService, err = tag.NewKey("service"); err != nil {
+		log.Fatalf("Cannot create service key: %v", err)
 	}
-	if keyMethod, err = tag.NewKey("grpc.method"); err != nil {
-		log.Fatalf("Cannot create grpc.method key: %v", err)
+	if keyMethod, err = tag.NewKey("method"); err != nil {
+		log.Fatalf("Cannot create method key: %v", err)
 	}
-	if keyOpStatus, err = tag.NewKey("grpc.opstatus"); err != nil {
-		log.Fatalf("Cannot create grpc.opstatus key: %v", err)
+	if keyStatus, err = tag.NewKey("canonical_status"); err != nil {
+		log.Fatalf("Cannot create canonical_status key: %v", err)
 	}
 	initServer()
 	initClient()

@@ -25,6 +25,7 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/grpclog"
 	"google.golang.org/grpc/stats"
+	"google.golang.org/grpc/status"
 )
 
 // ClientStatsHandler is a stats.Handler implementation
@@ -160,12 +161,14 @@ func (h *ClientStatsHandler) handleRPCEnd(ctx context.Context, s *stats.End) {
 	m = append(m, RPCClientRoundTripLatency.M(float64(elapsedTime)/float64(time.Millisecond)))
 
 	if s.Error != nil {
-		errorCode := s.Error.Error()
-		newTagMap, err := tag.NewMap(ctx,
-			tag.Upsert(keyOpStatus, errorCode),
-		)
-		if err == nil {
-			ctx = tag.NewContext(ctx, newTagMap)
+		s, ok := status.FromError(s.Error)
+		if ok {
+			newTagMap, err := tag.NewMap(ctx,
+				tag.Upsert(keyStatus, s.Code().String()),
+			)
+			if err == nil {
+				ctx = tag.NewContext(ctx, newTagMap)
+			}
 		}
 		m = append(m, RPCClientErrorCount.M(1))
 	}
