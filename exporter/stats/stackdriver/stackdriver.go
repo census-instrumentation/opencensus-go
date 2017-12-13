@@ -87,6 +87,13 @@ type Options struct {
 	// can be buffered before batch uploading them to the backend.
 	// Optional.
 	BundleCountThreshold int
+
+	// Resource is the Stackdriver MonitoredResource representing a
+	// resource that can be used for monitoring.
+	// If no custom ResourceDescriptor is set, a default MonitoredResource
+	// with type global and no resource labels will be used.
+	// Optional.
+	Resource *monitoredrespb.MonitoredResource
 }
 
 // NewExporter returns an exporter that uploads stats data to Stackdriver Monitoring.
@@ -179,6 +186,13 @@ func (e *Exporter) makeReq(vds []*stats.ViewData, limit int) []*monitoringpb.Cre
 	var reqs []*monitoringpb.CreateTimeSeriesRequest
 	var timeSeries []*monitoringpb.TimeSeries
 
+	resource := e.o.Resource
+	if resource == nil {
+		resource = &monitoredrespb.MonitoredResource{
+			Type: "global",
+		}
+	}
+
 	for _, vd := range vds {
 		if _, ok := vd.View.Window().(stats.Cumulative); !ok {
 			// TODO(jbd): Only Cumulative window will be exported to Stackdriver in this version.
@@ -191,10 +205,8 @@ func (e *Exporter) makeReq(vds []*stats.ViewData, limit int) []*monitoringpb.Cre
 					Type:   namespacedViewName(vd.View.Name(), false),
 					Labels: newLabels(row.Tags),
 				},
-				Resource: &monitoredrespb.MonitoredResource{
-					Type: "global",
-				},
-				Points: []*monitoringpb.Point{newPoint(vd.View, row, vd.Start, vd.End)},
+				Resource: resource,
+				Points:   []*monitoringpb.Point{newPoint(vd.View, row, vd.Start, vd.End)},
 			}
 			timeSeries = append(timeSeries, ts)
 			if len(timeSeries) == limit {
