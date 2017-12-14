@@ -39,9 +39,6 @@ type View struct {
 	// Examples of measures are cpu:tickCount, diskio:time...
 	m Measure
 
-	// start is time when view collection was started originally.
-	start time.Time
-
 	subscribed uint32 // 1 if someone is subscribed and data need to be exported, use atomic to access
 
 	collector *collector
@@ -66,7 +63,6 @@ func NewView(name, description string, keys []tag.Key, measure Measure, agg Aggr
 		description: description,
 		tagKeys:     keys,
 		m:           measure,
-		start:       time.Time{},
 		collector:   &collector{make(map[string]aggregator), agg, window},
 	}, nil
 }
@@ -168,6 +164,5 @@ func (r *Row) Equal(other *Row) bool {
 	if r == other {
 		return true
 	}
-
 	return reflect.DeepEqual(r.Tags, other.Tags) && r.Data.equal(other.Data)
 }

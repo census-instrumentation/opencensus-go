@@ -23,12 +23,12 @@ import (
 // They are reported on the view data during exporting.
 // Mosts users won't directly access aggregration data.
 type AggregationData interface {
-	equal(other AggregationData) bool
-	isAggregate() bool
+	isAggregationData() bool
 	addSample(v interface{})
+	addOther(other AggregationData)
 	multiplyByFraction(fraction float64) AggregationData
-	addToIt(other AggregationData)
 	clear()
+	equal(other AggregationData) bool
 }
 
 const epsilon = 1e-9
@@ -44,7 +44,7 @@ func newCountData(v int64) *CountData {
 	return &tmp
 }
 
-func (a *CountData) isAggregate() bool { return true }
+func (a *CountData) isAggregationData() bool { return true }
 
 func (a *CountData) addSample(v interface{}) {
 	*a = *a + 1
@@ -52,10 +52,9 @@ func (a *CountData) addSample(v interface{}) {
 
 func (a *CountData) multiplyByFraction(fraction float64) AggregationData {
 	return newCountData(int64(float64(int64(*a))*fraction + 0.5)) // adding 0.5 because go runtime will take floor instead of rounding
-
 }
 
-func (a *CountData) addToIt(av AggregationData) {
+func (a *CountData) addOther(av AggregationData) {
 	other, ok := av.(*CountData)
 	if !ok {
 		return
@@ -87,7 +86,7 @@ func newSumData(v float64) *SumData {
 	return &tmp
 }
 
-func (a *SumData) isAggregate() bool { return true }
+func (a *SumData) isAggregationData() bool { return true }
 
 func (a *SumData) addSample(v interface{}) {
 	// Both float64 and int64 values will be cast to float64
@@ -107,7 +106,7 @@ func (a *SumData) multiplyByFraction(fraction float64) AggregationData {
 	return newSumData(float64(*a) * fraction)
 }
 
-func (a *SumData) addToIt(av AggregationData) {
+func (a *SumData) addOther(av AggregationData) {
 	other, ok := av.(*SumData)
 	if !ok {
 		return
@@ -146,7 +145,7 @@ func newMeanData(mean float64, count float64) *MeanData {
 // Sum returns the sum of all samples collected.
 func (a *MeanData) Sum() float64 { return a.Mean * float64(a.Count) }
 
-func (a *MeanData) isAggregate() bool { return true }
+func (a *MeanData) isAggregationData() bool { return true }
 
 func (a *MeanData) addSample(v interface{}) {
 	var f float64
@@ -172,7 +171,7 @@ func (a *MeanData) multiplyByFraction(fraction float64) AggregationData {
 	return newMeanData(a.Mean, a.Count*fraction)
 }
 
-func (a *MeanData) addToIt(av AggregationData) {
+func (a *MeanData) addOther(av AggregationData) {
 	other, ok := av.(*MeanData)
 	if !ok {
 		return
@@ -232,7 +231,7 @@ func (a *DistributionData) variance() float64 {
 	return a.SumOfSquaredDev / float64(a.Count-1)
 }
 
-func (a *DistributionData) isAggregate() bool { return true }
+func (a *DistributionData) isAggregationData() bool { return true }
 
 func (a *DistributionData) addSample(v interface{}) {
 	var f float64
@@ -299,7 +298,7 @@ func (a *DistributionData) multiplyByFraction(fraction float64) AggregationData 
 	return ret
 }
 
-func (a *DistributionData) addToIt(av AggregationData) {
+func (a *DistributionData) addOther(av AggregationData) {
 	other, ok := av.(*DistributionData)
 	if !ok {
 		return
