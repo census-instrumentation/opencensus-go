@@ -28,6 +28,7 @@ type AggregationData interface {
 	addOther(other AggregationData)
 	multiplyByFraction(fraction float64) AggregationData
 	clear()
+	clone() AggregationData
 	equal(other AggregationData) bool
 }
 
@@ -48,6 +49,10 @@ func (a *CountData) isAggregationData() bool { return true }
 
 func (a *CountData) addSample(v interface{}) {
 	*a = *a + 1
+}
+
+func (a *CountData) clone() AggregationData {
+	return &(*a)
 }
 
 func (a *CountData) multiplyByFraction(fraction float64) AggregationData {
@@ -104,6 +109,10 @@ func (a *SumData) addSample(v interface{}) {
 
 func (a *SumData) multiplyByFraction(fraction float64) AggregationData {
 	return newSumData(float64(*a) * fraction)
+}
+
+func (a *SumData) clone() AggregationData {
+	return &(*a)
 }
 
 func (a *SumData) addOther(av AggregationData) {
@@ -164,6 +173,10 @@ func (a *MeanData) addSample(v interface{}) {
 		return
 	}
 	a.Mean = a.Mean + (f-a.Mean)/float64(a.Count)
+}
+
+func (a *MeanData) clone() AggregationData {
+	return &(*a)
 }
 
 // Only Count will be mutiplied by the fraction, Mean will remain the same.
@@ -331,6 +344,14 @@ func (a *DistributionData) clear() {
 	for i := range a.CountPerBucket {
 		a.CountPerBucket[i] = 0
 	}
+}
+
+func (a *DistributionData) clone() AggregationData {
+	counts := make([]int64, len(a.CountPerBucket))
+	copy(counts, a.CountPerBucket)
+	c := *a
+	c.CountPerBucket = counts
+	return &c
 }
 
 func (a *DistributionData) equal(other AggregationData) bool {
