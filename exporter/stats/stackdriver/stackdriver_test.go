@@ -591,6 +591,119 @@ func TestExporter_createMeasure(t *testing.T) {
 	}
 }
 
+func TestExporter_makeReq_withCustomMonitoredResource(t *testing.T) {
+	m, err := stats.NewMeasureFloat64("test-measure", "measure desc", "unit")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer stats.DeleteMeasure(m)
+
+	key, err := tag.NewKey("test_key")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	cumView, err := stats.NewView("cumview", "desc", []tag.Key{key}, m, stats.CountAggregation{}, stats.Cumulative{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := cumView.Subscribe(); err != nil {
+		t.Fatal(err)
+	}
+	defer cumView.Unsubscribe()
+
+	start := time.Now()
+	end := start.Add(time.Minute)
+	count1 := stats.CountData(10)
+	count2 := stats.CountData(16)
+
+	resource := &monitoredrespb.MonitoredResource{
+		Type:   "gce_instance",
+		Labels: map[string]string{"instance_id": "instance", "zone": "us-west-1a"},
+	}
+
+	tests := []struct {
+		name   string
+		projID string
+		vd     *stats.ViewData
+		want   []*monitoringpb.CreateTimeSeriesRequest
+	}{
+		{
+			name:   "count agg + cum timeline",
+			projID: "proj-id",
+			vd:     newTestCumViewData(cumView, start, end, &count1, &count2),
+			want: []*monitoringpb.CreateTimeSeriesRequest{{
+				Name: monitoring.MetricProjectPath("proj-id"),
+				TimeSeries: []*monitoringpb.TimeSeries{
+					{
+						Metric: &metricpb.Metric{
+							Type:   "custom.googleapis.com/opencensus/cumview",
+							Labels: map[string]string{"test_key": "test-value-1"},
+						},
+						Resource: resource,
+						Points: []*monitoringpb.Point{
+							{
+								Interval: &monitoringpb.TimeInterval{
+									StartTime: &timestamp.Timestamp{
+										Seconds: start.Unix(),
+										Nanos:   int32(start.Nanosecond()),
+									},
+									EndTime: &timestamp.Timestamp{
+										Seconds: end.Unix(),
+										Nanos:   int32(end.Nanosecond()),
+									},
+								},
+								Value: &monitoringpb.TypedValue{Value: &monitoringpb.TypedValue_Int64Value{
+									Int64Value: 10,
+								}},
+							},
+						},
+					},
+					{
+						Metric: &metricpb.Metric{
+							Type:   "custom.googleapis.com/opencensus/cumview",
+							Labels: map[string]string{"test_key": "test-value-2"},
+						},
+						Resource: resource,
+						Points: []*monitoringpb.Point{
+							{
+								Interval: &monitoringpb.TimeInterval{
+									StartTime: &timestamp.Timestamp{
+										Seconds: start.Unix(),
+										Nanos:   int32(start.Nanosecond()),
+									},
+									EndTime: &timestamp.Timestamp{
+										Seconds: end.Unix(),
+										Nanos:   int32(end.Nanosecond()),
+									},
+								},
+								Value: &monitoringpb.TypedValue{Value: &monitoringpb.TypedValue_Int64Value{
+									Int64Value: 16,
+								}},
+							},
+						},
+					},
+				},
+			}},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			e := &Exporter{o: Options{ProjectID: tt.projID, Resource: resource}}
+			resps := e.makeReq([]*stats.ViewData{tt.vd}, maxTimeSeriesPerUpload)
+			if got, want := len(resps), len(tt.want); got != want {
+				t.Fatalf("%v: Exporter.makeReq() returned %d responses; want %d", tt.name, got, want)
+			}
+			if len(tt.want) == 0 {
+				return
+			}
+			if !reflect.DeepEqual(resps, tt.want) {
+				t.Errorf("%v: Exporter.makeReq() = %v, want %v", tt.name, resps, tt.want)
+			}
+		})
+	}
+}
+
 func newTestCumViewData(v *stats.View, start, end time.Time, data1, data2 stats.AggregationData) *stats.ViewData {
 	key, _ := tag.NewKey("test-key")
 	tag1 := tag.Tag{Key: key, Value: "test-value-1"}
