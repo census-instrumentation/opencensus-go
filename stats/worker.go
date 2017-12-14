@@ -29,8 +29,13 @@ func init() {
 	go defaultWorker.start()
 }
 
+type measureRef struct {
+	measure Measure
+	views   map[*View]struct{}
+}
+
 type worker struct {
-	measures   map[string]Measure
+	measures   map[string]*measureRef
 	views      map[string]*View
 	startTimes map[*View]time.Time
 
@@ -53,7 +58,6 @@ func NewMeasureFloat64(name, description, unit string) (*MeasureFloat64, error) 
 		name:        name,
 		description: description,
 		unit:        unit,
-		views:       make(map[*View]bool),
 	}
 
 	req := &registerMeasureReq{
@@ -78,7 +82,6 @@ func NewMeasureInt64(name, description, unit string) (*MeasureInt64, error) {
 		name:        name,
 		description: description,
 		unit:        unit,
-		views:       make(map[*View]bool),
 	}
 
 	req := &registerMeasureReq{
@@ -203,7 +206,7 @@ func SetReportingPeriod(d time.Duration) {
 
 func newWorker() *worker {
 	return &worker{
-		measures:   make(map[string]Measure),
+		measures:   make(map[string]*measureRef),
 		views:      make(map[string]*View),
 		startTimes: make(map[*View]time.Time),
 		timer:      time.NewTicker(defaultReportingDuration),
@@ -237,8 +240,8 @@ func (w *worker) stop() {
 }
 
 func (w *worker) tryRegisterMeasure(m Measure) error {
-	if x, ok := w.measures[m.Name()]; ok {
-		if x != m {
+	if ref, ok := w.measures[m.Name()]; ok {
+		if ref.measure != m {
 			return fmt.Errorf("cannot register measure %q; another measure with the same name is already registered", m.Name())
 		}
 		// the measure is already registered so there is nothing to do and the
@@ -246,7 +249,10 @@ func (w *worker) tryRegisterMeasure(m Measure) error {
 		return nil
 	}
 
-	w.measures[m.Name()] = m
+	w.measures[m.Name()] = &measureRef{
+		measure: m,
+		views:   make(map[*View]struct{}),
+	}
 	return nil
 }
 
@@ -268,7 +274,9 @@ func (w *worker) tryRegisterView(v *View) error {
 	}
 
 	w.views[v.Name()] = v
-	v.Measure().addView(v)
+	ref := w.measures[v.Measure().Name()]
+	ref.views[v] = struct{}{}
+
 	return nil
 }
 
