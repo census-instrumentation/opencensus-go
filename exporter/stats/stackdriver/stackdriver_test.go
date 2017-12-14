@@ -53,7 +53,7 @@ func TestExporter_makeReq(t *testing.T) {
 	if err := stats.RegisterView(cumView); err != nil {
 		t.Fatal(err)
 	}
-	defer cumView.Unregister()
+	defer stats.UnregisterView(cumView)
 
 	distView, err := stats.NewView("distview", "desc", nil, m, stats.DistributionAggregation([]float64{2, 4, 7}), stats.Interval{})
 	if err != nil {
@@ -62,7 +62,7 @@ func TestExporter_makeReq(t *testing.T) {
 	if err := stats.RegisterView(distView); err != nil {
 		t.Fatal(err)
 	}
-	defer distView.Unregister()
+	defer stats.UnregisterView(distView)
 
 	start := time.Now()
 	end := start.Add(time.Minute)
@@ -338,7 +338,7 @@ func TestExporter_makeReq_batching(t *testing.T) {
 	if err := stats.RegisterView(view); err != nil {
 		t.Fatal(err)
 	}
-	defer view.Unregister()
+	defer stats.UnregisterView(view)
 
 	tests := []struct {
 		name      string
