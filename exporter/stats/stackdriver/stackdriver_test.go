@@ -607,10 +607,10 @@ func TestExporter_makeReq_withCustomMonitoredResource(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := stats.RegisterView(cumView); err != nil {
+	if err := cumView.Subscribe(); err != nil {
 		t.Fatal(err)
 	}
-	defer cumView.Unregister()
+	defer cumView.Unsubscribe()
 
 	start := time.Now()
 	end := start.Add(time.Minute)
