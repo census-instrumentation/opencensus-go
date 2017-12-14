@@ -37,7 +37,12 @@ type getMeasureByNameResp struct {
 }
 
 func (cmd *getMeasureByNameReq) handleCommand(w *worker) {
-	cmd.c <- &getMeasureByNameResp{w.measures[cmd.name]}
+	ref, ok := w.measures[cmd.name]
+	if ok {
+		cmd.c <- &getMeasureByNameResp{ref.measure}
+		return
+	}
+	cmd.c <- &getMeasureByNameResp{nil}
 }
 
 // registerMeasureReq is the command to register a measure with the library.
@@ -57,18 +62,18 @@ type deleteMeasureReq struct {
 }
 
 func (cmd *deleteMeasureReq) handleCommand(w *worker) {
-	m, ok := w.measures[cmd.m.Name()]
+	ref, ok := w.measures[cmd.m.Name()]
 	if !ok {
 		cmd.err <- nil
 		return
 	}
 
-	if m != cmd.m {
+	if ref.measure != cmd.m {
 		cmd.err <- nil
 		return
 	}
 
-	if c := m.viewsCount(); c > 0 {
+	if c := len(ref.views); c > 0 {
 		cmd.err <- fmt.Errorf("cannot delete; measure %q used by %v registered views", cmd.m.Name(), c)
 		return
 	}
@@ -122,7 +127,8 @@ func (cmd *unregisterViewReq) handleCommand(w *worker) {
 		return
 	}
 	delete(w.views, cmd.v.Name())
-	cmd.v.Measure().removeView(v)
+	ref := w.measures[v.Measure().Name()]
+	delete(ref.views, v)
 	cmd.err <- nil
 }
 
@@ -212,11 +218,13 @@ func (cmd *recordReq) handleCommand(w *worker) {
 	for _, m := range cmd.ms {
 		switch measurement := m.(type) {
 		case *measurementFloat64:
-			for v := range measurement.m.views {
+			ref := w.measures[measurement.m.Name()]
+			for v := range ref.views {
 				v.addSample(cmd.tm, measurement.v, cmd.now)
 			}
 		case *measurementInt64:
-			for v := range measurement.m.views {
+			ref := w.measures[measurement.m.Name()]
+			for v := range ref.views {
 				v.addSample(cmd.tm, measurement.v, cmd.now)
 			}
 		default:

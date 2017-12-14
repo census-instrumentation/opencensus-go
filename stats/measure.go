@@ -29,10 +29,6 @@ type Measure interface {
 	Name() string
 	Description() string
 	Unit() string
-
-	addView(v *View)
-	removeView(v *View)
-	viewsCount() int
 }
 
 // Measurement is the numeric value measured when recording stats. Each measure
