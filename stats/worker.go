@@ -121,7 +121,7 @@ func RegisterView(v *View) error {
 	return <-req.err
 }
 
-// Unregister removes the previously registered view. It returns an error
+// UnregisterView removes the previously registered view. It returns an error
 // if the view wasn't registered. All data collected and not reported for the
 // corresponding view will be lost. The view is automatically be unsubscribed.
 func UnregisterView(v *View) error {
