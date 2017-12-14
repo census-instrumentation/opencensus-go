@@ -19,7 +19,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"reflect"
-	"regexp"
 	"strings"
 	"testing"
 	"time"
@@ -83,10 +82,6 @@ func TestExport(t *testing.T) {
 	case <-time.After(2 * time.Second):
 		t.Fatalf("span was not exported")
 	}
-	// alter some fields that are custom-encoded by model.SpanModel.MarshalJSON so
-	// that we can unmarshal them.
-	data = regexp.MustCompile(`"timestamp":[0-9]*`).ReplaceAll(data, []byte(`"timestamp":"2006-01-02T15:04:05+07:00"`))
-	data = regexp.MustCompile(`"id":"1112131415161718"`).ReplaceAll(data, []byte(`"id":1`))
 	var got []model.SpanModel
 	json.Unmarshal(data, &got)
 	if len(got) != 1 {
@@ -104,12 +99,12 @@ func TestExport(t *testing.T) {
 					High: 0x102030405060708,
 					Low:  0x90a0b0c0d0e0f10,
 				},
-				ID: 0x1,
+				ID: 0x1112131415161718,
 			},
 			Name:      "name",
 			Kind:      "CLIENT",
 			Timestamp: time.Time{},
-			Duration:  86400000000,
+			Duration:  24 * time.Hour,
 			Shared:    false,
 			Annotations: []model.Annotation{
 				model.Annotation{
