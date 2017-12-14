@@ -442,9 +442,9 @@ func Test_Worker_ViewRegistration(t *testing.T) {
 
 		for _, unreg := range tc.unregs {
 			v := views[unreg.vID]
-			err := v.Unregister()
+			err := UnregisterView(v)
 			if (err != nil) != (unreg.err != nil) {
-				t.Errorf("%v: Unregister() = %v; want %v", tc.label, err, unreg.err)
+				t.Errorf("%v: UnregisterView() = %v; want %v", tc.label, err, unreg.err)
 			}
 		}
 
@@ -605,7 +605,7 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 		}
 
 		for _, v := range tc.registrations {
-			if err := v.Unregister(); err != nil {
+			if err := UnregisterView(v); err != nil {
 				t.Fatalf("%v: Unregistering view %v errrored with %v; want no error", tc.label, v.Name(), err)
 			}
 		}

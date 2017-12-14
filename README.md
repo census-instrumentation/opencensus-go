@@ -204,7 +204,7 @@ Unregister view:
 
 [embedmd]:# (stats.go unregisterView)
 ```go
-if v.Unregister(); err != nil {
+if stats.UnregisterView(v); err != nil {
 	log.Fatal(err)
 }
 ```
