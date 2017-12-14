@@ -78,6 +78,7 @@ func TestExporter_makeReq(t *testing.T) {
 		Mean:  -7.7,
 		Count: 5,
 	}
+	taskValue := getTaskValue()
 
 	tests := []struct {
 		name   string
@@ -94,8 +95,11 @@ func TestExporter_makeReq(t *testing.T) {
 				TimeSeries: []*monitoringpb.TimeSeries{
 					{
 						Metric: &metricpb.Metric{
-							Type:   "custom.googleapis.com/opencensus/cumview",
-							Labels: map[string]string{"test_key": "test-value-1"},
+							Type: "custom.googleapis.com/opencensus/cumview",
+							Labels: map[string]string{
+								"test_key":        "test-value-1",
+								opencensusTaskKey: taskValue,
+							},
 						},
 						Resource: &monitoredrespb.MonitoredResource{
 							Type: "global",
@@ -120,8 +124,11 @@ func TestExporter_makeReq(t *testing.T) {
 					},
 					{
 						Metric: &metricpb.Metric{
-							Type:   "custom.googleapis.com/opencensus/cumview",
-							Labels: map[string]string{"test_key": "test-value-2"},
+							Type: "custom.googleapis.com/opencensus/cumview",
+							Labels: map[string]string{
+								"test_key":        "test-value-2",
+								opencensusTaskKey: taskValue,
+							},
 						},
 						Resource: &monitoredrespb.MonitoredResource{
 							Type: "global",
@@ -156,8 +163,11 @@ func TestExporter_makeReq(t *testing.T) {
 				TimeSeries: []*monitoringpb.TimeSeries{
 					{
 						Metric: &metricpb.Metric{
-							Type:   "custom.googleapis.com/opencensus/cumview",
-							Labels: map[string]string{"test_key": "test-value-1"},
+							Type: "custom.googleapis.com/opencensus/cumview",
+							Labels: map[string]string{
+								"test_key":        "test-value-1",
+								opencensusTaskKey: taskValue,
+							},
 						},
 						Resource: &monitoredrespb.MonitoredResource{
 							Type: "global",
@@ -182,8 +192,11 @@ func TestExporter_makeReq(t *testing.T) {
 					},
 					{
 						Metric: &metricpb.Metric{
-							Type:   "custom.googleapis.com/opencensus/cumview",
-							Labels: map[string]string{"test_key": "test-value-2"},
+							Type: "custom.googleapis.com/opencensus/cumview",
+							Labels: map[string]string{
+								"test_key":        "test-value-2",
+								opencensusTaskKey: taskValue,
+							},
 						},
 						Resource: &monitoredrespb.MonitoredResource{
 							Type: "global",
@@ -218,8 +231,11 @@ func TestExporter_makeReq(t *testing.T) {
 				TimeSeries: []*monitoringpb.TimeSeries{
 					{
 						Metric: &metricpb.Metric{
-							Type:   "custom.googleapis.com/opencensus/cumview",
-							Labels: map[string]string{"test_key": "test-value-1"},
+							Type: "custom.googleapis.com/opencensus/cumview",
+							Labels: map[string]string{
+								"test_key":        "test-value-1",
+								opencensusTaskKey: taskValue,
+							},
 						},
 						Resource: &monitoredrespb.MonitoredResource{
 							Type: "global",
@@ -256,8 +272,11 @@ func TestExporter_makeReq(t *testing.T) {
 					},
 					{
 						Metric: &metricpb.Metric{
-							Type:   "custom.googleapis.com/opencensus/cumview",
-							Labels: map[string]string{"test_key": "test-value-2"},
+							Type: "custom.googleapis.com/opencensus/cumview",
+							Labels: map[string]string{
+								"test_key":        "test-value-2",
+								opencensusTaskKey: taskValue,
+							},
 						},
 						Resource: &monitoredrespb.MonitoredResource{
 							Type: "global",
@@ -304,7 +323,10 @@ func TestExporter_makeReq(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			e := &Exporter{o: Options{ProjectID: tt.projID}}
+			e := &Exporter{
+				o:         Options{ProjectID: tt.projID},
+				taskValue: taskValue,
+			}
 			resps := e.makeReq([]*stats.ViewData{tt.vd}, maxTimeSeriesPerUpload)
 			if got, want := len(resps), len(tt.want); got != want {
 				t.Fatalf("%v: Exporter.makeReq() returned %d responses; want %d", tt.name, got, want)
@@ -411,6 +433,7 @@ func TestEqualAggWindowTagKeys(t *testing.T) {
 			md: &metricpb.MetricDescriptor{
 				MetricKind: metricpb.MetricDescriptor_CUMULATIVE,
 				ValueType:  metricpb.MetricDescriptor_INT64,
+				Labels:     []*label.LabelDescriptor{{Key: opencensusTaskKey}},
 			},
 			agg:     stats.CountAggregation{},
 			window:  stats.Cumulative{},
@@ -421,6 +444,7 @@ func TestEqualAggWindowTagKeys(t *testing.T) {
 			md: &metricpb.MetricDescriptor{
 				MetricKind: metricpb.MetricDescriptor_CUMULATIVE,
 				ValueType:  metricpb.MetricDescriptor_DOUBLE,
+				Labels:     []*label.LabelDescriptor{{Key: opencensusTaskKey}},
 			},
 			agg:     stats.SumAggregation{},
 			window:  stats.Cumulative{},
@@ -431,6 +455,7 @@ func TestEqualAggWindowTagKeys(t *testing.T) {
 			md: &metricpb.MetricDescriptor{
 				MetricKind: metricpb.MetricDescriptor_CUMULATIVE,
 				ValueType:  metricpb.MetricDescriptor_DISTRIBUTION,
+				Labels:     []*label.LabelDescriptor{{Key: opencensusTaskKey}},
 			},
 			agg:     stats.MeanAggregation{},
 			window:  stats.Cumulative{},
@@ -441,6 +466,7 @@ func TestEqualAggWindowTagKeys(t *testing.T) {
 			md: &metricpb.MetricDescriptor{
 				MetricKind: metricpb.MetricDescriptor_CUMULATIVE,
 				ValueType:  metricpb.MetricDescriptor_DISTRIBUTION,
+				Labels:     []*label.LabelDescriptor{{Key: opencensusTaskKey}},
 			},
 			agg:     stats.CountAggregation{},
 			window:  stats.Cumulative{},
@@ -451,6 +477,7 @@ func TestEqualAggWindowTagKeys(t *testing.T) {
 			md: &metricpb.MetricDescriptor{
 				MetricKind: metricpb.MetricDescriptor_CUMULATIVE,
 				ValueType:  metricpb.MetricDescriptor_DOUBLE,
+				Labels:     []*label.LabelDescriptor{{Key: opencensusTaskKey}},
 			},
 			agg:     stats.MeanAggregation{},
 			window:  stats.Cumulative{},
@@ -461,6 +488,7 @@ func TestEqualAggWindowTagKeys(t *testing.T) {
 			md: &metricpb.MetricDescriptor{
 				MetricKind: metricpb.MetricDescriptor_DELTA,
 				ValueType:  metricpb.MetricDescriptor_DISTRIBUTION,
+				Labels:     []*label.LabelDescriptor{{Key: opencensusTaskKey}},
 			},
 			agg:     stats.DistributionAggregation{},
 			window:  stats.Interval{},
@@ -471,6 +499,7 @@ func TestEqualAggWindowTagKeys(t *testing.T) {
 			md: &metricpb.MetricDescriptor{
 				MetricKind: metricpb.MetricDescriptor_CUMULATIVE,
 				ValueType:  metricpb.MetricDescriptor_DISTRIBUTION,
+				Labels:     []*label.LabelDescriptor{{Key: opencensusTaskKey}},
 			},
 			agg:     stats.DistributionAggregation{},
 			window:  stats.Interval{},
@@ -484,6 +513,7 @@ func TestEqualAggWindowTagKeys(t *testing.T) {
 				Labels: []*label.LabelDescriptor{
 					{Key: "test_key_one"},
 					{Key: "test_key_two"},
+					{Key: opencensusTaskKey},
 				},
 			},
 			agg:     stats.DistributionAggregation{},
@@ -507,6 +537,7 @@ func TestEqualAggWindowTagKeys(t *testing.T) {
 			md: &metricpb.MetricDescriptor{
 				MetricKind: metricpb.MetricDescriptor_CUMULATIVE,
 				ValueType:  metricpb.MetricDescriptor_INT64,
+				Labels:     []*label.LabelDescriptor{{Key: opencensusTaskKey}},
 			},
 			agg:     &stats.CountAggregation{},
 			window:  &stats.Cumulative{},
@@ -616,6 +647,7 @@ func TestExporter_makeReq_withCustomMonitoredResource(t *testing.T) {
 	end := start.Add(time.Minute)
 	count1 := stats.CountData(10)
 	count2 := stats.CountData(16)
+	taskValue := getTaskValue()
 
 	resource := &monitoredrespb.MonitoredResource{
 		Type:   "gce_instance",
@@ -637,8 +669,11 @@ func TestExporter_makeReq_withCustomMonitoredResource(t *testing.T) {
 				TimeSeries: []*monitoringpb.TimeSeries{
 					{
 						Metric: &metricpb.Metric{
-							Type:   "custom.googleapis.com/opencensus/cumview",
-							Labels: map[string]string{"test_key": "test-value-1"},
+							Type: "custom.googleapis.com/opencensus/cumview",
+							Labels: map[string]string{
+								"test_key":        "test-value-1",
+								opencensusTaskKey: taskValue,
+							},
 						},
 						Resource: resource,
 						Points: []*monitoringpb.Point{
@@ -661,8 +696,11 @@ func TestExporter_makeReq_withCustomMonitoredResource(t *testing.T) {
 					},
 					{
 						Metric: &metricpb.Metric{
-							Type:   "custom.googleapis.com/opencensus/cumview",
-							Labels: map[string]string{"test_key": "test-value-2"},
+							Type: "custom.googleapis.com/opencensus/cumview",
+							Labels: map[string]string{
+								"test_key":        "test-value-2",
+								opencensusTaskKey: taskValue,
+							},
 						},
 						Resource: resource,
 						Points: []*monitoringpb.Point{
@@ -689,7 +727,10 @@ func TestExporter_makeReq_withCustomMonitoredResource(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			e := &Exporter{o: Options{ProjectID: tt.projID, Resource: resource}}
+			e := &Exporter{
+				o:         Options{ProjectID: tt.projID, Resource: resource},
+				taskValue: taskValue,
+			}
 			resps := e.makeReq([]*stats.ViewData{tt.vd}, maxTimeSeriesPerUpload)
 			if got, want := len(resps), len(tt.want); got != want {
 				t.Fatalf("%v: Exporter.makeReq() returned %d responses; want %d", tt.name, got, want)
