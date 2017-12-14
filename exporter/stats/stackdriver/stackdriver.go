@@ -102,6 +102,7 @@ type Options struct {
 }
 
 // NewExporter returns an exporter that uploads stats data to Stackdriver Monitoring.
+// Only one Stackdriver exporter should be created per process.
 func NewExporter(o Options) (*Exporter, error) {
 	opts := append(o.ClientOptions, option.WithUserAgent(internal.UserAgent))
 	client, err := monitoring.NewMetricClient(context.Background(), opts...)
