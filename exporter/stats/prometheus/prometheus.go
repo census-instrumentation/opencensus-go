@@ -219,11 +219,11 @@ func (c *collector) toMetric(desc *prometheus.Desc, view *stats.View, row *stats
 
 	case stats.MeanAggregation:
 		data := row.Data.(*stats.MeanData)
-		return prometheus.NewConstMetric(desc, prometheus.GaugeValue, data.Mean, tagValues(row.Tags)...)
+		return prometheus.NewConstMetric(desc, prometheus.UntypedValue, data.Mean, tagValues(row.Tags)...)
 
 	case stats.SumAggregation:
 		data := row.Data.(*stats.SumData)
-		return prometheus.NewConstMetric(desc, prometheus.GaugeValue, float64(*data), tagValues(row.Tags)...)
+		return prometheus.NewConstMetric(desc, prometheus.UntypedValue, float64(*data), tagValues(row.Tags)...)
 
 	default:
 		return nil, fmt.Errorf("aggregation %T is not yet supported", view.Aggregation())
