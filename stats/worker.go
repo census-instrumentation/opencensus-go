@@ -287,6 +287,9 @@ func (w *worker) reportUsage(start time.Time) {
 				start = s
 			}
 		}
+		// Make sure collector is never going
+		// to mutate the exported data.
+		rows, v = shallowCopy(rows, v)
 		viewData := &ViewData{
 			View:  v,
 			Start: start,
@@ -312,4 +315,16 @@ func isCumulative(v *View) bool {
 		return true
 	}
 	return false
+}
+
+func shallowCopy(rows []*Row, v *View) ([]*Row, *View) {
+	newV := *v
+	newRows := make([]*Row, 0, len(rows))
+	for _, r := range rows {
+		newRows = append(newRows, &Row{
+			Data: r.Data,
+			Tags: r.Tags,
+		})
+	}
+	return nil, &newV
 }
