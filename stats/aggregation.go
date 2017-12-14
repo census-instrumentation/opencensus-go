@@ -91,15 +91,13 @@ func (a DistributionAggregation) newData() func() AggregationData {
 // aggregatorCumulative indicates that the aggregation occurs over all samples
 // seen since the view collection started.
 type aggregatorCumulative struct {
-	started time.Time
-	av      AggregationData
+	data AggregationData
 }
 
 // newAggregatorCumulative creates an aggregatorCumulative.
 func newAggregatorCumulative(now time.Time, newAggregationValue func() AggregationData) *aggregatorCumulative {
 	return &aggregatorCumulative{
-		started: now,
-		av:      newAggregationValue(),
+		data: newAggregationValue(),
 	}
 }
 
@@ -108,11 +106,11 @@ func (a *aggregatorCumulative) isAggregator() bool {
 }
 
 func (a *aggregatorCumulative) addSample(v interface{}, now time.Time) {
-	a.av.addSample(v)
+	a.data.addSample(v)
 }
 
 func (a *aggregatorCumulative) retrieveCollected(now time.Time) AggregationData {
-	return a.av
+	return a.data
 }
 
 // aggregatorInterval indicates that the aggregation occurs over a
@@ -178,7 +176,7 @@ func (a *aggregatorInterval) retrieveCollected(now time.Time) AggregationData {
 	for j := 1; j < len(a.entries); j++ {
 		oldestIdx = (oldestIdx + 1) % len(a.entries)
 		e = a.entries[oldestIdx]
-		ret.addToIt(e.av)
+		ret.addOther(e.av)
 	}
 	return ret
 }

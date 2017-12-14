@@ -28,7 +28,7 @@ type aggregator interface {
 // which the aggregation occurs.
 type Window interface {
 	isWindow()
-	newAggregator(now time.Time, aggregationValueConstructor func() AggregationData) aggregator
+	newAggregator(now time.Time, newAggregationData func() AggregationData) aggregator
 }
 
 // Cumulative is a window that indicates that the aggregation occurs
@@ -37,8 +37,8 @@ type Cumulative struct{}
 
 func (w Cumulative) isWindow() {}
 
-func (w Cumulative) newAggregator(now time.Time, aggregationValueConstructor func() AggregationData) aggregator {
-	return newAggregatorCumulative(now, aggregationValueConstructor)
+func (w Cumulative) newAggregator(now time.Time, newAggregationData func() AggregationData) aggregator {
+	return newAggregatorCumulative(now, newAggregationData)
 }
 
 // Interval is a window that indicates that the aggregation occurs over a sliding
@@ -50,6 +50,6 @@ type Interval struct {
 
 func (w Interval) isWindow() {}
 
-func (w Interval) newAggregator(now time.Time, aggregationValueConstructor func() AggregationData) aggregator {
-	return newAggregatorInterval(now, w.Duration, w.Intervals, aggregationValueConstructor)
+func (w Interval) newAggregator(now time.Time, newAggregationData func() AggregationData) aggregator {
+	return newAggregatorInterval(now, w.Duration, w.Intervals, newAggregationData)
 }
