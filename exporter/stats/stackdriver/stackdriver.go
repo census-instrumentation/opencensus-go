@@ -24,8 +24,10 @@ import (
 	"fmt"
 	"log"
 	"net/url"
+	"os"
 	"path"
 	"reflect"
+	"strconv"
 	"sync"
 	"time"
 
@@ -48,6 +50,8 @@ import (
 )
 
 const maxTimeSeriesPerUpload = 200
+const opencensusTaskKey = "opencensus_task"
+const opencensusTaskDescription = "Opencensus task identifier"
 
 // Exporter exports stats to the Stackdriver Monitoring.
 type Exporter struct {
@@ -57,7 +61,8 @@ type Exporter struct {
 	createdViewsMu sync.Mutex
 	createdViews   map[string]*metricpb.MetricDescriptor // Views already created remotely
 
-	c *monitoring.MetricClient
+	c         *monitoring.MetricClient
+	taskValue string
 }
 
 // Options contains options for configuring the exporter.
@@ -107,6 +112,7 @@ func NewExporter(o Options) (*Exporter, error) {
 		c:            client,
 		o:            o,
 		createdViews: make(map[string]*metricpb.MetricDescriptor),
+		taskValue:    getTaskValue(),
 	}
 	e.bundler = bundler.NewBundler((*stats.ViewData)(nil), func(bundle interface{}) {
 		vds := bundle.([]*stats.ViewData)
@@ -134,6 +140,16 @@ func (e *Exporter) Export(vd *stats.ViewData) {
 	default:
 		e.onError(err)
 	}
+}
+
+// getTaskValue returns a task label value in the format of
+// "go-<pid>@<hostname>".
+func getTaskValue() string {
+	hostname, err := os.Hostname()
+	if err != nil {
+		hostname = "localhost"
+	}
+	return "go-" + strconv.Itoa(os.Getpid()) + "@" + hostname
 }
 
 // handleUpload handles uploading a slice
@@ -203,7 +219,7 @@ func (e *Exporter) makeReq(vds []*stats.ViewData, limit int) []*monitoringpb.Cre
 			ts := &monitoringpb.TimeSeries{
 				Metric: &metricpb.Metric{
 					Type:   namespacedViewName(vd.View.Name(), false),
-					Labels: newLabels(row.Tags),
+					Labels: newLabels(row.Tags, e.taskValue),
 				},
 				Resource: resource,
 				Points:   []*monitoringpb.Point{newPoint(vd.View, row, vd.Start, vd.End)},
@@ -384,21 +400,28 @@ func namespacedViewName(v string, escaped bool) string {
 	return path.Join("custom.googleapis.com", p)
 }
 
-func newLabels(tags []tag.Tag) map[string]string {
+func newLabels(tags []tag.Tag, taskValue string) map[string]string {
 	labels := make(map[string]string)
 	for _, tag := range tags {
 		labels[internal.Sanitize(tag.Key.Name())] = tag.Value
 	}
+	labels[opencensusTaskKey] = taskValue
 	return labels
 }
 
 func newLabelDescriptors(keys []tag.Key) []*labelpb.LabelDescriptor {
-	labelDescriptors := make([]*labelpb.LabelDescriptor, len(keys))
+	labelDescriptors := make([]*labelpb.LabelDescriptor, len(keys)+1)
 	for i, key := range keys {
 		labelDescriptors[i] = &labelpb.LabelDescriptor{
 			Key:       internal.Sanitize(key.Name()),
 			ValueType: labelpb.LabelDescriptor_STRING, // We only use string tags
 		}
+	}
+	// Add a specific open census task id label.
+	labelDescriptors[len(keys)] = &labelpb.LabelDescriptor{
+		Key:         opencensusTaskKey,
+		ValueType:   labelpb.LabelDescriptor_STRING,
+		Description: opencensusTaskDescription,
 	}
 	return labelDescriptors
 }
@@ -439,14 +462,15 @@ func equalAggWindowTagKeys(md *metricpb.MetricDescriptor, agg stats.Aggregation,
 		return fmt.Errorf("stackdriver metric descriptor was not created with window type %T", w)
 	}
 
-	if len(md.Labels) != len(keys) {
+	if len(md.Labels) != len(keys)+1 {
 		return errors.New("stackdriver metric descriptor was not created with the view labels")
 	}
 
-	labels := make(map[string]struct{}, len(keys))
+	labels := make(map[string]struct{}, len(keys)+1)
 	for _, k := range keys {
 		labels[internal.Sanitize(k.Name())] = struct{}{}
 	}
+	labels[opencensusTaskKey] = struct{}{}
 
 	for _, k := range md.Labels {
 		if _, ok := labels[k.Key]; !ok {
