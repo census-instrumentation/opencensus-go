@@ -17,20 +17,18 @@
 // Example:
 //
 // 	import (
-// 		zk "github.com/openzipkin/zipkin-go"
+// 		openzipkin "github.com/openzipkin/zipkin-go"
+// 		"github.com/openzipkin/zipkin-go/reporter/http"
 // 		"go.opencensus.io/trace/adaptor/zipkin"
 // 	)
 //	...
-//		localEndpoint, err := zk.NewEndpoint("my server", myHostPort)
+//		localEndpoint, err := openzipkin.NewEndpoint("server", "server:5454")
 // 		if err != nil {
 // 			log.Print(err)
 // 		}
-// 		exporter, err := zipkin.NewExporter("http://localhost:9411/api/v2/spans", localEndpoint)
-// 		if err != nil {
-// 			log.Print(err)
-// 		} else {
-// 			trace.RegisterExporter(exporter)
-// 		}
+// 		reporter := http.NewReporter("http://localhost:9411/api/v2/spans")
+// 		exporter := zipkin.NewExporter(reporter, localEndpoint)
+// 		trace.RegisterExporter(exporter)
 package zipkin
 
 import (
@@ -40,7 +38,6 @@ import (
 
 	"github.com/openzipkin/zipkin-go/model"
 	"github.com/openzipkin/zipkin-go/reporter"
-	"github.com/openzipkin/zipkin-go/reporter/http"
 	"go.opencensus.io/trace"
 )
 
@@ -54,20 +51,19 @@ type Exporter struct {
 // NewExporter returns an implementation of trace.Exporter that uploads spans
 // to a Zipkin server.
 //
-// zipkinURL is the address of the Zipkin server.
+// reporter is a Zipkin Reporter which will be used to send the spans.  These
+// can be created with the openzipkin library, using one of the packages under
+// github.com/openzipkin/zipkin-go/reporter.
 //
 // localEndpoint sets the local endpoint of exported spans.  It can be
 // constructed with github.com/openzipkin/zipkin-go.NewEndpoint, e.g.:
 // 	localEndpoint, err := NewEndpoint("my server", listener.Addr().String())
 // localEndpoint can be nil.
-//
-// opts can be used to pass options to the underlying Zipkin http reporter
-// library.
-func NewExporter(zipkinURL string, localEndpoint *model.Endpoint, opts ...http.ReporterOption) (*Exporter, error) {
+func NewExporter(reporter reporter.Reporter, localEndpoint *model.Endpoint) *Exporter {
 	return &Exporter{
-		reporter:      http.NewReporter(zipkinURL, opts...),
+		reporter:      reporter,
 		localEndpoint: localEndpoint,
-	}, nil
+	}
 }
 
 // Export exports a span to a Zipkin server.
@@ -76,11 +72,39 @@ func (e *Exporter) Export(s *trace.SpanData) {
 }
 
 const (
-	statusCodeTagKey        = "census.status_code"
-	statusDescriptionTagKey = "census.status_description"
+	statusCodeTagKey        = "error"
+	statusDescriptionTagKey = "opencensus.status_description"
 )
 
-var sampledTrue = true
+var (
+	sampledTrue    = true
+	canonicalCodes = [...]string{
+		"OK",
+		"CANCELLED",
+		"UNKNOWN",
+		"INVALID_ARGUMENT",
+		"DEADLINE_EXCEEDED",
+		"NOT_FOUND",
+		"ALREADY_EXISTS",
+		"PERMISSION_DENIED",
+		"RESOURCE_EXHAUSTED",
+		"FAILED_PRECONDITION",
+		"ABORTED",
+		"OUT_OF_RANGE",
+		"UNIMPLEMENTED",
+		"INTERNAL",
+		"UNAVAILABLE",
+		"DATA_LOSS",
+		"UNAUTHENTICATED",
+	}
+)
+
+func canonicalCodeString(code int32) string {
+	if code < 0 || int(code) >= len(canonicalCodes) {
+		return "error code " + strconv.FormatInt(int64(code), 10)
+	}
+	return canonicalCodes[code]
+}
 
 func convertTraceID(t trace.TraceID) model.TraceID {
 	return model.TraceID{
@@ -161,33 +185,37 @@ func zipkinSpan(s *trace.SpanData, localEndpoint *model.Endpoint) model.SpanMode
 		if z.Tags == nil {
 			z.Tags = make(map[string]string, 2)
 		}
-		z.Tags[statusCodeTagKey] = code(s.Status.Code).String()
+		if s.Status.Code != 0 {
+			z.Tags[statusCodeTagKey] = canonicalCodeString(s.Status.Code)
+		}
 		if s.Status.Message != "" {
 			z.Tags[statusDescriptionTagKey] = s.Status.Message
 		}
 	}
 
 	// construct Annotations from s.Annotations and s.MessageEvents.
-	z.Annotations = make([]model.Annotation, 0, len(s.Annotations)+len(s.MessageEvents))
-	for _, a := range s.Annotations {
-		z.Annotations = append(z.Annotations, model.Annotation{
-			Timestamp: a.Time,
-			Value:     a.Message,
-		})
-	}
-	for _, m := range s.MessageEvents {
-		a := model.Annotation{
-			Timestamp: m.Time,
+	if len(s.Annotations) != 0 || len(s.MessageEvents) != 0 {
+		z.Annotations = make([]model.Annotation, 0, len(s.Annotations)+len(s.MessageEvents))
+		for _, a := range s.Annotations {
+			z.Annotations = append(z.Annotations, model.Annotation{
+				Timestamp: a.Time,
+				Value:     a.Message,
+			})
 		}
-		switch m.EventType {
-		case trace.MessageEventTypeSent:
-			a.Value = "SENT"
-		case trace.MessageEventTypeRecv:
-			a.Value = "RECV"
-		default:
-			a.Value = "<?>"
+		for _, m := range s.MessageEvents {
+			a := model.Annotation{
+				Timestamp: m.Time,
+			}
+			switch m.EventType {
+			case trace.MessageEventTypeSent:
+				a.Value = "SENT"
+			case trace.MessageEventTypeRecv:
+				a.Value = "RECV"
+			default:
+				a.Value = "<?>"
+			}
+			z.Annotations = append(z.Annotations, a)
 		}
-		z.Annotations = append(z.Annotations, a)
 	}
 
 	return z
