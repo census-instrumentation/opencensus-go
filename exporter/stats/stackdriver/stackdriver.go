@@ -88,8 +88,8 @@ type Options struct {
 	// Optional.
 	BundleCountThreshold int
 
-	// Resource is the Stackdriver MonitoredResource representing a
-	// resource that can be used for monitoring.
+	// Resource is an optional field that represents the Stackdriver
+	// MonitoredResource, a resource that can be used for monitoring.
 	// If no custom ResourceDescriptor is set, a default MonitoredResource
 	// with type global and no resource labels will be used.
 	// Optional.
