@@ -268,7 +268,6 @@ func (w *worker) tryRegisterView(v *View) error {
 	}
 
 	w.views[v.Name()] = v
-
 	v.Measure().addView(v)
 	return nil
 }
@@ -287,6 +286,9 @@ func (w *worker) reportUsage(start time.Time) {
 				start = s
 			}
 		}
+		// Make sure collector is never going
+		// to mutate the exported data.
+		rows = deepCopy(rows)
 		viewData := &ViewData{
 			View:  v,
 			Start: start,
@@ -312,4 +314,38 @@ func isCumulative(v *View) bool {
 		return true
 	}
 	return false
+}
+
+func deepCopy(rows []*Row) []*Row {
+	// TODO(jbd): Find a better solution so each time
+	// we add a new aggreagtion data type, we don't have
+	// to modify this function.
+	newRows := make([]*Row, 0, len(rows))
+	for _, r := range rows {
+		var cloned AggregationData
+		switch d := r.Data.(type) {
+		case *CountData:
+			cloned = &(*d)
+		case *DistributionData:
+			counts := make([]int64, len(d.CountPerBucket))
+			copy(counts, d.CountPerBucket)
+			c := *d
+			c.CountPerBucket = counts
+			cloned = &c
+		case *SumData:
+			cloned = &(*d)
+		case *MeanData:
+			cloned = &(*d)
+		default:
+			// Panic, so we can easily tell we forgot
+			// to add support for the aggregation data type
+			// during development time.
+			panic("deep copy failed for unknown type")
+		}
+		newRows = append(newRows, &Row{
+			Data: cloned,
+			Tags: r.Tags,
+		})
+	}
+	return newRows
 }
