@@ -26,6 +26,15 @@ $ go get -u go.opencensus.io/...
 
 OpenCensus Go libraries require Go 1.8 or later.
 
+## Exporters
+
+OpenCensus is a vendor agnostic library and can export instrumentation data to
+various backends. Currently, OpenCensus is supporting:
+
+* [Prometheus][exporter-prom]
+* [Zipkin][exporter-zipkin]
+* Stackdriver [Monitoring][exporter-sdstats] and [Trace][exporter-sdtrace]
+
 ## Tags
 
 Tags represent propagated key values. They can propagated using context.Context
@@ -160,3 +169,8 @@ An example logger exporter is below:
 
 [newtags-ex]: https://godoc.org/go.opencensus.io/tag#example-NewMap
 [newtags-replace-ex]: https://godoc.org/go.opencensus.io/tag#example-NewMap--Replace
+
+[exporter-prom]: https://godoc.org/go.opencensus.io/exporter/stats/prometheus
+[exporter-sdstats]: https://godoc.org/go.opencensus.io/exporter/stats/stackdriver
+[exporter-zipkin]: https://godoc.org/go.opencensus.io/exporter/trace/zipkin
+[exporter-sdtrace]: https://godoc.org/go.opencensus.io/exporter/trace/stackdriver
