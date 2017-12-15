@@ -32,7 +32,7 @@ OpenCensus is a vendor agnostic library and can export instrumentation data to
 various backends. Currently, OpenCensus is supporting:
 
 * [Prometheus][exporter-prom]
-* [Zipkin][exporter-zipkin]
+* [OpenZipkin][exporter-zipkin]
 * Stackdriver [Monitoring][exporter-sdstats] and [Trace][exporter-sdtrace]
 
 ## Tags
