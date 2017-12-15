@@ -34,18 +34,32 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+func TestRejectBlankProjectID(t *testing.T) {
+	ids := []string{"", "     ", " "}
+	for _, projectID := range ids {
+		opts := Options{ProjectID: projectID}
+		exp, err := NewExporter(opts)
+		if err == nil || exp != nil {
+			t.Errorf("%q ProjectID must be rejected: NewExporter() = %v err = %q",
+				projectID, exp, err)
+		}
+	}
+}
+
 // Ensure only one exporter per projectID per process, any
 // subsequent invocations of NewExporter should fail.
 func TestNewExporterSingletonPerProcess(t *testing.T) {
-	ids := []string{"", "x", "fakeProjectID"}
+	ids := []string{"open-census.io", "x", "fakeProjectID"}
 	for _, projectID := range ids {
 		opts := Options{ProjectID: projectID}
 		exp, err := NewExporter(opts)
 		if err != nil {
-			t.Fatalf("NewExporter() projectID = %q err = %q", projectID, err)
+			t.Errorf("NewExporter() projectID = %q err = %q", projectID, err)
+			continue
 		}
 		if exp == nil {
-			t.Fatalf("NewExporter returned a nil Exporter")
+			t.Errorf("NewExporter returned a nil Exporter")
+			continue
 		}
 		for i := 0; i < 10; i++ {
 			exp, err := NewExporter(opts)

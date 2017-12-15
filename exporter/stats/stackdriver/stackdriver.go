@@ -28,6 +28,7 @@ import (
 	"path"
 	"reflect"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -112,12 +113,19 @@ func init() {
 	seenProjectIDs.m = make(map[string]bool)
 }
 
-var errSingletonExporter = errors.New("only one exporter can be created per GCP ID per process")
+var (
+	errBlankProjectID    = errors.New("expecting a non-blank ProjectID")
+	errSingletonExporter = errors.New("only one exporter can be created per unique ProjectID per process")
+)
 
 // NewExporter returns an exporter that uploads stats data to Stackdriver Monitoring.
-// Only one Stackdriver exporter should be created per GCP ID per process, any subsequent
-// invocations of NewExporter will return an error.
+// Only one Stackdriver exporter should be created per ProjectID per process, any subsequent
+// invocations of NewExporter with the same ProjectID will return an error.
 func NewExporter(o Options) (*Exporter, error) {
+	if strings.TrimSpace(o.ProjectID) == "" {
+		return nil, errBlankProjectID
+	}
+
 	seenProjectIDs.Lock()
 	_, seen := seenProjectIDs.m[o.ProjectID]
 	seenProjectIDs.Unlock()
