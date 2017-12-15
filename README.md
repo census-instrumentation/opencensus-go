@@ -265,7 +265,13 @@ func (e *exporter) Export(vd *stats.ViewData) {
 
 ## Tracing
 
-Coming soon.
+### Starting and ending a span
+
+[embedmd]:# (trace.go startend)
+```go
+ctx = trace.StartSpan(ctx, "your choice of name")
+defer trace.EndSpan(ctx)
+```
 
 
 [travis-image]: https://travis-ci.org/census-instrumentation/opencensus-go.svg?branch=master
