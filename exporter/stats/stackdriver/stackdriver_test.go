@@ -34,6 +34,28 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+// Ensure only one exporter per projectID per process, any
+// subsequent invocations of NewExporter should fail.
+func TestNewExporterSingletonPerProcess(t *testing.T) {
+	ids := []string{"", "x", "fakeProjectID"}
+	for _, projectID := range ids {
+		opts := Options{ProjectID: projectID}
+		exp, err := NewExporter(opts)
+		if err != nil {
+			t.Fatalf("NewExporter() projectID = %q err = %q", projectID, err)
+		}
+		if exp == nil {
+			t.Fatalf("NewExporter returned a nil Exporter")
+		}
+		for i := 0; i < 10; i++ {
+			exp, err := NewExporter(opts)
+			if err == nil || exp != nil {
+				t.Errorf("#%d: NewExporter more than once should fail; exp (%v) err %v", i, exp, err)
+			}
+		}
+	}
+}
+
 func TestExporter_makeReq(t *testing.T) {
 	m, err := stats.NewMeasureFloat64("test-measure", "measure desc", "unit")
 	if err != nil {

@@ -101,9 +101,34 @@ type Options struct {
 	Resource *monitoredrespb.MonitoredResource
 }
 
+// Enforces the singleton on NewExporter per projectID per process
+// lest there will be races with Stackdriver.
+var seenProjectIDs struct {
+	m map[string]bool
+	sync.Mutex
+}
+
+func init() {
+	seenProjectIDs.m = make(map[string]bool)
+}
+
+var errSingletonExporter = errors.New("only one exporter can be created per GCP ID per process")
+
 // NewExporter returns an exporter that uploads stats data to Stackdriver Monitoring.
-// Only one Stackdriver exporter should be created per process.
+// Only one Stackdriver exporter should be created per GCP ID per process, any subsequent
+// invocations of NewExporter will return an error.
 func NewExporter(o Options) (*Exporter, error) {
+	seenProjectIDs.Lock()
+	_, seen := seenProjectIDs.m[o.ProjectID]
+	seenProjectIDs.Unlock()
+	if seen {
+		return nil, errSingletonExporter
+	}
+
+	seenProjectIDs.Lock()
+	seenProjectIDs.m[o.ProjectID] = true
+	seenProjectIDs.Unlock()
+
 	opts := append(o.ClientOptions, option.WithUserAgent(internal.UserAgent))
 	client, err := monitoring.NewMetricClient(context.Background(), opts...)
 	if err != nil {
