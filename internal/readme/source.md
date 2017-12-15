@@ -143,7 +143,9 @@ An example logger exporter is below:
 
 ## Tracing
 
-Coming soon.
+### Starting and ending a span
+
+[embedmd]:# (trace.go startend)
 
 
 [travis-image]: https://travis-ci.org/census-instrumentation/opencensus-go.svg?branch=master
