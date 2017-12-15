@@ -34,9 +34,9 @@ type Exporter interface {
 
 // RegisterExporter registers an exporter.
 // Collected data will be reported via all the
-// registered exporters. Once you don't want data
-// to be expoter on the registered exporter, use
-// UnregisterExporter.
+// registered exporters. Once you no longer
+// want data to be exported, invoke UnregisterExporter
+// with the previously registered exporter.
 func RegisterExporter(e Exporter) {
 	exportersMu.Lock()
 	defer exportersMu.Unlock()
