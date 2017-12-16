@@ -24,15 +24,52 @@ import (
 	timestamp "github.com/golang/protobuf/ptypes/timestamp"
 	"go.opencensus.io/stats"
 	"go.opencensus.io/tag"
+	"google.golang.org/api/option"
 	distributionpb "google.golang.org/genproto/googleapis/api/distribution"
 	"google.golang.org/genproto/googleapis/api/label"
 	"google.golang.org/genproto/googleapis/api/metric"
 	metricpb "google.golang.org/genproto/googleapis/api/metric"
 	monitoredrespb "google.golang.org/genproto/googleapis/api/monitoredres"
 	monitoringpb "google.golang.org/genproto/googleapis/monitoring/v3"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
+
+var authOptions = []option.ClientOption{option.WithGRPCConn(&grpc.ClientConn{})}
+
+func TestRejectBlankProjectID(t *testing.T) {
+	ids := []string{"", "     ", " "}
+	for _, projectID := range ids {
+		opts := Options{ProjectID: projectID, ClientOptions: authOptions}
+		exp, err := NewExporter(opts)
+		if err == nil || exp != nil {
+			t.Errorf("%q ProjectID must be rejected: NewExporter() = %v err = %q", projectID, exp, err)
+		}
+	}
+}
+
+// Ensure only one exporter per projectID per process, any
+// subsequent invocations of NewExporter should fail.
+func TestNewExporterSingletonPerProcess(t *testing.T) {
+	ids := []string{"open-census.io", "x", "fakeProjectID"}
+	for _, projectID := range ids {
+		opts := Options{ProjectID: projectID, ClientOptions: authOptions}
+		exp, err := NewExporter(opts)
+		if err != nil {
+			t.Errorf("NewExporter() projectID = %q err = %q", projectID, err)
+			continue
+		}
+		if exp == nil {
+			t.Errorf("NewExporter returned a nil Exporter")
+			continue
+		}
+		exp, err = NewExporter(opts)
+		if err == nil || exp != nil {
+			t.Errorf("NewExporter more than once should fail; exp (%v) err %v", exp, err)
+		}
+	}
+}
 
 func TestExporter_makeReq(t *testing.T) {
 	m, err := stats.NewMeasureFloat64("test-measure", "measure desc", "unit")

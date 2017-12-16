@@ -28,6 +28,7 @@ import (
 	"path"
 	"reflect"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -101,9 +102,35 @@ type Options struct {
 	Resource *monitoredrespb.MonitoredResource
 }
 
+// Enforces the singleton on NewExporter per projectID per process
+// lest there will be races with Stackdriver.
+var (
+	seenProjectsMu sync.Mutex
+	seenProjects   = make(map[string]bool)
+)
+
+var (
+	errBlankProjectID    = errors.New("expecting a non-blank ProjectID")
+	errSingletonExporter = errors.New("only one exporter can be created per unique ProjectID per process")
+)
+
 // NewExporter returns an exporter that uploads stats data to Stackdriver Monitoring.
-// Only one Stackdriver exporter should be created per process.
+// Only one Stackdriver exporter should be created per ProjectID per process, any subsequent
+// invocations of NewExporter with the same ProjectID will return an error.
 func NewExporter(o Options) (*Exporter, error) {
+	if strings.TrimSpace(o.ProjectID) == "" {
+		return nil, errBlankProjectID
+	}
+
+	seenProjectsMu.Lock()
+	defer seenProjectsMu.Unlock()
+	_, seen := seenProjects[o.ProjectID]
+	if seen {
+		return nil, errSingletonExporter
+	}
+
+	seenProjects[o.ProjectID] = true
+
 	opts := append(o.ClientOptions, option.WithUserAgent(internal.UserAgent))
 	client, err := monitoring.NewMetricClient(context.Background(), opts...)
 	if err != nil {
