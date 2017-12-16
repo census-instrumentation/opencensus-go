@@ -13,8 +13,6 @@ This project is still at a very early stage of development and
 a lot of the API calls are in the process of being changed and
 might break your code in the future.
 
-TODO: Add a link to the language independent OpenCensus
-doc when it is available.
 
 ## Installation
 
