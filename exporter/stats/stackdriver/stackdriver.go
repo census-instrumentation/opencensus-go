@@ -104,14 +104,10 @@ type Options struct {
 
 // Enforces the singleton on NewExporter per projectID per process
 // lest there will be races with Stackdriver.
-var seenProjectIDs struct {
-	m map[string]bool
-	sync.Mutex
-}
-
-func init() {
-	seenProjectIDs.m = make(map[string]bool)
-}
+var (
+	seenProjectsMu sync.Mutex
+	seenProjects   = make(map[string]bool)
+)
 
 var (
 	errBlankProjectID    = errors.New("expecting a non-blank ProjectID")
@@ -126,16 +122,14 @@ func NewExporter(o Options) (*Exporter, error) {
 		return nil, errBlankProjectID
 	}
 
-	seenProjectIDs.Lock()
-	_, seen := seenProjectIDs.m[o.ProjectID]
-	seenProjectIDs.Unlock()
+	seenProjectsMu.Lock()
+	defer seenProjectsMu.Unlock()
+	_, seen := seenProjects[o.ProjectID]
 	if seen {
 		return nil, errSingletonExporter
 	}
 
-	seenProjectIDs.Lock()
-	seenProjectIDs.m[o.ProjectID] = true
-	seenProjectIDs.Unlock()
+	seenProjects[o.ProjectID] = true
 
 	opts := append(o.ClientOptions, option.WithUserAgent(internal.UserAgent))
 	client, err := monitoring.NewMetricClient(context.Background(), opts...)
