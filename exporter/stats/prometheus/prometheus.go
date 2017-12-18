@@ -20,6 +20,7 @@ package prometheus
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -53,8 +54,23 @@ type Options struct {
 	OnError   func(err error)
 }
 
+var (
+	newExporterOnce      sync.Once
+	errSingletonExporter = errors.New("expecting only one exporter per instance")
+)
+
 // NewExporter returns an exporter that exports stats to Prometheus.
+// Only one exporter should exist per instance
 func NewExporter(o Options) (*Exporter, error) {
+	var err error = errSingletonExporter
+	var exporter *Exporter
+	newExporterOnce.Do(func() {
+		exporter, err = newExporter(o)
+	})
+	return exporter, err
+}
+
+func newExporter(o Options) (*Exporter, error) {
 	if o.Namespace == "" {
 		o.Namespace = defaultNamespace
 	}
