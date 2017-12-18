@@ -75,3 +75,22 @@ func TestOnlyCumulativeWindowSupported(t *testing.T) {
 		}
 	}
 }
+
+func TestSingletonExporter(t *testing.T) {
+	exp, err := NewExporter(Options{})
+	if err != nil {
+		t.Fatalf("NewExporter() = %v", err)
+	}
+	if exp == nil {
+		t.Fatal("Nil exporter")
+	}
+
+	// Should all now fail
+	exp, err = NewExporter(Options{})
+	if err == nil {
+		t.Fatal("NewExporter() = nil")
+	}
+	if exp != nil {
+		t.Fatal("Non-nil exporter")
+	}
+}
