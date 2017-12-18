@@ -25,7 +25,7 @@ type Key struct {
 // Calling NewKey consequently with the same name returns the same key.
 func NewKey(name string) (Key, error) {
 	if !checkKeyName(name) {
-		return Key{}, errInvalid
+		return Key{}, errInvalidKeyName
 	}
 	return km.newStringKey(name)
 }

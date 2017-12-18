@@ -93,7 +93,7 @@ func Insert(k Key, v string) Mutator {
 	return &mutator{
 		fn: func(m *Map) (*Map, error) {
 			if !checkValue(v) {
-				return nil, errInvalid
+				return nil, errInvalidValue
 			}
 			m.insert(k, v)
 			return m, nil
@@ -108,7 +108,7 @@ func Update(k Key, v string) Mutator {
 	return &mutator{
 		fn: func(m *Map) (*Map, error) {
 			if !checkValue(v) {
-				return nil, errInvalid
+				return nil, errInvalidValue
 			}
 			m.update(k, v)
 			return m, nil
@@ -124,7 +124,7 @@ func Upsert(k Key, v string) Mutator {
 	return &mutator{
 		fn: func(m *Map) (*Map, error) {
 			if !checkValue(v) {
-				return nil, errInvalid
+				return nil, errInvalidValue
 			}
 			m.upsert(k, v)
 			return m, nil
@@ -146,11 +146,16 @@ func Delete(k Key) Mutator {
 // NewMap returns a new tag map originated from the incoming context
 // and modified with the provided mutators.
 func NewMap(ctx context.Context, mutator ...Mutator) (*Map, error) {
-	// TODO(jbd): Implement validation of keys and values.
 	m := newMap(0)
 	orig := FromContext(ctx)
 	if orig != nil {
 		for k, v := range orig.m {
+			if !checkKeyName(k.Name()) {
+				return nil, fmt.Errorf("key:%q: %v", k, errInvalidKeyName)
+			}
+			if !checkValue(v) {
+				return nil, fmt.Errorf("key:%q value:%q: %v", k.Name(), v, errInvalidValue)
+			}
 			m.insert(k, v)
 		}
 	}
