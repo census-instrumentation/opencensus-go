@@ -27,7 +27,7 @@ to collect from a server.
 
 Each measure needs to be registered before being used. Measure
 constructors such as NewMeasureInt64 and NewMeasureFloat64 automatically
-registers the measure by the given name. Each registered measure needs
+register the measure by the given name. Each registered measure needs
 to be unique by name. Measures also have a description and a unit.
 
 Libraries can define and export measures for their end users to
@@ -38,14 +38,14 @@ Recording measurements
 Measurement is a data point to be collected for a measure. For example,
 for a latency (ms) measure, 100 is a measurement that represents a 100ms
 latency event. Users collect data points on the existing measures with
-the current context. Tags from the current context is recorded with the
+the current context. Tags from the current context are recorded with the
 measurements if they are any.
 
 Recorded measurements are dropped immediately if user is not aggregating
 them via views. Users don't necessarily need to conditionally enable/disable
 recording to reduce cost. Recording of measurements is cheap.
 
-Libraries can always record measurements, and end-user can later decide
+Libraries can always record measurements, and end-users can later decide
 on which measurements they want to collect by registering views. This allows
 libraries to turn on the instrumentation by default.
 
