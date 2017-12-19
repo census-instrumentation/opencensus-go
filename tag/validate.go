@@ -24,7 +24,10 @@ const (
 	validKeyValueMax = 126
 )
 
-var errInvalid = errors.New("invalid key name: only ASCII characters accepted; max length must be 255 characters")
+var (
+	errInvalidKeyName = errors.New("invalid key name: only ASCII characters accepted; max length must be 255 characters")
+	errInvalidValue   = errors.New("invalid value: only ASCII characters accepted; max length must be 255 characters")
+)
 
 func checkKeyName(name string) bool {
 	if len(name) == 0 {

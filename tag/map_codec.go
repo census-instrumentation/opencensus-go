@@ -218,7 +218,7 @@ func Decode(bytes []byte) (*Map, error) {
 		}
 		val := string(v)
 		if !checkValue(val) {
-			return nil, errInvalid // no partial failures
+			return nil, errInvalidValue // no partial failures
 		}
 		ts.upsert(key, val)
 	}
