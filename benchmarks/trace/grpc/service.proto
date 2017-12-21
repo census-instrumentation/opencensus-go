@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package benchmarks;
+
+service Pinger {
+  rpc PingUniTraced(Ping) returns (Pong) {}
+  rpc PingUniUntraced(Ping) returns (Pong) {}
+}
+
+message Pong {
+  string message = 1;
+}
+
+message Ping {
+  string message = 1;
+}
