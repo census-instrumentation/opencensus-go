@@ -19,7 +19,7 @@
 // 	import (
 // 		openzipkin "github.com/openzipkin/zipkin-go"
 // 		"github.com/openzipkin/zipkin-go/reporter/http"
-// 		"go.opencensus.io/trace/adaptor/zipkin"
+// 		"go.opencensus.io/exporter/trace/zipkin"
 // 	)
 //	...
 //		localEndpoint, err := openzipkin.NewEndpoint("server", "server:5454")
