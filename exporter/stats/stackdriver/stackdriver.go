@@ -73,7 +73,7 @@ type Options struct {
 	ProjectID string
 
 	// OnError is the hook to be called when there is
-	// an error occured when uploading the stats data.
+	// an error occurred when uploading the stats data.
 	// If no custom hook is set, errors are logged.
 	// Optional.
 	OnError func(err error)

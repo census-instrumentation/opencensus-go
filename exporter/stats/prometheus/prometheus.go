@@ -156,7 +156,7 @@ type collector struct {
 	opts Options
 	mu   sync.Mutex // mu guards all the fields.
 
-	// reg helps collector register views dyanmically.
+	// reg helps collector register views dynamically.
 	reg *prometheus.Registry
 
 	// viewData are accumulated and atomically

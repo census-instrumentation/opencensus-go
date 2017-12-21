@@ -95,7 +95,7 @@ func (v *View) clearRows() {
 	v.collector.clearRows()
 }
 
-// TagKeys returns the list of tag keys assoicated with this view.
+// TagKeys returns the list of tag keys associated with this view.
 func (v *View) TagKeys() []tag.Key {
 	return v.tagKeys
 }
