@@ -300,9 +300,7 @@ func (a *DistributionData) incrementBucketCount(f float64) {
 // various buckets of the histogram.
 func (a *DistributionData) multiplyByFraction(fraction float64) AggregationData {
 	ret := newDistributionData(a.bounds)
-	for i, c := range a.CountPerBucket {
-		ret.CountPerBucket[i] = c
-	}
+	copy(ret.CountPerBucket, a.CountPerBucket)
 	ret.Count = a.Count
 	ret.Min = a.Min
 	ret.Max = a.Max
