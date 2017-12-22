@@ -286,10 +286,7 @@ func (e *Exporter) createMeasure(ctx context.Context, vd *stats.ViewData) error 
 
 	if md, ok := e.createdViews[viewName]; ok {
 		// Check agg, window and keys.
-		if err := equalAggWindowTagKeys(md, agg, window, tagKeys); err != nil {
-			return err
-		}
-		return nil
+		return equalAggWindowTagKeys(md, agg, window, tagKeys)
 	}
 
 	metricName := monitoring.MetricMetricDescriptorPath(e.o.ProjectID, namespacedViewName(viewName, true))
