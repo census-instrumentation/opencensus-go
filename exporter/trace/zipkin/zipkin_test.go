@@ -35,7 +35,9 @@ func (r roundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 }
 
 func TestExport(t *testing.T) {
-	now := time.Now()
+	// Since Zipkin reports in microsecond resolution let's round our Timestamp,
+	// so when deserializing Zipkin data in this test we can properly compare.
+	now := time.Now().Round(time.Microsecond)
 	tests := []struct {
 		span *trace.SpanData
 		want model.SpanModel
@@ -53,7 +55,8 @@ func TestExport(t *testing.T) {
 				Attributes: map[string]interface{}{
 					"stringkey": "value",
 					"intkey":    int64(42),
-					"boolkey":   true,
+					"boolkey1":  true,
+					"boolkey2":  false,
 				},
 				MessageEvents: []trace.MessageEvent{
 					trace.MessageEvent{
@@ -64,6 +67,18 @@ func TestExport(t *testing.T) {
 						CompressedByteSize:   98,
 					},
 				},
+				Annotations: []trace.Annotation{
+					trace.Annotation{
+						Time:    now,
+						Message: "Annotation",
+						Attributes: map[string]interface{}{
+							"stringkey": "value",
+							"intkey":    int64(42),
+							"boolkey1":  true,
+							"boolkey2":  false,
+						},
+					},
+				},
 				Status: trace.Status{
 					Code:    3,
 					Message: "error",
@@ -72,27 +87,32 @@ func TestExport(t *testing.T) {
 			want: model.SpanModel{
 				SpanContext: model.SpanContext{
 					TraceID: model.TraceID{
-						High: 0x102030405060708,
-						Low:  0x90a0b0c0d0e0f10,
+						High: 0x0102030405060708,
+						Low:  0x090a0b0c0d0e0f10,
 					},
 					ID:      0x1112131415161718,
 					Sampled: &sampledTrue,
 				},
 				Name:      "name",
-				Kind:      "CLIENT",
-				Timestamp: time.Time{},
+				Kind:      model.Client,
+				Timestamp: now,
 				Duration:  24 * time.Hour,
 				Shared:    false,
 				Annotations: []model.Annotation{
 					model.Annotation{
-						Timestamp: time.Time{},
+						Timestamp: now,
+						Value:     "Annotation",
+					},
+					model.Annotation{
+						Timestamp: now,
 						Value:     "SENT",
 					},
 				},
 				Tags: map[string]string{
 					"stringkey": "value",
 					"intkey":    "42",
-					"boolkey":   "true",
+					"boolkey1":  "true",
+					"boolkey2":  "false",
 					"error":     "INVALID_ARGUMENT",
 					"opencensus.status_description": "error",
 				},
@@ -112,14 +132,14 @@ func TestExport(t *testing.T) {
 			want: model.SpanModel{
 				SpanContext: model.SpanContext{
 					TraceID: model.TraceID{
-						High: 0x102030405060708,
-						Low:  0x90a0b0c0d0e0f10,
+						High: 0x0102030405060708,
+						Low:  0x090a0b0c0d0e0f10,
 					},
 					ID:      0x1112131415161718,
 					Sampled: &sampledTrue,
 				},
 				Name:      "name",
-				Timestamp: time.Time{},
+				Timestamp: now,
 				Duration:  24 * time.Hour,
 				Shared:    false,
 			},
@@ -142,14 +162,14 @@ func TestExport(t *testing.T) {
 			want: model.SpanModel{
 				SpanContext: model.SpanContext{
 					TraceID: model.TraceID{
-						High: 0x102030405060708,
-						Low:  0x90a0b0c0d0e0f10,
+						High: 0x0102030405060708,
+						Low:  0x090a0b0c0d0e0f10,
 					},
 					ID:      0x1112131415161718,
 					Sampled: &sampledTrue,
 				},
 				Name:      "name",
-				Timestamp: time.Time{},
+				Timestamp: now,
 				Duration:  24 * time.Hour,
 				Shared:    false,
 				Tags: map[string]string{
@@ -174,14 +194,14 @@ func TestExport(t *testing.T) {
 			want: model.SpanModel{
 				SpanContext: model.SpanContext{
 					TraceID: model.TraceID{
-						High: 0x102030405060708,
-						Low:  0x90a0b0c0d0e0f10,
+						High: 0x0102030405060708,
+						Low:  0x090a0b0c0d0e0f10,
 					},
 					ID:      0x1112131415161718,
 					Sampled: &sampledTrue,
 				},
 				Name:      "name",
-				Timestamp: time.Time{},
+				Timestamp: now,
 				Duration:  24 * time.Hour,
 				Shared:    false,
 				Tags: map[string]string{
@@ -192,15 +212,11 @@ func TestExport(t *testing.T) {
 	}
 	for _, tt := range tests {
 		got := zipkinSpan(tt.span, nil)
-		got.Timestamp = time.Time{}
 		if len(got.Annotations) != len(tt.want.Annotations) {
 			t.Fatalf("zipkinSpan: got %d annotations in span, want %d", len(got.Annotations), len(tt.want.Annotations))
 		}
-		for i := range got.Annotations {
-			got.Annotations[i].Timestamp = time.Time{}
-		}
 		if !reflect.DeepEqual(got, tt.want) {
-			t.Errorf("zipkinSpan: got %#v want %#v", got, tt.want)
+			t.Errorf("zipkinSpan:\n\tgot  %#v\n\twant %#v", got, tt.want)
 		}
 	}
 	for _, tt := range tests {
@@ -228,15 +244,11 @@ func TestExport(t *testing.T) {
 		}
 		got := spans[0]
 		got.SpanContext.Sampled = &sampledTrue // Sampled is not set when the span is reported.
-		got.Timestamp = time.Time{}
 		if len(got.Annotations) != len(tt.want.Annotations) {
 			t.Fatalf("Export: got %d annotations in span, want %d", len(got.Annotations), len(tt.want.Annotations))
 		}
-		for i := range got.Annotations {
-			got.Annotations[i].Timestamp = time.Time{}
-		}
 		if !reflect.DeepEqual(got, tt.want) {
-			t.Errorf("Export: got %#v want %#v", got, tt.want)
+			t.Errorf("Export:\n\tgot  %#v\n\twant %#v", got, tt.want)
 		}
 	}
 }
