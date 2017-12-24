@@ -35,13 +35,13 @@ various backends. Currently, OpenCensus is supporting:
 
 ## Tags
 
-Tags represent propagated key values. They can propagated using context.Context
+Tags represent propagated key values. They can be propagated using context.Context
 in the same process or can be encoded to be transmitted on wire and decoded back
 to a tag.Map at the destination.
 
 ### Getting a key by a name
 
-A key is defined by its name. To use a key a user needs to know its name and type.
+A key is defined by its name. To use a key, a user needs to know its name and type.
 Currently, only keys of type string are supported.
 Other types will be supported in the future.
 
@@ -84,6 +84,8 @@ Delete measure (this can be useful when replacing a measure by
 another measure with the same name):
 
 [embedmd]:# (stats.go deleteMeasure)
+However, it is an error to delete a Measure that's used by at least one View. The
+View using the Measure has to be unregistered first.
 
 ### Creating an aggregation
 

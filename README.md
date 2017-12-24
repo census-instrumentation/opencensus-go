@@ -245,7 +245,7 @@ Users need to subscribe to a view in order to retrieve collected data.
 
 [embedmd]:# (stats.go subscribe)
 ```go
-if view.Subscribe(); err != nil {
+if err := view.Subscribe(); err != nil {
 	log.Fatal(err)
 }
 ```
