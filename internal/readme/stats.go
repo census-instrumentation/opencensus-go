@@ -113,7 +113,7 @@ func statsExamples() {
 	// END record
 
 	// START subscribe
-	if view.Subscribe(); err != nil {
+	if err := view.Subscribe(); err != nil {
 		log.Fatal(err)
 	}
 	// END subscribe
