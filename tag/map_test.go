@@ -152,17 +152,17 @@ func TestNewMapValidation(t *testing.T) {
 		seed *Map
 	}{
 		// Key name validation in seed
-		{err: "invalid key", seed: &Map{m: map[Key]string{Key{name: ""}: "foo"}}},
-		{err: "", seed: &Map{m: map[Key]string{Key{name: "key"}: "foo"}}},
-		{err: "", seed: &Map{m: map[Key]string{Key{name: strings.Repeat("a", 255)}: "census"}}},
-		{err: "invalid key", seed: &Map{m: map[Key]string{Key{name: strings.Repeat("a", 256)}: "census"}}},
-		{err: "invalid key", seed: &Map{m: map[Key]string{Key{name: "Приве́т"}: "census"}}},
+		{err: "invalid key", seed: &Map{m: map[Key]string{{name: ""}: "foo"}}},
+		{err: "", seed: &Map{m: map[Key]string{{name: "key"}: "foo"}}},
+		{err: "", seed: &Map{m: map[Key]string{{name: strings.Repeat("a", 255)}: "census"}}},
+		{err: "invalid key", seed: &Map{m: map[Key]string{{name: strings.Repeat("a", 256)}: "census"}}},
+		{err: "invalid key", seed: &Map{m: map[Key]string{{name: "Приве́т"}: "census"}}},
 
 		// Value validation
-		{err: "", seed: &Map{m: map[Key]string{Key{name: "key"}: ""}}},
-		{err: "", seed: &Map{m: map[Key]string{Key{name: "key"}: strings.Repeat("a", 255)}}},
-		{err: "invalid value", seed: &Map{m: map[Key]string{Key{name: "key"}: "Приве́т"}}},
-		{err: "invalid value", seed: &Map{m: map[Key]string{Key{name: "key"}: strings.Repeat("a", 256)}}},
+		{err: "", seed: &Map{m: map[Key]string{{name: "key"}: ""}}},
+		{err: "", seed: &Map{m: map[Key]string{{name: "key"}: strings.Repeat("a", 255)}}},
+		{err: "invalid value", seed: &Map{m: map[Key]string{{name: "key"}: "Приве́т"}}},
+		{err: "invalid value", seed: &Map{m: map[Key]string{{name: "key"}: strings.Repeat("a", 256)}}},
 	}
 
 	for i, tt := range tests {

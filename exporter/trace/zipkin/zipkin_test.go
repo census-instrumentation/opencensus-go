@@ -59,7 +59,7 @@ func TestExport(t *testing.T) {
 					"boolkey2":  false,
 				},
 				MessageEvents: []trace.MessageEvent{
-					trace.MessageEvent{
+					{
 						Time:                 now,
 						EventType:            trace.MessageEventTypeSent,
 						MessageID:            12,
@@ -68,7 +68,7 @@ func TestExport(t *testing.T) {
 					},
 				},
 				Annotations: []trace.Annotation{
-					trace.Annotation{
+					{
 						Time:    now,
 						Message: "Annotation",
 						Attributes: map[string]interface{}{
@@ -99,11 +99,11 @@ func TestExport(t *testing.T) {
 				Duration:  24 * time.Hour,
 				Shared:    false,
 				Annotations: []model.Annotation{
-					model.Annotation{
+					{
 						Timestamp: now,
 						Value:     "Annotation",
 					},
-					model.Annotation{
+					{
 						Timestamp: now,
 						Value:     "SENT",
 					},

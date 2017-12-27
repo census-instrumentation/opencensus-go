@@ -421,12 +421,12 @@ func TestAnnotations(t *testing.T) {
 		ParentSpanID: sid,
 		Name:         "span0",
 		Annotations: []Annotation{
-			Annotation{Message: "foo", Attributes: nil},
-			Annotation{Message: "foo", Attributes: map[string]interface{}{"key2": "value2"}},
-			Annotation{Message: "-1.500000", Attributes: nil},
-			Annotation{Message: "1.500000", Attributes: map[string]interface{}{"key3": "value3"}},
-			Annotation{Message: "Print", Attributes: nil},
-			Annotation{Message: "PrintWithAttributes", Attributes: map[string]interface{}{"key4": "value4"}},
+			{Message: "foo", Attributes: nil},
+			{Message: "foo", Attributes: map[string]interface{}{"key2": "value2"}},
+			{Message: "-1.500000", Attributes: nil},
+			{Message: "1.500000", Attributes: map[string]interface{}{"key3": "value3"}},
+			{Message: "Print", Attributes: nil},
+			{Message: "PrintWithAttributes", Attributes: map[string]interface{}{"key4": "value4"}},
 		},
 		HasRemoteParent: true,
 	}
@@ -459,8 +459,8 @@ func TestMessageEvents(t *testing.T) {
 		ParentSpanID: sid,
 		Name:         "span0",
 		MessageEvents: []MessageEvent{
-			MessageEvent{EventType: 2, MessageID: 0x3, UncompressedByteSize: 0x190, CompressedByteSize: 0x12c},
-			MessageEvent{EventType: 1, MessageID: 0x1, UncompressedByteSize: 0xc8, CompressedByteSize: 0x64},
+			{EventType: 2, MessageID: 0x3, UncompressedByteSize: 0x190, CompressedByteSize: 0x12c},
+			{EventType: 1, MessageID: 0x1, UncompressedByteSize: 0xc8, CompressedByteSize: 0x64},
 		},
 		HasRemoteParent: true,
 	}
@@ -514,7 +514,7 @@ func TestAddLink(t *testing.T) {
 		},
 		ParentSpanID: sid,
 		Name:         "span0",
-		Links: []Link{Link{
+		Links: []Link{{
 			TraceID:    tid,
 			SpanID:     sid,
 			Type:       2,
