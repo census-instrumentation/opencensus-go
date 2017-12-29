@@ -15,7 +15,9 @@
 package internal
 
 import (
+	"fmt"
 	"strings"
+	"sync"
 	"unicode"
 )
 
@@ -38,6 +40,32 @@ func Sanitize(s string) string {
 		s = "key" + s
 	}
 	return s
+}
+
+var (
+	smu       sync.Mutex
+	sanitized = make(map[string]string)
+)
+
+// SanitizeNoClash returns an error if in's sanitization clashes
+// with that of a previously sanitized string yet the two strings are
+// lexicographically different.
+//
+// For example:
+//   Sanitize("_012_foo")     == "key_012_foo"
+//   Sanitize("key_012_foo")  == "key_012_foo"
+//   Sanitize("012?foo")      == "key_012_foo"
+// all produce the same sanitization "key_012_foo"
+// yet none of them are the same.
+func SanitizeNoClash(in string) (string, error) {
+	sn := Sanitize(in)
+	smu.Lock()
+	defer smu.Unlock()
+	if prev, ok := sanitized[sn]; ok && prev != in {
+		return "", fmt.Errorf("sanitization %q of %q clashes with already sanitized %q", sn, in, prev)
+	}
+	sanitized[sn] = in
+	return sn, nil
 }
 
 // converts anything that is not a letter or digit to an underscore

@@ -428,6 +428,8 @@ func namespacedViewName(v string, escaped bool) string {
 func newLabels(tags []tag.Tag, taskValue string) map[string]string {
 	labels := make(map[string]string)
 	for _, tag := range tags {
+		// TODO(odeke-em, rakyll): decide if we should
+		// instead use internal.SanitizeNoClash here
 		labels[internal.Sanitize(tag.Key.Name())] = tag.Value
 	}
 	labels[opencensusTaskKey] = taskValue
@@ -438,6 +440,8 @@ func newLabelDescriptors(keys []tag.Key) []*labelpb.LabelDescriptor {
 	labelDescriptors := make([]*labelpb.LabelDescriptor, len(keys)+1)
 	for i, key := range keys {
 		labelDescriptors[i] = &labelpb.LabelDescriptor{
+			// TODO(odeke-em, rakyll): decide if we should
+			// instead use internal.SanitizeNoClash here
 			Key:       internal.Sanitize(key.Name()),
 			ValueType: labelpb.LabelDescriptor_STRING, // We only use string tags
 		}
@@ -493,7 +497,11 @@ func equalAggWindowTagKeys(md *metricpb.MetricDescriptor, agg stats.Aggregation,
 
 	labels := make(map[string]struct{}, len(keys)+1)
 	for _, k := range keys {
-		labels[internal.Sanitize(k.Name())] = struct{}{}
+		sanitizedKey, err := internal.SanitizeNoClash(k.Name())
+		if err != nil {
+			return err
+		}
+		labels[sanitizedKey] = struct{}{}
 	}
 	labels[opencensusTaskKey] = struct{}{}
 

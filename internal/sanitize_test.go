@@ -65,3 +65,70 @@ func TestSanitize(t *testing.T) {
 		})
 	}
 }
+
+func TestSanitizeNoClash(t *testing.T) {
+	tests := []struct {
+		name    string
+		input   string
+		want    string
+		wantErr string
+	}{
+		{
+			name:  "truncate long string",
+			input: strings.Repeat("a", 101),
+			want:  strings.Repeat("a", 100),
+		},
+		{
+			name:    "long string clashes with one above",
+			input:   strings.Repeat("a", 101) + "foo",
+			wantErr: "clashes with already",
+		},
+		{
+			name:  "replace character",
+			input: "test/key-1",
+			want:  "test_key_1",
+		},
+		{
+			name:    "replace character that clashes with previous",
+			input:   "test?key-1",
+			wantErr: `"test_key_1" of "test?key-1" clashes with already sanitized "test/key-1"`,
+		},
+		{
+			name:  "add prefix if starting with digit",
+			input: "0123456789?foo",
+			want:  "key_0123456789_foo",
+		},
+		{
+			name:    "add prefix if starting with _ but clashes",
+			input:   "_0123456789/foo",
+			wantErr: `"key_0123456789_foo" of "_0123456789/foo" clashes with already sanitized "0123456789?foo"`,
+		},
+		{
+			name:    "starts with _ after sanitization but clashes",
+			input:   "/0123456789_foo",
+			wantErr: `"key_0123456789_foo" of "/0123456789_foo" clashes with already sanitized "0123456789?foo"`,
+		},
+		{
+			name:  "valid input",
+			input: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_0123456789",
+			want:  "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_0123456789",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := SanitizeNoClash(tt.input)
+			if tt.wantErr != "" {
+				if err == nil {
+					t.Errorf("SanitizeNoClash: unexpected success got %q", got)
+				} else if !strings.Contains(err.Error(), tt.wantErr) {
+					t.Errorf("SanitizeNoClash:\ngot  %q\nwant %q", err.Error(), tt.wantErr)
+				}
+			} else if err != nil {
+				t.Errorf("SanitizeNoClash: unexpected error %v", err)
+			} else if got != tt.want {
+				t.Errorf("got  %q\nwant %q", got, tt.want)
+			}
+		})
+	}
+}
