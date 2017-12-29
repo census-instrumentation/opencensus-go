@@ -46,8 +46,8 @@ lines to the top of the function:
     ctx = trace.StartSpan(ctx, "your choice of name")
     defer trace.EndSpan(ctx)
 
-StartSpan will create a child span if one already exists, and will create a
-new top-level span otherwise.
+Invoking StartSpan with the name of an already existent span will create a child span,
+otherwise it will create a new top-level span.
 
 As a suggestion, use the fully-qualified function name as the span name, e.g.
 "github.com/me/mypackage.Run".
