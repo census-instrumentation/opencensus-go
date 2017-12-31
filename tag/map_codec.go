@@ -127,8 +127,8 @@ func (eg *encoderGRPC) readBytesWithVarintLen() ([]byte, error) {
 
 	valueStart += eg.readIdx
 	valueEnd := valueStart + int(length)
-	if valueEnd > len(eg.buf) || length < 0 {
-		return nil, fmt.Errorf("malformed encoding: length:%v, upper%v, maxLength:%v", length, valueEnd, len(eg.buf))
+	if valueEnd > len(eg.buf) {
+		return nil, fmt.Errorf("malformed encoding: length:%v, upper:%v, maxLength:%v", length, valueEnd, len(eg.buf))
 	}
 
 	eg.readIdx = valueEnd
