@@ -16,14 +16,16 @@
 //
 // Example:
 //
-// 	import "go.opencensus.io/trace/adaptor/stackdriver"
+// 	import (
+//        "go.opencensus.io/exporter/trace/stackdriver"
+//        "go.opencensus.io/trace"
+//  )
 //
-// 	exporter, err := stackdriver.NewExporter(stackdriver.Options{ProjectID: *project})
+// 	exporter, err := stackdriver.NewExporter(stackdriver.Options{ProjectID: "google-project-id"})
 // 	if err != nil {
-// 		log.Println(err)
-// 	} else {
-// 		trace.RegisterExporter(exporter)
+// 		log.Fatal(err)
 // 	}
+// 	trace.RegisterExporter(exporter)
 //
 // The package uses Application Default Credentials to authenticate.  See
 // https://developers.google.com/identity/protocols/application-default-credentials
