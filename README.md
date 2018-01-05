@@ -282,6 +282,30 @@ ctx = trace.StartSpan(ctx, "your choice of name")
 defer trace.EndSpan(ctx)
 ```
 
+More tracing examples are coming soon...
+
+## Profiling
+
+OpenCensus tags can be applied as profiler labels
+for users who are on Go 1.9 and above.
+
+[embedmd]:# (tags.go profiler)
+```go
+tagMap, err = tag.NewMap(ctx,
+	tag.Insert(key, "macOS-10.12.5"),
+	tag.Upsert(key, "macOS-10.12.7"),
+	tag.Upsert(userIDKey, "fff0989878"),
+)
+if err != nil {
+	log.Fatal(err)
+}
+tag.Do(ctx, tagMap, func(ctx context.Context) {
+	// Do work.
+	// When profiling is on, samples will be
+	// recorded with the key/values from the tag map.
+})
+```
+
 
 [travis-image]: https://travis-ci.org/census-instrumentation/opencensus-go.svg?branch=master
 [travis-url]: https://travis-ci.org/census-instrumentation/opencensus-go
