@@ -127,16 +127,18 @@ func (h *ServerStatsHandler) handleRPCEnd(ctx context.Context, s *stats.End) {
 		}
 		return
 	}
-	elapsedTime := time.Since(d.startTime)
 
+	elapsedTime := time.Since(d.startTime)
 	reqCount := atomic.LoadInt64(&d.reqCount)
 	respCount := atomic.LoadInt64(&d.respCount)
 
-	var m []istats.Measurement
-	m = append(m, RPCServerRequestCount.M(reqCount))
-	m = append(m, RPCServerResponseCount.M(respCount))
-	m = append(m, RPCServerFinishedCount.M(1))
-	m = append(m, RPCServerServerElapsedTime.M(float64(elapsedTime)/float64(time.Millisecond)))
+	m := []*istats.Measurement{
+		RPCServerRequestCount.M(reqCount),
+		RPCServerResponseCount.M(respCount),
+		RPCServerFinishedCount.M(1),
+		RPCServerServerElapsedTime.M(float64(elapsedTime) / float64(time.Millisecond)),
+	}
+
 	if s.Error != nil {
 		s, ok := status.FromError(s.Error)
 		if ok {
