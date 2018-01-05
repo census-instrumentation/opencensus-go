@@ -134,16 +134,17 @@ func (h *ClientStatsHandler) handleRPCEnd(ctx context.Context, s *stats.End) {
 		}
 		return
 	}
-	elapsedTime := time.Since(d.startTime)
 
+	elapsedTime := time.Since(d.startTime)
 	reqCount := atomic.LoadInt64(&d.reqCount)
 	respCount := atomic.LoadInt64(&d.respCount)
 
-	var m []istats.Measurement
-	m = append(m, RPCClientRequestCount.M(reqCount))
-	m = append(m, RPCClientResponseCount.M(respCount))
-	m = append(m, RPCClientFinishedCount.M(1))
-	m = append(m, RPCClientRoundTripLatency.M(float64(elapsedTime)/float64(time.Millisecond)))
+	m := []*istats.Measurement{
+		RPCClientRequestCount.M(reqCount),
+		RPCClientResponseCount.M(respCount),
+		RPCClientFinishedCount.M(1),
+		RPCClientRoundTripLatency.M(float64(elapsedTime) / float64(time.Millisecond)),
+	}
 
 	if s.Error != nil {
 		s, ok := status.FromError(s.Error)
