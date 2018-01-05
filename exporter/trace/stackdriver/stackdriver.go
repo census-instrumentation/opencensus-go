@@ -17,9 +17,9 @@
 // Example:
 //
 // 	import (
-//        "go.opencensus.io/exporter/trace/stackdriver"
-//        "go.opencensus.io/trace"
-//  )
+// 		"go.opencensus.io/exporter/trace/stackdriver"
+// 		"go.opencensus.io/trace"
+// 	)
 //
 // 	exporter, err := stackdriver.NewExporter(stackdriver.Options{ProjectID: "google-project-id"})
 // 	if err != nil {
