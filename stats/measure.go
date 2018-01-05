@@ -34,8 +34,9 @@ type Measure interface {
 // Measurement is the numeric value measured when recording stats. Each measure
 // provides methods to create measurements of their kind. For example, MeasureInt64
 // provides M to convert an int64 into a measurement.
-type Measurement interface {
-	isMeasurement()
+type Measurement struct {
+	v interface{} // int64 or float64
+	m Measure
 }
 
 // FindMeasure returns the registered measure associated with name.
