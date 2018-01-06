@@ -169,6 +169,16 @@ func NewMap(ctx context.Context, mutator ...Mutator) (*Map, error) {
 	return m, nil
 }
 
+// Do is similar to pprof.Do.
+//
+// It converts the key/values from the given map to Go profiler labels
+// and calls pprof.Do.
+//
+// Do is going to do nothing if your Go version is below 1.9.
+func Do(ctx context.Context, m *Map, f func(ctx context.Context)) {
+	do(ctx, m, f)
+}
+
 type mutator struct {
 	fn func(t *Map) (*Map, error)
 }

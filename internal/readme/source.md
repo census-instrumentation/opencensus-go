@@ -156,6 +156,15 @@ An example logger exporter is below:
 
 [embedmd]:# (trace.go startend)
 
+More tracing examples are coming soon...
+
+## Profiling
+
+OpenCensus tags can be applied as profiler labels
+for users who are on Go 1.9 and above.
+
+[embedmd]:# (tags.go profiler)
+
 
 [travis-image]: https://travis-ci.org/census-instrumentation/opencensus-go.svg?branch=master
 [travis-url]: https://travis-ci.org/census-instrumentation/opencensus-go
