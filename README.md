@@ -272,7 +272,7 @@ func (e *exporter) Export(vd *stats.ViewData) {
 
 ```
 
-## Tracing
+## Traces
 
 ### Starting and ending a span
 
@@ -284,7 +284,7 @@ defer trace.EndSpan(ctx)
 
 More tracing examples are coming soon...
 
-## Profiling
+## Profiles
 
 OpenCensus tags can be applied as profiler labels
 for users who are on Go 1.9 and above.
@@ -305,6 +305,10 @@ tag.Do(ctx, tagMap, func(ctx context.Context) {
 	// recorded with the key/values from the tag map.
 })
 ```
+
+A screenshot of the CPU profile from the program above:
+
+![CPU profile](https://i.imgur.com/jBKjlkw.png)
 
 
 [travis-image]: https://travis-ci.org/census-instrumentation/opencensus-go.svg?branch=master

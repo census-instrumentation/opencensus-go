@@ -150,7 +150,7 @@ An example logger exporter is below:
 
 [embedmd]:# (stats.go exporter)
 
-## Tracing
+## Traces
 
 ### Starting and ending a span
 
@@ -158,12 +158,16 @@ An example logger exporter is below:
 
 More tracing examples are coming soon...
 
-## Profiling
+## Profiles
 
 OpenCensus tags can be applied as profiler labels
 for users who are on Go 1.9 and above.
 
 [embedmd]:# (tags.go profiler)
+
+A screenshot of the CPU profile from the program above:
+
+![CPU profile](https://i.imgur.com/jBKjlkw.png)
 
 
 [travis-image]: https://travis-ci.org/census-instrumentation/opencensus-go.svg?branch=master
