@@ -77,7 +77,8 @@ func tagsExamples() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	tag.Do(ctx, tagMap, func(ctx context.Context) {
+	ctx = tag.NewContext(ctx, tagMap)
+	tag.Do(ctx, func(ctx context.Context) {
 		// Do work.
 		// When profiling is on, samples will be
 		// recorded with the key/values from the tag map.
