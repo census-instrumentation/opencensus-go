@@ -181,7 +181,7 @@ func (v *View) RetrieveData() ([]*Row, error) {
 
 // Record records one or multiple measurements with the same tags at once.
 // If there are any tags in the context, measurements will be tagged with them.
-func Record(ctx context.Context, ms ...*Measurement) {
+func Record(ctx context.Context, ms ...Measurement) {
 	req := &recordReq{
 		now: time.Now(),
 		tm:  tag.FromContext(ctx),

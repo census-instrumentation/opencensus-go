@@ -211,7 +211,7 @@ func (cmd *retrieveDataReq) handleCommand(w *worker) {
 type recordReq struct {
 	now time.Time
 	tm  *tag.Map
-	ms  []*Measurement
+	ms  []Measurement
 }
 
 func (cmd *recordReq) handleCommand(w *worker) {

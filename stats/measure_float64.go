@@ -39,6 +39,6 @@ func (m *MeasureFloat64) Unit() string {
 
 // M creates a new float64 measurement.
 // Use Record to record measurements.
-func (m *MeasureFloat64) M(v float64) *Measurement {
-	return &Measurement{m: m, v: v}
+func (m *MeasureFloat64) M(v float64) Measurement {
+	return Measurement{m: m, v: v}
 }
