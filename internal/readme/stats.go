@@ -99,7 +99,7 @@ func statsExamples() {
 	_ = v
 
 	// START unregisterView
-	if stats.UnregisterView(v); err != nil {
+	if err = stats.UnregisterView(v); err != nil {
 		log.Fatal(err)
 	}
 	// END unregisterView
