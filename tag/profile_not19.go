@@ -18,4 +18,6 @@ package tag
 
 import "context"
 
-func do(ctx context.Context, m *Map, f func(ctx context.Context)) {}
+func do(ctx context.Context, m *Map, f func(ctx context.Context)) {
+	f(ctx)
+}
