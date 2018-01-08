@@ -13,9 +13,9 @@
 // limitations under the License.
 
 // Package propagation implements the binary trace context format.
-//
-// TODO: link to external spec document.
 package propagation
+
+// TODO: link to external spec document.
 
 // BinaryFormat format:
 //
@@ -46,6 +46,8 @@ package propagation
 // trace_options = {1};
 
 import (
+	"net/http"
+
 	"go.opencensus.io/trace"
 )
 
@@ -88,4 +90,17 @@ func FromBinary(b []byte) (sc trace.SpanContext, ok bool) {
 		sc.TraceOptions = trace.TraceOptions(b[1])
 	}
 	return sc, true
+}
+
+// HTTPPropagator propoagates span contexts in HTTP requests.
+//
+// FromRequest extracts a span context from incoming
+// requests. If the request doesn't contain a trace header,
+// nil is returned.
+//
+// ToRequest modifies the given request to include the given
+// span context in the request. Modified request is returned.
+type HTTPPropagator interface {
+	FromRequest(req *http.Request) (sc trace.SpanContext, ok bool)
+	ToRequest(sc trace.SpanContext, req *http.Request) *http.Request
 }
