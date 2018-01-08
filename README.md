@@ -9,9 +9,8 @@ OpenCensus Go is a Go implementation of OpenCensus, a toolkit for
 collecting application performance and behavior monitoring data.
 Currently it consists of three major components: tags, stats, and tracing.
 
-This project is still at a very early stage of development and
-a lot of the API calls are in the process of being changed and
-might break your code in the future.
+This project is still at a very early stage of development. The API is changing
+rapidly, vendoring is recommended.
 
 
 ## Installation
@@ -26,17 +25,17 @@ OpenCensus Go libraries require Go 1.8 or later.
 
 ## Exporters
 
-OpenCensus is a vendor agnostic library and can export instrumentation data to
-various backends. Currently, OpenCensus is supporting:
+OpenCensus can export instrumentation data to various backends. 
+Currently, OpenCensus supports:
 
-* [Prometheus][exporter-prom]
-* [OpenZipkin][exporter-zipkin]
+* [Prometheus][exporter-prom] for stats
+* [OpenZipkin][exporter-zipkin] for traces
 * Stackdriver [Monitoring][exporter-sdstats] and [Trace][exporter-sdtrace]
 
 ## Tags
 
-Tags represent propagated key values. They can be propagated using context.Context
-in the same process or can be encoded to be transmitted on wire and decoded back
+Tags represent propagated key-value pairs. They can be propagated using context.Context
+in the same process or can be encoded to be transmitted on the wire and decoded back
 to a tag.Map at the destination.
 
 ### Getting a key by a name
@@ -80,7 +79,7 @@ if err != nil {
 
 ### Propagating a tag map in a context
 
-To propagate a tag map to downstream methods and downstream RPCs, add a tag map
+To propagate a tag map to downstream methods and RPCs, add a tag map
 to the current context. NewContext will return a copy of the current context,
 and put the tag map into the returned one.
 If there is already a tag map in the current context, it will be replaced.
@@ -230,7 +229,7 @@ stats.SetReportingPeriod(5 * time.Second)
 
 ### Recording measurements
 
-Recording usage can only be performed against already registered measure
+Recording usage can only be performed against already registered measures
 and their registered views. Measurements are implicitly tagged with the
 tags in the context:
 
