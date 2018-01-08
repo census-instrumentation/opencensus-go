@@ -40,6 +40,37 @@ func TestContext(t *testing.T) {
 	}
 }
 
+func TestDoFunctionCalled(t *testing.T) {
+	ctx := context.Background()
+	want, _ := NewMap(ctx)
+	called := false
+
+	Do(ctx, want, func(ctx context.Context) {
+			called = true
+	})
+
+	if !called {
+		t.Errorf("function should be called")
+	}
+}
+
+func TestDo(t *testing.T) {
+	k1, _ := NewKey("k1")
+	k2, _ := NewKey("k2")
+
+	want, _ := NewMap(context.Background(),
+		Insert(k1, "v1"),
+		Insert(k2, "v2"),
+	)
+
+	Do(context.Background(), want, func(ctx context.Context) {
+		got := FromContext(ctx)
+		if !reflect.DeepEqual(got, want) {
+			t.Errorf("Map = %#v; want %#v", got, want)
+		}
+	})
+}
+
 func TestNewMap(t *testing.T) {
 	k1, _ := NewKey("k1")
 	k2, _ := NewKey("k2")
