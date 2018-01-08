@@ -139,7 +139,7 @@ func (h *ClientStatsHandler) handleRPCEnd(ctx context.Context, s *stats.End) {
 	reqCount := atomic.LoadInt64(&d.reqCount)
 	respCount := atomic.LoadInt64(&d.respCount)
 
-	m := []*istats.Measurement{
+	m := []istats.Measurement{
 		RPCClientRequestCount.M(reqCount),
 		RPCClientResponseCount.M(respCount),
 		RPCClientFinishedCount.M(1),
