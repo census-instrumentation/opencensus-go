@@ -195,10 +195,7 @@ func Decode(bytes []byte) (*Map, error) {
 	for !eg.readEnded() {
 		typ := keyType(eg.readByte())
 
-		switch typ {
-		case keyTypeString:
-			break
-		default:
+		if typ != keyTypeString {
 			return nil, fmt.Errorf("cannot decode: invalid key type: %q", typ)
 		}
 
