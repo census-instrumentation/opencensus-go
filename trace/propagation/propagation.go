@@ -92,15 +92,17 @@ func FromBinary(b []byte) (sc trace.SpanContext, ok bool) {
 	return sc, true
 }
 
-// HTTPPropagator propoagates span contexts in HTTP requests.
+// HTTPFormat implementations propoagates span contexts
+// in HTTP requests.
 //
 // FromRequest extracts a span context from incoming
-// requests. If the request doesn't contain a trace header,
-// nil is returned.
+// requests.
 //
 // ToRequest modifies the given request to include the given
-// span context in the request. Modified request is returned.
-type HTTPPropagator interface {
+// span context.
+type HTTPFormat interface {
 	FromRequest(req *http.Request) (sc trace.SpanContext, ok bool)
-	ToRequest(sc trace.SpanContext, req *http.Request) *http.Request
+	ToRequest(sc trace.SpanContext, req *http.Request)
 }
+
+// TODO(jbd): Find a more representative but short name for HTTPFormat.

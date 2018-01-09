@@ -53,13 +53,12 @@ func (t *testPropagator) FromRequest(req *http.Request) (sc trace.SpanContext, o
 	return sc, true
 }
 
-func (t *testPropagator) ToRequest(sc trace.SpanContext, req *http.Request) *http.Request {
+func (t *testPropagator) ToRequest(sc trace.SpanContext, req *http.Request) {
 	var buf bytes.Buffer
 	buf.Write(sc.TraceID[:])
 	buf.Write(sc.SpanID[:])
 	buf.WriteByte(byte(sc.TraceOptions))
 	req.Header.Set("trace", hex.EncodeToString(buf.Bytes()))
-	return req
 }
 
 func TestTransport_RoundTrip(t *testing.T) {

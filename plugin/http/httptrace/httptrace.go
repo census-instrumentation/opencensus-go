@@ -23,11 +23,11 @@ import (
 	"go.opencensus.io/trace/propagation"
 )
 
-const httpHeader = `X-Cloud-Trace-Context`
+// TODO(jbd): Add godoc examples.
 
 type transport struct {
 	base        http.RoundTripper
-	propogators []propagation.HTTPPropagator
+	propogators []propagation.HTTPFormat
 }
 
 // RoundTrip creates a trace.Span and inserts it into the outgoing request's headers.
@@ -35,12 +35,14 @@ type transport struct {
 // the request's context.
 func (t *transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	name := "Sent" + strings.Replace(req.URL.String(), req.URL.Scheme, ".", -1)
+	// TODO(jbd): Discuss whether we want to prefix
+	// outgoing requests with Sent.
 	ctx := trace.StartSpan(req.Context(), name)
 	req = req.WithContext(ctx)
 
 	span := trace.FromContext(ctx)
 	for _, p := range t.propogators {
-		req = p.ToRequest(span.SpanContext(), req)
+		p.ToRequest(span.SpanContext(), req)
 	}
 
 	resp, err := t.base.RoundTrip(req)
@@ -63,10 +65,11 @@ func (t *transport) CancelRequest(req *http.Request) {
 // NewTransport returns an http.RoundTripper that traces the outgoing requests.
 //
 // All the requests are done by the given base roundtripper. If nil is given,
-// http.DefaultTransport is used.
+// http.DefaultTransport is used. If its base HTTP RoundTripper implements CancelRequest,
+// the returned round tripper will be cancelable.
 //
 // Traces are propagated via the provided HTTP propagation mechanisms.
-func NewTransport(base http.RoundTripper, p ...propagation.HTTPPropagator) http.RoundTripper {
+func NewTransport(base http.RoundTripper, p ...propagation.HTTPFormat) http.RoundTripper {
 	if base == nil {
 		base = http.DefaultTransport
 	}
@@ -80,16 +83,16 @@ func NewTransport(base http.RoundTripper, p ...propagation.HTTPPropagator) http.
 //
 //    span := trace.FromContext(r.Context())
 //
-// The span will be auto finished by the handler.
+// The span will be automatically ended by the handler.
 //
 // Incoming propagation mechanism is determined by the given HTTP propagators.
-func NewHandler(base http.Handler, p ...propagation.HTTPPropagator) http.Handler {
+func NewHandler(base http.Handler, p ...propagation.HTTPFormat) http.Handler {
 	return &handler{handler: base, propogators: p}
 }
 
 type handler struct {
 	handler     http.Handler
-	propogators []propagation.HTTPPropagator
+	propogators []propagation.HTTPFormat
 }
 
 func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
