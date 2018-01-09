@@ -169,14 +169,16 @@ func NewMap(ctx context.Context, mutator ...Mutator) (*Map, error) {
 	return m, nil
 }
 
-// Do is similar to pprof.Do.
+// Do is similar to pprof.Do: a convenience for installing the tags
+// from the context as Go profiler labels. This allows you to
+// correlated runtime profiling with stats.
 //
 // It converts the key/values from the given map to Go profiler labels
 // and calls pprof.Do.
 //
 // Do is going to do nothing if your Go version is below 1.9.
-func Do(ctx context.Context, m *Map, f func(ctx context.Context)) {
-	do(ctx, m, f)
+func Do(ctx context.Context, f func(ctx context.Context)) {
+	do(ctx, f)
 }
 
 type mutator struct {
