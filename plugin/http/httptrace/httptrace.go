@@ -26,8 +26,8 @@ import (
 // TODO(jbd): Add godoc examples.
 
 type transport struct {
-	base        http.RoundTripper
-	propogators []propagation.HTTPFormat
+	base    http.RoundTripper
+	formats []propagation.HTTPFormat
 }
 
 // RoundTrip creates a trace.Span and inserts it into the outgoing request's headers.
@@ -41,8 +41,8 @@ func (t *transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	req = req.WithContext(ctx)
 
 	span := trace.FromContext(ctx)
-	for _, p := range t.propogators {
-		p.ToRequest(span.SpanContext(), req)
+	for _, f := range t.formats {
+		f.ToRequest(span.SpanContext(), req)
 	}
 
 	resp, err := t.base.RoundTrip(req)
@@ -69,11 +69,11 @@ func (t *transport) CancelRequest(req *http.Request) {
 // the returned round tripper will be cancelable.
 //
 // Traces are propagated via the provided HTTP propagation mechanisms.
-func NewTransport(base http.RoundTripper, p ...propagation.HTTPFormat) http.RoundTripper {
+func NewTransport(base http.RoundTripper, format ...propagation.HTTPFormat) http.RoundTripper {
 	if base == nil {
 		base = http.DefaultTransport
 	}
-	return &transport{base: base, propogators: p}
+	return &transport{base: base, formats: format}
 }
 
 // NewHandler returns a http.Handler from the given handler
@@ -86,13 +86,13 @@ func NewTransport(base http.RoundTripper, p ...propagation.HTTPFormat) http.Roun
 // The span will be automatically ended by the handler.
 //
 // Incoming propagation mechanism is determined by the given HTTP propagators.
-func NewHandler(base http.Handler, p ...propagation.HTTPFormat) http.Handler {
-	return &handler{handler: base, propogators: p}
+func NewHandler(base http.Handler, format ...propagation.HTTPFormat) http.Handler {
+	return &handler{handler: base, formats: format}
 }
 
 type handler struct {
-	handler     http.Handler
-	propogators []propagation.HTTPFormat
+	handler http.Handler
+	formats []propagation.HTTPFormat
 }
 
 func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -104,8 +104,8 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	)
 
 	ctx := r.Context()
-	for _, p := range h.propogators {
-		sc, ok = p.FromRequest(r)
+	for _, f := range h.formats {
+		sc, ok = f.FromRequest(r)
 		if ok {
 			break
 		}
