@@ -28,7 +28,7 @@
 // 	trace.RegisterExporter(exporter)
 //
 // The package uses Application Default Credentials to authenticate.  See
-// https://developers.google.com/identity/protocols/application-default-credentials.
+// https://developers.google.com/identity/protocols/application-default-credentials
 //
 // Exporter can be used to propagate traces over HTTP requests for Stackdriver Trace.
 //
@@ -58,6 +58,7 @@ import (
 	"time"
 
 	"go.opencensus.io/internal"
+	"go.opencensus.io/trace/propagation"
 
 	tracingclient "cloud.google.com/go/trace/apiv2"
 	"go.opencensus.io/trace"
@@ -66,7 +67,10 @@ import (
 	tracepb "google.golang.org/genproto/googleapis/devtools/cloudtrace/v2"
 )
 
-const httpHeader = `X-Cloud-Trace-Context`
+const (
+	httpHeader        = `X-Cloud-Trace-Context`
+	httpHeaderMaxSize = 200
+)
 
 // Exporter is an implementation of trace.Exporter that uploads spans to
 // Stackdriver.
@@ -83,6 +87,7 @@ type Exporter struct {
 }
 
 var _ trace.Exporter = (*Exporter)(nil)
+var _ propagation.HTTPFormat = (*Exporter)(nil)
 
 // Options contains options for configuring an exporter.
 //
@@ -192,7 +197,7 @@ func (e *Exporter) FromRequest(req *http.Request) (sc trace.SpanContext, ok bool
 	// See https://cloud.google.com/trace/docs/faq for the header format.
 	// Return if the header is empty or missing, or if the header is unreasonably
 	// large, to avoid making unnecessary copies of a large string.
-	if h == "" || len(h) > 200 {
+	if h == "" || len(h) > httpHeaderMaxSize {
 		return trace.SpanContext{}, false
 	}
 
