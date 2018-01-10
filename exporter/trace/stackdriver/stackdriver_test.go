@@ -65,10 +65,9 @@ func TestBundling(t *testing.T) {
 }
 
 func TestHTTPFormat(t *testing.T) {
-	exporter, err := NewExporter(Options{ProjectID: "test"})
-	if err != nil {
-		t.Fatal(err)
-	}
+	exporter := newExporter(Options{
+		ProjectID: "fakeProjectID",
+	}, nil)
 
 	traceID := [16]byte{16, 84, 69, 170, 120, 67, 188, 139, 242, 6, 177, 32, 0, 16, 0, 0}
 	var spanID [8]byte

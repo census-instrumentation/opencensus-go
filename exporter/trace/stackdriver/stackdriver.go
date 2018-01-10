@@ -45,7 +45,6 @@
 package stackdriver
 
 import (
-	"bytes"
 	"context"
 	"encoding/binary"
 	"encoding/hex"
@@ -205,7 +204,6 @@ func (e *Exporter) FromRequest(req *http.Request) (sc trace.SpanContext, ok bool
 	slash := strings.Index(h, `/`)
 	if slash == -1 {
 		return trace.SpanContext{}, false
-
 	}
 	tid, h := h[:slash], h[slash+1:]
 
@@ -233,12 +231,10 @@ func (e *Exporter) FromRequest(req *http.Request) (sc trace.SpanContext, ok bool
 	// Parse the options field, options field is optional.
 	if !strings.HasPrefix(h, "o=") {
 		return sc, true
-
 	}
 	o, err := strconv.ParseUint(h[2:], 10, 64)
 	if err != nil {
 		return trace.SpanContext{}, false
-
 	}
 	sc.TraceOptions = trace.TraceOptions(o)
 	return sc, true
@@ -246,14 +242,9 @@ func (e *Exporter) FromRequest(req *http.Request) (sc trace.SpanContext, ok bool
 
 // ToRequest modifies the given request to include a Stackdriver Trace header.
 func (e *Exporter) ToRequest(sc trace.SpanContext, req *http.Request) {
-	var b bytes.Buffer
-	b.WriteString(hex.EncodeToString(sc.TraceID[:]))
 	sid, _ := binary.Uvarint(sc.SpanID[:])
-	b.WriteString("/")
-	b.WriteString(strconv.FormatUint(sid, 10))
-	b.WriteString(";o=")
-	b.WriteString(strconv.FormatInt(int64(sc.TraceOptions), 10))
-	req.Header.Set(httpHeader, b.String())
+	header := fmt.Sprintf("%s/%d;o=%d", hex.EncodeToString(sc.TraceID[:]), sid, int64(sc.TraceOptions))
+	req.Header.Set(httpHeader, header)
 }
 
 // overflowLogger ensures that at most one overflow error log message is
