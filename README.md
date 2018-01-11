@@ -95,8 +95,7 @@ use NewMap and put the new tag map back to the context.
 [embedmd]:# (tags.go replaceTagMap)
 ```go
 tagMap, err = tag.NewMap(ctx,
-	tag.Insert(key, "macOS-10.12.5"),
-	tag.Upsert(key, "macOS-10.12.7"),
+	tag.Insert(osKey, "macOS-10.12.5"),
 	tag.Upsert(userIDKey, "fff0989878"),
 )
 if err != nil {
@@ -291,9 +290,8 @@ for users who are on Go 1.9 and above.
 [embedmd]:# (tags.go profiler)
 ```go
 tagMap, err = tag.NewMap(ctx,
-	tag.Insert(key, "macOS-10.12.5"),
-	tag.Upsert(key, "macOS-10.12.7"),
-	tag.Upsert(userIDKey, "fff0989878"),
+	tag.Insert(osKey, "macOS-10.12.5"),
+	tag.Insert(userIDKey, "fff0989878"),
 )
 if err != nil {
 	log.Fatal(err)
