@@ -20,6 +20,7 @@ import (
 	"testing"
 	"time"
 
+	"go.opencensus.io/stats/aggregation"
 	"go.opencensus.io/tag"
 )
 
@@ -58,7 +59,7 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowCumulative(t *testin
 			[]*Row{
 				{
 					[]tag.Tag{{Key: k1, Value: "v1"}},
-					&DistributionData{
+					&aggregation.DistributionData{
 						2, 1, 5, 3, 8, []int64{1, 1}, agg1,
 					},
 				},
@@ -73,7 +74,7 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowCumulative(t *testin
 			[]*Row{
 				{
 					[]tag.Tag{{Key: k1, Value: "v1"}},
-					&DistributionData{
+					&aggregation.DistributionData{
 						1, 1, 1, 1, 0, []int64{1, 0}, agg1,
 					},
 				},

@@ -19,9 +19,9 @@ import (
 	"bytes"
 	"fmt"
 	"reflect"
-	"sync/atomic"
 	"time"
 
+	"go.opencensus.io/stats/aggregation"
 	"go.opencensus.io/tag"
 )
 
@@ -38,10 +38,8 @@ type View struct {
 
 	// Examples of measures are cpu:tickCount, diskio:time...
 	m Measure
-
-	subscribed uint32 // 1 if someone is subscribed and data need to be exported, use atomic to access
-
-	collector *collector
+	a Aggregation
+	w Window
 }
 
 // NewView creates a new view with the given name and description.
@@ -63,7 +61,8 @@ func NewView(name, description string, keys []tag.Key, measure Measure, agg Aggr
 		description: description,
 		tagKeys:     keys,
 		m:           measure,
-		collector:   &collector{make(map[string]aggregator), agg, window},
+		a:           agg,
+		w:           window,
 	}, nil
 }
 
@@ -77,24 +76,6 @@ func (v *View) Description() string {
 	return v.description
 }
 
-func (v *View) subscribe() {
-	atomic.StoreUint32(&v.subscribed, 1)
-}
-
-func (v *View) unsubscribe() {
-	atomic.StoreUint32(&v.subscribed, 0)
-}
-
-// isSubscribed returns true if the view is exporting
-// data by subscription.
-func (v *View) isSubscribed() bool {
-	return atomic.LoadUint32(&v.subscribed) == 1
-}
-
-func (v *View) clearRows() {
-	v.collector.clearRows()
-}
-
 // TagKeys returns the list of tag keys associated with this view.
 func (v *View) TagKeys() []tag.Key {
 	return v.tagKeys
@@ -103,30 +84,18 @@ func (v *View) TagKeys() []tag.Key {
 // Window returns the timing window being used to collect
 // metrics from this view.
 func (v *View) Window() Window {
-	return v.collector.w
+	return v.w
 }
 
 // Aggregation returns the data aggregation method used to aggregate
 // the measurements collected by this view.
 func (v *View) Aggregation() Aggregation {
-	return v.collector.a
+	return v.a
 }
 
 // Measure returns the measure the view is collecting measurements for.
 func (v *View) Measure() Measure {
 	return v.m
-}
-
-func (v *View) collectedRows(now time.Time) []*Row {
-	return v.collector.collectedRows(v.tagKeys, now)
-}
-
-func (v *View) addSample(m *tag.Map, val interface{}, now time.Time) {
-	if !v.isSubscribed() {
-		return
-	}
-	sig := string(encodeWithKeys(m, v.tagKeys))
-	v.collector.addSample(sig, val, now)
 }
 
 // A ViewData is a set of rows about usage of the single measure associated
@@ -141,7 +110,7 @@ type ViewData struct {
 // Row is the collected value for a specific set of key value pairs a.k.a tags.
 type Row struct {
 	Tags []tag.Tag
-	Data AggregationData
+	Data aggregation.Data
 }
 
 func (r *Row) String() string {
@@ -164,5 +133,5 @@ func (r *Row) Equal(other *Row) bool {
 	if r == other {
 		return true
 	}
-	return reflect.DeepEqual(r.Tags, other.Tags) && r.Data.equal(other.Data)
+	return reflect.DeepEqual(r.Tags, other.Tags) && r.Data.Equal(other.Data)
 }

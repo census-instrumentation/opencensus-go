@@ -15,6 +15,18 @@
 
 package stats
 
+import (
+	"fmt"
+	"sync"
+
+	"go.opencensus.io/stats/internal"
+)
+
+var (
+	measuresMu sync.Mutex
+	measures   = make(map[string]Measure)
+)
+
 // Measure represents a type of metric to be tracked and recorded.
 // For example, latency, request Mb/s, and response Mb/s are measures
 // to collect from a server.
@@ -42,23 +54,69 @@ type Measurement struct {
 // FindMeasure returns the registered measure associated with name.
 // If no registered measure is not found, nil is returned.
 func FindMeasure(name string) (m Measure) {
-	req := &getMeasureByNameReq{
-		name: name,
-		c:    make(chan *getMeasureByNameResp),
-	}
-	defaultWorker.c <- req
-	resp := <-req.c
-	return resp.m
+	measuresMu.Lock()
+	defer measuresMu.Unlock()
+
+	return measures[name]
 }
 
 // DeleteMeasure deletes an existing measure to allow for creation of a new
 // measure with the same name. It returns an error if the measure cannot be
 // deleted, such as one or multiple registered views refer to it.
 func DeleteMeasure(m Measure) error {
-	req := &deleteMeasureReq{
-		m:   m,
-		err: make(chan error),
+	if err := internal.DefaultWorker.DeleteMeasure(m.Name()); err != nil {
+		return err
 	}
-	defaultWorker.c <- req
-	return <-req.err
+
+	measuresMu.Lock()
+	defer measuresMu.Unlock()
+
+	delete(measures, m.Name())
+	return nil
+}
+
+// NewMeasureFloat64 creates a new measure of type MeasureFloat64. It returns
+// an error if a measure with the same name already exists.
+func NewMeasureFloat64(name, description, unit string) (*MeasureFloat64, error) {
+	if err := checkMeasureName(name); err != nil {
+		return nil, err
+	}
+	m := &MeasureFloat64{
+		name:        name,
+		description: description,
+		unit:        unit,
+	}
+	if err := registerMeasure(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+// NewMeasureInt64 creates a new measure of type MeasureInt64. It returns an
+// error if a measure with the same name already exists.
+func NewMeasureInt64(name, description, unit string) (*MeasureInt64, error) {
+	if err := checkMeasureName(name); err != nil {
+		return nil, err
+	}
+	m := &MeasureInt64{
+		name:        name,
+		description: description,
+		unit:        unit,
+	}
+	if err := registerMeasure(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func registerMeasure(m Measure) error {
+	measuresMu.Lock()
+	defer measuresMu.Unlock()
+
+	name := m.Name()
+	if _, ok := measures[name]; ok {
+		return fmt.Errorf("measure %q already exists", name)
+	}
+	measures[name] = m
+	return nil
 }

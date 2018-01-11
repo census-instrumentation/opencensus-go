@@ -1,4 +1,4 @@
-// Copyright 2017, OpenCensus Authors
+// Copyright 2018, OpenCensus Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,51 +11,59 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
 
-package stats
+package internal
 
 import (
 	"sort"
 	"time"
 
 	"go.opencensus.io/internal/tagencoding"
+	"go.opencensus.io/stats/aggregation"
 	"go.opencensus.io/tag"
 )
 
-type collector struct {
-	// signatures holds the aggregations values for each unique tag signature
-	// (values for all keys) to its Window.
-	signatures map[string]aggregator
-	// Aggregation is the description of the aggregation to perform for this
-	// view.
-	a Aggregation
-
-	// window is the window under which the aggregation is performed.
-	w Window
+// Row is the collected value for a specific set of key value pairs a.k.a tags.
+type Row struct {
+	Tags []tag.Tag
+	Data aggregation.Data
 }
 
-func (c *collector) addSample(s string, v interface{}, now time.Time) {
-	aggregator, ok := c.signatures[s]
-	if !ok {
-		aggregator = c.w.newAggregator(now, c.a.newData())
-		c.signatures[s] = aggregator
-	}
-	aggregator.addSample(v, now)
+type ViewWorker struct {
+	Name                string
+	TagKeys             []tag.Key
+	MeasureDesc         *MeasureDesc
+	NewData             func() aggregation.Data
+	NewWindowAggregator func(start time.Time, fn func() aggregation.Data) aggregation.WindowAggregator
+	IsCumulative        bool
+
+	startTime  time.Time
+	signatures map[string]aggregation.WindowAggregator
 }
 
-func (c *collector) collectedRows(keys []tag.Key, now time.Time) []*Row {
+func (v *ViewWorker) clearRows() {
+	v.signatures = make(map[string]aggregation.WindowAggregator)
+}
+
+func (v *ViewWorker) collectedRows(now time.Time) []*Row {
 	var rows []*Row
-	for sig, aggregator := range c.signatures {
-		tags := decodeTags([]byte(sig), keys)
-		row := &Row{tags, aggregator.retrieveCollected(now)}
+	for sig, aggregator := range v.signatures {
+		tags := decodeTags([]byte(sig), v.TagKeys)
+		row := &Row{tags, aggregator.Collect(now)}
 		rows = append(rows, row)
 	}
 	return rows
 }
 
-func (c *collector) clearRows() {
-	c.signatures = make(map[string]aggregator)
+func (v *ViewWorker) addSample(m *tag.Map, val interface{}, now time.Time) {
+	sig := string(encodeWithKeys(m, v.TagKeys))
+	// TODO(jbd): Buffer not process.
+	aggregator, ok := v.signatures[sig]
+	if !ok {
+		aggregator = v.NewWindowAggregator(now, v.NewData)
+		v.signatures[sig] = aggregator
+	}
+	aggregator.AddSample(v, now)
 }
 
 // encodeWithKeys encodes the map by using values

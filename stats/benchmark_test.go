@@ -1,11 +1,10 @@
 package stats
 
 import (
-	"testing"
-	"log"
 	"context"
+	"log"
+	"testing"
 )
-
 
 func BenchmarkRecord(b *testing.B) {
 	restart()

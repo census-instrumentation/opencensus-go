@@ -11,25 +11,23 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
 
-package stats
+package aggregation
 
 import (
 	"math"
 )
 
-// AggregationData represents an aggregated value from a collection.
+// Data represents an aggregated value from a collection.
 // They are reported on the view data during exporting.
 // Mosts users won't directly access aggregration data.
-type AggregationData interface {
-	isAggregationData() bool
-	addSample(v interface{})
-	addOther(other AggregationData)
-	multiplyByFraction(fraction float64) AggregationData
-	clear()
-	clone() AggregationData
-	equal(other AggregationData) bool
+type Data interface {
+	AddSample(v interface{})
+	AddData(other Data)
+	MultiplyByFraction(fraction float64) Data
+	Clear()
+	Clone() Data
+	Equal(other Data) bool
 }
 
 const epsilon = 1e-9
@@ -40,14 +38,12 @@ const epsilon = 1e-9
 // Most users won't directly access count data.
 type CountData int64
 
-func newCountData(v int64) *CountData {
+func NewCountData(v int64) *CountData {
 	tmp := CountData(v)
 	return &tmp
 }
 
-func (a *CountData) isAggregationData() bool { return true }
-
-func (a *CountData) addSample(v interface{}) {
+func (a *CountData) AddSample(v interface{}) {
 	*a = *a + 1
 }
 
@@ -55,11 +51,11 @@ func (a *CountData) clone() AggregationData {
 	return newCountData(int64(*a))
 }
 
-func (a *CountData) multiplyByFraction(fraction float64) AggregationData {
-	return newCountData(int64(float64(int64(*a))*fraction + 0.5)) // adding 0.5 because go runtime will take floor instead of rounding
+func (a *CountData) MultiplyByFraction(fraction float64) Data {
+	return NewCountData(int64(float64(int64(*a))*fraction + 0.5)) // adding 0.5 because go runtime will take floor instead of rounding
 }
 
-func (a *CountData) addOther(av AggregationData) {
+func (a *CountData) AddData(av Data) {
 	other, ok := av.(*CountData)
 	if !ok {
 		return
@@ -67,11 +63,11 @@ func (a *CountData) addOther(av AggregationData) {
 	*a = *a + *other
 }
 
-func (a *CountData) clear() {
+func (a *CountData) Clear() {
 	*a = 0
 }
 
-func (a *CountData) equal(other AggregationData) bool {
+func (a *CountData) Equal(other Data) bool {
 	a2, ok := other.(*CountData)
 	if !ok {
 		return false
@@ -86,14 +82,12 @@ func (a *CountData) equal(other AggregationData) bool {
 // Most users won't directly access sum data.
 type SumData float64
 
-func newSumData(v float64) *SumData {
+func NewSumData(v float64) *SumData {
 	tmp := SumData(v)
 	return &tmp
 }
 
-func (a *SumData) isAggregationData() bool { return true }
-
-func (a *SumData) addSample(v interface{}) {
+func (a *SumData) AddSample(v interface{}) {
 	// Both float64 and int64 values will be cast to float64
 	var f float64
 	switch x := v.(type) {
@@ -107,15 +101,15 @@ func (a *SumData) addSample(v interface{}) {
 	*a += SumData(f)
 }
 
-func (a *SumData) multiplyByFraction(fraction float64) AggregationData {
-	return newSumData(float64(*a) * fraction)
+func (a *SumData) MultiplyByFraction(fraction float64) Data {
+	return NewSumData(float64(*a) * fraction)
 }
 
 func (a *SumData) clone() AggregationData {
 	return newSumData(float64(*a))
 }
 
-func (a *SumData) addOther(av AggregationData) {
+func (a *SumData) AddData(av Data) {
 	other, ok := av.(*SumData)
 	if !ok {
 		return
@@ -123,11 +117,11 @@ func (a *SumData) addOther(av AggregationData) {
 	*a = *a + *other
 }
 
-func (a *SumData) clear() {
+func (a *SumData) Clear() {
 	*a = 0
 }
 
-func (a *SumData) equal(other AggregationData) bool {
+func (a *SumData) Equal(other Data) bool {
 	a2, ok := other.(*SumData)
 	if !ok {
 		return false
@@ -144,7 +138,7 @@ type MeanData struct {
 	Mean  float64 // mean of all data points
 }
 
-func newMeanData(mean float64, count float64) *MeanData {
+func NewMeanData(mean float64, count float64) *MeanData {
 	return &MeanData{
 		Mean:  mean,
 		Count: count,
@@ -154,9 +148,7 @@ func newMeanData(mean float64, count float64) *MeanData {
 // Sum returns the sum of all samples collected.
 func (a *MeanData) Sum() float64 { return a.Mean * float64(a.Count) }
 
-func (a *MeanData) isAggregationData() bool { return true }
-
-func (a *MeanData) addSample(v interface{}) {
+func (a *MeanData) AddSample(v interface{}) {
 	var f float64
 	switch x := v.(type) {
 	case int64:
@@ -180,11 +172,11 @@ func (a *MeanData) clone() AggregationData {
 }
 
 // Only Count will be mutiplied by the fraction, Mean will remain the same.
-func (a *MeanData) multiplyByFraction(fraction float64) AggregationData {
-	return newMeanData(a.Mean, a.Count*fraction)
+func (a *MeanData) MultiplyByFraction(fraction float64) Data {
+	return NewMeanData(a.Mean, a.Count*fraction)
 }
 
-func (a *MeanData) addOther(av AggregationData) {
+func (a *MeanData) AddData(av Data) {
 	other, ok := av.(*MeanData)
 	if !ok {
 		return
@@ -198,12 +190,12 @@ func (a *MeanData) addOther(av AggregationData) {
 	a.Count = a.Count + other.Count
 }
 
-func (a *MeanData) clear() {
+func (a *MeanData) Clear() {
 	a.Count = 0
 	a.Mean = 0
 }
 
-func (a *MeanData) equal(other AggregationData) bool {
+func (a *MeanData) Equal(other Data) bool {
 	a2, ok := other.(*MeanData)
 	if !ok {
 		return false
@@ -225,7 +217,7 @@ type DistributionData struct {
 	bounds          []float64 // histogram distribution of the values
 }
 
-func newDistributionData(bounds []float64) *DistributionData {
+func NewDistributionData(bounds []float64) *DistributionData {
 	return &DistributionData{
 		CountPerBucket: make([]int64, len(bounds)+1),
 		bounds:         bounds,
@@ -246,7 +238,7 @@ func (a *DistributionData) variance() float64 {
 
 func (a *DistributionData) isAggregationData() bool { return true }
 
-func (a *DistributionData) addSample(v interface{}) {
+func (a *DistributionData) AddSample(v interface{}) {
 	var f float64
 	switch x := v.(type) {
 	case int64:
@@ -298,8 +290,8 @@ func (a *DistributionData) incrementBucketCount(f float64) {
 //  to multiply it by the fraction as it would make the calculation too complex
 // and will create inconsistencies between sumOfSquaredDev, min, max and the
 // various buckets of the histogram.
-func (a *DistributionData) multiplyByFraction(fraction float64) AggregationData {
-	ret := newDistributionData(a.bounds)
+func (a *DistributionData) MultiplyByFraction(fraction float64) Data {
+	ret := NewDistributionData(a.bounds)
 	copy(ret.CountPerBucket, a.CountPerBucket)
 	ret.Count = a.Count
 	ret.Min = a.Min
@@ -309,7 +301,7 @@ func (a *DistributionData) multiplyByFraction(fraction float64) AggregationData 
 	return ret
 }
 
-func (a *DistributionData) addOther(av AggregationData) {
+func (a *DistributionData) AddData(av Data) {
 	other, ok := av.(*DistributionData)
 	if !ok {
 		return
@@ -333,7 +325,7 @@ func (a *DistributionData) addOther(av AggregationData) {
 	}
 }
 
-func (a *DistributionData) clear() {
+func (a *DistributionData) Clear() {
 	a.Count = 0
 	a.Min = math.MaxFloat64
 	a.Max = math.SmallestNonzeroFloat64
@@ -344,7 +336,7 @@ func (a *DistributionData) clear() {
 	}
 }
 
-func (a *DistributionData) clone() AggregationData {
+func (a *DistributionData) Clone() Data {
 	counts := make([]int64, len(a.CountPerBucket))
 	copy(counts, a.CountPerBucket)
 	c := *a
@@ -352,7 +344,7 @@ func (a *DistributionData) clone() AggregationData {
 	return &c
 }
 
-func (a *DistributionData) equal(other AggregationData) bool {
+func (a *DistributionData) Equal(other Data) bool {
 	a2, ok := other.(*DistributionData)
 	if !ok {
 		return false
