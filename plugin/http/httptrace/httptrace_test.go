@@ -81,7 +81,8 @@ func TestTransport_RoundTrip(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			transport := &testTransport{ch: make(chan *http.Request, 1)}
-			rt := NewTransport(transport, &testPropagator{})
+			rt := NewTransport(&testPropagator{})
+			rt.Base = transport
 
 			req, _ := http.NewRequest("GET", "http://foo.com", nil)
 			if tt.parent != nil {
