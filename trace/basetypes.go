@@ -36,7 +36,7 @@ func (s SpanID) String() string {
 
 // Annotation represents a text annotation with a set of attributes and a timestamp.
 type Annotation struct {
-	time.Time
+	Time       time.Time
 	Message    string
 	Attributes map[string]interface{}
 }
@@ -84,9 +84,9 @@ const (
 
 // Link represents a reference from one span to another span.
 type Link struct {
-	TraceID
-	SpanID
-	Type LinkType
+	TraceID TraceID
+	SpanID  SpanID
+	Type    LinkType
 	// Attributes is a set of attributes on the link.
 	Attributes map[string]interface{}
 }
@@ -103,7 +103,7 @@ const (
 
 // MessageEvent represents an event describing a message sent or received on the network.
 type MessageEvent struct {
-	time.Time
+	Time                 time.Time
 	EventType            MessageEventType
 	MessageID            int64
 	UncompressedByteSize int64
