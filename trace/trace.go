@@ -117,6 +117,45 @@ type StartSpanOptions struct {
 	RegisterNameForLocalSpanStore bool
 }
 
+// StartSpan starts a new child span of the current span in the context.
+//
+// If there is no span in the context, creates a new trace and span.
+func StartSpan(ctx context.Context, name string) (context.Context, *Span) {
+	parentSpan, _ := ctx.Value(contextKey{}).(*Span)
+	span := parentSpan.StartSpanWithOptions(name, StartSpanOptions{})
+	return WithSpan(ctx, span), span
+}
+
+// StartSpanWithOptions starts a new child span of the current span in the context.
+//
+// If there is no span in the context, creates a new trace and span.
+func StartSpanWithOptions(ctx context.Context, name string, o StartSpanOptions) (context.Context, *Span) {
+	parentSpan, _ := ctx.Value(contextKey{}).(*Span)
+	span := parentSpan.StartSpanWithOptions(name, o)
+	return WithSpan(ctx, span), span
+}
+
+// EndSpan ends the current span.
+//
+// The context passed to EndSpan will still refer to the now-ended span, so any
+// code that adds more information to it, like SetSpanStatus, should be called
+// before EndSpan.
+func EndSpan(ctx context.Context) {
+	s, ok := ctx.Value(contextKey{}).(*Span)
+	if !ok {
+		return
+	}
+	s.End()
+}
+
+// StartSpanWithRemoteParent starts a new child span with the given parent SpanContext.
+//
+// If there is an existing span in ctx, it is ignored -- the returned Span is a
+// child of the span specified by parent.
+func StartSpanWithRemoteParent(ctx context.Context, name string, parent SpanContext, o StartSpanOptions) context.Context {
+	return WithSpan(ctx, NewSpanWithRemoteParent(name, parent, o))
+}
+
 // NewSpan returns a new span.
 //
 // The returned span has no parent span; a new trace ID will be created for it.
@@ -127,6 +166,23 @@ func NewSpan(name string, o StartSpanOptions) *Span {
 // NewSpanWithRemoteParent returns a new span with the given parent SpanContext.
 func NewSpanWithRemoteParent(name string, parent SpanContext, o StartSpanOptions) *Span {
 	return startSpanInternal(name, true, parent, true, o)
+}
+
+// StartSpan starts a new child span.
+//
+// If s is nil, creates a new trace and span, like the function NewSpan.
+func (s *Span) StartSpan(name string) *Span {
+	return s.StartSpanWithOptions(name, StartSpanOptions{})
+}
+
+// StartSpanWithOptions starts a new child span using the given options.
+//
+// If s is nil, creates a new trace and span, like the function NewSpan.
+func (s *Span) StartSpanWithOptions(name string, o StartSpanOptions) *Span {
+	if s != nil {
+		return startSpanInternal(name, true, s.spanContext, false, o)
+	}
+	return startSpanInternal(name, false, SpanContext{}, false, o)
 }
 
 func startSpanInternal(name string, hasParent bool, parent SpanContext, remoteParent bool, o StartSpanOptions) *Span {
@@ -289,24 +345,6 @@ func (s *Span) lazyPrintfInternal(attributes []Attribute, format string, a ...in
 	s.mu.Unlock()
 }
 
-// Annotatef adds an annotation with attributes to the current span.
-// Attributes can be nil.
-func Annotatef(ctx context.Context, a []Attribute, format string, arg ...interface{}) {
-	s, ok := ctx.Value(contextKey{}).(*Span)
-	if !ok {
-		return
-	}
-	s.Annotatef(a, format, arg...)
-}
-
-// Annotatef adds an annotation with attributes.
-func (s *Span) Annotatef(attributes []Attribute, format string, a ...interface{}) {
-	if !s.IsRecordingEvents() {
-		return
-	}
-	s.lazyPrintfInternal(attributes, format, a...)
-}
-
 func (s *Span) printStringInternal(attributes []Attribute, str string) {
 	now := time.Now()
 	var a map[string]interface{}
@@ -323,15 +361,6 @@ func (s *Span) printStringInternal(attributes []Attribute, str string) {
 	s.mu.Unlock()
 }
 
-// Annotate adds an annotation with attributes to the current span.
-// Attributes can be nil.
-func Annotate(ctx context.Context, a []Attribute, str string) {
-	s, ok := ctx.Value(contextKey{}).(*Span)
-	if !ok {
-	}
-	s.Annotate(a, str)
-}
-
 // Annotate adds an annotation with attributes.
 // Attributes can be nil.
 func (s *Span) Annotate(attributes []Attribute, str string) {
@@ -341,18 +370,12 @@ func (s *Span) Annotate(attributes []Attribute, str string) {
 	s.printStringInternal(attributes, str)
 }
 
-// AddMessageSendEvent adds a message send event to the current span.
-//
-// messageID is an identifier for the message, which is recommended to be
-// unique in this span and the same between the send event and the receive
-// event (this allows to identify a message between the sender and receiver).
-// For example, this could be a sequence id.
-func AddMessageSendEvent(ctx context.Context, messageID, uncompressedByteSize, compressedByteSize int64) {
-	s, ok := ctx.Value(contextKey{}).(*Span)
-	if !ok {
+// Annotatef adds an annotation with attributes.
+func (s *Span) Annotatef(attributes []Attribute, format string, a ...interface{}) {
+	if !s.IsRecordingEvents() {
 		return
 	}
-	s.AddMessageSendEvent(messageID, uncompressedByteSize, compressedByteSize)
+	s.lazyPrintfInternal(attributes, format, a...)
 }
 
 // AddMessageSendEvent adds a message send event to the span.
