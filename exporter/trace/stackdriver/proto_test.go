@@ -71,8 +71,8 @@ func TestExportTrace(t *testing.T) {
 		{
 			ctx2 := trace.StartSpan(ctx1, "span2")
 			trace.AddMessageSendEvent(ctx2, 0x123, 1024, 512)
-			trace.LazyPrintf(ctx2, "in span%d", 2)
-			trace.LazyPrint(ctx2, big.NewRat(2, 4))
+			trace.Annotatef(ctx2, nil, "in span%d", 2)
+			trace.Annotate(ctx2, nil, big.NewRat(2, 4).String())
 			trace.SetSpanAttributes(ctx2,
 				trace.StringAttribute{Key: "key1", Value: "value1"},
 				trace.StringAttribute{Key: "key2", Value: "value2"})
@@ -81,7 +81,7 @@ func TestExportTrace(t *testing.T) {
 		}
 		{
 			ctx3 := trace.StartSpan(ctx1, "span3")
-			trace.Print(ctx3, "in span3")
+			trace.Annotate(ctx3, nil, "in span3")
 			trace.AddMessageReceiveEvent(ctx3, 0x456, 2048, 1536)
 			trace.SetSpanStatus(ctx3, trace.Status{Code: int32(codepb.Code_UNAVAILABLE)})
 			trace.EndSpan(ctx3)
@@ -93,9 +93,9 @@ func TestExportTrace(t *testing.T) {
 				a3 := []trace.Attribute{trace.StringAttribute{Key: "k3", Value: "v3"}}
 				a4 := map[string]interface{}{"k4": "v4"}
 				r := big.NewRat(2, 4)
-				trace.LazyPrintWithAttributes(ctx4, a1, r)
-				trace.LazyPrintfWithAttributes(ctx4, a2, "foo %d", x)
-				trace.PrintWithAttributes(ctx4, a3, "in span4")
+				trace.Annotate(ctx4, a1, r.String())
+				trace.Annotatef(ctx4, a2, "foo %d", x)
+				trace.Annotate(ctx4, a3, "in span4")
 				trace.AddLink(ctx4, trace.Link{TraceID: trace.TraceID{1, 2}, SpanID: trace.SpanID{3}, Type: trace.LinkTypeParent, Attributes: a4})
 				trace.EndSpan(ctx4)
 			}
