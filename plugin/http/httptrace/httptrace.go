@@ -16,8 +16,11 @@
 package httptrace
 
 import (
+	"context"
+	"io"
 	"net/http"
 	"strings"
+	"sync"
 
 	"go.opencensus.io/trace"
 	"go.opencensus.io/trace/propagation"
@@ -59,8 +62,36 @@ func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	resp, err := t.base().RoundTrip(req)
 
 	// TODO(jbd): Add status and attributes.
-	trace.EndSpan(ctx)
+	if err != nil {
+		trace.EndSpan(ctx)
+		return resp, err
+	}
+
+	// trace.EndSpan(ctx) will be invoked after
+	// resp.Body.Close() has been invoked.
+	resp.Body = &bodyProxyReader{rc: resp.Body, ctxToEnd: ctx}
 	return resp, err
+}
+
+type bodyProxyReader struct {
+	rc        io.ReadCloser
+	closeOnce sync.Once
+	ctxToEnd  context.Context
+}
+
+var _ io.ReadCloser = (*bodyProxyReader)(nil)
+
+func (bpr *bodyProxyReader) Read(b []byte) (int, error) {
+	return bpr.rc.Read(b)
+}
+
+func (bpr *bodyProxyReader) Close() error {
+	var err error
+	bpr.closeOnce.Do(func() {
+		err = bpr.rc.Close()
+		trace.EndSpan(bpr.ctxToEnd)
+	})
+	return err
 }
 
 // CancelRequest cancels an in-flight request by closing its connection.
