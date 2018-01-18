@@ -582,3 +582,44 @@ func TestBucket(t *testing.T) {
 		}
 	}
 }
+
+type exporter []*SpanData
+func (e *exporter) Export(s *SpanData) {
+	*e = append(*e, s)
+}
+
+func Test_Issue328_EndSpanTwice(t *testing.T) {
+	t.Skip("TODO(#328)")
+	var e exporter
+	RegisterExporter(&e)
+	defer UnregisterExporter(&e)
+	ctx := context.Background()
+	ctx = StartSpanWithOptions(ctx, "span-1", StartSpanOptions{Sampler: AlwaysSample()})
+	EndSpan(ctx)
+	EndSpan(ctx)
+	UnregisterExporter(&e)
+	if len(e) != 1 {
+		t.Fatalf("expected only a single span, got %#v", e)
+	}
+}
+
+func Test_Issue328_EndSpanAndStartSpan(t *testing.T) {
+	t.Skip("TODO(#328)")
+	var spans exporter
+	RegisterExporter(&spans)
+	defer UnregisterExporter(&spans)
+	ctx := context.Background()
+	ctx = StartSpanWithOptions(ctx, "span-1", StartSpanOptions{Sampler: AlwaysSample()})
+	EndSpan(ctx)
+	ctx = StartSpanWithOptions(ctx, "span-2", StartSpanOptions{Sampler: AlwaysSample()})
+	EndSpan(ctx)
+	UnregisterExporter(&spans)
+	if len(spans) != 2 {
+		t.Fatalf("expected 2 spans, got %#v", spans)
+	}
+	for _, span := range spans {
+		if span.ParentSpanID != *new(SpanID) {
+			t.Errorf("%s should not have a parent: %q", span.Name, span.ParentSpanID)
+		}
+	}
+}
