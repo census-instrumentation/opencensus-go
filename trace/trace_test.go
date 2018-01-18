@@ -395,12 +395,8 @@ func TestSetSpanAttributes(t *testing.T) {
 
 func TestAnnotations(t *testing.T) {
 	ctx := startSpan()
-	LazyPrint(ctx, foo(1))
-	LazyPrintWithAttributes(ctx, []Attribute{StringAttribute{"key2", "value2"}}, foo(2))
-	LazyPrintf(ctx, "%f", -1.5)
-	LazyPrintfWithAttributes(ctx, []Attribute{StringAttribute{"key3", "value3"}}, "%f", 1.5)
-	Print(ctx, "Print")
-	PrintWithAttributes(ctx, []Attribute{StringAttribute{"key4", "value4"}}, "PrintWithAttributes")
+	Annotatef(ctx, []Attribute{StringAttribute{"key1", "value1"}}, "%f", 1.5)
+	Annotate(ctx, []Attribute{StringAttribute{"key2", "value2"}}, "Annotate")
 	got, err := endSpan(ctx)
 	if err != nil {
 		t.Fatal(err)
@@ -421,12 +417,8 @@ func TestAnnotations(t *testing.T) {
 		ParentSpanID: sid,
 		Name:         "span0",
 		Annotations: []Annotation{
-			{Message: "foo", Attributes: nil},
-			{Message: "foo", Attributes: map[string]interface{}{"key2": "value2"}},
-			{Message: "-1.500000", Attributes: nil},
-			{Message: "1.500000", Attributes: map[string]interface{}{"key3": "value3"}},
-			{Message: "Print", Attributes: nil},
-			{Message: "PrintWithAttributes", Attributes: map[string]interface{}{"key4": "value4"}},
+			{Message: "1.500000", Attributes: map[string]interface{}{"key1": "value1"}},
+			{Message: "Annotate", Attributes: map[string]interface{}{"key2": "value2"}},
 		},
 		HasRemoteParent: true,
 	}

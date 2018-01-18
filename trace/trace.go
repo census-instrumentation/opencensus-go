@@ -372,86 +372,6 @@ func copyAttributes(m map[string]interface{}, attributes []Attribute) {
 	}
 }
 
-// LazyPrint adds an annotation to the current span using a fmt.Stringer.
-//
-// str.String is called only when the annotation text is needed.
-func LazyPrint(ctx context.Context, str fmt.Stringer) {
-	s, ok := ctx.Value(contextKey{}).(*Span)
-	if !ok {
-		return
-	}
-	s.LazyPrint(str)
-}
-
-// LazyPrint adds an annotation using a fmt.Stringer.
-//
-// str.String is called only when the annotation text is needed.
-func (s *Span) LazyPrint(str fmt.Stringer) {
-	if !s.IsRecordingEvents() {
-		return
-	}
-	s.lazyPrintInternal(nil, str)
-}
-
-// LazyPrintWithAttributes adds an annotation with attributes to the current span using a fmt.Stringer.
-//
-// str.String is called only when the annotation text is needed.
-func LazyPrintWithAttributes(ctx context.Context, attributes []Attribute, str fmt.Stringer) {
-	s, ok := ctx.Value(contextKey{}).(*Span)
-	if !ok {
-		return
-	}
-	s.LazyPrintWithAttributes(attributes, str)
-}
-
-// LazyPrintWithAttributes adds an annotation with attributes using a fmt.Stringer.
-//
-// str.String is called only when the annotation text is needed.
-func (s *Span) LazyPrintWithAttributes(attributes []Attribute, str fmt.Stringer) {
-	if !s.IsRecordingEvents() {
-		return
-	}
-	s.lazyPrintInternal(attributes, str)
-}
-
-func (s *Span) lazyPrintInternal(attributes []Attribute, str fmt.Stringer) {
-	now := time.Now()
-	msg := str.String()
-	var a map[string]interface{}
-	s.mu.Lock()
-	if len(attributes) != 0 {
-		a = make(map[string]interface{})
-		copyAttributes(a, attributes)
-	}
-	s.data.Annotations = append(s.data.Annotations, Annotation{
-		Time:       now,
-		Message:    msg,
-		Attributes: a,
-	})
-	s.mu.Unlock()
-}
-
-// LazyPrintf adds an annotation to the current span.
-//
-// The format string is evaluated with its arguments only when the annotation text is needed.
-func LazyPrintf(ctx context.Context, format string, a ...interface{}) {
-	s, ok := ctx.Value(contextKey{}).(*Span)
-	if !ok {
-		return
-	}
-	s.LazyPrintf(format, a...)
-}
-
-// LazyPrintf adds an annotation.
-//
-// The format string is evaluated with its arguments only when the annotation text is needed.
-func (s *Span) LazyPrintf(format string, a ...interface{}) {
-	if !s.IsRecordingEvents() {
-		return
-	}
-	s.lazyPrintfInternal(nil, format, a...)
-}
-
 func (s *Span) lazyPrintfInternal(attributes []Attribute, format string, a ...interface{}) {
 	now := time.Now()
 	msg := fmt.Sprintf(format, a...)
@@ -469,42 +389,22 @@ func (s *Span) lazyPrintfInternal(attributes []Attribute, format string, a ...in
 	s.mu.Unlock()
 }
 
-// LazyPrintfWithAttributes adds an annotation with attributes to the current span.
-//
-// The format string is evaluated with its arguments only when the annotation text is needed.
-func LazyPrintfWithAttributes(ctx context.Context, attributes []Attribute, format string, a ...interface{}) {
+// Annotatef adds an annotation with attributes to the current span.
+// Attributes can be nil.
+func Annotatef(ctx context.Context, a []Attribute, format string, arg ...interface{}) {
 	s, ok := ctx.Value(contextKey{}).(*Span)
 	if !ok {
 		return
 	}
-	s.LazyPrintfWithAttributes(attributes, format, a...)
+	s.Annotatef(a, format, arg...)
 }
 
-// LazyPrintfWithAttributes adds an annotation with attributes.
-//
-// The format string is evaluated with its arguments only when the annotation text is needed.
-func (s *Span) LazyPrintfWithAttributes(attributes []Attribute, format string, a ...interface{}) {
+// Annotatef adds an annotation with attributes.
+func (s *Span) Annotatef(attributes []Attribute, format string, a ...interface{}) {
 	if !s.IsRecordingEvents() {
 		return
 	}
 	s.lazyPrintfInternal(attributes, format, a...)
-}
-
-// Print adds an annotation to the current span.
-func Print(ctx context.Context, str string) {
-	s, ok := ctx.Value(contextKey{}).(*Span)
-	if !ok {
-		return
-	}
-	s.Print(str)
-}
-
-// Print adds an annotation.
-func (s *Span) Print(str string) {
-	if !s.IsRecordingEvents() {
-		return
-	}
-	s.printStringInternal(nil, str)
 }
 
 func (s *Span) printStringInternal(attributes []Attribute, str string) {
@@ -523,17 +423,19 @@ func (s *Span) printStringInternal(attributes []Attribute, str string) {
 	s.mu.Unlock()
 }
 
-// PrintWithAttributes adds an annotation with attributes to the current span.
-func PrintWithAttributes(ctx context.Context, attributes []Attribute, str string) {
+// Annotate adds an annotation with attributes to the current span.
+// Attributes can be nil.
+func Annotate(ctx context.Context, a []Attribute, str string) {
 	s, ok := ctx.Value(contextKey{}).(*Span)
 	if !ok {
 		return
 	}
-	s.PrintWithAttributes(attributes, str)
+	s.Annotate(a, str)
 }
 
-// PrintWithAttributes adds an annotation with attributes.
-func (s *Span) PrintWithAttributes(attributes []Attribute, str string) {
+// Annotate adds an annotation with attributes.
+// Attributes can be nil.
+func (s *Span) Annotate(attributes []Attribute, str string) {
 	if !s.IsRecordingEvents() {
 		return
 	}
