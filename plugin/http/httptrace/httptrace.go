@@ -24,6 +24,7 @@ import (
 
 	"go.opencensus.io/trace"
 	"go.opencensus.io/trace/propagation"
+	"google.golang.org/api/googleapi"
 )
 
 // TODO(jbd): Add godoc examples.
@@ -69,29 +70,66 @@ func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 
 	// trace.EndSpan(ctx) will be invoked after
 	// resp.Body.Close() has been invoked.
-	resp.Body = &bodyProxyReader{rc: resp.Body, ctxToEnd: ctx}
+	resp.Body = &spanEndBody{rc: resp.Body, spanCtx: ctx}
 	return resp, err
 }
 
-type bodyProxyReader struct {
-	rc        io.ReadCloser
-	closeOnce sync.Once
-	ctxToEnd  context.Context
+// spanEndBody wraps a response.Body and invokes
+// trace.EndSpan on encountering io.EOF on reading
+// the body of the original response.
+type spanEndBody struct {
+	rc      io.ReadCloser
+	spanCtx context.Context
+
+	endSpanOnce sync.Once
 }
 
-var _ io.ReadCloser = (*bodyProxyReader)(nil)
+var _ io.ReadCloser = (*spanEndBody)(nil)
 
-func (bpr *bodyProxyReader) Read(b []byte) (int, error) {
-	return bpr.rc.Read(b)
+func (bpr *spanEndBody) Read(b []byte) (int, error) {
+	n, err := bpr.rc.Read(b)
+	if err == nil {
+		return n, nil
+	}
+
+	// Otherwise, time to end the span or set the status
+	switch err {
+	case io.EOF:
+		bpr.endSpan()
+	default:
+		// For all other errors, set the span status
+		// If the error has a status and code
+		// let's propagate those in the span
+		if ge, ok := err.(*googleapi.Error); ok {
+			trace.SetSpanStatus(bpr.spanCtx, trace.Status{
+				Message: ge.Message,
+				Code:    int32(ge.Code),
+			})
+		} else {
+			trace.SetSpanStatus(bpr.spanCtx, trace.Status{
+				// Code 2 is for Internal server error as per
+				// https://github.com/googleapis/googleapis/blob/f704d14a7224a140bca5cc26835fae471eaf7281/google/rpc/code.proto#L44-L51
+				Code:    2,
+				Message: err.Error(),
+			})
+		}
+	}
+	return n, err
 }
 
-func (bpr *bodyProxyReader) Close() error {
-	var err error
-	bpr.closeOnce.Do(func() {
-		err = bpr.rc.Close()
-		trace.EndSpan(bpr.ctxToEnd)
+// endSpan invokes trace.EndSpan exactly once
+func (bpr *spanEndBody) endSpan() {
+	bpr.endSpanOnce.Do(func() {
+		trace.EndSpan(bpr.spanCtx)
 	})
-	return err
+}
+
+func (bpr *spanEndBody) Close() error {
+	// Invoking endSpan on Close will help catch the cases
+	// in which a read returned a non-nil error, we set the
+	// span status but didn't end the span.
+	bpr.endSpan()
+	return bpr.rc.Close()
 }
 
 // CancelRequest cancels an in-flight request by closing its connection.
