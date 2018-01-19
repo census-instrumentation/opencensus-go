@@ -47,7 +47,7 @@ func main() {
 		nil,
 		videoSize,
 		stats.DistributionAggregation([]float64{0, 1 << 16, 1 << 32}),
-		stats.Interval{Duration: 10 * time.Second, Intervals: 10},
+		stats.Cumulative{},
 	)
 	if err != nil {
 		log.Fatalf("Cannot create view: %v", err)
