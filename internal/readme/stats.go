@@ -62,15 +62,8 @@ func statsExamples() {
 	_, _, _, _ = distAgg, countAgg, sumAgg, meanAgg
 
 	// START windows
-	interval := stats.Interval{
-		Duration:  10 * time.Second,
-		Intervals: 5,
-	}
-
 	cum := stats.Cumulative{}
 	// END windows
-
-	_, _ = interval, cum
 
 	// START view
 	view, err := stats.NewView(

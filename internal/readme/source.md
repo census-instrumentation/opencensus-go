@@ -98,11 +98,7 @@ sample values.
 
 ### Create an aggregation window
 
-Currently only two types of aggregation windows are supported. The Cumulative
-is used to continuously aggregate the data received.
-The Interval window is used to aggregate the data received over the last specified time interval.
-Currently all aggregation types are compatible with all aggregation windows.
-Later we might provide aggregation types that are incompatible with some windows.
+Use Cumulative to continuously aggregate the recorded data.
 
 [embedmd]:# (stats.go windows)
 
