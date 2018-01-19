@@ -97,8 +97,7 @@ func (seb *spanEndBody) Read(b []byte) (int, error) {
 	default:
 		// For all other errors, set the span status
 		trace.SetSpanStatus(seb.spanCtx, trace.Status{
-			// Code 2 is for Internal server error as per
-			// https://github.com/googleapis/googleapis/blob/f704d14a7224a140bca5cc26835fae471eaf7281/google/rpc/code.proto#L44-L51
+			// Code 2 is the error code for Internal server error.
 			Code:    2,
 			Message: err.Error(),
 		})
