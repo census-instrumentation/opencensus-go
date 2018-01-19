@@ -224,7 +224,7 @@ func (e *Exporter) FromRequest(req *http.Request) (sc trace.SpanContext, ok bool
 		return trace.SpanContext{}, false
 	}
 
-	buf = make([]byte, 8)
+	buf = make([]byte, binary.MaxVarintLen64)
 	binary.PutUvarint(buf, sid)
 	copy(sc.SpanID[:], buf)
 
