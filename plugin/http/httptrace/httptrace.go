@@ -16,8 +16,11 @@
 package httptrace
 
 import (
+	"context"
+	"io"
 	"net/http"
 	"strings"
+	"sync"
 
 	"go.opencensus.io/trace"
 	"go.opencensus.io/trace/propagation"
@@ -59,8 +62,62 @@ func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	resp, err := t.base().RoundTrip(req)
 
 	// TODO(jbd): Add status and attributes.
-	trace.EndSpan(ctx)
+	if err != nil {
+		trace.EndSpan(ctx)
+		return resp, err
+	}
+
+	// trace.EndSpan(ctx) will be invoked after
+	// a read from resp.Body returns io.EOF or when
+	// resp.Body.Close() is invoked.
+	resp.Body = &spanEndBody{rc: resp.Body, spanCtx: ctx}
 	return resp, err
+}
+
+// spanEndBody wraps a response.Body and invokes
+// trace.EndSpan on encountering io.EOF on reading
+// the body of the original response.
+type spanEndBody struct {
+	rc      io.ReadCloser
+	spanCtx context.Context
+
+	endSpanOnce sync.Once
+}
+
+var _ io.ReadCloser = (*spanEndBody)(nil)
+
+func (seb *spanEndBody) Read(b []byte) (int, error) {
+	n, err := seb.rc.Read(b)
+
+	switch err {
+	case nil:
+		return n, nil
+	case io.EOF:
+		seb.endSpan()
+	default:
+		// For all other errors, set the span status
+		trace.SetSpanStatus(seb.spanCtx, trace.Status{
+			// Code 2 is the error code for Internal server error.
+			Code:    2,
+			Message: err.Error(),
+		})
+	}
+	return n, err
+}
+
+// endSpan invokes trace.EndSpan exactly once
+func (seb *spanEndBody) endSpan() {
+	seb.endSpanOnce.Do(func() {
+		trace.EndSpan(seb.spanCtx)
+	})
+}
+
+func (seb *spanEndBody) Close() error {
+	// Invoking endSpan on Close will help catch the cases
+	// in which a read returned a non-nil error, we set the
+	// span status but didn't end the span.
+	seb.endSpan()
+	return seb.rc.Close()
 }
 
 // CancelRequest cancels an in-flight request by closing its connection.
