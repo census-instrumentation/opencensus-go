@@ -22,7 +22,16 @@ import (
 	"net/http"
 	"testing"
 
+	"context"
+	"fmt"
+	"io"
+	"io/ioutil"
+	"net/http/httptest"
+	"strings"
+	"time"
+
 	"go.opencensus.io/trace"
+	"go.opencensus.io/trace/propagation"
 )
 
 type testTransport struct {
@@ -36,7 +45,7 @@ func (t *testTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 
 type testPropagator struct{}
 
-func (t *testPropagator) FromRequest(req *http.Request) (sc trace.SpanContext, ok bool) {
+func (t testPropagator) FromRequest(req *http.Request) (sc trace.SpanContext, ok bool) {
 	header := req.Header.Get("trace")
 	buf, err := hex.DecodeString(header)
 	if err != nil {
@@ -53,7 +62,7 @@ func (t *testPropagator) FromRequest(req *http.Request) (sc trace.SpanContext, o
 	return sc, true
 }
 
-func (t *testPropagator) ToRequest(sc trace.SpanContext, req *http.Request) {
+func (t testPropagator) ToRequest(sc trace.SpanContext, req *http.Request) {
 	var buf bytes.Buffer
 	buf.Write(sc.TraceID[:])
 	buf.Write(sc.SpanID[:])
@@ -146,4 +155,121 @@ func TestHandler(t *testing.T) {
 			handler.ServeHTTP(nil, req)
 		})
 	}
+}
+
+var _ http.RoundTripper = (*Transport)(nil)
+var propagators = []propagation.HTTPFormat{testPropagator{}}
+
+type collector []*trace.SpanData
+
+func (c *collector) Export(s *trace.SpanData) {
+	*c = append(*c, s)
+}
+
+func TestEndToEnd(t *testing.T) {
+	var spans collector
+	trace.RegisterExporter(&spans)
+	defer trace.UnregisterExporter(&spans)
+
+	ctx := trace.StartSpanWithOptions(context.Background(),
+		"top-level",
+		trace.StartSpanOptions{
+			RecordEvents: true,
+			Sampler:      trace.AlwaysSample(),
+		})
+
+	serverDone := make(chan struct{})
+	serverReturn := make(chan time.Time)
+	url := serveHTTP(serverDone, serverReturn)
+
+	req, err := http.NewRequest(
+		"POST",
+		fmt.Sprintf("%s/example/url/path?qparam=val", url),
+		strings.NewReader("expected-request-body"))
+	if err != nil {
+		t.Fatalf("unexpected error %#v", err)
+	}
+	req = req.WithContext(ctx)
+
+	rt := &Transport{Formats: propagators}
+	resp, err := rt.RoundTrip(req)
+	if err != nil {
+		t.Fatalf("unexpected error %#v", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("unexpected stats: %d", resp.StatusCode)
+	}
+
+	serverReturn <- time.Now().Add(time.Millisecond)
+
+	respBody, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatalf("unexpected read error: %#v", err)
+	}
+	if string(respBody) != "expected-response" {
+		t.Fatalf("unexpected response: %s", string(respBody))
+	}
+
+	resp.Body.Close()
+
+	<-serverDone
+	trace.UnregisterExporter(&spans)
+
+	if len(spans) != 2 {
+		t.Fatalf("expected two spans, got: %#v", spans)
+	}
+	var client, server *trace.SpanData
+	for _, sp := range spans {
+		if strings.HasPrefix(sp.Name, "Sent.") {
+			client = sp
+			if client.Name != "Sent./test" {
+				t.Logf("TODO(#335): invalid name: %s", client.Name)
+			}
+		} else if strings.HasPrefix(sp.Name, "Recv.") {
+			server = sp
+			if server.Name != "Recv./example/url/path" {
+				t.Logf("TODO(#335): invalid name: %s", server.Name)
+			}
+		}
+	}
+
+	if server == nil || client == nil {
+		t.Fatalf("server or client span missing")
+	}
+	if server.TraceID != client.TraceID {
+		t.Errorf("TraceID does not match: server.TraceID=%q client.TraceID=%q", server.TraceID, client.TraceID)
+	}
+	if server.StartTime.Before(client.StartTime) {
+		t.Errorf("server span starts before client span")
+	}
+	if server.EndTime.After(client.EndTime) {
+		t.Errorf("client span ends before server span")
+	}
+	if !server.HasRemoteParent {
+		t.Errorf("server span should have remote parent")
+	}
+	if server.ParentSpanID != client.SpanID {
+		t.Errorf("server span should have client span as parent")
+	}
+}
+
+func serveHTTP(done chan struct{}, wait chan time.Time) string {
+	server := httptest.NewServer(NewHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(200)
+		w.(http.Flusher).Flush()
+
+		// simulate a slow-responding server
+		sleepUntil := <-wait
+		for time.Now().Before(sleepUntil) {
+			time.Sleep(sleepUntil.Sub(time.Now()))
+		}
+
+		io.WriteString(w, "expected-response")
+		close(done)
+	}), propagators...))
+	go func() {
+		<-done
+		server.Close()
+	}()
+	return server.URL
 }
