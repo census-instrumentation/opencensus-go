@@ -16,18 +16,18 @@ package httptrace
 
 import (
 	"bytes"
+	"context"
 	"encoding/hex"
 	"errors"
-	"log"
-	"net/http"
-	"testing"
-
-	"context"
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
+	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
+	"testing"
 	"time"
 
 	"go.opencensus.io/trace"
@@ -218,17 +218,19 @@ func TestEndToEnd(t *testing.T) {
 	if len(spans) != 2 {
 		t.Fatalf("expected two spans, got: %#v", spans)
 	}
+
 	var client, server *trace.SpanData
 	for _, sp := range spans {
 		if strings.HasPrefix(sp.Name, "Sent.") {
 			client = sp
-			if client.Name != "Sent./test" {
-				t.Logf("TODO(#335): invalid name: %s", client.Name)
+			serverHostport := req.URL.Hostname() + ":" + req.URL.Port()
+			if got, want := client.Name, "Sent."+serverHostport+"/example/url/path"; got != want {
+				t.Errorf("Span name: %q; want %q", got, want)
 			}
 		} else if strings.HasPrefix(sp.Name, "Recv.") {
 			server = sp
-			if server.Name != "Recv./example/url/path" {
-				t.Logf("TODO(#335): invalid name: %s", server.Name)
+			if got, want := server.Name, "Recv./example/url/path"; got != want {
+				t.Errorf("Span name: %q; want %q", got, want)
 			}
 		}
 	}
@@ -272,4 +274,39 @@ func serveHTTP(done chan struct{}, wait chan time.Time) string {
 		server.Close()
 	}()
 	return server.URL
+}
+
+func TestSpanNameFromURL(t *testing.T) {
+	tests := []struct {
+		prefix string
+		u      string
+		want   string
+	}{
+		{
+			prefix: "Sent",
+			u:      "http://localhost:80/hello?q=a",
+			want:   "Sent.localhost/hello",
+		},
+		{
+			prefix: "Recv",
+			u:      "https://localhost:443/a",
+			want:   "Recv.localhost/a",
+		},
+		{
+			prefix: "Sent",
+			u:      "/a/b?q=c",
+			want:   "Sent./a/b",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.prefix+"-"+tt.u, func(t *testing.T) {
+			u, err := url.Parse(tt.u)
+			if err != nil {
+				t.Errorf("url.Parse() = %v", err)
+			}
+			if got := spanNameFromURL(tt.prefix, u); got != tt.want {
+				t.Errorf("spanNameFromURL() = %v, want %v", got, tt.want)
+			}
+		})
+	}
 }
