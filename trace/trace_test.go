@@ -589,7 +589,6 @@ func (e *exporter) Export(s *SpanData) {
 }
 
 func Test_Issue328_EndSpanTwice(t *testing.T) {
-	t.Skip("TODO(#328)")
 	var e exporter
 	RegisterExporter(&e)
 	defer UnregisterExporter(&e)
@@ -603,23 +602,43 @@ func Test_Issue328_EndSpanTwice(t *testing.T) {
 	}
 }
 
-func Test_Issue328_EndSpanAndStartSpan(t *testing.T) {
-	t.Skip("TODO(#328)")
+func TestStartSpanAfterEnd(t *testing.T) {
 	var spans exporter
 	RegisterExporter(&spans)
 	defer UnregisterExporter(&spans)
-	ctx := context.Background()
-	ctx = StartSpanWithOptions(ctx, "span-1", StartSpanOptions{Sampler: AlwaysSample()})
-	EndSpan(ctx)
-	ctx = StartSpanWithOptions(ctx, "span-2", StartSpanOptions{Sampler: AlwaysSample()})
+	ctx := StartSpanWithOptions(context.Background(), "parent", StartSpanOptions{Sampler: AlwaysSample()})
+	ctx1 := StartSpanWithOptions(ctx, "span-1", StartSpanOptions{Sampler: AlwaysSample()})
+	EndSpan(ctx1)
+	// Start a new span with the context containing span-1
+	// even though span-1 is ended, we still add this as a new child of span-1
+	ctx2 := StartSpanWithOptions(ctx1, "span-2", StartSpanOptions{Sampler: AlwaysSample()})
+	EndSpan(ctx2)
 	EndSpan(ctx)
 	UnregisterExporter(&spans)
-	if len(spans) != 2 {
-		t.Fatalf("expected 2 spans, got %#v", spans)
+	if len(spans) != 3 {
+		t.Fatalf("expected 3 spans, got %#v", spans)
 	}
+	var span1, span2, parent *SpanData
 	for _, span := range spans {
-		if span.ParentSpanID != *new(SpanID) {
-			t.Errorf("%s should not have a parent: %q", span.Name, span.ParentSpanID)
+		switch span.Name {
+		case "span-1":
+			span1 = span
+			break
+		case "span-2":
+			span2 = span
+			break
+		case "parent":
+			parent = span
+			break
 		}
+	}
+	if span1.TraceID != parent.TraceID || span2.TraceID != parent.TraceID {
+		t.Errorf("expected same TraceID, got: %q, %q, %q", parent.TraceID, span1.TraceID, span2.TraceID)
+	}
+	if span1.ParentSpanID != parent.SpanID {
+		t.Errorf("span-1 parent, expected: %q got: %q", parent.SpanID, span1.ParentSpanID)
+	}
+	if span2.ParentSpanID != span1.SpanID {
+		t.Errorf("span-2 parent, expected: %q got: %q", span1.SpanID, parent.ParentSpanID)
 	}
 }
