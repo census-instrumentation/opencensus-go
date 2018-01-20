@@ -293,6 +293,11 @@ func TestSpanNameFromURL(t *testing.T) {
 			want:   "Recv.localhost/a",
 		},
 		{
+			prefix: "Recv",
+			u:      "https://example.com:7654/a",
+			want:   "Recv.example.com:7654/a",
+		},
+		{
 			prefix: "Sent",
 			u:      "/a/b?q=c",
 			want:   "Sent./a/b",
