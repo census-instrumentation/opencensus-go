@@ -19,7 +19,7 @@ import (
 	"context"
 	"io"
 	"net/http"
-	"strings"
+	"net/url"
 	"sync"
 
 	"go.opencensus.io/trace"
@@ -48,7 +48,7 @@ type Transport struct {
 // The created span can follow a parent span, if a parent is presented in
 // the request's context.
 func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
-	name := "Sent" + strings.Replace(req.URL.String(), req.URL.Scheme, ".", -1)
+	name := spanNameFromURL("Sent", req.URL)
 	// TODO(jbd): Discuss whether we want to prefix
 	// outgoing requests with Sent.
 	ctx := trace.StartSpan(req.Context(), name)
@@ -164,7 +164,7 @@ type handler struct {
 }
 
 func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	name := "Recv" + strings.Replace(r.URL.String(), r.URL.Scheme, ".", -1)
+	name := spanNameFromURL("Recv", r.URL)
 
 	var (
 		sc trace.SpanContext
@@ -188,4 +188,13 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// TODO(jbd): Add status and attributes.
 	r = r.WithContext(ctx)
 	h.handler.ServeHTTP(w, r)
+}
+
+func spanNameFromURL(prefix string, u *url.URL) string {
+	host := u.Hostname()
+	port := ":" + u.Port()
+	if port == ":" || port == ":80" || port == ":443" {
+		port = ""
+	}
+	return prefix + "." + host + port + u.Path
 }
