@@ -582,3 +582,52 @@ func TestBucket(t *testing.T) {
 		}
 	}
 }
+
+type exporter map[string]*SpanData
+func (e exporter) Export(s *SpanData) {
+	e[s.Name] = s
+}
+
+func Test_Issue328_EndSpanTwice(t *testing.T) {
+	spans := make(exporter)
+	RegisterExporter(&spans)
+	defer UnregisterExporter(&spans)
+	ctx := context.Background()
+	ctx = StartSpanWithOptions(ctx, "span-1", StartSpanOptions{Sampler: AlwaysSample()})
+	EndSpan(ctx)
+	EndSpan(ctx)
+	UnregisterExporter(&spans)
+	if len(spans) != 1 {
+		t.Fatalf("expected only a single span, got %#v", spans)
+	}
+}
+
+func TestStartSpanAfterEnd(t *testing.T) {
+	spans := make(exporter)
+	RegisterExporter(&spans)
+	defer UnregisterExporter(&spans)
+	ctx := StartSpanWithOptions(context.Background(), "parent", StartSpanOptions{Sampler: AlwaysSample()})
+	ctx1 := StartSpanWithOptions(ctx, "span-1", StartSpanOptions{Sampler: AlwaysSample()})
+	EndSpan(ctx1)
+	// Start a new span with the context containing span-1
+	// even though span-1 is ended, we still add this as a new child of span-1
+	ctx2 := StartSpanWithOptions(ctx1, "span-2", StartSpanOptions{Sampler: AlwaysSample()})
+	EndSpan(ctx2)
+	EndSpan(ctx)
+	UnregisterExporter(&spans)
+	if got, want := len(spans), 3; got != want {
+		t.Fatalf("len(%#v) = %d; want %d", spans, got, want)
+	}
+	if got, want := spans["span-1"].TraceID, spans["parent"].TraceID; got != want {
+		t.Errorf("span-1.TraceID=%q; want %q", got, want)
+	}
+	if got, want := spans["span-2"].TraceID, spans["parent"].TraceID; got != want {
+		t.Errorf("span-2.TraceID=%q; want %q", got, want)
+	}
+	if got, want := spans["span-1"].ParentSpanID, spans["parent"].SpanID; got != want {
+		t.Errorf("span-1.ParentSpanID=%q; want %q (parent.SpanID)", got, want)
+	}
+	if got, want := spans["span-2"].ParentSpanID, spans["span-1"].SpanID; got != want {
+		t.Errorf("span-2.ParentSpanID=%q; want %q (span1.SpanID)", got, want)
+	}
+}
