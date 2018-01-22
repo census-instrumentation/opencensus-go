@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-package stats
+package aggregation
 
 import (
 	"reflect"
@@ -21,7 +21,7 @@ import (
 )
 
 func TestDataClone(t *testing.T) {
-	dist := newDistributionData([]float64{1, 2, 3, 4})
+	dist := NewDistributionData([]float64{1, 2, 3, 4})
 	dist.Count = 7
 	dist.Max = 11
 	dist.Min = 1
@@ -31,11 +31,11 @@ func TestDataClone(t *testing.T) {
 
 	tests := []struct {
 		name string
-		src  AggregationData
+		src  Data
 	}{
 		{
 			name: "count data",
-			src:  newCountData(5),
+			src:  NewCountData(5),
 		},
 		{
 			name: "distribution data",
@@ -43,16 +43,16 @@ func TestDataClone(t *testing.T) {
 		},
 		{
 			name: "mean data",
-			src:  newMeanData(11.0, 5),
+			src:  NewMeanData(11.0, 5),
 		},
 		{
 			name: "sum data",
-			src:  newSumData(65.7),
+			src:  NewSumData(65.7),
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := tt.src.clone()
+			got := tt.src.Clone()
 			if !reflect.DeepEqual(got, tt.src) {
 				t.Errorf("AggregationData.clone() = %v, want %v", got, tt.src)
 			}
