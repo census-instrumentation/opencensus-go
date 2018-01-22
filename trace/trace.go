@@ -41,7 +41,7 @@ type Span struct {
 	spanContext SpanContext
 	// spanStore is the spanStore this span belongs to, if any, otherwise it is nil.
 	*spanStore
-	once sync.Once
+	exportOnce sync.Once
 }
 
 // IsRecordingEvents returns true if events are being recorded for the current span.
@@ -264,7 +264,7 @@ func (s *Span) End() {
 	if !s.IsRecordingEvents() {
 		return
 	}
-	s.once.Do(func() {
+	s.exportOnce.Do(func() {
 		// TODO: optimize to avoid this call if sd won't be used.
 		sd := s.makeSpanData()
 		sd.EndTime = time.Now()

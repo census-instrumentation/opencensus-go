@@ -615,8 +615,8 @@ func TestStartSpanAfterEnd(t *testing.T) {
 	EndSpan(ctx2)
 	EndSpan(ctx)
 	UnregisterExporter(&spans)
-	if len(spans) != 3 {
-		t.Fatalf("expected 3 spans, got %#v", spans)
+	if got, want := len(spans), 3; got != want {
+		t.Fatalf("len(%#v) = %d; want %d", spans, got, want)
 	}
 	var span1, span2, parent *SpanData
 	for _, span := range spans {
@@ -632,13 +632,16 @@ func TestStartSpanAfterEnd(t *testing.T) {
 			break
 		}
 	}
-	if span1.TraceID != parent.TraceID || span2.TraceID != parent.TraceID {
-		t.Errorf("expected same TraceID, got: %q, %q, %q", parent.TraceID, span1.TraceID, span2.TraceID)
+	if got, want := span1.TraceID, parent.TraceID; got != want {
+		t.Errorf("span1.TraceID=%q; want %q", got, want)
 	}
-	if span1.ParentSpanID != parent.SpanID {
-		t.Errorf("span-1 parent, expected: %q got: %q", parent.SpanID, span1.ParentSpanID)
+	if got, want := span2.TraceID, parent.TraceID; got != want {
+		t.Errorf("span2.TraceID=%q; want %q", got, want)
 	}
-	if span2.ParentSpanID != span1.SpanID {
-		t.Errorf("span-2 parent, expected: %q got: %q", span1.SpanID, parent.ParentSpanID)
+	if got, want := span1.ParentSpanID, parent.SpanID; got != want {
+		t.Errorf("span1.ParentSpanID=%q; want %q (parent.SpanID)", got, want)
+	}
+	if got, want := span2.ParentSpanID, span1.SpanID; got != want {
+		t.Errorf("span2.ParentSpanID=%q; want %q (span1.SpanID)", got, want)
 	}
 }
