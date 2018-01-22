@@ -583,27 +583,27 @@ func TestBucket(t *testing.T) {
 	}
 }
 
-type exporter []*SpanData
-func (e *exporter) Export(s *SpanData) {
-	*e = append(*e, s)
+type exporter map[string]*SpanData
+func (e exporter) Export(s *SpanData) {
+	e[s.Name] = s
 }
 
 func Test_Issue328_EndSpanTwice(t *testing.T) {
-	var e exporter
-	RegisterExporter(&e)
-	defer UnregisterExporter(&e)
+	spans := make(exporter)
+	RegisterExporter(&spans)
+	defer UnregisterExporter(&spans)
 	ctx := context.Background()
 	ctx = StartSpanWithOptions(ctx, "span-1", StartSpanOptions{Sampler: AlwaysSample()})
 	EndSpan(ctx)
 	EndSpan(ctx)
-	UnregisterExporter(&e)
-	if len(e) != 1 {
-		t.Fatalf("expected only a single span, got %#v", e)
+	UnregisterExporter(&spans)
+	if len(spans) != 1 {
+		t.Fatalf("expected only a single span, got %#v", spans)
 	}
 }
 
 func TestStartSpanAfterEnd(t *testing.T) {
-	var spans exporter
+	spans := make(exporter)
 	RegisterExporter(&spans)
 	defer UnregisterExporter(&spans)
 	ctx := StartSpanWithOptions(context.Background(), "parent", StartSpanOptions{Sampler: AlwaysSample()})
@@ -618,30 +618,16 @@ func TestStartSpanAfterEnd(t *testing.T) {
 	if got, want := len(spans), 3; got != want {
 		t.Fatalf("len(%#v) = %d; want %d", spans, got, want)
 	}
-	var span1, span2, parent *SpanData
-	for _, span := range spans {
-		switch span.Name {
-		case "span-1":
-			span1 = span
-			break
-		case "span-2":
-			span2 = span
-			break
-		case "parent":
-			parent = span
-			break
-		}
+	if got, want := spans["span-1"].TraceID, spans["parent"].TraceID; got != want {
+		t.Errorf("span-1.TraceID=%q; want %q", got, want)
 	}
-	if got, want := span1.TraceID, parent.TraceID; got != want {
-		t.Errorf("span1.TraceID=%q; want %q", got, want)
+	if got, want := spans["span-2"].TraceID, spans["parent"].TraceID; got != want {
+		t.Errorf("span-2.TraceID=%q; want %q", got, want)
 	}
-	if got, want := span2.TraceID, parent.TraceID; got != want {
-		t.Errorf("span2.TraceID=%q; want %q", got, want)
+	if got, want := spans["span-1"].ParentSpanID, spans["parent"].SpanID; got != want {
+		t.Errorf("span-1.ParentSpanID=%q; want %q (parent.SpanID)", got, want)
 	}
-	if got, want := span1.ParentSpanID, parent.SpanID; got != want {
-		t.Errorf("span1.ParentSpanID=%q; want %q (parent.SpanID)", got, want)
-	}
-	if got, want := span2.ParentSpanID, span1.SpanID; got != want {
-		t.Errorf("span2.ParentSpanID=%q; want %q (span1.SpanID)", got, want)
+	if got, want := spans["span-2"].ParentSpanID, spans["span-1"].SpanID; got != want {
+		t.Errorf("span-2.ParentSpanID=%q; want %q (span1.SpanID)", got, want)
 	}
 }
