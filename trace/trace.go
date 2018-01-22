@@ -23,6 +23,8 @@ import (
 	"runtime"
 	"sync"
 	"time"
+	"go.opencensus.io/stats"
+	"sync/atomic"
 )
 
 // Span represents a span of a trace.  It has an associated SpanContext, and
@@ -41,6 +43,12 @@ type Span struct {
 	spanContext SpanContext
 	// spanStore is the spanStore this span belongs to, if any, otherwise it is nil.
 	*spanStore
+	stats *SpanStatsOptions
+
+	uncompressedBytesReceived, compressedBytesReceived int64
+	uncompressedBytesSent, compressedBytesSent         int64
+
+	startTime time.Time
 }
 
 // IsRecordingEvents returns true if events are being recorded for the current span.
@@ -122,17 +130,72 @@ func WithSpan(parent context.Context, s *Span) context.Context {
 	return context.WithValue(parent, contextKey{}, s)
 }
 
+type SpanStatsOptions struct {
+	started *stats.MeasureInt64
+
+	uncompressedBytesSent, compressedBytesSent         *stats.MeasureInt64
+	uncompressedBytesReceived, compressedBytesReceived *stats.MeasureInt64
+
+	messagesReceived, messagesSent *stats.MeasureInt64
+
+	totalLatency *stats.MeasureFloat64
+}
+
+func NewSpanStatsOptions(prefix string, messageCounts bool) (*SpanStatsOptions, error) {
+	var (
+		err error
+		ss  SpanStatsOptions
+	)
+	intMeasures := []struct {
+		mp               **stats.MeasureInt64
+		name, unit, desc string
+		enabled bool
+	}{
+		{&ss.messagesReceived, "recv_msg", "1", "messages received", messageCounts},
+		{&ss.messagesSent, "sent_msg", "1", "messages sent", messageCounts},
+		{&ss.started, "started", "1", "spans started", true},
+		{&ss.uncompressedBytesSent, "sent_uncompressed", "byte", "bytes sent (uncompressed)", true},
+		{&ss.uncompressedBytesReceived, "recv_uncompressed", "byte", "bytes received (uncompressed)", true},
+		{&ss.compressedBytesSent, "sent_compressed", "byte", "bytes sent (compressed)", true},
+		{&ss.compressedBytesReceived, "recv_compressed", "byte", "bytes received (compressed)", true},
+	}
+	for _, m := range intMeasures {
+		if !m.enabled {
+			continue
+		}
+		*m.mp, err = stats.NewMeasureInt64(fmt.Sprintf("%s/%s", prefix), m.desc, m.unit)
+		if err != nil {
+			return nil, err
+		}
+	}
+	floatMeasures := []struct {
+		mp               **stats.MeasureFloat64
+		name, unit, desc string
+	}{
+		{&ss.totalLatency, "latency", "microseconds", "total span latency"},
+	}
+	for _, m := range floatMeasures {
+		*m.mp, err = stats.NewMeasureFloat64(fmt.Sprintf("%s/%s", prefix), m.desc, m.unit)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return &ss, nil
+}
+
 // StartSpanOptions contains options concerning how a span is started.
 type StartSpanOptions struct {
 	// RecordEvents indicates whether to record data for this span, and include
 	// the span in a local span store.
 	// Events will also be recorded if the span will be exported.
 	RecordEvents bool
-	Sampler      // if non-nil, the Sampler to consult for this span.
+	Sampler // if non-nil, the Sampler to consult for this span.
 	// RegisterNameForLocalSpanStore indicates that a local span store for spans
 	// of this name should be created, if one does not exist.
 	// If RecordEvents is false, this option has no effect.
 	RegisterNameForLocalSpanStore bool
+
+	Stats *SpanStatsOptions
 }
 
 // StartSpan starts a new child span of the current span in the context.
@@ -148,6 +211,9 @@ func StartSpan(ctx context.Context, name string) context.Context {
 // If there is no span in the context, creates a new trace and span.
 func StartSpanWithOptions(ctx context.Context, name string, o StartSpanOptions) context.Context {
 	parentSpan, _ := ctx.Value(contextKey{}).(*Span)
+	if o.Stats != nil {
+		stats.Record(ctx, o.Stats.started.M(1))
+	}
 	return WithSpan(ctx, parentSpan.StartSpanWithOptions(name, o))
 }
 
@@ -215,6 +281,8 @@ func startSpanInternal(name string, hasParent bool, parent SpanContext, remotePa
 			Name:            name,
 			HasRemoteParent: remoteParent}).Sample)
 	}
+	span.stats = o.Stats
+	span.startTime = time.Now()
 
 	if !o.RecordEvents && !span.spanContext.IsSampled() {
 		return span
@@ -222,7 +290,7 @@ func startSpanInternal(name string, hasParent bool, parent SpanContext, remotePa
 
 	span.data = &SpanData{
 		SpanContext:     span.spanContext,
-		StartTime:       time.Now(),
+		StartTime:       span.startTime,
 		Name:            name,
 		HasRemoteParent: remoteParent,
 	}
@@ -254,6 +322,14 @@ func EndSpan(ctx context.Context) {
 	s, ok := ctx.Value(contextKey{}).(*Span)
 	if !ok {
 		return
+	}
+	if s.stats != nil {
+		stats.Record(ctx,
+			s.stats.totalLatency.M(float64(time.Since(s.startTime))/float64(time.Microsecond)),
+			s.stats.compressedBytesSent.M(s.compressedBytesSent),
+			s.stats.uncompressedBytesSent.M(s.uncompressedBytesSent),
+			s.stats.compressedBytesReceived.M(s.compressedBytesReceived),
+			s.stats.uncompressedBytesReceived.M(s.uncompressedBytesReceived))
 	}
 	s.End()
 }
@@ -484,6 +560,8 @@ func AddMessageSendEvent(ctx context.Context, messageID, uncompressedByteSize, c
 // event (this allows to identify a message between the sender and receiver).
 // For example, this could be a sequence id.
 func (s *Span) AddMessageSendEvent(messageID, uncompressedByteSize, compressedByteSize int64) {
+	atomic.AddInt64(&s.uncompressedBytesSent, uncompressedByteSize)
+	atomic.AddInt64(&s.compressedBytesSent, compressedByteSize)
 	if !s.IsRecordingEvents() {
 		return
 	}
@@ -520,6 +598,11 @@ func AddMessageReceiveEvent(ctx context.Context, messageID, uncompressedByteSize
 // event (this allows to identify a message between the sender and receiver).
 // For example, this could be a sequence id.
 func (s *Span) AddMessageReceiveEvent(messageID, uncompressedByteSize, compressedByteSize int64) {
+	s.onceFirstByte.Do(func() {
+		s.firstByteReceived = time.Now()
+	})
+	atomic.AddInt64(&s.uncompressedBytesReceived, uncompressedByteSize)
+	atomic.AddInt64(&s.compressedBytesReceived, compressedByteSize)
 	if !s.IsRecordingEvents() {
 		return
 	}
