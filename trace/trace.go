@@ -274,10 +274,10 @@ func (s *Span) End() {
 		if s.spanContext.IsSampled() {
 			// TODO: consider holding exportersMu for less time.
 			exportersMu.Lock()
+			defer exportersMu.Unlock()
 			for e := range exporters {
 				e.Export(sd)
 			}
-			exportersMu.Unlock()
 		}
 	})
 }
