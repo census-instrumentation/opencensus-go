@@ -52,7 +52,7 @@ func (a *CountData) addSample(v interface{}) {
 }
 
 func (a *CountData) clone() AggregationData {
-	return &(*a)
+	return newCountData(int64(*a))
 }
 
 func (a *CountData) multiplyByFraction(fraction float64) AggregationData {
@@ -112,7 +112,7 @@ func (a *SumData) multiplyByFraction(fraction float64) AggregationData {
 }
 
 func (a *SumData) clone() AggregationData {
-	return &(*a)
+	return newSumData(float64(*a))
 }
 
 func (a *SumData) addOther(av AggregationData) {
@@ -176,7 +176,7 @@ func (a *MeanData) addSample(v interface{}) {
 }
 
 func (a *MeanData) clone() AggregationData {
-	return &(*a)
+	return newMeanData(a.Mean, a.Count)
 }
 
 // Only Count will be mutiplied by the fraction, Mean will remain the same.
