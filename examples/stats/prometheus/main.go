@@ -46,7 +46,7 @@ func main() {
 	// 1. Create view to see the number of processed videos cumulatively.
 	viewCount, err := stats.NewView(
 		"video_count",
-		"number of videos processed processed over time",
+		"number of videos processed over time",
 		nil,
 		videoCount,
 		stats.CountAggregation{},
@@ -57,7 +57,7 @@ func main() {
 	}
 
 	// Subscribe will allow view data to be exported.
-	// Once no longer need, you can unsubscribe from the view.
+	// Once no longer needed, you can unsubscribe from the view.
 	if err := viewCount.Subscribe(); err != nil {
 		log.Fatalf("Cannot subscribe to the view: %v", err)
 	}
@@ -83,7 +83,7 @@ func main() {
 	}
 
 	// Subscribe will allow view data to be exported.
-	// Once no longer need, you can unsubscribe from the view.
+	// Once no longer needed, you can unsubscribe from the view.
 	if err := viewSize.Subscribe(); err != nil {
 		log.Fatalf("Cannot subscribe to the view: %v", err)
 	}
