@@ -25,6 +25,7 @@ import (
 	"time"
 	"go.opencensus.io/stats"
 	"sync/atomic"
+	"go.opencensus.io/tag"
 )
 
 // Span represents a span of a trace.  It has an associated SpanContext, and
@@ -202,8 +203,7 @@ type StartSpanOptions struct {
 //
 // If there is no span in the context, creates a new trace and span.
 func StartSpan(ctx context.Context, name string) context.Context {
-	parentSpan, _ := ctx.Value(contextKey{}).(*Span)
-	return WithSpan(ctx, parentSpan.StartSpanWithOptions(name, StartSpanOptions{}))
+	return StartSpanWithOptions(ctx, name, StartSpanOptions{})
 }
 
 // StartSpanWithOptions starts a new child span of the current span in the context.
@@ -211,10 +211,26 @@ func StartSpan(ctx context.Context, name string) context.Context {
 // If there is no span in the context, creates a new trace and span.
 func StartSpanWithOptions(ctx context.Context, name string, o StartSpanOptions) context.Context {
 	parentSpan, _ := ctx.Value(contextKey{}).(*Span)
+	span := parentSpan.StartSpanWithOptions(name, o)
 	if o.Stats != nil {
+		if m := tag.FromContext(ctx); m != nil {
+			if tags := m.Tags(); len(tags) > 0 {
+				attributes := tagsToAttributes(m)
+				span.SetAttributes(attributes...)
+			}
+		}
 		stats.Record(ctx, o.Stats.started.M(1))
 	}
-	return WithSpan(ctx, parentSpan.StartSpanWithOptions(name, o))
+	return WithSpan(ctx, span)
+}
+
+func tagsToAttributes(m *tag.Map) []Attribute {
+	tags := m.Tags()
+	attrs := make([]Attribute, len(tags))
+	for i, t := range tags {
+		attrs[i] = StringAttribute{Key: t.Key.Name(), Value: t.Value}
+	}
+	return attrs
 }
 
 // StartSpanWithRemoteParent starts a new child span with the given parent SpanContext.
@@ -598,9 +614,6 @@ func AddMessageReceiveEvent(ctx context.Context, messageID, uncompressedByteSize
 // event (this allows to identify a message between the sender and receiver).
 // For example, this could be a sequence id.
 func (s *Span) AddMessageReceiveEvent(messageID, uncompressedByteSize, compressedByteSize int64) {
-	s.onceFirstByte.Do(func() {
-		s.firstByteReceived = time.Now()
-	})
 	atomic.AddInt64(&s.uncompressedBytesReceived, uncompressedByteSize)
 	atomic.AddInt64(&s.compressedBytesReceived, compressedByteSize)
 	if !s.IsRecordingEvents() {

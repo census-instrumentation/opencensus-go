@@ -33,6 +33,15 @@ type Map struct {
 	m map[Key]string
 }
 
+func (m *Map) Tags() []Tag {
+	tags := make([]Tag, 0, len(m.m))
+	for key, val := range m.m {
+		tags = append(tags, Tag{Key: key, Value: val})
+	}
+	sort.Slice(tags, func(i, j int) bool { return tags[i].Key.name < tags[j].Key.name })
+	return tags
+}
+
 // Value returns the value for the key if a value
 // for the key exists.
 func (m *Map) Value(k Key) (string, bool) {
