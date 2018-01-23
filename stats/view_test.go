@@ -823,21 +823,20 @@ func TestViewSortedKeys(t *testing.T) {
 
 	v, err := NewView("sort_keys", "desc sort_keys", ks, nil, MeanAggregation{}, Cumulative{})
 	if err != nil {
-		t.Fatalf("sort_keys failed creating view: %v", err)
+		t.Fatalf("NewView() = %v", err)
 	}
 
-	expected := []string{"a", "b", "c"}
+	want := []string{"a", "b", "c"}
 	vks := v.TagKeys()
-	if len(vks) != len(expected) {
-		t.Fatalf("unexpected keys: %+v, expected %+v", vks, expected)
+	if len(vks) != len(want) {
+		t.Errorf("Keys = %+v; want %+v", vks, want)
 	}
 
-	for i, v := range expected {
-		if v != vks[i].Name() {
-			t.Fatalf("expected %s, got %s", v, vks[i].Name())
+	for i, v := range want {
+		if got, want := v, vks[i].Name(); got != want {
+			t.Errorf("View name = %q; want %q", got, want)
 		}
 	}
-
 }
 
 // TODO(songya): add tests for AggregationSum and AggregationMean with Interval Window
