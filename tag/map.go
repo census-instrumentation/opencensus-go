@@ -145,17 +145,14 @@ func Delete(k Key) Mutator {
 
 // NewMap returns a new tag map originated from the incoming context
 // and modified with the provided mutators.
+// If any of the mutators return errors, NewMap returns the first error
+// and ignores the result of the error-producing mutator(s).
 func NewMap(ctx context.Context, mutator ...Mutator) (*Map, error) {
 	m := newMap(0)
 	orig := FromContext(ctx)
+	errors := []error{}
 	if orig != nil {
 		for k, v := range orig.m {
-			if !checkKeyName(k.Name()) {
-				return nil, fmt.Errorf("key:%q: %v", k, errInvalidKeyName)
-			}
-			if !checkValue(v) {
-				return nil, fmt.Errorf("key:%q value:%q: %v", k.Name(), v, errInvalidValue)
-			}
 			m.insert(k, v)
 		}
 	}
@@ -163,10 +160,14 @@ func NewMap(ctx context.Context, mutator ...Mutator) (*Map, error) {
 	for _, mod := range mutator {
 		m, err = mod.Mutate(m)
 		if err != nil {
-			return nil, err
+			errors = append(errors, err)
 		}
 	}
-	return m, nil
+	if len(errors) > 0 {
+		return m, errors[0]
+	} else {
+		return m, nil
+	}
 }
 
 // Do is similar to pprof.Do: a convenience for installing the tags
