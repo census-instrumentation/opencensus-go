@@ -133,13 +133,13 @@ func Test_Worker_MeasureDelete(t *testing.T) {
 		return func(m Measure) error {
 			switch x := m.(type) {
 			case *MeasureInt64:
-				v, err := NewView(viewName, "", nil, x, nil, nil)
+				v, err := NewView(viewName, "", nil, x, nil)
 				if err != nil {
 					return err
 				}
 				return RegisterView(v)
 			case *MeasureFloat64:
-				v, err := NewView(viewName, "", nil, x, nil, nil)
+				v, err := NewView(viewName, "", nil, x, nil)
 				if err != nil {
 					return err
 				}
@@ -412,9 +412,9 @@ func Test_Worker_ViewRegistration(t *testing.T) {
 		mf1, _ := NewMeasureFloat64("MF1", "desc MF1", "unit")
 		mf2, _ := NewMeasureFloat64("MF2", "desc MF2", "unit")
 
-		v1, _ := NewView("VF1", "desc VF1", nil, mf1, nil, nil)
-		v11, _ := NewView("VF1", "desc duplicate name VF1", nil, mf1, nil, nil)
-		v2, _ := NewView("VF2", "desc VF2", nil, mf2, nil, nil)
+		v1, _ := NewView("VF1", "desc VF1", nil, mf1, nil)
+		v11, _ := NewView("VF1", "desc duplicate name VF1", nil, mf1, nil)
+		v2, _ := NewView("VF2", "desc VF2", nil, mf2, nil)
 
 		views := map[string]*View{
 			"v1ID":         v1,
@@ -482,11 +482,11 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 	}
 	ctx := tag.NewContext(context.Background(), ts)
 
-	v1, err := NewView("VF1", "desc VF1", []tag.Key{k1, k2}, m, CountAggregation{}, Cumulative{})
+	v1, err := NewView("VF1", "desc VF1", []tag.Key{k1, k2}, m, CountAggregation{})
 	if err != nil {
 		t.Fatal(err)
 	}
-	v2, err := NewView("VF2", "desc VF2", []tag.Key{k1, k2}, m, CountAggregation{}, Cumulative{})
+	v2, err := NewView("VF2", "desc VF2", []tag.Key{k1, k2}, m, CountAggregation{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -620,9 +620,8 @@ func TestReportUsage(t *testing.T) {
 		t.Fatalf("NewMeasureInt64() = %v", err)
 	}
 
-	cum1, _ := NewView("cum1", "", nil, m, CountAggregation{}, Cumulative{})
-	cum2, _ := NewView("cum1", "", nil, m, CountAggregation{}, &Cumulative{})
-	interval, _ := NewView("cum1", "", nil, m, CountAggregation{}, Interval{Duration: 5 * time.Millisecond, Intervals: 1})
+	cum1, _ := NewView("cum1", "", nil, m, CountAggregation{})
+	cum2, _ := NewView("cum1", "", nil, m, CountAggregation{})
 
 	tests := []struct {
 		name         string
@@ -638,11 +637,6 @@ func TestReportUsage(t *testing.T) {
 			name:         "cum2",
 			view:         cum2,
 			wantMaxCount: 8,
-		},
-		{
-			name:         "interval",
-			view:         interval,
-			wantMaxCount: 2,
 		},
 	}
 
@@ -707,7 +701,7 @@ func TestWorkerCumStarttime(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewMeasureInt64() = %v", err)
 	}
-	view, err := NewView("cum", "", nil, m, CountAggregation{}, Cumulative{})
+	view, err := NewView("cum", "", nil, m, CountAggregation{})
 	if err != nil {
 		t.Fatalf("NewView() = %v", err)
 	}

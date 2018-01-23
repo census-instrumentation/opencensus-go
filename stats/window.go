@@ -24,32 +24,6 @@ type aggregator interface {
 	retrieveCollected(now time.Time) AggregationData
 }
 
-// Window represents a time interval or samples count over
-// which the aggregation occurs.
-type Window interface {
-	isWindow()
-	newAggregator(now time.Time, newAggregationData func() AggregationData) aggregator
-}
-
-// Cumulative is a window that indicates that the aggregation occurs
-// over the lifetime of the view.
-type Cumulative struct{}
-
-func (w Cumulative) isWindow() {}
-
-func (w Cumulative) newAggregator(now time.Time, newAggregationData func() AggregationData) aggregator {
-	return newAggregatorCumulative(now, newAggregationData)
-}
-
-// Interval is a window that indicates that the aggregation occurs over a sliding
-// window of time: last n seconds, minutes, hours.
-type Interval struct {
-	Duration  time.Duration
-	Intervals int
-}
-
-func (w Interval) isWindow() {}
-
-func (w Interval) newAggregator(now time.Time, newAggregationData func() AggregationData) aggregator {
-	return newAggregatorInterval(now, w.Duration, w.Intervals, newAggregationData)
+func newCumulativeAggregator(now time.Time, newAggregationData func() AggregationData) aggregator {
+	return newAggregatorCumulative(newAggregationData)
 }

@@ -83,7 +83,7 @@ func TestExporter_makeReq(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	cumView, err := stats.NewView("cumview", "desc", []tag.Key{key}, m, stats.CountAggregation{}, stats.Cumulative{})
+	cumView, err := stats.NewView("cumview", "desc", []tag.Key{key}, m, stats.CountAggregation{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -92,7 +92,7 @@ func TestExporter_makeReq(t *testing.T) {
 	}
 	defer stats.UnregisterView(cumView)
 
-	distView, err := stats.NewView("distview", "desc", nil, m, stats.DistributionAggregation([]float64{2, 4, 7}), stats.Interval{})
+	distView, err := stats.NewView("distview", "desc", nil, m, stats.DistributionAggregation([]float64{2, 4, 7}))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -351,12 +351,6 @@ func TestExporter_makeReq(t *testing.T) {
 				},
 			}},
 		},
-		{
-			name:   "dist agg + time window",
-			projID: "proj-id",
-			vd:     newTestDistViewData(distView, start, end),
-			want:   []*monitoringpb.CreateTimeSeriesRequest{},
-		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -390,7 +384,7 @@ func TestExporter_makeReq_batching(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	view, err := stats.NewView("view", "desc", []tag.Key{key}, m, stats.CountAggregation{}, stats.Cumulative{})
+	view, err := stats.NewView("view", "desc", []tag.Key{key}, m, stats.CountAggregation{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -462,7 +456,6 @@ func TestEqualAggWindowTagKeys(t *testing.T) {
 		md      *metricpb.MetricDescriptor
 		agg     stats.Aggregation
 		keys    []tag.Key
-		window  stats.Window
 		wantErr bool
 	}{
 		{
@@ -473,7 +466,6 @@ func TestEqualAggWindowTagKeys(t *testing.T) {
 				Labels:     []*label.LabelDescriptor{{Key: opencensusTaskKey}},
 			},
 			agg:     stats.CountAggregation{},
-			window:  stats.Cumulative{},
 			wantErr: false,
 		},
 		{
@@ -484,7 +476,6 @@ func TestEqualAggWindowTagKeys(t *testing.T) {
 				Labels:     []*label.LabelDescriptor{{Key: opencensusTaskKey}},
 			},
 			agg:     stats.SumAggregation{},
-			window:  stats.Cumulative{},
 			wantErr: false,
 		},
 		{
@@ -495,7 +486,6 @@ func TestEqualAggWindowTagKeys(t *testing.T) {
 				Labels:     []*label.LabelDescriptor{{Key: opencensusTaskKey}},
 			},
 			agg:     stats.MeanAggregation{},
-			window:  stats.Cumulative{},
 			wantErr: false,
 		},
 		{
@@ -506,7 +496,6 @@ func TestEqualAggWindowTagKeys(t *testing.T) {
 				Labels:     []*label.LabelDescriptor{{Key: opencensusTaskKey}},
 			},
 			agg:     stats.CountAggregation{},
-			window:  stats.Cumulative{},
 			wantErr: true,
 		},
 		{
@@ -517,29 +506,6 @@ func TestEqualAggWindowTagKeys(t *testing.T) {
 				Labels:     []*label.LabelDescriptor{{Key: opencensusTaskKey}},
 			},
 			agg:     stats.MeanAggregation{},
-			window:  stats.Cumulative{},
-			wantErr: true,
-		},
-		{
-			name: "distribution agg + delta",
-			md: &metricpb.MetricDescriptor{
-				MetricKind: metricpb.MetricDescriptor_DELTA,
-				ValueType:  metricpb.MetricDescriptor_DISTRIBUTION,
-				Labels:     []*label.LabelDescriptor{{Key: opencensusTaskKey}},
-			},
-			agg:     stats.DistributionAggregation{},
-			window:  stats.Interval{},
-			wantErr: false,
-		},
-		{
-			name: "distribution agg + cum",
-			md: &metricpb.MetricDescriptor{
-				MetricKind: metricpb.MetricDescriptor_CUMULATIVE,
-				ValueType:  metricpb.MetricDescriptor_DISTRIBUTION,
-				Labels:     []*label.LabelDescriptor{{Key: opencensusTaskKey}},
-			},
-			agg:     stats.DistributionAggregation{},
-			window:  stats.Interval{},
 			wantErr: true,
 		},
 		{
@@ -554,7 +520,6 @@ func TestEqualAggWindowTagKeys(t *testing.T) {
 				},
 			},
 			agg:     stats.DistributionAggregation{},
-			window:  stats.Cumulative{},
 			keys:    []tag.Key{key1, key2},
 			wantErr: false,
 		},
@@ -565,7 +530,6 @@ func TestEqualAggWindowTagKeys(t *testing.T) {
 				ValueType:  metricpb.MetricDescriptor_DISTRIBUTION,
 			},
 			agg:     stats.DistributionAggregation{},
-			window:  stats.Cumulative{},
 			keys:    []tag.Key{key1, key2},
 			wantErr: true,
 		},
@@ -577,13 +541,12 @@ func TestEqualAggWindowTagKeys(t *testing.T) {
 				Labels:     []*label.LabelDescriptor{{Key: opencensusTaskKey}},
 			},
 			agg:     &stats.CountAggregation{},
-			window:  &stats.Cumulative{},
 			wantErr: false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := equalAggWindowTagKeys(tt.md, tt.agg, tt.window, tt.keys)
+			err := equalAggWindowTagKeys(tt.md, tt.agg, tt.keys)
 			if err != nil && !tt.wantErr {
 				t.Errorf("equalAggWindowTagKeys() = %q; want no error", err)
 			}
@@ -611,7 +574,7 @@ func TestExporter_createMeasure(t *testing.T) {
 	}
 	defer stats.DeleteMeasure(m)
 
-	view, err := stats.NewView("cumview", "desc", []tag.Key{key}, m, stats.CountAggregation{}, stats.Cumulative{})
+	view, err := stats.NewView("cumview", "desc", []tag.Key{key}, m, stats.CountAggregation{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -671,7 +634,7 @@ func TestExporter_makeReq_withCustomMonitoredResource(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	cumView, err := stats.NewView("cumview", "desc", []tag.Key{key}, m, stats.CountAggregation{}, stats.Cumulative{})
+	cumView, err := stats.NewView("cumview", "desc", []tag.Key{key}, m, stats.CountAggregation{})
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -22,9 +22,9 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-func newView(agg stats.Aggregation, window stats.Window) *stats.View {
+func newView(agg stats.Aggregation) *stats.View {
 	m, _ := stats.NewMeasureInt64("tests/foo1", "bytes", "byte")
-	view, _ := stats.NewView("foo", "bar", nil, m, agg, window)
+	view, _ := stats.NewView("foo", "bar", nil, m, agg)
 	return view
 }
 
@@ -41,13 +41,13 @@ func TestOnlyCumulativeWindowSupported(t *testing.T) {
 	}{
 		0: {
 			vds: &stats.ViewData{
-				View: newView(stats.CountAggregation{}, stats.Cumulative{}),
+				View: newView(stats.CountAggregation{}),
 			},
 			want: 0, // no rows present
 		},
 		1: {
 			vds: &stats.ViewData{
-				View: newView(stats.CountAggregation{}, stats.Cumulative{}),
+				View: newView(stats.CountAggregation{}),
 				Rows: []*stats.Row{
 					{nil, &count1},
 				},
@@ -56,7 +56,7 @@ func TestOnlyCumulativeWindowSupported(t *testing.T) {
 		},
 		2: {
 			vds: &stats.ViewData{
-				View: newView(stats.CountAggregation{}, stats.Interval{}),
+				View: newView(stats.CountAggregation{}),
 				Rows: []*stats.Row{
 					{nil, &count1},
 				},
@@ -65,7 +65,7 @@ func TestOnlyCumulativeWindowSupported(t *testing.T) {
 		},
 		3: {
 			vds: &stats.ViewData{
-				View: newView(stats.MeanAggregation{}, stats.Cumulative{}),
+				View: newView(stats.MeanAggregation{}),
 				Rows: []*stats.Row{
 					{nil, &mean1},
 				},

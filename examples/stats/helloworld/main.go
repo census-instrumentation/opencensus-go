@@ -13,7 +13,7 @@
 // limitations under the License.
 
 // Command helloworld is an example program that collects data for
-// video size over a time window.
+// video size.
 package main
 
 import (
@@ -47,7 +47,6 @@ func main() {
 		nil,
 		videoSize,
 		stats.DistributionAggregation([]float64{0, 1 << 16, 1 << 32}),
-		stats.Cumulative{},
 	)
 	if err != nil {
 		log.Fatalf("Cannot create view: %v", err)

@@ -157,15 +157,6 @@ sumAgg := stats.SumAggregation{}
 meanAgg := stats.MeanAggregation{}
 ```
 
-### Create an aggregation window
-
-Use Cumulative to continuously aggregate the recorded data.
-
-[embedmd]:# (stats.go windows)
-```go
-cum := stats.Cumulative{}
-```
-
 ### Creating, registering and unregistering a view
 
 Create and register a view:

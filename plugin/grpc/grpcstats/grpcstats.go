@@ -62,10 +62,6 @@ var (
 	aggDistMillis = istats.DistributionAggregation(rpcMillisBucketBoundaries)
 	aggDistCounts = istats.DistributionAggregation(rpcCountBucketBoundaries)
 
-	windowCumulative    = istats.Cumulative{}
-	windowSlidingHour   = istats.Interval{Duration: 1 * time.Hour, Intervals: 6}
-	windowSlidingMinute = istats.Interval{Duration: 1 * time.Minute, Intervals: 6}
-
 	keyMethod tag.Key
 	keyStatus tag.Key
 )

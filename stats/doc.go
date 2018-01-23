@@ -52,7 +52,7 @@ libraries to turn on the instrumentation by default.
 Views
 
 In order to collect measurements, views need to be defined and registered.
-A view allows recorded measurements to be filtered and aggregated over a time window.
+A view allows recorded measurements to be filtered and aggregated.
 
 All recorded measurements can be filtered by a list of tags.
 

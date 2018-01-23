@@ -95,7 +95,7 @@ type aggregatorCumulative struct {
 }
 
 // newAggregatorCumulative creates an aggregatorCumulative.
-func newAggregatorCumulative(now time.Time, newAggregationValue func() AggregationData) *aggregatorCumulative {
+func newAggregatorCumulative(newAggregationValue func() AggregationData) *aggregatorCumulative {
 	return &aggregatorCumulative{
 		data: newAggregationValue(),
 	}
@@ -111,90 +111,4 @@ func (a *aggregatorCumulative) addSample(v interface{}, now time.Time) {
 
 func (a *aggregatorCumulative) retrieveCollected(now time.Time) AggregationData {
 	return a.data
-}
-
-// aggregatorInterval indicates that the aggregation occurs over a
-// window of time.
-type aggregatorInterval struct {
-	// keptDuration is the full duration that needs to be kept in memory in
-	// order to retrieve the aggregated data whenever it is requested. Its size
-	// is subDuration*len(entries+1). The actual desiredDuration interval is
-	// slightly shorter: subDuration*len(entries). The extra subDuration is
-	// needed to compute an approximation of the collected stats over the last
-	// desiredDuration without storing every instance with its timestamp.
-	keptDuration    time.Duration
-	desiredDuration time.Duration
-	subDuration     time.Duration
-	entries         []*timeSerieEntry
-	idx             int
-}
-
-// newAggregatorInterval creates an aggregatorSlidingTime.
-func newAggregatorInterval(now time.Time, d time.Duration, subIntervalsCount int, newAggregationValue func() AggregationData) *aggregatorInterval {
-	subDuration := d / time.Duration(subIntervalsCount)
-	start := now.Add(-subDuration * time.Duration(subIntervalsCount))
-	var entries []*timeSerieEntry
-	// Keeps track of subIntervalsCount+1 entries in order to approximate the
-	// collected stats without storing every instance with its timestamp.
-	for i := 0; i <= subIntervalsCount; i++ {
-		entries = append(entries, &timeSerieEntry{
-			endTime: start.Add(subDuration),
-			av:      newAggregationValue(),
-		})
-		start = start.Add(subDuration)
-	}
-
-	return &aggregatorInterval{
-		keptDuration:    subDuration * time.Duration(len(entries)),
-		desiredDuration: subDuration * time.Duration(len(entries)-1), // this is equal to d
-		subDuration:     subDuration,
-		entries:         entries,
-		idx:             subIntervalsCount,
-	}
-}
-
-func (a *aggregatorInterval) isAggregator() bool {
-	return true
-}
-
-func (a *aggregatorInterval) addSample(v interface{}, now time.Time) {
-	a.moveToCurrentEntry(now)
-	e := a.entries[a.idx]
-	e.av.addSample(v)
-}
-
-func (a *aggregatorInterval) retrieveCollected(now time.Time) AggregationData {
-	a.moveToCurrentEntry(now)
-
-	e := a.entries[a.idx]
-	remaining := float64(e.endTime.Sub(now)) / float64(a.subDuration)
-	oldestIdx := (a.idx + 1) % len(a.entries)
-
-	e = a.entries[oldestIdx]
-	ret := e.av.multiplyByFraction(remaining)
-
-	for j := 1; j < len(a.entries); j++ {
-		oldestIdx = (oldestIdx + 1) % len(a.entries)
-		e = a.entries[oldestIdx]
-		ret.addOther(e.av)
-	}
-	return ret
-}
-
-func (a *aggregatorInterval) moveToCurrentEntry(now time.Time) {
-	e := a.entries[a.idx]
-	for {
-		if e.endTime.After(now) {
-			break
-		}
-		a.idx = (a.idx + 1) % len(a.entries)
-		e = a.entries[a.idx]
-		e.endTime = e.endTime.Add(a.keptDuration)
-		e.av.clear()
-	}
-}
-
-type timeSerieEntry struct {
-	endTime time.Time
-	av      AggregationData
 }

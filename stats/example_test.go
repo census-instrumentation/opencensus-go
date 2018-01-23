@@ -17,7 +17,6 @@ package stats_test
 import (
 	"context"
 	"log"
-	"time"
 
 	"go.opencensus.io/stats"
 )
@@ -39,11 +38,10 @@ func Example_view() {
 
 	view, err := stats.NewView(
 		"my.org/views/openconns",
-		"open connections distribution over one second time window",
+		"open connections",
 		nil,
 		m,
 		stats.DistributionAggregation([]float64{0, 1000, 2000}),
-		stats.Interval{Duration: time.Second},
 	)
 	if err != nil {
 		log.Fatal(err)
