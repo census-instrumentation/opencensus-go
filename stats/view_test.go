@@ -815,6 +815,31 @@ func Test_View_MeasureFloat64_AggregationMean_WindowCumulative(t *testing.T) {
 	}
 }
 
+func TestViewSortedKeys(t *testing.T) {
+	k1, _ := tag.NewKey("a")
+	k2, _ := tag.NewKey("b")
+	k3, _ := tag.NewKey("c")
+	ks := []tag.Key{k1, k3, k2}
+
+	v, err := NewView("sort_keys", "desc sort_keys", ks, nil, MeanAggregation{}, Cumulative{})
+	if err != nil {
+		t.Fatalf("sort_keys failed creating view: %v", err)
+	}
+
+	expected := []string{"a", "b", "c"}
+	vks := v.TagKeys()
+	if len(vks) != len(expected) {
+		t.Fatalf("unexpected keys: %+v, expected %+v", vks, expected)
+	}
+
+	for i, v := range expected {
+		if v != vks[i].Name() {
+			t.Fatalf("expected %s, got %s", v, vks[i].Name())
+		}
+	}
+
+}
+
 // TODO(songya): add tests for AggregationSum and AggregationMean with Interval Window
 
 // containsRow returns true if rows contain r.

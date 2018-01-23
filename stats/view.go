@@ -19,6 +19,7 @@ import (
 	"bytes"
 	"fmt"
 	"reflect"
+	"sort"
 	"sync/atomic"
 	"time"
 
@@ -58,10 +59,16 @@ func NewView(name, description string, keys []tag.Key, measure Measure, agg Aggr
 	if err := checkViewName(name); err != nil {
 		return nil, err
 	}
+	var ks []tag.Key
+	if len(keys) > 0 {
+		ks = make([]tag.Key, len(keys))
+		copy(ks, keys)
+		sort.Slice(ks, func(i, j int) bool { return ks[i].Name() < ks[j].Name() })
+	}
 	return &View{
 		name:        name,
 		description: description,
-		tagKeys:     keys,
+		tagKeys:     ks,
 		m:           measure,
 		collector:   &collector{make(map[string]aggregator), agg, window},
 	}, nil
