@@ -36,9 +36,9 @@ func TestClientStats(t *testing.T) {
 	}))
 	defer server.Close()
 
-	LatencyDistribution.Subscribe()
-	StartedCount.Subscribe()
-	ConnectionsOpenedCount.Subscribe()
+	ClientLatencyDistribution.Subscribe()
+	ClientRequestCount.Subscribe()
+	ClientConnectionsOpenedCount.Subscribe()
 
 	e := make(mockExporter)
 	stats.RegisterExporter(&e)
