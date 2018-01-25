@@ -305,7 +305,7 @@ func (w *worker) reportUsage(start time.Time) {
 		}
 		exportersMu.Lock()
 		for e := range exporters {
-			e.Export(viewData)
+			e.ExportView(viewData)
 		}
 		exportersMu.Unlock()
 		if !isCumulative(v) {

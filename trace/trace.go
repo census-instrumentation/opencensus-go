@@ -276,7 +276,7 @@ func (s *Span) End() {
 			exportersMu.Lock()
 			defer exportersMu.Unlock()
 			for e := range exporters {
-				e.Export(sd)
+				e.ExportSpan(sd)
 			}
 		}
 	})

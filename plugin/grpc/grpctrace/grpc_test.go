@@ -84,7 +84,7 @@ type testExporter struct {
 	ch chan *trace.SpanData
 }
 
-func (t *testExporter) Export(s *trace.SpanData) {
+func (t *testExporter) ExportSpan(s *trace.SpanData) {
 	go func() { t.ch <- s }()
 }
 

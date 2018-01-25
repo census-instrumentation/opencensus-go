@@ -162,7 +162,7 @@ var propagators = []propagation.HTTPFormat{testPropagator{}}
 
 type collector []*trace.SpanData
 
-func (c *collector) Export(s *trace.SpanData) {
+func (c *collector) ExportSpan(s *trace.SpanData) {
 	*c = append(*c, s)
 }
 

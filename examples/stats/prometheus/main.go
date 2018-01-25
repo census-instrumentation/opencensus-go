@@ -23,7 +23,7 @@ import (
 	"net/http"
 	"time"
 
-	"go.opencensus.io/exporter/stats/prometheus"
+	"go.opencensus.io/exporter/prometheus"
 	"go.opencensus.io/stats"
 )
 
