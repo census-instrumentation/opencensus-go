@@ -54,14 +54,6 @@ func (s *Span) IsRecordingEvents() bool {
 // TraceOptions contains options associated with a trace span.
 type TraceOptions uint32
 
-// IsSampled returns true if this span will be exported.
-func (s *Span) IsSampled() bool {
-	if s == nil {
-		return false
-	}
-	return s.spanContext.IsSampled()
-}
-
 // IsSampled returns true if the span will be exported.
 func (sc SpanContext) IsSampled() bool {
 	return sc.TraceOptions.IsSampled()
@@ -104,88 +96,69 @@ func WithSpan(parent context.Context, s *Span) context.Context {
 	return context.WithValue(parent, contextKey{}, s)
 }
 
-// StartSpanOptions contains options concerning how a span is started.
-type StartSpanOptions struct {
+// StartOptions contains options concerning how a span is started.
+type StartOptions struct {
 	// RecordEvents indicates whether to record data for this span, and include
 	// the span in a local span store.
 	// Events will also be recorded if the span will be exported.
 	RecordEvents bool
-	Sampler      // if non-nil, the Sampler to consult for this span.
+
+	Sampler Sampler // if non-nil, the Sampler to consult for this span.
+
 	// RegisterNameForLocalSpanStore indicates that a local span store for spans
 	// of this name should be created, if one does not exist.
 	// If RecordEvents is false, this option has no effect.
 	RegisterNameForLocalSpanStore bool
 }
 
+// TODO(jbd): Remove start options.
+
 // StartSpan starts a new child span of the current span in the context.
 //
 // If there is no span in the context, creates a new trace and span.
 func StartSpan(ctx context.Context, name string) (context.Context, *Span) {
 	parentSpan, _ := ctx.Value(contextKey{}).(*Span)
-	span := parentSpan.StartSpanWithOptions(name, StartSpanOptions{})
+	span := NewSpan(name, parentSpan, StartOptions{})
 	return WithSpan(ctx, span), span
 }
 
 // StartSpanWithOptions starts a new child span of the current span in the context.
 //
 // If there is no span in the context, creates a new trace and span.
-func StartSpanWithOptions(ctx context.Context, name string, o StartSpanOptions) (context.Context, *Span) {
+func StartSpanWithOptions(ctx context.Context, name string, o StartOptions) (context.Context, *Span) {
 	parentSpan, _ := ctx.Value(contextKey{}).(*Span)
-	span := parentSpan.StartSpanWithOptions(name, o)
+	span := NewSpan(name, parentSpan, o)
 	return WithSpan(ctx, span), span
-}
-
-// EndSpan ends the current span.
-//
-// The context passed to EndSpan will still refer to the now-ended span, so any
-// code that adds more information to it, like SetSpanStatus, should be called
-// before EndSpan.
-func EndSpan(ctx context.Context) {
-	s, ok := ctx.Value(contextKey{}).(*Span)
-	if !ok {
-		return
-	}
-	s.End()
 }
 
 // StartSpanWithRemoteParent starts a new child span with the given parent SpanContext.
 //
 // If there is an existing span in ctx, it is ignored -- the returned Span is a
 // child of the span specified by parent.
-func StartSpanWithRemoteParent(ctx context.Context, name string, parent SpanContext, o StartSpanOptions) context.Context {
-	return WithSpan(ctx, NewSpanWithRemoteParent(name, parent, o))
+func StartSpanWithRemoteParent(ctx context.Context, name string, parent SpanContext, o StartOptions) (context.Context, *Span) {
+	span := NewSpanWithRemoteParent(name, parent, o)
+	return WithSpan(ctx, span), span
 }
 
 // NewSpan returns a new span.
 //
-// The returned span has no parent span; a new trace ID will be created for it.
-func NewSpan(name string, o StartSpanOptions) *Span {
-	return startSpanInternal(name, false, SpanContext{}, false, o)
+// If parent is not nil, created span will be a child of the parent.
+func NewSpan(name string, parent *Span, o StartOptions) *Span {
+	hasParent := false
+	var parentSpanContext SpanContext
+	if parent != nil {
+		hasParent = true
+		parentSpanContext = parent.SpanContext()
+	}
+	return startSpanInternal(name, hasParent, parentSpanContext, false, o)
 }
 
 // NewSpanWithRemoteParent returns a new span with the given parent SpanContext.
-func NewSpanWithRemoteParent(name string, parent SpanContext, o StartSpanOptions) *Span {
+func NewSpanWithRemoteParent(name string, parent SpanContext, o StartOptions) *Span {
 	return startSpanInternal(name, true, parent, true, o)
 }
 
-// StartSpan starts a new child span.
-//
-// If s is nil, creates a new trace and span, like the function NewSpan.
-func (s *Span) StartSpan(name string) *Span {
-	return s.StartSpanWithOptions(name, StartSpanOptions{})
-}
-
-// StartSpanWithOptions starts a new child span using the given options.
-//
-// If s is nil, creates a new trace and span, like the function NewSpan.
-func (s *Span) StartSpanWithOptions(name string, o StartSpanOptions) *Span {
-	if s != nil {
-		return startSpanInternal(name, true, s.spanContext, false, o)
-	}
-	return startSpanInternal(name, false, SpanContext{}, false, o)
-}
-
-func startSpanInternal(name string, hasParent bool, parent SpanContext, remoteParent bool, o StartSpanOptions) *Span {
+func startSpanInternal(name string, hasParent bool, parent SpanContext, remoteParent bool, o StartOptions) *Span {
 	span := &Span{}
 	span.spanContext = parent
 	mu.Lock()
