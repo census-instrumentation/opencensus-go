@@ -107,8 +107,8 @@ var _ trace.Exporter = (*Exporter)(nil)
 // Export exports a SpanData to Jaeger.
 func (e *Exporter) Export(data *trace.SpanData) {
 	var tags []*gen.Tag
-	for _, v := range data.Attributes {
-		tag := attributeToTag(v)
+	for k, v := range data.Attributes {
+		tag := attributeToTag(k, v)
 		if tag != nil {
 			tags = append(tags, tag)
 		}
@@ -116,8 +116,8 @@ func (e *Exporter) Export(data *trace.SpanData) {
 	var logs []*gen.Log
 	for _, a := range data.Annotations {
 		var fields []*gen.Tag
-		for _, v := range a.Attributes {
-			tag := attributeToTag(v)
+		for k, v := range a.Attributes {
+			tag := attributeToTag(k, v)
 			if tag != nil {
 				fields = append(tags, tag)
 			}
@@ -152,23 +152,23 @@ func (e *Exporter) Export(data *trace.SpanData) {
 	// TODO(jbd): Handle oversized bundlers.
 }
 
-func attributeToTag(a interface{}) *gen.Tag {
+func attributeToTag(key string, a interface{}) *gen.Tag {
 	var tag *gen.Tag
 	switch value := a.(type) {
-	case trace.BoolAttribute:
+	case bool:
 		tag = &gen.Tag{
-			Key:   value.Key,
-			VBool: &value.Value,
+			Key:   key,
+			VBool: &value,
 		}
-	case trace.StringAttribute:
+	case string:
 		tag = &gen.Tag{
-			Key:  value.Key,
-			VStr: &value.Value,
+			Key:  key,
+			VStr: &value,
 		}
-	case trace.Int64Attribute:
+	case int64:
 		tag = &gen.Tag{
-			Key:   value.Key,
-			VLong: &value.Value,
+			Key:   key,
+			VLong: &value,
 		}
 	}
 	return tag
