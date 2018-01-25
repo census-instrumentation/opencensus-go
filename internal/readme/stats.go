@@ -122,7 +122,7 @@ func statsExamples() {
 
 type exporter struct{}
 
-func (e *exporter) Export(vd *stats.ViewData) {
+func (e *exporter) ExportView(vd *stats.ViewData) {
 	log.Println(vd)
 }
 

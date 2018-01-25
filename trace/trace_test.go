@@ -297,7 +297,7 @@ type testExporter struct {
 	spans []*SpanData
 }
 
-func (t *testExporter) Export(s *SpanData) {
+func (t *testExporter) ExportSpan(s *SpanData) {
 	t.spans = append(t.spans, s)
 }
 
@@ -584,7 +584,8 @@ func TestBucket(t *testing.T) {
 }
 
 type exporter map[string]*SpanData
-func (e exporter) Export(s *SpanData) {
+
+func (e exporter) ExportSpan(s *SpanData) {
 	e[s.Name] = s
 }
 

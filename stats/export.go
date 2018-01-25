@@ -23,13 +23,13 @@ var (
 
 // Exporter exports the collected records as view data.
 //
-// The Export method should return quickly; if an
+// The ExportView method should return quickly; if an
 // Exporter takes a significant amount of time to
 // process a ViewData, that work should be done on another goroutine.
 //
 // The ViewData should not be modified.
 type Exporter interface {
-	Export(viewData *ViewData)
+	ExportView(viewData *ViewData)
 }
 
 // RegisterExporter registers an exporter.

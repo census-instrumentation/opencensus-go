@@ -20,7 +20,7 @@ import (
 	"context"
 	"log"
 
-	"go.opencensus.io/exporter/trace/jaeger"
+	"go.opencensus.io/exporter/jaeger"
 	"go.opencensus.io/trace"
 )
 

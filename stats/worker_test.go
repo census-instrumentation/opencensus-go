@@ -757,7 +757,7 @@ type countExporter struct {
 	count int64
 }
 
-func (e *countExporter) Export(vd *ViewData) {
+func (e *countExporter) ExportView(vd *ViewData) {
 	if len(vd.Rows) == 0 {
 		return
 	}
@@ -773,7 +773,7 @@ type vdExporter struct {
 	vds []*ViewData
 }
 
-func (e *vdExporter) Export(vd *ViewData) {
+func (e *vdExporter) ExportView(vd *ViewData) {
 	e.Lock()
 	defer e.Unlock()
 
