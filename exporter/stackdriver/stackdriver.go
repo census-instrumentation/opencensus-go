@@ -56,7 +56,6 @@
 package stackdriver
 
 import (
-	"net/http"
 	"time"
 
 	"go.opencensus.io/stats"
@@ -101,7 +100,7 @@ type Options struct {
 	Resource *monitoredrespb.MonitoredResource
 }
 
-// Exporter is a stats.Exporter, trace.Exporter and propagation.HTTPFormat
+// Exporter is a stats.Exporter and trace.Exporter
 // implementation that uploads data to Stackdriver.
 type Exporter struct {
 	traceExporter *traceExporter
@@ -132,16 +131,6 @@ func (e *Exporter) ExportView(vd *stats.ViewData) {
 // ExportSpan exports a SpanData to Stackdriver Trace.
 func (e *Exporter) ExportSpan(sd *trace.SpanData) {
 	e.traceExporter.ExportSpan(sd)
-}
-
-// ToRequest modifies the given request to include a Stackdriver Trace header.
-func (e *Exporter) ToRequest(sc trace.SpanContext, req *http.Request) {
-	e.traceExporter.ToRequest(sc, req)
-}
-
-// FromRequest extracts a Stakdriver Trace span context from incoming requests.
-func (e *Exporter) FromRequest(req *http.Request) (sc trace.SpanContext, ok bool) {
-	return e.traceExporter.FromRequest(req)
 }
 
 // Flush waits for exported data to be uploaded.

@@ -16,9 +16,6 @@ package stackdriver
 
 import (
 	"context"
-	"encoding/binary"
-	"net/http"
-	"reflect"
 	"testing"
 	"time"
 
@@ -62,55 +59,5 @@ func TestBundling(t *testing.T) {
 	case <-ch:
 		t.Errorf("too many bundles sent")
 	case <-time.After(time.Second / 5):
-	}
-}
-
-func TestHTTPFormat(t *testing.T) {
-	exporter := newTraceExporterWithClient(Options{
-		ProjectID: "fakeProjectID",
-	}, nil)
-
-	traceID := [16]byte{16, 84, 69, 170, 120, 67, 188, 139, 242, 6, 177, 32, 0, 16, 0, 0}
-	var spanID [8]byte
-	binary.PutUvarint(spanID[:], 123)
-	tests := []struct {
-		incoming        string
-		wantSpanContext trace.SpanContext
-	}{
-		{
-			incoming: "105445aa7843bc8bf206b12000100000/123;o=1",
-			wantSpanContext: trace.SpanContext{
-				TraceID:      traceID,
-				SpanID:       spanID,
-				TraceOptions: 1,
-			},
-		},
-		{
-			incoming: "105445aa7843bc8bf206b12000100000/123;o=0",
-			wantSpanContext: trace.SpanContext{
-				TraceID:      traceID,
-				SpanID:       spanID,
-				TraceOptions: 0,
-			},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.incoming, func(t *testing.T) {
-			req, _ := http.NewRequest("GET", "http://example.com", nil)
-			req.Header.Add(httpHeader, tt.incoming)
-			sc, ok := exporter.FromRequest(req)
-			if !ok {
-				t.Errorf("exporter.FromRequest() = false; want true")
-			}
-			if got, want := sc, tt.wantSpanContext; !reflect.DeepEqual(got, want) {
-				t.Errorf("exporter.FromRequest() returned span context %v; want %v", got, want)
-			}
-
-			req, _ = http.NewRequest("GET", "http://example.com", nil)
-			exporter.ToRequest(sc, req)
-			if got, want := req.Header.Get(httpHeader), tt.incoming; got != want {
-				t.Errorf("exporter.ToRequest() returned header %q; want %q", got, want)
-			}
-		})
 	}
 }
