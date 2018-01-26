@@ -92,7 +92,7 @@ func FromBinary(b []byte) (sc trace.SpanContext, ok bool) {
 	return sc, true
 }
 
-// HTTPFormat implementations propoagates span contexts
+// HTTPFormat implementations propagate span contexts
 // in HTTP requests.
 //
 // FromRequest extracts a span context from incoming
