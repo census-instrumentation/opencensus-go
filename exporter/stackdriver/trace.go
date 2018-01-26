@@ -16,29 +16,18 @@ package stackdriver
 
 import (
 	"context"
-	"encoding/binary"
-	"encoding/hex"
 	"fmt"
 	"log"
-	"net/http"
-	"strconv"
-	"strings"
 	"sync"
 	"time"
 
 	"go.opencensus.io/internal"
-	"go.opencensus.io/trace/propagation"
 
 	tracingclient "cloud.google.com/go/trace/apiv2"
 	"go.opencensus.io/trace"
 	"google.golang.org/api/option"
 	"google.golang.org/api/support/bundler"
 	tracepb "google.golang.org/genproto/googleapis/devtools/cloudtrace/v2"
-)
-
-const (
-	httpHeader        = `X-Cloud-Trace-Context`
-	httpHeaderMaxSize = 200
 )
 
 // traceExporter is an implementation of trace.Exporter that uploads spans to
@@ -56,7 +45,6 @@ type traceExporter struct {
 }
 
 var _ trace.Exporter = (*traceExporter)(nil)
-var _ propagation.HTTPFormat = (*traceExporter)(nil)
 
 func newTraceExporter(o Options) (*traceExporter, error) {
 	co := []option.ClientOption{
@@ -141,63 +129,6 @@ func (e *traceExporter) uploadToStackdriver(spans []*trace.SpanData) {
 	if err != nil {
 		log.Printf("OpenCensus Stackdriver exporter: failed to upload %d spans: %v", len(spans), err)
 	}
-}
-
-// FromRequest extracts a Stakdriver Trace span context from incoming requests.
-func (e *traceExporter) FromRequest(req *http.Request) (sc trace.SpanContext, ok bool) {
-	h := req.Header.Get(httpHeader)
-	// See https://cloud.google.com/trace/docs/faq for the header format.
-	// Return if the header is empty or missing, or if the header is unreasonably
-	// large, to avoid making unnecessary copies of a large string.
-	if h == "" || len(h) > httpHeaderMaxSize {
-		return trace.SpanContext{}, false
-	}
-
-	// Parse the trace id field.
-	slash := strings.Index(h, `/`)
-	if slash == -1 {
-		return trace.SpanContext{}, false
-	}
-	tid, h := h[:slash], h[slash+1:]
-
-	buf, err := hex.DecodeString(tid)
-	if err != nil {
-		return trace.SpanContext{}, false
-	}
-	copy(sc.TraceID[:], buf)
-
-	// Parse the span id field.
-	spanstr := h
-	semicolon := strings.Index(h, `;`)
-	if semicolon != -1 {
-		spanstr, h = h[:semicolon], h[semicolon+1:]
-	}
-	sid, err := strconv.ParseUint(spanstr, 10, 64)
-	if err != nil {
-		return trace.SpanContext{}, false
-	}
-
-	buf = make([]byte, binary.MaxVarintLen64)
-	binary.PutUvarint(buf, sid)
-	copy(sc.SpanID[:], buf)
-
-	// Parse the options field, options field is optional.
-	if !strings.HasPrefix(h, "o=") {
-		return sc, true
-	}
-	o, err := strconv.ParseUint(h[2:], 10, 64)
-	if err != nil {
-		return trace.SpanContext{}, false
-	}
-	sc.TraceOptions = trace.TraceOptions(o)
-	return sc, true
-}
-
-// ToRequest modifies the given request to include a Stackdriver Trace header.
-func (e *traceExporter) ToRequest(sc trace.SpanContext, req *http.Request) {
-	sid, _ := binary.Uvarint(sc.SpanID[:])
-	header := fmt.Sprintf("%s/%d;o=%d", hex.EncodeToString(sc.TraceID[:]), sid, int64(sc.TraceOptions))
-	req.Header.Set(httpHeader, header)
 }
 
 // overflowLogger ensures that at most one overflow error log message is
