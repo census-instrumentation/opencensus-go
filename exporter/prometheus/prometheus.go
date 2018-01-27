@@ -235,7 +235,7 @@ func (c *collector) toMetric(desc *prometheus.Desc, view *stats.View, row *stats
 
 	case stats.MeanAggregation:
 		data := row.Data.(*stats.MeanData)
-		return prometheus.NewConstMetric(desc, prometheus.UntypedValue, data.Mean, tagValues(row.Tags)...)
+		return prometheus.NewConstSummary(desc, uint64(data.Count), data.Sum(), make(map[float64]float64), tagValues(row.Tags)...)
 
 	case stats.SumAggregation:
 		data := row.Data.(*stats.SumData)
