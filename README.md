@@ -313,7 +313,7 @@ A screenshot of the CPU profile from the program above:
 [newtags-ex]: https://godoc.org/go.opencensus.io/tag#example-NewMap
 [newtags-replace-ex]: https://godoc.org/go.opencensus.io/tag#example-NewMap--Replace
 
-[exporter-prom]: https://godoc.org/go.opencensus.io/exporter/stats/prometheus
-[exporter-sdstats]: https://godoc.org/go.opencensus.io/exporter/stats/stackdriver
-[exporter-zipkin]: https://godoc.org/go.opencensus.io/exporter/trace/zipkin
+[exporter-prom]: https://godoc.org/go.opencensus.io/exporter/prometheus
+[exporter-sdstats]: https://godoc.org/go.opencensus.io/exporter/stackdriver
+[exporter-zipkin]: https://godoc.org/go.opencensus.io/exporter/zipkin
 [exporter-sdtrace]: https://godoc.org/go.opencensus.io/exporter/trace/stackdriver
