@@ -32,10 +32,6 @@
 //
 // Export to Stackdriver Trace:
 //
-// 	stats.RegisterExporter(exporter)
-//
-// Export to Stackdriver Trace:
-//
 // 	trace.RegisterExporter(exporter)
 //
 // The package uses Application Default Credentials to authenticate.  See
