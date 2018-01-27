@@ -40,5 +40,24 @@ func (m *MeasureFloat64) Unit() string {
 // M creates a new float64 measurement.
 // Use Record to record measurements.
 func (m *MeasureFloat64) M(v float64) Measurement {
-	return Measurement{m: m, v: v}
+	return Measurement{Measure: m, Value: v}
+}
+
+// NewMeasureFloat64 creates a new measure of type MeasureFloat64. It returns
+// an error if a measure with the same name already exists.
+func NewMeasureFloat64(name, description, unit string) (*MeasureFloat64, error) {
+	if err := checkMeasureName(name); err != nil {
+		return nil, err
+	}
+	m := &MeasureFloat64{
+		name:        name,
+		description: description,
+		unit:        unit,
+	}
+	_, err := registerMeasure(m)
+	if err != nil {
+		return nil, err
+	} else {
+		return m, err
+	}
 }

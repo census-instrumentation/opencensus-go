@@ -27,7 +27,7 @@ import (
 	"sync"
 
 	"go.opencensus.io/internal"
-	"go.opencensus.io/stats"
+	"go.opencensus.io/stats/view"
 	"go.opencensus.io/tag"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -86,17 +86,17 @@ func newExporter(o Options) (*Exporter, error) {
 }
 
 var _ http.Handler = (*Exporter)(nil)
-var _ stats.Exporter = (*Exporter)(nil)
+var _ view.Exporter = (*Exporter)(nil)
 
-func allowedWindowType(v *stats.View) bool {
+func allowedWindowType(v *view.View) bool {
 	// TODO: (@rakyll, @odeke-em): Only the cumulative window will
 	// be exported in this version. Support others in the future.
 	// See Issue https://github.com/census-instrumentation/opencensus-go/issues/214
-	_, ok := v.Window().(stats.Cumulative)
+	_, ok := v.Window().(view.Cumulative)
 	return ok
 }
 
-func (c *collector) registerViews(views ...*stats.View) {
+func (c *collector) registerViews(views ...*view.View) {
 	count := 0
 	for _, view := range views {
 		if !allowedWindowType(view) {
@@ -145,7 +145,7 @@ func (o *Options) onError(err error) {
 // DistributionData will be Histogram Metric, and MeanData
 // will be Summary Metric. Please note the Summary Metric from
 // MeanData does not have any quantiles.
-func (e *Exporter) ExportView(vd *stats.ViewData) {
+func (e *Exporter) ExportView(vd *view.Data) {
 	if len(vd.Rows) == 0 {
 		return
 	}
@@ -169,14 +169,14 @@ type collector struct {
 	// appended to on every Export invocation, from
 	// stats. These views are cleared out when
 	// Collect is invoked and the cycle is repeated.
-	viewData map[string]*stats.ViewData
+	viewData map[string]*view.Data
 
 	registeredViewsMu sync.Mutex
 	// registeredViews maps a view to a prometheus desc.
 	registeredViews map[string]*prometheus.Desc
 }
 
-func (c *collector) addViewData(vd *stats.ViewData) {
+func (c *collector) addViewData(vd *view.Data) {
 	c.registerViews(vd.View)
 	sig := viewSignature(c.opts.Namespace, vd.View)
 
@@ -225,30 +225,30 @@ func (c *collector) Collect(ch chan<- prometheus.Metric) {
 
 }
 
-func (c *collector) toMetric(desc *prometheus.Desc, view *stats.View, row *stats.Row) (prometheus.Metric, error) {
-	switch agg := view.Aggregation().(type) {
-	case stats.CountAggregation:
-		data := row.Data.(*stats.CountData)
+func (c *collector) toMetric(desc *prometheus.Desc, v *view.View, row *view.Row) (prometheus.Metric, error) {
+	switch agg := v.Aggregation().(type) {
+	case view.CountAggregation:
+		data := row.Data.(*view.CountData)
 		return prometheus.NewConstMetric(desc, prometheus.CounterValue, float64(*data), tagValues(row.Tags)...)
 
-	case stats.DistributionAggregation:
-		data := row.Data.(*stats.DistributionData)
+	case view.DistributionAggregation:
+		data := row.Data.(*view.DistributionData)
 		points := make(map[float64]uint64)
 		for i, b := range agg {
 			points[b] = uint64(data.CountPerBucket[i])
 		}
 		return prometheus.NewConstHistogram(desc, uint64(data.Count), data.Sum(), points, tagValues(row.Tags)...)
 
-	case stats.MeanAggregation:
-		data := row.Data.(*stats.MeanData)
+	case view.MeanAggregation:
+		data := row.Data.(*view.MeanData)
 		return prometheus.NewConstSummary(desc, uint64(data.Count), data.Sum(), make(map[float64]float64), tagValues(row.Tags)...)
 
-	case stats.SumAggregation:
-		data := row.Data.(*stats.SumData)
+	case view.SumAggregation:
+		data := row.Data.(*view.SumData)
 		return prometheus.NewConstMetric(desc, prometheus.UntypedValue, float64(*data), tagValues(row.Tags)...)
 
 	default:
-		return nil, fmt.Errorf("aggregation %T is not yet supported", view.Aggregation())
+		return nil, fmt.Errorf("aggregation %T is not yet supported", v.Aggregation())
 	}
 }
 
@@ -272,7 +272,7 @@ func newCollector(opts Options, registrar *prometheus.Registry) *collector {
 		reg:             registrar,
 		opts:            opts,
 		registeredViews: make(map[string]*prometheus.Desc),
-		viewData:        make(map[string]*stats.ViewData),
+		viewData:        make(map[string]*view.Data),
 	}
 }
 
@@ -284,11 +284,11 @@ func tagValues(t []tag.Tag) []string {
 	return values
 }
 
-func viewName(namespace string, v *stats.View) string {
+func viewName(namespace string, v *view.View) string {
 	return namespace + "_" + internal.Sanitize(v.Name())
 }
 
-func viewSignature(namespace string, v *stats.View) string {
+func viewSignature(namespace string, v *view.View) string {
 	var buf bytes.Buffer
 	buf.WriteString(viewName(namespace, v))
 	for _, k := range v.TagKeys() {

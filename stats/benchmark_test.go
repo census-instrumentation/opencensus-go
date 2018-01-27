@@ -1,25 +1,25 @@
-package stats
+package stats_test
 
 import (
-	"testing"
-	"log"
 	"context"
+	"log"
+	"testing"
+
+	"go.opencensus.io/stats"
+	_ "go.opencensus.io/stats/view"
 )
 
+var m = makeMeasure()
 
 func BenchmarkRecord(b *testing.B) {
-	restart()
-	var m = makeMeasure()
 	var ctx = context.Background()
-	b.ResetTimer()
-
 	for i := 0; i < b.N; i++ {
-		Record(ctx, m.M(1), m.M(1), m.M(1), m.M(1), m.M(1), m.M(1), m.M(1), m.M(1), m.M(1), m.M(1))
+		stats.Record(ctx, m.M(1), m.M(1), m.M(1), m.M(1), m.M(1), m.M(1), m.M(1), m.M(1), m.M(1), m.M(1))
 	}
 }
 
-func makeMeasure() *MeasureInt64 {
-	m, err := NewMeasureInt64("m", "test measure", "")
+func makeMeasure() *stats.MeasureInt64 {
+	m, err := stats.NewMeasureInt64("m", "test measure", "")
 	if err != nil {
 		log.Fatal(err)
 	}

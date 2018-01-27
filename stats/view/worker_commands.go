@@ -13,73 +13,18 @@
 // limitations under the License.
 //
 
-package stats
+package view
 
 import (
 	"fmt"
 	"time"
 
+	"go.opencensus.io/stats"
 	"go.opencensus.io/tag"
 )
 
 type command interface {
 	handleCommand(w *worker)
-}
-
-// getMeasureByNameReq is the command to get a measure given its name.
-type getMeasureByNameReq struct {
-	name string
-	c    chan *getMeasureByNameResp
-}
-
-type getMeasureByNameResp struct {
-	m Measure
-}
-
-func (cmd *getMeasureByNameReq) handleCommand(w *worker) {
-	ref, ok := w.measures[cmd.name]
-	if ok {
-		cmd.c <- &getMeasureByNameResp{ref.measure}
-		return
-	}
-	cmd.c <- &getMeasureByNameResp{nil}
-}
-
-// registerMeasureReq is the command to register a measure with the library.
-type registerMeasureReq struct {
-	m   Measure
-	err chan error
-}
-
-func (cmd *registerMeasureReq) handleCommand(w *worker) {
-	cmd.err <- w.tryRegisterMeasure(cmd.m)
-}
-
-// deleteMeasureReq is the command to delete a measure from the library.
-type deleteMeasureReq struct {
-	m   Measure
-	err chan error
-}
-
-func (cmd *deleteMeasureReq) handleCommand(w *worker) {
-	ref, ok := w.measures[cmd.m.Name()]
-	if !ok {
-		cmd.err <- nil
-		return
-	}
-
-	if ref.measure != cmd.m {
-		cmd.err <- nil
-		return
-	}
-
-	if c := len(ref.views); c > 0 {
-		cmd.err <- fmt.Errorf("cannot delete; measure %q used by %v registered views", cmd.m.Name(), c)
-		return
-	}
-
-	delete(w.measures, cmd.m.Name())
-	cmd.err <- nil
 }
 
 // getViewByNameReq is the command to get a view given its name.
@@ -127,7 +72,7 @@ func (cmd *unregisterViewReq) handleCommand(w *worker) {
 		return
 	}
 	delete(w.views, cmd.v.Name())
-	ref := w.measures[v.Measure().Name()]
+	ref := w.getMeasureRef(v.Measure())
 	delete(ref.views, v)
 	cmd.err <- nil
 }
@@ -211,14 +156,14 @@ func (cmd *retrieveDataReq) handleCommand(w *worker) {
 type recordReq struct {
 	now time.Time
 	tm  *tag.Map
-	ms  []Measurement
+	ms  []stats.Measurement
 }
 
 func (cmd *recordReq) handleCommand(w *worker) {
 	for _, m := range cmd.ms {
-		ref := w.measures[m.m.Name()]
+		ref := w.getMeasureRef(m.Measure)
 		for v := range ref.views {
-			v.addSample(cmd.tm, m.v, cmd.now)
+			v.addSample(cmd.tm, m.Value, cmd.now)
 		}
 	}
 }

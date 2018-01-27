@@ -13,14 +13,14 @@
 // limitations under the License.
 //
 
-package stats
+package view
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"time"
 
+	"go.opencensus.io/stats"
 	"go.opencensus.io/tag"
 )
 
@@ -30,7 +30,7 @@ func init() {
 }
 
 type measureRef struct {
-	measure Measure
+	measure stats.Measure
 	views   map[*View]struct{}
 }
 
@@ -48,57 +48,9 @@ var defaultWorker *worker
 
 var defaultReportingDuration = 10 * time.Second
 
-// NewMeasureFloat64 creates a new measure of type MeasureFloat64. It returns
-// an error if a measure with the same name already exists.
-func NewMeasureFloat64(name, description, unit string) (*MeasureFloat64, error) {
-	if err := checkMeasureName(name); err != nil {
-		return nil, err
-	}
-	m := &MeasureFloat64{
-		name:        name,
-		description: description,
-		unit:        unit,
-	}
-
-	req := &registerMeasureReq{
-		m:   m,
-		err: make(chan error),
-	}
-	defaultWorker.c <- req
-	if err := <-req.err; err != nil {
-		return nil, err
-	}
-
-	return m, nil
-}
-
-// NewMeasureInt64 creates a new measure of type MeasureInt64. It returns an
-// error if a measure with the same name already exists.
-func NewMeasureInt64(name, description, unit string) (*MeasureInt64, error) {
-	if err := checkMeasureName(name); err != nil {
-		return nil, err
-	}
-	m := &MeasureInt64{
-		name:        name,
-		description: description,
-		unit:        unit,
-	}
-
-	req := &registerMeasureReq{
-		m:   m,
-		err: make(chan error),
-	}
-	defaultWorker.c <- req
-	if err := <-req.err; err != nil {
-		return nil, err
-	}
-
-	return m, nil
-}
-
-// FindView returns a registered view associated with this name.
+// Find returns a registered view associated with this name.
 // If no registered view is found, nil is returned.
-func FindView(name string) (v *View) {
+func Find(name string) (v *View) {
 	req := &getViewByNameReq{
 		name: name,
 		c:    make(chan *getViewByNameResp),
@@ -108,14 +60,14 @@ func FindView(name string) (v *View) {
 	return resp.v
 }
 
-// RegisterView registers view. It returns an error if the view is already registered.
+// Register registers view. It returns an error if the view is already registered.
 //
 // Subscription automatically registers a view.
 // Most users will not register directly but register via subscription.
-// Registeration can be used by libraries to claim a view name.
+// Registration can be used by libraries to claim a view name.
 //
 // Unregister the view once the view is not required anymore.
-func RegisterView(v *View) error {
+func Register(v *View) error {
 	req := &registerViewReq{
 		v:   v,
 		err: make(chan error),
@@ -124,10 +76,10 @@ func RegisterView(v *View) error {
 	return <-req.err
 }
 
-// UnregisterView removes the previously registered view. It returns an error
+// Unregister removes the previously registered view. It returns an error
 // if the view wasn't registered. All data collected and not reported for the
 // corresponding view will be lost. The view is automatically be unsubscribed.
-func UnregisterView(v *View) error {
+func Unregister(v *View) error {
 	req := &unregisterViewReq{
 		v:   v,
 		err: make(chan error),
@@ -150,11 +102,8 @@ func (v *View) Subscribe() error {
 	return <-req.err
 }
 
-// Unsubscribe unsubscribes a previously subscribed channel.
+// Unsubscribe unsubscribes a previously subscribed view.
 // Data will not be exported from this view once unsubscription happens.
-// If no more subscriber for v exists and the the ad hoc
-// collection for this view isn't active, data stops being collected for this
-// view.
 func (v *View) Unsubscribe() error {
 	req := &unsubscribeFromViewReq{
 		v:   v,
@@ -181,13 +130,17 @@ func (v *View) RetrieveData() ([]*Row, error) {
 
 // Record records one or multiple measurements with the same tags at once.
 // If there are any tags in the context, measurements will be tagged with them.
-func Record(ctx context.Context, ms ...Measurement) {
+func record(tags *tag.Map, now time.Time, ms []stats.Measurement) {
 	req := &recordReq{
-		now: time.Now(),
-		tm:  tag.FromContext(ctx),
+		now: now,
+		tm:  tags,
 		ms:  ms,
 	}
 	defaultWorker.c <- req
+}
+
+func init() {
+	stats.DefaultRecorder = record
 }
 
 // SetReportingPeriod sets the interval between reporting aggregated views in
@@ -239,24 +192,22 @@ func (w *worker) stop() {
 	<-w.done
 }
 
-func (w *worker) tryRegisterMeasure(m Measure) error {
-	if ref, ok := w.measures[m.Name()]; ok {
-		if ref.measure != m {
-			return fmt.Errorf("cannot register measure %q; another measure with the same name is already registered", m.Name())
-		}
-		// the measure is already registered so there is nothing to do and the
-		// command is considered successful.
-		return nil
+func (w *worker) getMeasureRef(m stats.Measure) *measureRef {
+	if mr, ok := w.measures[m.Name()]; ok {
+		return mr
 	}
-
-	w.measures[m.Name()] = &measureRef{
+	mr := &measureRef{
 		measure: m,
 		views:   make(map[*View]struct{}),
 	}
-	return nil
+	w.measures[m.Name()] = mr
+	return mr
 }
 
 func (w *worker) tryRegisterView(v *View) error {
+	if err := checkViewName(v.name); err != nil {
+		return err
+	}
 	if x, ok := w.views[v.Name()]; ok {
 		if x != v {
 			return fmt.Errorf("cannot register view %q; another view with the same name is already registered", v.Name())
@@ -267,14 +218,12 @@ func (w *worker) tryRegisterView(v *View) error {
 		return nil
 	}
 
-	// view is not registered and needs to be registered, but first its measure
-	// needs to be registered.
-	if err := w.tryRegisterMeasure(v.Measure()); err != nil {
-		return fmt.Errorf("cannot register view %q: %v", v.Name(), err)
+	if v.Measure() == nil {
+		return fmt.Errorf("cannot register view %q: measure not defined", v.Name())
 	}
 
 	w.views[v.Name()] = v
-	ref := w.measures[v.Measure().Name()]
+	ref := w.getMeasureRef(v.Measure())
 	ref.views[v] = struct{}{}
 
 	return nil
@@ -297,7 +246,7 @@ func (w *worker) reportUsage(start time.Time) {
 		// Make sure collector is never going
 		// to mutate the exported data.
 		rows = deepCopyRowData(rows)
-		viewData := &ViewData{
+		viewData := &Data{
 			View:  v,
 			Start: start,
 			End:   time.Now(),

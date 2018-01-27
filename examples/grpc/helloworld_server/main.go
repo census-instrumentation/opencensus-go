@@ -24,7 +24,7 @@ import (
 	pb "go.opencensus.io/examples/grpc/proto"
 	ocgrpc "go.opencensus.io/plugin/grpc"
 	"go.opencensus.io/plugin/grpc/grpcstats"
-	"go.opencensus.io/stats"
+	"go.opencensus.io/stats/view"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
@@ -43,7 +43,7 @@ func (s *server) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloRe
 func main() {
 	// Register stats and trace exporters to export
 	// the collected data.
-	stats.RegisterExporter(&exporter.Exporter{})
+	view.RegisterExporter(&exporter.Exporter{})
 
 	// Subscribe to collect server request count.
 	if err := grpcstats.RPCServerRequestCountView.Subscribe(); err != nil {

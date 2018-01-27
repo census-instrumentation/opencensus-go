@@ -23,7 +23,7 @@ import (
 
 	"golang.org/x/net/context"
 
-	istats "go.opencensus.io/stats"
+	"go.opencensus.io/stats/view"
 	"go.opencensus.io/tag"
 
 	"google.golang.org/grpc/stats"
@@ -39,8 +39,8 @@ func TestClientDefaultCollections(t *testing.T) {
 	}
 
 	type wantData struct {
-		v    func() *istats.View
-		rows []*istats.Row
+		v    func() *view.View
+		rows []*view.Row
 	}
 	type rpc struct {
 		tags        []tagPair
@@ -73,8 +73,8 @@ func TestClientDefaultCollections(t *testing.T) {
 			},
 			[]*wantData{
 				{
-					func() *istats.View { return RPCClientRequestCountView },
-					[]*istats.Row{
+					func() *view.View { return RPCClientRequestCountView },
+					[]*view.Row{
 						{
 							[]tag.Tag{
 								{Key: keyMethod, Value: "package.service/method"},
@@ -84,8 +84,8 @@ func TestClientDefaultCollections(t *testing.T) {
 					},
 				},
 				{
-					func() *istats.View { return RPCClientResponseCountView },
-					[]*istats.Row{
+					func() *view.View { return RPCClientResponseCountView },
+					[]*view.Row{
 						{
 							[]tag.Tag{
 								{Key: keyMethod, Value: "package.service/method"},
@@ -95,8 +95,8 @@ func TestClientDefaultCollections(t *testing.T) {
 					},
 				},
 				{
-					func() *istats.View { return RPCClientRequestBytesView },
-					[]*istats.Row{
+					func() *view.View { return RPCClientRequestBytesView },
+					[]*view.Row{
 						{
 							[]tag.Tag{
 								{Key: keyMethod, Value: "package.service/method"},
@@ -106,8 +106,8 @@ func TestClientDefaultCollections(t *testing.T) {
 					},
 				},
 				{
-					func() *istats.View { return RPCClientResponseBytesView },
-					[]*istats.Row{
+					func() *view.View { return RPCClientResponseBytesView },
+					[]*view.Row{
 						{
 							[]tag.Tag{
 								{Key: keyMethod, Value: "package.service/method"},
@@ -150,8 +150,8 @@ func TestClientDefaultCollections(t *testing.T) {
 			},
 			[]*wantData{
 				{
-					func() *istats.View { return RPCClientErrorCountView },
-					[]*istats.Row{
+					func() *view.View { return RPCClientErrorCountView },
+					[]*view.Row{
 						{
 							[]tag.Tag{
 								{Key: keyStatus, Value: "Canceled"},
@@ -162,8 +162,8 @@ func TestClientDefaultCollections(t *testing.T) {
 					},
 				},
 				{
-					func() *istats.View { return RPCClientRequestCountView },
-					[]*istats.Row{
+					func() *view.View { return RPCClientRequestCountView },
+					[]*view.Row{
 						{
 							[]tag.Tag{
 								{Key: keyMethod, Value: "package.service/method"},
@@ -173,8 +173,8 @@ func TestClientDefaultCollections(t *testing.T) {
 					},
 				},
 				{
-					func() *istats.View { return RPCClientResponseCountView },
-					[]*istats.Row{
+					func() *view.View { return RPCClientResponseCountView },
+					[]*view.Row{
 						{
 							[]tag.Tag{
 								{Key: keyMethod, Value: "package.service/method"},
@@ -230,8 +230,8 @@ func TestClientDefaultCollections(t *testing.T) {
 			},
 			[]*wantData{
 				{
-					func() *istats.View { return RPCClientErrorCountView },
-					[]*istats.Row{
+					func() *view.View { return RPCClientErrorCountView },
+					[]*view.Row{
 						{
 							[]tag.Tag{
 								{Key: keyStatus, Value: "Canceled"},
@@ -249,8 +249,8 @@ func TestClientDefaultCollections(t *testing.T) {
 					},
 				},
 				{
-					func() *istats.View { return RPCClientRequestCountView },
-					[]*istats.Row{
+					func() *view.View { return RPCClientRequestCountView },
+					[]*view.Row{
 						{
 							[]tag.Tag{
 								{Key: keyMethod, Value: "package.service/method"},
@@ -260,8 +260,8 @@ func TestClientDefaultCollections(t *testing.T) {
 					},
 				},
 				{
-					func() *istats.View { return RPCClientResponseCountView },
-					[]*istats.Row{
+					func() *view.View { return RPCClientResponseCountView },
+					[]*view.Row{
 						{
 							[]tag.Tag{
 								{Key: keyMethod, Value: "package.service/method"},
@@ -271,8 +271,8 @@ func TestClientDefaultCollections(t *testing.T) {
 					},
 				},
 				{
-					func() *istats.View { return RPCClientRequestBytesView },
-					[]*istats.Row{
+					func() *view.View { return RPCClientRequestBytesView },
+					[]*view.Row{
 						{
 							[]tag.Tag{
 								{Key: keyMethod, Value: "package.service/method"},
@@ -282,8 +282,8 @@ func TestClientDefaultCollections(t *testing.T) {
 					},
 				},
 				{
-					func() *istats.View { return RPCClientResponseBytesView },
-					[]*istats.Row{
+					func() *view.View { return RPCClientResponseBytesView },
+					[]*view.Row{
 						{
 							[]tag.Tag{
 								{Key: keyMethod, Value: "package.service/method"},
@@ -358,7 +358,7 @@ func TestClientDefaultCollections(t *testing.T) {
 }
 
 // containsRow returns true if rows contain r.
-func containsRow(rows []*istats.Row, r *istats.Row) bool {
+func containsRow(rows []*view.Row, r *view.Row) bool {
 	for _, x := range rows {
 		if r.Equal(x) {
 			return true

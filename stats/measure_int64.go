@@ -40,5 +40,24 @@ func (m *MeasureInt64) Unit() string {
 // M creates a new int64 measurement.
 // Use Record to record measurements.
 func (m *MeasureInt64) M(v int64) Measurement {
-	return Measurement{m: m, v: v}
+	return Measurement{Measure: m, Value: v}
+}
+
+// NewMeasureInt64 creates a new measure of type MeasureInt64. It returns an
+// error if a measure with the same name already exists.
+func NewMeasureInt64(name, description, unit string) (*MeasureInt64, error) {
+	if err := checkMeasureName(name); err != nil {
+		return nil, err
+	}
+	m := &MeasureInt64{
+		name:        name,
+		description: description,
+		unit:        unit,
+	}
+	_, err := registerMeasure(m)
+	if err != nil {
+		return nil, err
+	} else {
+		return m, err
+	}
 }

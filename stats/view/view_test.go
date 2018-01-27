@@ -13,10 +13,11 @@
 // limitations under the License.
 //
 
-package stats
+package view
 
 import (
 	"context"
+	"strings"
 	"testing"
 	"time"
 
@@ -28,7 +29,7 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowCumulative(t *testin
 	k2, _ := tag.NewKey("k2")
 	k3, _ := tag.NewKey("k3")
 	agg1 := DistributionAggregation([]float64{2})
-	view, err := NewView("VF1", "desc VF1", []tag.Key{k1, k2}, nil, agg1, Cumulative{})
+	view, err := New("VF1", "desc VF1", []tag.Key{k1, k2}, nil, agg1, Cumulative{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -193,7 +194,7 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowSlidingTime(t *testi
 	k1, _ := tag.NewKey("k1")
 	k2, _ := tag.NewKey("k2")
 	agg1 := DistributionAggregation([]float64{2})
-	view, err := NewView("VF1", "desc VF1", []tag.Key{k1, k2}, nil, agg1, Interval{10 * time.Second, 5})
+	view, err := New("VF1", "desc VF1", []tag.Key{k1, k2}, nil, agg1, Interval{10 * time.Second, 5})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -389,7 +390,7 @@ func Test_View_MeasureFloat64_AggregationCount_WindowSlidingTime(t *testing.T) {
 	k1, _ := tag.NewKey("k1")
 	k2, _ := tag.NewKey("k2")
 	agg1 := CountAggregation{}
-	view, err := NewView("VF1", "desc VF1", []tag.Key{k1, k2}, nil, agg1, Interval{10 * time.Second, 5})
+	view, err := New("VF1", "desc VF1", []tag.Key{k1, k2}, nil, agg1, Interval{10 * time.Second, 5})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -587,7 +588,7 @@ func Test_View_MeasureFloat64_AggregationSum_WindowCumulative(t *testing.T) {
 	k1, _ := tag.NewKey("k1")
 	k2, _ := tag.NewKey("k2")
 	k3, _ := tag.NewKey("k3")
-	view, err := NewView("VF1", "desc VF1", []tag.Key{k1, k2}, nil, SumAggregation{}, Cumulative{})
+	view, err := New("VF1", "desc VF1", []tag.Key{k1, k2}, nil, SumAggregation{}, Cumulative{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -702,7 +703,7 @@ func Test_View_MeasureFloat64_AggregationMean_WindowCumulative(t *testing.T) {
 	k1, _ := tag.NewKey("k1")
 	k2, _ := tag.NewKey("k2")
 	k3, _ := tag.NewKey("k3")
-	view, err := NewView("VF1", "desc VF1", []tag.Key{k1, k2}, nil, MeanAggregation{}, Cumulative{})
+	view, err := New("VF1", "desc VF1", []tag.Key{k1, k2}, nil, MeanAggregation{}, Cumulative{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -821,9 +822,9 @@ func TestViewSortedKeys(t *testing.T) {
 	k3, _ := tag.NewKey("c")
 	ks := []tag.Key{k1, k3, k2}
 
-	v, err := NewView("sort_keys", "desc sort_keys", ks, nil, MeanAggregation{}, Cumulative{})
+	v, err := New("sort_keys", "desc sort_keys", ks, nil, MeanAggregation{}, Cumulative{})
 	if err != nil {
-		t.Fatalf("NewView() = %v", err)
+		t.Fatalf("New() = %v", err)
 	}
 
 	want := []string{"a", "b", "c"}
@@ -836,6 +837,37 @@ func TestViewSortedKeys(t *testing.T) {
 		if got, want := v, vks[i].Name(); got != want {
 			t.Errorf("View name = %q; want %q", got, want)
 		}
+	}
+}
+
+func Test_checkViewName(t *testing.T) {
+	tests := []struct {
+		name    string
+		view    string
+		wantErr bool
+	}{
+		{
+			name:    "valid view name",
+			view:    "my.org/views/response_size",
+			wantErr: false,
+		},
+		{
+			name:    "long name",
+			view:    strings.Repeat("a", 256),
+			wantErr: true,
+		},
+		{
+			name:    "name with non-ASCII",
+			view:    "my.org/views/\007",
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := checkViewName(tt.view); (err != nil) != tt.wantErr {
+				t.Errorf("checkViewName() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
 	}
 }
 

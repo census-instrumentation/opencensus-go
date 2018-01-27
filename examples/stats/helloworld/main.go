@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"go.opencensus.io/stats"
+	"go.opencensus.io/stats/view"
 )
 
 func main() {
@@ -30,7 +31,7 @@ func main() {
 
 	// Register an exporter to be able to retrieve
 	// the data from the subscribed views.
-	stats.RegisterExporter(&exporter{})
+	view.RegisterExporter(&exporter{})
 
 	// Create measures. The program will record measures for the size of
 	// processed videos and the nubmer of videos marked as spam.
@@ -41,24 +42,24 @@ func main() {
 
 	// Create view to see the processed video size
 	// distribution over 10 seconds.
-	view, err := stats.NewView(
+	v, err := view.New(
 		"my.org/views/video_size",
 		"processed video size over time",
 		nil,
 		videoSize,
-		stats.DistributionAggregation([]float64{0, 1 << 16, 1 << 32}),
-		stats.Cumulative{},
+		view.DistributionAggregation([]float64{0, 1 << 16, 1 << 32}),
+		view.Cumulative{},
 	)
 	if err != nil {
 		log.Fatalf("Cannot create view: %v", err)
 	}
 
 	// Set reporting period to report data at every second.
-	stats.SetReportingPeriod(1 * time.Second)
+	view.SetReportingPeriod(1 * time.Second)
 
 	// Subscribe will allow view data to be exported.
 	// Once no longer need, you can unsubscribe from the view.
-	if err := view.Subscribe(); err != nil {
+	if err := v.Subscribe(); err != nil {
 		log.Fatalf("Cannot subscribe to the view: %v", err)
 	}
 
@@ -73,6 +74,6 @@ func main() {
 
 type exporter struct{}
 
-func (e *exporter) ExportView(vd *stats.ViewData) {
+func (e *exporter) ExportView(vd *view.Data) {
 	log.Println(vd)
 }

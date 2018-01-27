@@ -25,6 +25,7 @@ import (
 
 	"go.opencensus.io/exporter/prometheus"
 	"go.opencensus.io/stats"
+	"go.opencensus.io/stats/view"
 )
 
 func main() {
@@ -34,7 +35,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	stats.RegisterExporter(exporter)
+	view.RegisterExporter(exporter)
 
 	// Create measures. The program will record measures for the size of
 	// processed videos and the number of videos marked as spam.
@@ -44,13 +45,13 @@ func main() {
 	}
 
 	// 1. Create view to see the number of processed videos cumulatively.
-	viewCount, err := stats.NewView(
+	viewCount, err := view.New(
 		"video_count",
 		"number of videos processed over time",
 		nil,
 		videoCount,
-		stats.CountAggregation{},
-		stats.Cumulative{},
+		view.CountAggregation{},
+		view.Cumulative{},
 	)
 	if err != nil {
 		log.Fatalf("Cannot create view: %v", err)
@@ -70,13 +71,13 @@ func main() {
 	}
 
 	// 2. Create view to see the amount of video processed
-	viewSize, err := stats.NewView(
+	viewSize, err := view.New(
 		"video_cum",
 		"processed video size over time",
 		nil,
 		videoSize,
-		stats.DistributionAggregation([]float64{0, 1 << 16, 1 << 32}),
-		stats.Cumulative{},
+		view.DistributionAggregation([]float64{0, 1 << 16, 1 << 32}),
+		view.Cumulative{},
 	)
 	if err != nil {
 		log.Fatalf("Cannot create view: %v", err)
@@ -89,7 +90,7 @@ func main() {
 	}
 
 	// Set reporting period to report data at every second.
-	stats.SetReportingPeriod(1 * time.Second)
+	view.SetReportingPeriod(1 * time.Second)
 
 	// Record some data points...
 	go func() {

@@ -255,7 +255,7 @@ An example logger exporter is below:
 
 type exporter struct{}
 
-func (e *exporter) Export(vd *stats.ViewData) {
+func (e *exporter) Export(vd *view.ViewData) {
 	log.Println(vd)
 }
 

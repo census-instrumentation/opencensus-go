@@ -15,6 +15,14 @@
 
 package stats
 
+import (
+	"errors"
+	"fmt"
+	"sync"
+
+	"go.opencensus.io/stats/internal"
+)
+
 // Measure represents a type of metric to be tracked and recorded.
 // For example, latency, request Mb/s, and response Mb/s are measures
 // to collect from a server.
@@ -31,34 +39,41 @@ type Measure interface {
 	Unit() string
 }
 
+var (
+	measures     sync.Map
+	errDuplicate = errors.New("duplicate measure name")
+)
+
+func FindMeasure(name string) Measure {
+	if m, ok := measures.Load(name); ok {
+		return m.(Measure)
+	}
+	return nil
+}
+
+func registerMeasure(m Measure) (Measure, error) {
+	stored, loaded := measures.LoadOrStore(m.Name(), m)
+	if loaded {
+		return stored.(Measure), errDuplicate
+	} else {
+		return m, nil
+	}
+}
+
 // Measurement is the numeric value measured when recording stats. Each measure
 // provides methods to create measurements of their kind. For example, MeasureInt64
 // provides M to convert an int64 into a measurement.
 type Measurement struct {
-	v interface{} // int64 or float64
-	m Measure
+	Value   interface{} // int64 or float64
+	Measure Measure
 }
 
-// FindMeasure returns the registered measure associated with name.
-// If no registered measure is not found, nil is returned.
-func FindMeasure(name string) (m Measure) {
-	req := &getMeasureByNameReq{
-		name: name,
-		c:    make(chan *getMeasureByNameResp),
+func checkMeasureName(name string) error {
+	if len(name) > internal.MaxNameLength {
+		return fmt.Errorf("measure name cannot be larger than %v", internal.MaxNameLength)
 	}
-	defaultWorker.c <- req
-	resp := <-req.c
-	return resp.m
-}
-
-// DeleteMeasure deletes an existing measure to allow for creation of a new
-// measure with the same name. It returns an error if the measure cannot be
-// deleted, such as one or multiple registered views refer to it.
-func DeleteMeasure(m Measure) error {
-	req := &deleteMeasureReq{
-		m:   m,
-		err: make(chan error),
+	if !internal.IsPrintable(name) {
+		return fmt.Errorf("measure name needs to be an ASCII string")
 	}
-	defaultWorker.c <- req
-	return <-req.err
+	return nil
 }
