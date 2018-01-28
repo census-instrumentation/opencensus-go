@@ -30,7 +30,7 @@
 // 		log.Fatal(err)
 // 	}
 //
-// Export to Stackdriver Trace:
+// Export to Stackdriver Stats:
 //
 // 	stats.RegisterExporter(exporter)
 //
