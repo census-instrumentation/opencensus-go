@@ -100,7 +100,6 @@ func TestExportTrace(t *testing.T) {
 				trace.EndSpan(ctx4)
 			}
 		}
-		trace.SetStackTrace(ctx1)
 		trace.EndSpan(ctx1)
 	}
 	trace.EndSpan(ctx)
@@ -113,22 +112,6 @@ func TestExportTrace(t *testing.T) {
 		spbs = append(spbs, protoFromSpanData(s, "testproject"))
 	}
 	sort.Sort(spbs)
-
-	if st := spbs[1].StackTrace; st == nil {
-		t.Error("expected stack trace in span 1")
-	} else {
-		ok := false
-		if st.StackFrames != nil {
-			for _, frame := range st.StackFrames.Frame {
-				if strings.HasSuffix(frame.FunctionName.Value, "stackdriver.TestExportTrace") {
-					ok = true
-				}
-			}
-		}
-		if !ok {
-			t.Error("expected stack frame for stackdriver.TestExportTrace")
-		}
-	}
 
 	for i, want := range []string{
 		spanID.String(),
@@ -154,9 +137,6 @@ func TestExportTrace(t *testing.T) {
 			for _, te := range span.TimeEvents.TimeEvent {
 				checkTime(&te.Time)
 			}
-		}
-		if span.StackTrace != nil {
-			span.StackTrace = nil
 		}
 		if want := fmt.Sprintf("projects/testproject/traces/%s/spans/%s", traceID, span.SpanId); span.Name != want {
 			t.Errorf("got span name %q want %q", span.Name, want)

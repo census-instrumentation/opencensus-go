@@ -66,7 +66,6 @@ type SpanData struct {
 	Annotations   []Annotation
 	MessageEvents []MessageEvent
 	Status
-	StackTrace      []uintptr
 	Links           []Link
 	HasRemoteParent bool
 }

@@ -20,7 +20,6 @@ import (
 	"encoding/binary"
 	"fmt"
 	"math/rand"
-	"runtime"
 	"sync"
 	"time"
 )
@@ -443,27 +442,6 @@ func (s *Span) Annotate(attributes []Attribute, str string) {
 		return
 	}
 	s.printStringInternal(attributes, str)
-}
-
-// SetStackTrace adds a stack trace to the current span.
-func SetStackTrace(ctx context.Context) {
-	s, ok := ctx.Value(contextKey{}).(*Span)
-	if !ok {
-		return
-	}
-	s.SetStackTrace()
-}
-
-// SetStackTrace adds a stack trace to the span.
-func (s *Span) SetStackTrace() {
-	if !s.IsRecordingEvents() {
-		return
-	}
-	pcs := make([]uintptr, 20 /* TODO: configurable stack size? */)
-	_ = runtime.Callers(1, pcs[:])
-	s.mu.Lock()
-	s.data.StackTrace = pcs
-	s.mu.Unlock()
 }
 
 // AddMessageSendEvent adds a message send event to the current span.
