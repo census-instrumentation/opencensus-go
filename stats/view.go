@@ -27,9 +27,9 @@ import (
 )
 
 // View allows users to filter and aggregate the recorded events.
-// Each view has to be registered to enable
-// data retrieval. Use NewView to initiate new views.
-// Unregister views once you don't want to collect any more events.
+// Each view has to be registered to enable data retrieval. Use NewView to
+// initiate new views. Unregister views once you don't want to collect any more
+// events.
 type View struct {
 	name        string // name of View. Must be unique.
 	description string
