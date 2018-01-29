@@ -45,10 +45,13 @@
 //
 // Example:
 //
-//	import "go.opencensus.io/plugin/http/httptrace"
+// 	import (
+// 		"go.opencensus.io/plugin/http/httptrace"
+// 		"go.opencensus.io/plugin/http/propagation/google"
+// 	)
 //
 //	client := &http.Client {
-//		Transport: httptrace.NewTransport(nil, exporter),
+//		Transport: httptrace.NewTransport(nil, &google.HTTPFormat{}),
 //	}
 //
 // All outgoing requests from client will include a Stackdriver Trace header.
