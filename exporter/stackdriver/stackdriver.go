@@ -22,7 +22,7 @@
 // 	import (
 // 		"go.opencensus.io/exporter/stackdriver"
 // 		"go.opencensus.io/trace"
-// 		"go.opencensus.io/stats"
+// 		"go.opencensus.io/stats/measure"
 // 	)
 //
 // 	exporter, err := stackdriver.NewExporter(stackdriver.Options{ProjectID: "google-project-id"})

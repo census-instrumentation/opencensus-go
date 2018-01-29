@@ -19,7 +19,7 @@ import (
 	"fmt"
 	"time"
 
-	"go.opencensus.io/stats"
+	"go.opencensus.io/stats/measure"
 	"go.opencensus.io/tag"
 )
 
@@ -156,7 +156,7 @@ func (cmd *retrieveDataReq) handleCommand(w *worker) {
 type recordReq struct {
 	now time.Time
 	tm  *tag.Map
-	ms  []stats.Measurement
+	ms  []measure.Measurement
 }
 
 func (cmd *recordReq) handleCommand(w *worker) {

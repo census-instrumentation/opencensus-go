@@ -18,7 +18,7 @@ package grpcstats
 import (
 	"log"
 
-	"go.opencensus.io/stats"
+	"go.opencensus.io/stats/measure"
 	"go.opencensus.io/stats/view"
 	"go.opencensus.io/tag"
 )
@@ -27,14 +27,14 @@ import (
 // Client connection needs to use a ClientStatsHandler in order to enable collection.
 var (
 	// Available client measures
-	RPCClientErrorCount       *stats.MeasureInt64
-	RPCClientRoundTripLatency *stats.MeasureFloat64
-	RPCClientRequestBytes     *stats.MeasureInt64
-	RPCClientResponseBytes    *stats.MeasureInt64
-	RPCClientStartedCount     *stats.MeasureInt64
-	RPCClientFinishedCount    *stats.MeasureInt64
-	RPCClientRequestCount     *stats.MeasureInt64
-	RPCClientResponseCount    *stats.MeasureInt64
+	RPCClientErrorCount       *measure.Int64
+	RPCClientRoundTripLatency *measure.Float64
+	RPCClientRequestBytes     *measure.Int64
+	RPCClientResponseBytes    *measure.Int64
+	RPCClientStartedCount     *measure.Int64
+	RPCClientFinishedCount    *measure.Int64
+	RPCClientRequestCount     *measure.Int64
+	RPCClientResponseCount    *measure.Int64
 
 	// Predefined client views
 	RPCClientErrorCountView       *view.View
@@ -71,28 +71,28 @@ func defaultClientMeasures() {
 	var err error
 
 	// Creating client measures
-	if RPCClientErrorCount, err = stats.NewMeasureInt64("grpc.io/client/error_count", "RPC Errors", unitCount); err != nil {
+	if RPCClientErrorCount, err = measure.NewInt64("grpc.io/client/error_count", "RPC Errors", unitCount); err != nil {
 		log.Fatalf("Cannot create measure grpc.io/client/error_count: %v", err)
 	}
-	if RPCClientRoundTripLatency, err = stats.NewMeasureFloat64("grpc.io/client/roundtrip_latency", "RPC roundtrip latency in msecs", unitMillisecond); err != nil {
+	if RPCClientRoundTripLatency, err = measure.NewFloat64("grpc.io/client/roundtrip_latency", "RPC roundtrip latency in msecs", unitMillisecond); err != nil {
 		log.Fatalf("Cannot create measure grpc.io/client/roundtrip_latency: %v", err)
 	}
-	if RPCClientRequestBytes, err = stats.NewMeasureInt64("grpc.io/client/request_bytes", "Request bytes", unitByte); err != nil {
+	if RPCClientRequestBytes, err = measure.NewInt64("grpc.io/client/request_bytes", "Request bytes", unitByte); err != nil {
 		log.Fatalf("Cannot create measure grpc.io/client/request_bytes: %v", err)
 	}
-	if RPCClientResponseBytes, err = stats.NewMeasureInt64("grpc.io/client/response_bytes", "Response bytes", unitByte); err != nil {
+	if RPCClientResponseBytes, err = measure.NewInt64("grpc.io/client/response_bytes", "Response bytes", unitByte); err != nil {
 		log.Fatalf("Cannot create measure grpc.io/client/response_bytes: %v", err)
 	}
-	if RPCClientStartedCount, err = stats.NewMeasureInt64("grpc.io/client/started_count", "Number of client RPCs (streams) started", unitCount); err != nil {
+	if RPCClientStartedCount, err = measure.NewInt64("grpc.io/client/started_count", "Number of client RPCs (streams) started", unitCount); err != nil {
 		log.Fatalf("Cannot create measure grpc.io/client/started_count: %v", err)
 	}
-	if RPCClientFinishedCount, err = stats.NewMeasureInt64("grpc.io/client/finished_count", "Number of client RPCs (streams) finished", unitCount); err != nil {
+	if RPCClientFinishedCount, err = measure.NewInt64("grpc.io/client/finished_count", "Number of client RPCs (streams) finished", unitCount); err != nil {
 		log.Fatalf("Cannot create measure grpc.io/client/finished_count: %v", err)
 	}
-	if RPCClientRequestCount, err = stats.NewMeasureInt64("grpc.io/client/request_count", "Number of client RPC request messages", unitCount); err != nil {
+	if RPCClientRequestCount, err = measure.NewInt64("grpc.io/client/request_count", "Number of client RPC request messages", unitCount); err != nil {
 		log.Fatalf("Cannot create measure grpc.io/client/request_count: %v", err)
 	}
-	if RPCClientResponseCount, err = stats.NewMeasureInt64("grpc.io/client/response_count", "Number of client RPC response messages", unitCount); err != nil {
+	if RPCClientResponseCount, err = measure.NewInt64("grpc.io/client/response_count", "Number of client RPC response messages", unitCount); err != nil {
 		log.Fatalf("Cannot create measure grpc.io/client/response_count: %v", err)
 	}
 }

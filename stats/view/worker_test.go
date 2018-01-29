@@ -22,39 +22,39 @@ import (
 	"testing"
 	"time"
 
-	"go.opencensus.io/stats"
+	"go.opencensus.io/stats/measure"
 	"go.opencensus.io/tag"
 )
 
 func Test_Worker_MeasureCreation(t *testing.T) {
 	restart()
 
-	if _, err := stats.NewMeasureFloat64("MF1", "desc MF1", "unit"); err != nil {
-		t.Errorf("stats.NewMeasureFloat64(\"MF1\", \"desc MF1\") got error %v, want no error", err)
+	if _, err := measure.NewFloat64("MF1", "desc MF1", "unit"); err != nil {
+		t.Errorf("measure.NewFloat64(\"MF1\", \"desc MF1\") got error %v, want no error", err)
 	}
 
-	if _, err := stats.NewMeasureFloat64("MF1", "Duplicate measure with same name as MF1.", "unit"); err == nil {
-		t.Error("stats.NewMeasureFloat64(\"MF1\", \"Duplicate MeasureFloat64 with same name as MF1.\") got no error, want no error")
+	if _, err := measure.NewFloat64("MF1", "Duplicate measure with same name as MF1.", "unit"); err == nil {
+		t.Error("measure.NewFloat64(\"MF1\", \"Duplicate Float64 with same name as MF1.\") got no error, want no error")
 	}
 
-	if _, err := stats.NewMeasureInt64("MF1", "Duplicate measure with same name as MF1.", "unit"); err == nil {
-		t.Error("stats.NewMeasureInt64(\"MF1\", \"Duplicate MeasureInt64 with same name as MF1.\") got no error, want no error")
+	if _, err := measure.NewInt64("MF1", "Duplicate measure with same name as MF1.", "unit"); err == nil {
+		t.Error("measure.NewInt64(\"MF1\", \"Duplicate Int64 with same name as MF1.\") got no error, want no error")
 	}
 
-	if _, err := stats.NewMeasureFloat64("MF2", "desc MF2", "unit"); err != nil {
-		t.Errorf("stats.NewMeasureFloat64(\"MF2\", \"desc MF2\") got error %v, want no error", err)
+	if _, err := measure.NewFloat64("MF2", "desc MF2", "unit"); err != nil {
+		t.Errorf("measure.NewFloat64(\"MF2\", \"desc MF2\") got error %v, want no error", err)
 	}
 
-	if _, err := stats.NewMeasureInt64("MI1", "desc MI1", "unit"); err != nil {
-		t.Errorf("stats.NewMeasureInt64(\"MI1\", \"desc MI1\") got error %v, want no error", err)
+	if _, err := measure.NewInt64("MI1", "desc MI1", "unit"); err != nil {
+		t.Errorf("measure.NewInt64(\"MI1\", \"desc MI1\") got error %v, want no error", err)
 	}
 
-	if _, err := stats.NewMeasureInt64("MI1", "Duplicate measure with same name as MI1.", "unit"); err == nil {
-		t.Error("stats.NewMeasureInt64(\"MI1\", \"Duplicate NewMeasureInt64 with same name as MI1.\") got no error, want no error")
+	if _, err := measure.NewInt64("MI1", "Duplicate measure with same name as MI1.", "unit"); err == nil {
+		t.Error("measure.NewInt64(\"MI1\", \"Duplicate NewInt64 with same name as MI1.\") got no error, want no error")
 	}
 
-	if _, err := stats.NewMeasureFloat64("MI1", "Duplicate measure with same name as MI1.", "unit"); err == nil {
-		t.Error("stats.NewMeasureFloat64(\"MI1\", \"Duplicate NewMeasureFloat64 with same name as MI1.\") got no error, want no error")
+	if _, err := measure.NewFloat64("MI1", "Duplicate measure with same name as MI1.", "unit"); err == nil {
+		t.Error("measure.NewFloat64(\"MI1\", \"Duplicate NewFloat64 with same name as MI1.\") got no error, want no error")
 	}
 }
 
@@ -206,8 +206,8 @@ func Test_Worker_ViewRegistration(t *testing.T) {
 		},
 	}
 
-	mf1, _ := stats.NewMeasureFloat64("MF1/Test_Worker_ViewRegistration", "desc MF1", "unit")
-	mf2, _ := stats.NewMeasureFloat64("MF2/Test_Worker_ViewRegistration", "desc MF2", "unit")
+	mf1, _ := measure.NewFloat64("MF1/Test_Worker_ViewRegistration", "desc MF1", "unit")
+	mf2, _ := measure.NewFloat64("MF2/Test_Worker_ViewRegistration", "desc MF2", "unit")
 
 	for _, tc := range tcs {
 		t.Run(tc.label, func(t *testing.T) {
@@ -268,9 +268,9 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 	restart()
 
 	someError := errors.New("some error")
-	m, err := stats.NewMeasureFloat64("Test_Worker_RecordFloat64/MF1", "desc MF1", "unit")
+	m, err := measure.NewFloat64("Test_Worker_RecordFloat64/MF1", "desc MF1", "unit")
 	if err != nil {
-		t.Errorf("stats.NewMeasureFloat64(\"MF1\", \"desc MF1\") got error '%v', want no error", err)
+		t.Errorf("measure.NewFloat64(\"MF1\", \"desc MF1\") got error '%v', want no error", err)
 	}
 
 	k1, _ := tag.NewKey("k1")
@@ -377,7 +377,7 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 		}
 
 		for _, value := range tc.records {
-			stats.Record(ctx, m.M(value))
+			measure.Record(ctx, m.M(value))
 		}
 
 		for _, w := range tc.wants {
@@ -417,9 +417,9 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 func TestReportUsage(t *testing.T) {
 	ctx := context.Background()
 
-	m, err := stats.NewMeasureInt64("measure", "desc", "unit")
+	m, err := measure.NewInt64("measure", "desc", "unit")
 	if err != nil {
-		t.Fatalf("stats.NewMeasureInt64() = %v", err)
+		t.Fatalf("measure.NewInt64() = %v", err)
 	}
 
 	cum1, _ := New("cum1", "", nil, m, CountAggregation{}, Cumulative{})
@@ -459,17 +459,17 @@ func TestReportUsage(t *testing.T) {
 		e := &countExporter{}
 		RegisterExporter(e)
 
-		stats.Record(ctx, m.M(1))
-		stats.Record(ctx, m.M(1))
-		stats.Record(ctx, m.M(1))
-		stats.Record(ctx, m.M(1))
+		measure.Record(ctx, m.M(1))
+		measure.Record(ctx, m.M(1))
+		measure.Record(ctx, m.M(1))
+		measure.Record(ctx, m.M(1))
 
 		time.Sleep(50 * time.Millisecond)
 
-		stats.Record(ctx, m.M(1))
-		stats.Record(ctx, m.M(1))
-		stats.Record(ctx, m.M(1))
-		stats.Record(ctx, m.M(1))
+		measure.Record(ctx, m.M(1))
+		measure.Record(ctx, m.M(1))
+		measure.Record(ctx, m.M(1))
+		measure.Record(ctx, m.M(1))
 
 		time.Sleep(50 * time.Millisecond)
 
@@ -505,9 +505,9 @@ func TestWorkerCumStarttime(t *testing.T) {
 	restart()
 
 	ctx := context.Background()
-	m, err := stats.NewMeasureInt64("measure/TestWorkerCumStarttime", "desc", "unit")
+	m, err := measure.NewInt64("measure/TestWorkerCumStarttime", "desc", "unit")
 	if err != nil {
-		t.Fatalf("stats.NewMeasureInt64() = %v", err)
+		t.Fatalf("measure.NewInt64() = %v", err)
 	}
 	view, err := New("cum", "", nil, m, CountAggregation{}, Cumulative{})
 	if err != nil {
@@ -523,17 +523,17 @@ func TestWorkerCumStarttime(t *testing.T) {
 	RegisterExporter(e)
 	defer UnregisterExporter(e)
 
-	stats.Record(ctx, m.M(1))
-	stats.Record(ctx, m.M(1))
-	stats.Record(ctx, m.M(1))
-	stats.Record(ctx, m.M(1))
+	measure.Record(ctx, m.M(1))
+	measure.Record(ctx, m.M(1))
+	measure.Record(ctx, m.M(1))
+	measure.Record(ctx, m.M(1))
 
 	time.Sleep(50 * time.Millisecond)
 
-	stats.Record(ctx, m.M(1))
-	stats.Record(ctx, m.M(1))
-	stats.Record(ctx, m.M(1))
-	stats.Record(ctx, m.M(1))
+	measure.Record(ctx, m.M(1))
+	measure.Record(ctx, m.M(1))
+	measure.Record(ctx, m.M(1))
+	measure.Record(ctx, m.M(1))
 
 	time.Sleep(50 * time.Millisecond)
 

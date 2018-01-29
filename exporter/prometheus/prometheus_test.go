@@ -17,14 +17,14 @@ package prometheus
 import (
 	"testing"
 
-	"go.opencensus.io/stats"
+	"go.opencensus.io/stats/measure"
 	"go.opencensus.io/stats/view"
 
 	"github.com/prometheus/client_golang/prometheus"
 )
 
 func newView(agg view.Aggregation, window view.Window) *view.View {
-	m, _ := stats.NewMeasureInt64("tests/foo1", "bytes", "byte")
+	m, _ := measure.NewInt64("tests/foo1", "bytes", "byte")
 	view, _ := view.New("foo", "bar", nil, m, agg, window)
 	return view
 }

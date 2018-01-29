@@ -22,7 +22,7 @@ import (
 
 	"golang.org/x/net/context"
 
-	istats "go.opencensus.io/stats"
+	"go.opencensus.io/stats/measure"
 	"go.opencensus.io/tag"
 	"google.golang.org/grpc/grpclog"
 	"google.golang.org/grpc/stats"
@@ -72,7 +72,7 @@ func (h *ServerStatsHandler) TagRPC(ctx context.Context, info *stats.RPCTagInfo)
 	}
 	ctx = tag.NewContext(ctx, ts)
 
-	istats.Record(ctx, RPCServerStartedCount.M(1))
+	measure.Record(ctx, RPCServerStartedCount.M(1))
 	return context.WithValue(ctx, grpcServerRPCKey, d)
 }
 
@@ -102,7 +102,7 @@ func (h *ServerStatsHandler) handleRPCInPayload(ctx context.Context, s *stats.In
 		return
 	}
 
-	istats.Record(ctx, RPCServerRequestBytes.M(int64(s.Length)))
+	measure.Record(ctx, RPCServerRequestBytes.M(int64(s.Length)))
 	atomic.AddInt64(&d.reqCount, 1)
 }
 
@@ -115,7 +115,7 @@ func (h *ServerStatsHandler) handleRPCOutPayload(ctx context.Context, s *stats.O
 		return
 	}
 
-	istats.Record(ctx, RPCServerResponseBytes.M(int64(s.Length)))
+	measure.Record(ctx, RPCServerResponseBytes.M(int64(s.Length)))
 	atomic.AddInt64(&d.respCount, 1)
 }
 
@@ -132,7 +132,7 @@ func (h *ServerStatsHandler) handleRPCEnd(ctx context.Context, s *stats.End) {
 	reqCount := atomic.LoadInt64(&d.reqCount)
 	respCount := atomic.LoadInt64(&d.respCount)
 
-	m := []istats.Measurement{
+	m := []measure.Measurement{
 		RPCServerRequestCount.M(reqCount),
 		RPCServerResponseCount.M(respCount),
 		RPCServerFinishedCount.M(1),
@@ -152,7 +152,7 @@ func (h *ServerStatsHandler) handleRPCEnd(ctx context.Context, s *stats.End) {
 		m = append(m, RPCServerErrorCount.M(1))
 	}
 
-	istats.Record(ctx, m...)
+	measure.Record(ctx, m...)
 }
 
 // createTagMap creates a new tag map containing the tags extracted from the

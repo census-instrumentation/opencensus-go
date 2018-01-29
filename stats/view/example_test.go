@@ -18,12 +18,12 @@ import (
 	"log"
 	"time"
 
-	"go.opencensus.io/stats"
+	"go.opencensus.io/stats/measure"
 	"go.opencensus.io/stats/view"
 )
 
 func Example_view() {
-	m, err := stats.NewMeasureInt64("my.org/measure/openconns", "open connections", "")
+	m, err := measure.NewInt64("my.org/measure/openconns", "open connections", "")
 	if err != nil {
 		log.Fatal(err)
 	}

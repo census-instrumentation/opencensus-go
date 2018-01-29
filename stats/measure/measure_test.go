@@ -1,4 +1,4 @@
-package stats
+package measure
 
 import (
 	"strings"
@@ -37,17 +37,17 @@ func TestCheckMeasureName(t *testing.T) {
 }
 
 func Test_FindMeasure(t *testing.T) {
-	mf1, err := NewMeasureFloat64("MF1", "desc MF1", "unit")
+	mf1, err := NewFloat64("MF1", "desc MF1", "unit")
 	if err != nil {
-		t.Errorf("stats.NewMeasureFloat64(\"MF1\", \"desc MF1\") got error %v, want no error", err)
+		t.Errorf("measure.NewFloat64(\"MF1\", \"desc MF1\") got error %v, want no error", err)
 	}
-	mf2, err := NewMeasureFloat64("MF2", "desc MF2", "unit")
+	mf2, err := NewFloat64("MF2", "desc MF2", "unit")
 	if err != nil {
-		t.Errorf("stats.NewMeasureFloat64(\"MF2\", \"desc MF2\") got error %v, want no error", err)
+		t.Errorf("measure.NewFloat64(\"MF2\", \"desc MF2\") got error %v, want no error", err)
 	}
-	mi1, err := NewMeasureInt64("MI1", "desc MI1", "unit")
+	mi1, err := NewInt64("MI1", "desc MI1", "unit")
 	if err != nil {
-		t.Errorf("stats.NewMeasureInt64(\"MI1\", \"desc MI1\") got error %v, want no error", err)
+		t.Errorf("measure.NewInt64(\"MI1\", \"desc MI1\") got error %v, want no error", err)
 	}
 
 	type testCase struct {

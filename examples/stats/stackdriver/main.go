@@ -24,7 +24,7 @@ import (
 	"time"
 
 	"go.opencensus.io/exporter/stackdriver"
-	"go.opencensus.io/stats"
+	"go.opencensus.io/stats/measure"
 	"go.opencensus.io/stats/view"
 )
 
@@ -51,7 +51,7 @@ func main() {
 
 	// Create measures. The program will record measures for the size of
 	// processed videos and the nubmer of videos marked as spam.
-	videoSize, err := stats.NewMeasureInt64("my.org/measure/video_size", "size of processed videos", "MBy")
+	videoSize, err := measure.NewInt64("my.org/measure/video_size", "size of processed videos", "MBy")
 	if err != nil {
 		log.Fatalf("Video size measure not created: %v", err)
 	}
@@ -79,7 +79,7 @@ func main() {
 	}
 
 	// Record data points.
-	stats.Record(ctx, videoSize.M(25648))
+	measure.Record(ctx, videoSize.M(25648))
 
 	// Wait for a duration longer than reporting duration to ensure the stats
 	// library reports the collected data.

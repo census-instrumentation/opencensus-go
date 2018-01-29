@@ -1,4 +1,4 @@
-// Copyright 2018, OpenCensus Authors
+// Copyright 2017, OpenCensus Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,26 +11,21 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
 
-package stats
+package measure_test
 
 import (
 	"context"
-	"time"
+	"log"
 
-	"go.opencensus.io/tag"
+	"go.opencensus.io/stats/measure"
 )
 
-type Recorder func(*tag.Map, time.Time, []Measurement)
-
-// DefaultRecorder will be called for each Record call.
-var DefaultRecorder Recorder = nil
-
-// Record records one or multiple measurements with the same tags at once.
-// If there are any tags in the context, measurements will be tagged with them.
-func Record(ctx context.Context, ms ...Measurement) {
-	if DefaultRecorder != nil {
-		DefaultRecorder(tag.FromContext(ctx), time.Now(), ms)
+func Example_record() {
+	m, err := measure.NewInt64("my.org/measure/openconns", "open connections", "")
+	if err != nil {
+		log.Fatal(err)
 	}
+
+	measure.Record(context.TODO(), m.M(124)) // Record 124 open connections.
 }

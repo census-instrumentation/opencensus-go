@@ -19,7 +19,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	istats "go.opencensus.io/stats"
+	"go.opencensus.io/stats/measure"
 	"go.opencensus.io/tag"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/grpclog"
@@ -79,7 +79,7 @@ func (h *ClientStatsHandler) TagRPC(ctx context.Context, info *stats.RPCTagInfo)
 	}
 	// TODO(acetechnologist): should we be recording this later? What is the
 	// point of updating d.reqLen & d.reqCount if we update now?
-	istats.Record(ctx, RPCClientStartedCount.M(1))
+	measure.Record(ctx, RPCClientStartedCount.M(1))
 
 	return context.WithValue(ctx, grpcClientRPCKey, d)
 }
@@ -109,7 +109,7 @@ func (h *ClientStatsHandler) handleRPCOutPayload(ctx context.Context, s *stats.O
 		return
 	}
 
-	istats.Record(ctx, RPCClientRequestBytes.M(int64(s.Length)))
+	measure.Record(ctx, RPCClientRequestBytes.M(int64(s.Length)))
 	atomic.AddInt64(&d.reqCount, 1)
 }
 
@@ -122,7 +122,7 @@ func (h *ClientStatsHandler) handleRPCInPayload(ctx context.Context, s *stats.In
 		return
 	}
 
-	istats.Record(ctx, RPCClientResponseBytes.M(int64(s.Length)))
+	measure.Record(ctx, RPCClientResponseBytes.M(int64(s.Length)))
 	atomic.AddInt64(&d.respCount, 1)
 }
 
@@ -139,7 +139,7 @@ func (h *ClientStatsHandler) handleRPCEnd(ctx context.Context, s *stats.End) {
 	reqCount := atomic.LoadInt64(&d.reqCount)
 	respCount := atomic.LoadInt64(&d.respCount)
 
-	m := []istats.Measurement{
+	m := []measure.Measurement{
 		RPCClientRequestCount.M(reqCount),
 		RPCClientResponseCount.M(respCount),
 		RPCClientFinishedCount.M(1),
@@ -159,5 +159,5 @@ func (h *ClientStatsHandler) handleRPCEnd(ctx context.Context, s *stats.End) {
 		m = append(m, RPCClientErrorCount.M(1))
 	}
 
-	istats.Record(ctx, m...)
+	measure.Record(ctx, m...)
 }
