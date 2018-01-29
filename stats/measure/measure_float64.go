@@ -46,7 +46,7 @@ func (m *Float64) M(v float64) Measurement {
 // NewFloat64 creates a new measure of type Float64. It returns
 // an error if a measure with the same name already exists.
 func NewFloat64(name, description, unit string) (*Float64, error) {
-	if err := checkMeasureName(name); err != nil {
+	if err := checkName(name); err != nil {
 		return nil, err
 	}
 	m := &Float64{
@@ -54,7 +54,7 @@ func NewFloat64(name, description, unit string) (*Float64, error) {
 		description: description,
 		unit:        unit,
 	}
-	_, err := registerMeasure(m)
+	_, err := register(m)
 	if err != nil {
 		return nil, err
 	} else {

@@ -39,7 +39,7 @@ func statsExamples() {
 	_ = videoSize
 
 	// START findMeasure
-	m := measure.FindMeasure("my.org/video_size")
+	m := measure.Find("my.org/video_size")
 	if m == nil {
 		log.Fatalln("measure not found")
 	}

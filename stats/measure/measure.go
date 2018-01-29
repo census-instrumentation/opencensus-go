@@ -44,14 +44,14 @@ var (
 	errDuplicate = errors.New("duplicate measure name")
 )
 
-func FindMeasure(name string) Measure {
+func Find(name string) Measure {
 	if m, ok := measures.Load(name); ok {
 		return m.(Measure)
 	}
 	return nil
 }
 
-func registerMeasure(m Measure) (Measure, error) {
+func register(m Measure) (Measure, error) {
 	stored, loaded := measures.LoadOrStore(m.Name(), m)
 	if loaded {
 		return stored.(Measure), errDuplicate
@@ -68,7 +68,7 @@ type Measurement struct {
 	Measure Measure
 }
 
-func checkMeasureName(name string) error {
+func checkName(name string) error {
 	if len(name) > internal.MaxNameLength {
 		return fmt.Errorf("measure name cannot be larger than %v", internal.MaxNameLength)
 	}

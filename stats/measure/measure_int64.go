@@ -46,7 +46,7 @@ func (m *Int64) M(v int64) Measurement {
 // NewInt64 creates a new measure of type Int64. It returns an
 // error if a measure with the same name already exists.
 func NewInt64(name, description, unit string) (*Int64, error) {
-	if err := checkMeasureName(name); err != nil {
+	if err := checkName(name); err != nil {
 		return nil, err
 	}
 	m := &Int64{
@@ -54,7 +54,7 @@ func NewInt64(name, description, unit string) (*Int64, error) {
 		description: description,
 		unit:        unit,
 	}
-	_, err := registerMeasure(m)
+	_, err := register(m)
 	if err != nil {
 		return nil, err
 	} else {

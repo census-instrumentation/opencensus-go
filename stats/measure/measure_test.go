@@ -29,8 +29,8 @@ func TestCheckMeasureName(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := checkMeasureName(tt.view); (err != nil) != tt.wantErr {
-				t.Errorf("checkMeasureName() error = %v, wantErr %v", err, tt.wantErr)
+			if err := checkName(tt.view); (err != nil) != tt.wantErr {
+				t.Errorf("checkName() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}
@@ -95,9 +95,9 @@ func Test_FindMeasure(t *testing.T) {
 	}
 
 	for _, tc := range tcs {
-		m := FindMeasure(tc.name)
+		m := Find(tc.name)
 		if m != tc.m {
-			t.Errorf("FindMeasure(%q) got measure %v; want %v", tc.label, m, tc.m)
+			t.Errorf("Find(%q) got measure %v; want %v", tc.label, m, tc.m)
 		}
 	}
 }
