@@ -17,7 +17,6 @@ package stackdriver
 import (
 	"fmt"
 	"math"
-	"runtime"
 	"time"
 	"unicode/utf8"
 
@@ -108,30 +107,6 @@ func protoFromSpanData(s *trace.SpanData, projectID string) *tracepb.Span {
 		}
 		sp.TimeEvents.DroppedAnnotationsCount = clip32(droppedAnnotationsCount)
 		sp.TimeEvents.DroppedMessageEventsCount = clip32(droppedMessageEventsCount)
-	}
-
-	if pcs := s.StackTrace; pcs != nil {
-		sf := &tracepb.StackTrace_StackFrames{}
-		sp.StackTrace = &tracepb.StackTrace{StackFrames: sf}
-		frames := runtime.CallersFrames(pcs)
-		dropped := 0
-		for {
-			frame, more := frames.Next()
-			if len(sf.Frame) >= 128 {
-				// TODO: drop from the middle
-				dropped++
-			} else {
-				sf.Frame = append(sf.Frame, &tracepb.StackTrace_StackFrame{
-					FunctionName: trunc(frame.Function, 1024),
-					FileName:     trunc(frame.File, 256),
-					LineNumber:   int64(frame.Line),
-				})
-			}
-			if !more {
-				break
-			}
-		}
-		sf.DroppedFramesCount = clip32(dropped)
 	}
 
 	if len(s.Links) > 0 {

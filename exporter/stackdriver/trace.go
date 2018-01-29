@@ -94,7 +94,6 @@ func (e *traceExporter) ExportSpan(s *trace.SpanData) {
 	n += len(s.Attributes)
 	n += len(s.Annotations)
 	n += len(s.MessageEvents)
-	n += len(s.StackTrace)
 	err := e.bundler.Add(s, n)
 	switch err {
 	case nil:

@@ -341,34 +341,6 @@ func checkTime(x *time.Time) bool {
 	return true
 }
 
-func TestStackTrace(t *testing.T) {
-	ctx := startSpan()
-	SetStackTrace(ctx)
-	got, err := endSpan(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if len(got.StackTrace) == 0 || got.StackTrace[0] == 0 {
-		t.Error("exporting span: expected stack trace")
-	}
-	got.StackTrace = nil
-
-	want := &SpanData{
-		SpanContext: SpanContext{
-			TraceID:      tid,
-			SpanID:       SpanID{},
-			TraceOptions: 0x1,
-		},
-		ParentSpanID:    sid,
-		Name:            "span0",
-		HasRemoteParent: true,
-	}
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("exporting span: got %#v want %#v", got, want)
-	}
-}
-
 func TestSetSpanAttributes(t *testing.T) {
 	ctx := startSpan()
 	SetSpanAttributes(ctx, StringAttribute{"key1", "value1"})
