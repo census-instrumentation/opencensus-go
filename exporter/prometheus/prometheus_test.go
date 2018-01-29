@@ -31,6 +31,10 @@ func newView(agg stats.Aggregation, window stats.Window) *stats.View {
 func TestOnlyCumulativeWindowSupported(t *testing.T) {
 	// See Issue https://github.com/census-instrumentation/opencensus-go/issues/214.
 	count1 := stats.CountData(1)
+	mean1 := stats.MeanData{
+		Mean:  4.5,
+		Count: 5,
+	}
 	tests := []struct {
 		vds  *stats.ViewData
 		want int
@@ -58,6 +62,15 @@ func TestOnlyCumulativeWindowSupported(t *testing.T) {
 				},
 			},
 			want: 0,
+		},
+		3: {
+			vds: &stats.ViewData{
+				View: newView(stats.MeanAggregation{}, stats.Cumulative{}),
+				Rows: []*stats.Row{
+					{nil, &mean1},
+				},
+			},
+			want: 1,
 		},
 	}
 
