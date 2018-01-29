@@ -51,12 +51,12 @@ func TracezHandler(w http.ResponseWriter, r *http.Request) {
 // WriteHTMLTracezPage writes an HTML document to w containing locally-sampled trace spans.
 func WriteHTMLTracezPage(w io.Writer, spanName string, spanType, spanSubtype int) {
 	if err := headerTemplate.Execute(w, headerData{Title: "Trace Spans"}); err != nil {
-		log.Printf("z: executing template: %v", err)
+		log.Printf("zpages: executing template: %v", err)
 	}
 	WriteHTMLTracezSummary(w)
 	WriteHTMLTracezSpans(w, spanName, spanType, spanSubtype)
 	if err := footerTemplate.Execute(w, nil); err != nil {
-		log.Printf("z: executing template: %v", err)
+		log.Printf("zpages: executing template: %v", err)
 	}
 }
 
@@ -65,7 +65,7 @@ func WriteHTMLTracezPage(w io.Writer, spanName string, spanType, spanSubtype int
 // It includes neither a header nor footer, so you can embed this data in other pages.
 func WriteHTMLTracezSummary(w io.Writer) {
 	if err := summaryTableTemplate.Execute(w, getSummaryPageData()); err != nil {
-		log.Printf("z: executing template: %v", err)
+		log.Printf("zpages: executing template: %v", err)
 	}
 }
 
@@ -77,7 +77,7 @@ func WriteHTMLTracezSpans(w io.Writer, spanName string, spanType, spanSubtype in
 		return
 	}
 	if err := tracesTableTemplate.Execute(w, traceDataFromSpans(spanName, traceSpans(spanName, spanType, spanSubtype))); err != nil {
-		log.Printf("z: executing template: %v", err)
+		log.Printf("zpages: executing template: %v", err)
 	}
 }
 

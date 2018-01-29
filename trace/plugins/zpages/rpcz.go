@@ -90,11 +90,11 @@ func RpczHandler(w http.ResponseWriter, r *http.Request) {
 // WriteHTMLRpczPage writes an HTML document to w containing per-method RPC stats.
 func WriteHTMLRpczPage(w io.Writer) {
 	if err := headerTemplate.Execute(w, headerData{Title: "RPC Stats"}); err != nil {
-		log.Printf("z: executing template: %v", err)
+		log.Printf("zpages: executing template: %v", err)
 	}
 	WriteHTMLRpczSummary(w)
 	if err := footerTemplate.Execute(w, nil); err != nil {
-		log.Printf("z: executing template: %v", err)
+		log.Printf("zpages: executing template: %v", err)
 	}
 }
 
@@ -104,7 +104,7 @@ func WriteHTMLRpczPage(w io.Writer) {
 func WriteHTMLRpczSummary(w io.Writer) {
 	mu.Lock()
 	if err := statsTemplate.Execute(w, getStatsPage()); err != nil {
-		log.Printf("z: executing template: %v", err)
+		log.Printf("zpages: executing template: %v", err)
 	}
 	mu.Unlock()
 }
@@ -336,12 +336,12 @@ func (s snapExporter) Export(vd *stats.ViewData) {
 			dist = v
 			sum = v.Sum()
 			count = float64(v.Count)
-		case *stats.MeanData:
-			sum = v.Sum()
-			count = v.Count
-		case *stats.SumData:
-			sum = float64(*v)
-			count = float64(*v)
+		//case *stats.MeanData:
+		//	sum = v.Sum()
+		//	count = v.Count
+		//case *stats.SumData:
+		//	sum = float64(*v)
+		//	count = float64(*v)
 		}
 
 		// Update field of s corresponding to the view.

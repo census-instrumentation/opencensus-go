@@ -24,7 +24,7 @@ import (
 	"time"
 
 	tracingclient "cloud.google.com/go/trace/apiv2"
-	"github.com/census-instrumentation/opencensus-go/trace"
+	"go.opencensus.io/trace"
 	"golang.org/x/net/context"
 	"google.golang.org/api/option"
 	"google.golang.org/api/support/bundler"

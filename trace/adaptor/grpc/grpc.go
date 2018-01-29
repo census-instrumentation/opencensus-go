@@ -6,8 +6,8 @@ package grpc
 import (
 	"strings"
 
-	"github.com/census-instrumentation/opencensus-go/trace"
-	"github.com/census-instrumentation/opencensus-go/trace/propagation"
+	"go.opencensus.io/trace"
+	"go.opencensus.io/trace/propagation"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"

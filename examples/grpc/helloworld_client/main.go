@@ -24,7 +24,7 @@ import (
 	pb "go.opencensus.io/examples/grpc/proto"
 	ocgrpc "go.opencensus.io/plugin/grpc"
 	"go.opencensus.io/plugin/grpc/grpcstats"
-	"go.opencensus.io/plugin/zpages"
+	"go.opencensus.io/trace/plugins/zpages"
 	"go.opencensus.io/stats"
 	"go.opencensus.io/trace"
 	"golang.org/x/net/context"

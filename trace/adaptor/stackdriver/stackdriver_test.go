@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/census-instrumentation/opencensus-go/trace"
+	"go.opencensus.io/trace"
 )
 
 func TestBundling(t *testing.T) {
