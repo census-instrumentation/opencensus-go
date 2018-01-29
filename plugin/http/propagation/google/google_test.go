@@ -24,7 +24,7 @@ import (
 )
 
 func TestHTTPFormat(t *testing.T) {
-	format := HTTPFormat{}
+	format := &HTTPFormat{}
 
 	traceID := [16]byte{16, 84, 69, 170, 120, 67, 188, 139, 242, 6, 177, 32, 0, 16, 0, 0}
 	var spanID [8]byte
