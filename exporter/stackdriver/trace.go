@@ -21,11 +21,8 @@ import (
 	"sync"
 	"time"
 
-	"go.opencensus.io/internal"
-
 	tracingclient "cloud.google.com/go/trace/apiv2"
 	"go.opencensus.io/trace"
-	"google.golang.org/api/option"
 	"google.golang.org/api/support/bundler"
 	tracepb "google.golang.org/genproto/googleapis/devtools/cloudtrace/v2"
 )
@@ -47,12 +44,7 @@ type traceExporter struct {
 var _ trace.Exporter = (*traceExporter)(nil)
 
 func newTraceExporter(o Options) (*traceExporter, error) {
-	co := []option.ClientOption{
-		option.WithUserAgent(internal.UserAgent),
-		// NB: NewClient below adds WithEndpoint, WithScopes options.
-	}
-	co = append(co, o.ClientOptions...)
-	client, err := tracingclient.NewClient(context.Background(), co...)
+	client, err := tracingclient.NewClient(context.Background(), o.ClientOptions...)
 	if err != nil {
 		return nil, fmt.Errorf("stackdriver: couldn't initialize trace client: %v", err)
 	}
