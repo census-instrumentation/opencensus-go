@@ -10,10 +10,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/census-instrumentation/opencensus-go/trace"
 	"github.com/golang/protobuf/proto"
 	timestamppb "github.com/golang/protobuf/ptypes/timestamp"
 	wrapperspb "github.com/golang/protobuf/ptypes/wrappers"
+	"go.opencensus.io/trace"
 	tracepb "google.golang.org/genproto/googleapis/devtools/cloudtrace/v2"
 	codepb "google.golang.org/genproto/googleapis/rpc/code"
 	statuspb "google.golang.org/genproto/googleapis/rpc/status"
@@ -36,7 +36,7 @@ type testExporter struct {
 	spans []*trace.SpanData
 }
 
-func (t *testExporter) Export(s *trace.SpanData) {
+func (t *testExporter) ExportSpan(s *trace.SpanData) {
 	t.spans = append(t.spans, s)
 }
 
@@ -57,17 +57,17 @@ func TestExportTrace(t *testing.T) {
 		{
 			ctx2 := trace.StartSpan(ctx1, "span2")
 			trace.AddMessageSendEvent(ctx2, 0x123, 1024, 512)
-			trace.LazyPrintf(ctx2, "in span%d", 2)
-			trace.LazyPrint(ctx2, big.NewRat(2, 4))
+			trace.Annotatef(ctx2, nil, "in span%d", 2)
+			//trace.Annotate(ctx2, nil, big.NewRat(2, 4))
 			trace.SetSpanAttributes(ctx2,
 				trace.StringAttribute{Key: "key1", Value: "value1"},
 				trace.StringAttribute{Key: "key2", Value: "value2"})
-			trace.SetSpanAttributes(ctx2, trace.IntAttribute{Key: "key1", Value: 100})
+			trace.SetSpanAttributes(ctx2, trace.Int64Attribute{Key: "key1", Value: 100})
 			trace.EndSpan(ctx2)
 		}
 		{
 			ctx3 := trace.StartSpan(ctx1, "span3")
-			trace.Print(ctx3, "in span3")
+			trace.Annotate(ctx3, nil, "in span3")
 			trace.AddMessageReceiveEvent(ctx3, 0x456, 2048, 1536)
 			trace.SetSpanStatus(ctx3, trace.Status{Code: int32(codepb.Code_UNAVAILABLE)})
 			trace.EndSpan(ctx3)
@@ -79,14 +79,13 @@ func TestExportTrace(t *testing.T) {
 				a3 := []trace.Attribute{trace.StringAttribute{Key: "k3", Value: "v3"}}
 				a4 := map[string]interface{}{"k4": "v4"}
 				r := big.NewRat(2, 4)
-				trace.LazyPrintWithAttributes(ctx4, a1, r)
-				trace.LazyPrintfWithAttributes(ctx4, a2, "foo %d", x)
-				trace.PrintWithAttributes(ctx4, a3, "in span4")
+				trace.Annotate(ctx4, a1, r.String())
+				trace.Annotatef(ctx4, a2, "foo %d", x)
+				trace.Annotate(ctx4, a3, "in span4")
 				trace.AddLink(ctx4, trace.Link{TraceID: trace.TraceID{1, 2}, SpanID: trace.SpanID{3}, Type: trace.LinkTypeParent, Attributes: a4})
 				trace.EndSpan(ctx4)
 			}
 		}
-		trace.SetStackTrace(ctx1)
 		trace.EndSpan(ctx1)
 	}
 	trace.EndSpan(ctx)

@@ -103,13 +103,13 @@ func NewExporter(o Options) (*Exporter, error) {
 }
 
 // Export exports a SpanData to Stackdriver Trace.
-func (e *Exporter) Export(s *trace.SpanData) {
+func (e *Exporter) ExportSpan(s *trace.SpanData) {
 	// n is a length heuristic.
 	n := 1
 	n += len(s.Attributes)
 	n += len(s.Annotations)
 	n += len(s.MessageEvents)
-	n += len(s.StackTrace)
+	//n += len(s.StackTrace)
 	err := e.bundler.Add(s, n)
 	switch err {
 	case nil:

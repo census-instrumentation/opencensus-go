@@ -7,9 +7,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/census-instrumentation/opencensus-go/trace"
-	grpctrace "github.com/census-instrumentation/opencensus-go/trace/adaptor/grpc"
-	testpb "github.com/census-instrumentation/opencensus-go/trace/adaptor/grpc/testdata"
+	"go.opencensus.io/plugin/grpc/grpctrace"
+	"go.opencensus.io/trace"
+	testpb "go.opencensus.io/trace/adaptor/grpc/testdata"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
@@ -71,7 +71,7 @@ type testExporter struct {
 	ch chan *trace.SpanData
 }
 
-func (t *testExporter) Export(s *trace.SpanData) {
+func (t *testExporter) ExportSpan(s *trace.SpanData) {
 	go func() { t.ch <- s }()
 }
 

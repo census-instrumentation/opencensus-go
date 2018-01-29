@@ -275,7 +275,7 @@ type methodKey struct {
 
 type snapExporter struct{}
 
-func (s snapExporter) Export(vd *stats.ViewData) {
+func (s snapExporter) ExportView(vd *stats.ViewData) {
 	received, ok := viewType[vd.View]
 	if !ok {
 		return
@@ -336,12 +336,12 @@ func (s snapExporter) Export(vd *stats.ViewData) {
 			dist = v
 			sum = v.Sum()
 			count = float64(v.Count)
-		//case *stats.MeanData:
-		//	sum = v.Sum()
-		//	count = v.Count
-		//case *stats.SumData:
-		//	sum = float64(*v)
-		//	count = float64(*v)
+		case *stats.MeanData:
+			sum = v.Sum()
+			count = v.Count
+		case *stats.SumData:
+			sum = float64(*v)
+			count = float64(*v)
 		}
 
 		// Update field of s corresponding to the view.
