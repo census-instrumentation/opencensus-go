@@ -22,43 +22,41 @@ import (
 	"testing"
 )
 
-func Test_EncodeDecode_Set(t *testing.T) {
+func TestEncodeDecode(t *testing.T) {
 	k1, _ := NewKey("k1")
 	k2, _ := NewKey("k2")
 	k3, _ := NewKey("k3 is very weird <>.,?/'\";:`~!@#$%^&*()_-+={[}]|\\")
 	k4, _ := NewKey("k4")
 
-	type pair struct {
+	type keyValue struct {
 		k Key
 		v string
 	}
 
-	type testCase struct {
+	testCases := []struct {
 		label string
-		pairs []pair
-	}
-
-	testCases := []testCase{
+		pairs []keyValue
+	}{
 		{
 			"0",
-			[]pair{},
+			[]keyValue{},
 		},
 		{
 			"1",
-			[]pair{
+			[]keyValue{
 				{k1, "v1"},
 			},
 		},
 		{
 			"2",
-			[]pair{
+			[]keyValue{
 				{k1, "v1"},
 				{k2, "v2"},
 			},
 		},
 		{
 			"3",
-			[]pair{
+			[]keyValue{
 				{k1, "v1"},
 				{k2, "v2"},
 				{k3, "v3"},
@@ -66,7 +64,7 @@ func Test_EncodeDecode_Set(t *testing.T) {
 		},
 		{
 			"4",
-			[]pair{
+			[]keyValue{
 				{k1, "v1"},
 				{k2, "v2"},
 				{k3, "v3"},
@@ -84,16 +82,16 @@ func Test_EncodeDecode_Set(t *testing.T) {
 		if err != nil {
 			t.Errorf("%v: NewMap = %v", tc.label, err)
 		}
+
 		encoded := Encode(ts)
 		decoded, err := Decode(encoded)
-
 		if err != nil {
 			t.Errorf("%v: decoding encoded tag map failed: %v", tc.label, err)
 		}
 
-		got := make([]pair, 0)
+		got := make([]keyValue, 0)
 		for k, v := range decoded.m {
-			got = append(got, pair{k, string(v)})
+			got = append(got, keyValue{k, string(v)})
 		}
 		want := tc.pairs
 
@@ -103,5 +101,54 @@ func Test_EncodeDecode_Set(t *testing.T) {
 		if !reflect.DeepEqual(got, tc.pairs) {
 			t.Errorf("%v: decoded tag map = %#v; want %#v", tc.label, got, want)
 		}
+	}
+}
+
+func TestDecode(t *testing.T) {
+	k1, _ := NewKey("k1")
+	m, _ := NewMap(context.Background(), Insert(k1, "v1"))
+
+	tests := []struct {
+		name    string
+		bytes   []byte
+		want    *Map
+		wantErr bool
+	}{
+		{
+			name:    "valid",
+			bytes:   []byte{0, 0, 2, 107, 49, 2, 118, 49},
+			want:    m,
+			wantErr: false,
+		},
+		{
+			name:    "non-ascii key",
+			bytes:   []byte{0, 0, 2, 107, 49, 2, 118, 49, 0, 2, 107, 25, 2, 118, 49},
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name:    "non-ascii value",
+			bytes:   []byte{0, 0, 2, 107, 49, 2, 118, 49, 0, 2, 107, 50, 2, 118, 25},
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name:    "long value",
+			bytes:   []byte{0, 0, 2, 107, 49, 2, 118, 49, 0, 2, 107, 50, 172, 2, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97},
+			want:    nil,
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := Decode(tt.bytes)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Decode() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Decode() = %v, want %v", got, tt.want)
+			}
+		})
 	}
 }

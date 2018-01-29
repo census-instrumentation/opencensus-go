@@ -20,7 +20,6 @@ type MeasureFloat64 struct {
 	name        string
 	unit        string
 	description string
-	views       map[*View]bool
 }
 
 // Name returns the name of the measure.
@@ -38,25 +37,8 @@ func (m *MeasureFloat64) Unit() string {
 	return m.unit
 }
 
-func (m *MeasureFloat64) addView(v *View) {
-	m.views[v] = true
-}
-
-func (m *MeasureFloat64) removeView(v *View) {
-	delete(m.views, v)
-}
-
-func (m *MeasureFloat64) viewsCount() int { return len(m.views) }
-
 // M creates a new float64 measurement.
 // Use Record to record measurements.
 func (m *MeasureFloat64) M(v float64) Measurement {
-	return &measurementFloat64{m: m, v: v}
+	return Measurement{m: m, v: v}
 }
-
-type measurementFloat64 struct {
-	m *MeasureFloat64
-	v float64
-}
-
-func (mf *measurementFloat64) isMeasurement() {}

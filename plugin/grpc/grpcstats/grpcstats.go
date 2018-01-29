@@ -18,6 +18,7 @@ package grpcstats // import "go.opencensus.io/plugin/grpc/grpcstats"
 
 import (
 	"log"
+	"strings"
 	"time"
 
 	istats "go.opencensus.io/stats"
@@ -56,6 +57,7 @@ var (
 	rpcCountBucketBoundaries  = []float64{0, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65536}
 
 	aggCount      = istats.CountAggregation{}
+	aggMean       = istats.MeanAggregation{}
 	aggDistBytes  = istats.DistributionAggregation(rpcBytesBucketBoundaries)
 	aggDistMillis = istats.DistributionAggregation(rpcMillisBucketBoundaries)
 	aggDistCounts = istats.DistributionAggregation(rpcCountBucketBoundaries)
@@ -64,21 +66,17 @@ var (
 	windowSlidingHour   = istats.Interval{Duration: 1 * time.Hour, Intervals: 6}
 	windowSlidingMinute = istats.Interval{Duration: 1 * time.Minute, Intervals: 6}
 
-	keyService  tag.Key
-	keyMethod   tag.Key
-	keyOpStatus tag.Key
+	keyMethod tag.Key
+	keyStatus tag.Key
 )
 
 func init() {
 	var err error
-	if keyService, err = tag.NewKey("grpc.service"); err != nil {
-		log.Fatalf("Cannot create grpc.service key: %v", err)
+	if keyMethod, err = tag.NewKey("method"); err != nil {
+		log.Fatalf("Cannot create method key: %v", err)
 	}
-	if keyMethod, err = tag.NewKey("grpc.method"); err != nil {
-		log.Fatalf("Cannot create grpc.method key: %v", err)
-	}
-	if keyOpStatus, err = tag.NewKey("grpc.opstatus"); err != nil {
-		log.Fatalf("Cannot create grpc.opstatus key: %v", err)
+	if keyStatus, err = tag.NewKey("canonical_status"); err != nil {
+		log.Fatalf("Cannot create canonical_status key: %v", err)
 	}
 	initServer()
 	initClient()
@@ -89,3 +87,7 @@ var (
 	grpcServerRPCKey  = grpcInstrumentationKey("server-rpc")
 	grpcClientRPCKey  = grpcInstrumentationKey("client-rpc")
 )
+
+func methodName(fullname string) string {
+	return strings.TrimLeft(fullname, "/")
+}

@@ -297,7 +297,7 @@ type testExporter struct {
 	spans []*SpanData
 }
 
-func (t *testExporter) Export(s *SpanData) {
+func (t *testExporter) ExportSpan(s *SpanData) {
 	t.spans = append(t.spans, s)
 }
 
@@ -341,34 +341,6 @@ func checkTime(x *time.Time) bool {
 	return true
 }
 
-func TestStackTrace(t *testing.T) {
-	ctx := startSpan()
-	SetStackTrace(ctx)
-	got, err := endSpan(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if len(got.StackTrace) == 0 || got.StackTrace[0] == 0 {
-		t.Error("exporting span: expected stack trace")
-	}
-	got.StackTrace = nil
-
-	want := &SpanData{
-		SpanContext: SpanContext{
-			TraceID:      tid,
-			SpanID:       SpanID{},
-			TraceOptions: 0x1,
-		},
-		ParentSpanID:    sid,
-		Name:            "span0",
-		HasRemoteParent: true,
-	}
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("exporting span: got %#v want %#v", got, want)
-	}
-}
-
 func TestSetSpanAttributes(t *testing.T) {
 	ctx := startSpan()
 	SetSpanAttributes(ctx, StringAttribute{"key1", "value1"})
@@ -395,12 +367,8 @@ func TestSetSpanAttributes(t *testing.T) {
 
 func TestAnnotations(t *testing.T) {
 	ctx := startSpan()
-	LazyPrint(ctx, foo(1))
-	LazyPrintWithAttributes(ctx, []Attribute{StringAttribute{"key2", "value2"}}, foo(2))
-	LazyPrintf(ctx, "%f", -1.5)
-	LazyPrintfWithAttributes(ctx, []Attribute{StringAttribute{"key3", "value3"}}, "%f", 1.5)
-	Print(ctx, "Print")
-	PrintWithAttributes(ctx, []Attribute{StringAttribute{"key4", "value4"}}, "PrintWithAttributes")
+	Annotatef(ctx, []Attribute{StringAttribute{"key1", "value1"}}, "%f", 1.5)
+	Annotate(ctx, []Attribute{StringAttribute{"key2", "value2"}}, "Annotate")
 	got, err := endSpan(ctx)
 	if err != nil {
 		t.Fatal(err)
@@ -421,12 +389,8 @@ func TestAnnotations(t *testing.T) {
 		ParentSpanID: sid,
 		Name:         "span0",
 		Annotations: []Annotation{
-			Annotation{Message: "foo", Attributes: nil},
-			Annotation{Message: "foo", Attributes: map[string]interface{}{"key2": "value2"}},
-			Annotation{Message: "-1.500000", Attributes: nil},
-			Annotation{Message: "1.500000", Attributes: map[string]interface{}{"key3": "value3"}},
-			Annotation{Message: "Print", Attributes: nil},
-			Annotation{Message: "PrintWithAttributes", Attributes: map[string]interface{}{"key4": "value4"}},
+			{Message: "1.500000", Attributes: map[string]interface{}{"key1": "value1"}},
+			{Message: "Annotate", Attributes: map[string]interface{}{"key2": "value2"}},
 		},
 		HasRemoteParent: true,
 	}
@@ -459,8 +423,8 @@ func TestMessageEvents(t *testing.T) {
 		ParentSpanID: sid,
 		Name:         "span0",
 		MessageEvents: []MessageEvent{
-			MessageEvent{EventType: 2, MessageID: 0x3, UncompressedByteSize: 0x190, CompressedByteSize: 0x12c},
-			MessageEvent{EventType: 1, MessageID: 0x1, UncompressedByteSize: 0xc8, CompressedByteSize: 0x64},
+			{EventType: 2, MessageID: 0x3, UncompressedByteSize: 0x190, CompressedByteSize: 0x12c},
+			{EventType: 1, MessageID: 0x1, UncompressedByteSize: 0xc8, CompressedByteSize: 0x64},
 		},
 		HasRemoteParent: true,
 	}
@@ -514,7 +478,7 @@ func TestAddLink(t *testing.T) {
 		},
 		ParentSpanID: sid,
 		Name:         "span0",
-		Links: []Link{Link{
+		Links: []Link{{
 			TraceID:    tid,
 			SpanID:     sid,
 			Type:       2,
@@ -588,5 +552,55 @@ func TestBucket(t *testing.T) {
 		if b.span(i).TraceID[0] != byte(want) {
 			t.Errorf("after resizing downwards: got span index %d, want %d\n", b.span(i).TraceID[0], want)
 		}
+	}
+}
+
+type exporter map[string]*SpanData
+
+func (e exporter) ExportSpan(s *SpanData) {
+	e[s.Name] = s
+}
+
+func Test_Issue328_EndSpanTwice(t *testing.T) {
+	spans := make(exporter)
+	RegisterExporter(&spans)
+	defer UnregisterExporter(&spans)
+	ctx := context.Background()
+	ctx = StartSpanWithOptions(ctx, "span-1", StartSpanOptions{Sampler: AlwaysSample()})
+	EndSpan(ctx)
+	EndSpan(ctx)
+	UnregisterExporter(&spans)
+	if len(spans) != 1 {
+		t.Fatalf("expected only a single span, got %#v", spans)
+	}
+}
+
+func TestStartSpanAfterEnd(t *testing.T) {
+	spans := make(exporter)
+	RegisterExporter(&spans)
+	defer UnregisterExporter(&spans)
+	ctx := StartSpanWithOptions(context.Background(), "parent", StartSpanOptions{Sampler: AlwaysSample()})
+	ctx1 := StartSpanWithOptions(ctx, "span-1", StartSpanOptions{Sampler: AlwaysSample()})
+	EndSpan(ctx1)
+	// Start a new span with the context containing span-1
+	// even though span-1 is ended, we still add this as a new child of span-1
+	ctx2 := StartSpanWithOptions(ctx1, "span-2", StartSpanOptions{Sampler: AlwaysSample()})
+	EndSpan(ctx2)
+	EndSpan(ctx)
+	UnregisterExporter(&spans)
+	if got, want := len(spans), 3; got != want {
+		t.Fatalf("len(%#v) = %d; want %d", spans, got, want)
+	}
+	if got, want := spans["span-1"].TraceID, spans["parent"].TraceID; got != want {
+		t.Errorf("span-1.TraceID=%q; want %q", got, want)
+	}
+	if got, want := spans["span-2"].TraceID, spans["parent"].TraceID; got != want {
+		t.Errorf("span-2.TraceID=%q; want %q", got, want)
+	}
+	if got, want := spans["span-1"].ParentSpanID, spans["parent"].SpanID; got != want {
+		t.Errorf("span-1.ParentSpanID=%q; want %q (parent.SpanID)", got, want)
+	}
+	if got, want := spans["span-2"].ParentSpanID, spans["span-1"].SpanID; got != want {
+		t.Errorf("span-2.ParentSpanID=%q; want %q (span1.SpanID)", got, want)
 	}
 }

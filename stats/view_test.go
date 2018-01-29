@@ -16,10 +16,9 @@
 package stats
 
 import (
+	"context"
 	"testing"
 	"time"
-
-	"golang.org/x/net/context"
 
 	"go.opencensus.io/tag"
 )
@@ -485,16 +484,6 @@ func Test_View_MeasureFloat64_AggregationCount_WindowSlidingTime(t *testing.T) {
 					},
 				},
 				{
-					"oldest partial bucket: (remaining time: 50%) (count: 0)",
-					startTime.Add(12 * time.Second),
-					[]*Row{
-						{
-							[]tag.Tag{{Key: k1, Value: "v1"}},
-							newCountData(7),
-						},
-					},
-				},
-				{
 					"oldest partial bucket: (remaining time: 50%) (count: 1)",
 					startTime.Add(12 * time.Second),
 					[]*Row{
@@ -593,6 +582,264 @@ func Test_View_MeasureFloat64_AggregationCount_WindowSlidingTime(t *testing.T) {
 
 	}
 }
+
+func Test_View_MeasureFloat64_AggregationSum_WindowCumulative(t *testing.T) {
+	k1, _ := tag.NewKey("k1")
+	k2, _ := tag.NewKey("k2")
+	k3, _ := tag.NewKey("k3")
+	view, err := NewView("VF1", "desc VF1", []tag.Key{k1, k2}, nil, SumAggregation{}, Cumulative{})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	type tagString struct {
+		k tag.Key
+		v string
+	}
+	type record struct {
+		f    float64
+		tags []tagString
+	}
+
+	tcs := []struct {
+		label    string
+		records  []record
+		wantRows []*Row
+	}{
+		{
+			"1",
+			[]record{
+				{1, []tagString{{k1, "v1"}}},
+				{5, []tagString{{k1, "v1"}}},
+			},
+			[]*Row{
+				{
+					[]tag.Tag{{Key: k1, Value: "v1"}},
+					newSumData(6),
+				},
+			},
+		},
+		{
+			"2",
+			[]record{
+				{1, []tagString{{k1, "v1"}}},
+				{5, []tagString{{k2, "v2"}}},
+			},
+			[]*Row{
+				{
+					[]tag.Tag{{Key: k1, Value: "v1"}},
+					newSumData(1),
+				},
+				{
+					[]tag.Tag{{Key: k2, Value: "v2"}},
+					newSumData(5),
+				},
+			},
+		},
+		{
+			"3",
+			[]record{
+				{1, []tagString{{k1, "v1"}}},
+				{5, []tagString{{k1, "v1"}, {k3, "v3"}}},
+				{1, []tagString{{k1, "v1 other"}}},
+				{5, []tagString{{k2, "v2"}}},
+				{5, []tagString{{k1, "v1"}, {k2, "v2"}}},
+			},
+			[]*Row{
+				{
+					[]tag.Tag{{Key: k1, Value: "v1"}},
+					newSumData(6),
+				},
+				{
+					[]tag.Tag{{Key: k1, Value: "v1 other"}},
+					newSumData(1),
+				},
+				{
+					[]tag.Tag{{Key: k2, Value: "v2"}},
+					newSumData(5),
+				},
+				{
+					[]tag.Tag{{Key: k1, Value: "v1"}, {Key: k2, Value: "v2"}},
+					newSumData(5),
+				},
+			},
+		},
+	}
+
+	for _, tt := range tcs {
+		view.clearRows()
+		view.subscribe()
+		for _, r := range tt.records {
+			mods := []tag.Mutator{}
+			for _, t := range r.tags {
+				mods = append(mods, tag.Insert(t.k, t.v))
+			}
+			ts, err := tag.NewMap(context.Background(), mods...)
+			if err != nil {
+				t.Errorf("%v: NewMap = %v", tt.label, err)
+			}
+			view.addSample(ts, r.f, time.Now())
+		}
+
+		gotRows := view.collectedRows(time.Now())
+		for i, got := range gotRows {
+			if !containsRow(tt.wantRows, got) {
+				t.Errorf("%v-%d: got row %v; want none", tt.label, i, got)
+				break
+			}
+		}
+
+		for i, want := range tt.wantRows {
+			if !containsRow(gotRows, want) {
+				t.Errorf("%v-%d: got none; want row %v", tt.label, i, want)
+				break
+			}
+		}
+	}
+}
+
+func Test_View_MeasureFloat64_AggregationMean_WindowCumulative(t *testing.T) {
+	k1, _ := tag.NewKey("k1")
+	k2, _ := tag.NewKey("k2")
+	k3, _ := tag.NewKey("k3")
+	view, err := NewView("VF1", "desc VF1", []tag.Key{k1, k2}, nil, MeanAggregation{}, Cumulative{})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	type tagString struct {
+		k tag.Key
+		v string
+	}
+	type record struct {
+		f    float64
+		tags []tagString
+	}
+
+	tcs := []struct {
+		label    string
+		records  []record
+		wantRows []*Row
+	}{
+		{
+			"1",
+			[]record{
+				{1, []tagString{{k1, "v1"}}},
+				{5, []tagString{{k1, "v1"}}},
+			},
+			[]*Row{
+				{
+					[]tag.Tag{{Key: k1, Value: "v1"}},
+					newMeanData(3, 2),
+				},
+			},
+		},
+		{
+			"2",
+			[]record{
+				{1, []tagString{{k1, "v1"}}},
+				{5, []tagString{{k2, "v2"}}},
+				{-0.5, []tagString{{k2, "v2"}}},
+			},
+			[]*Row{
+				{
+					[]tag.Tag{{Key: k1, Value: "v1"}},
+					newMeanData(1, 1),
+				},
+				{
+					[]tag.Tag{{Key: k2, Value: "v2"}},
+					newMeanData(2.25, 2),
+				},
+			},
+		},
+		{
+			"3",
+			[]record{
+				{1, []tagString{{k1, "v1"}}},
+				{5, []tagString{{k1, "v1"}, {k3, "v3"}}},
+				{1, []tagString{{k1, "v1 other"}}},
+				{5, []tagString{{k2, "v2"}}},
+				{5, []tagString{{k1, "v1"}, {k2, "v2"}}},
+				{-4, []tagString{{k1, "v1"}, {k2, "v2"}}},
+			},
+			[]*Row{
+				{
+					[]tag.Tag{{Key: k1, Value: "v1"}},
+					newMeanData(3, 2),
+				},
+				{
+					[]tag.Tag{{Key: k1, Value: "v1 other"}},
+					newMeanData(1, 1),
+				},
+				{
+					[]tag.Tag{{Key: k2, Value: "v2"}},
+					newMeanData(5, 1),
+				},
+				{
+					[]tag.Tag{{Key: k1, Value: "v1"}, {Key: k2, Value: "v2"}},
+					newMeanData(0.5, 2),
+				},
+			},
+		},
+	}
+
+	for _, tt := range tcs {
+		view.clearRows()
+		view.subscribe()
+		for _, r := range tt.records {
+			mods := []tag.Mutator{}
+			for _, t := range r.tags {
+				mods = append(mods, tag.Insert(t.k, t.v))
+			}
+			ts, err := tag.NewMap(context.Background(), mods...)
+			if err != nil {
+				t.Errorf("%v: NewMap = %v", tt.label, err)
+			}
+			view.addSample(ts, r.f, time.Now())
+		}
+
+		gotRows := view.collectedRows(time.Now())
+		for i, got := range gotRows {
+			if !containsRow(tt.wantRows, got) {
+				t.Errorf("%v-%d: got row %v; want none", tt.label, i, got)
+				break
+			}
+		}
+
+		for i, want := range tt.wantRows {
+			if !containsRow(gotRows, want) {
+				t.Errorf("%v-%d: got none; want row %v", tt.label, i, want)
+				break
+			}
+		}
+	}
+}
+
+func TestViewSortedKeys(t *testing.T) {
+	k1, _ := tag.NewKey("a")
+	k2, _ := tag.NewKey("b")
+	k3, _ := tag.NewKey("c")
+	ks := []tag.Key{k1, k3, k2}
+
+	v, err := NewView("sort_keys", "desc sort_keys", ks, nil, MeanAggregation{}, Cumulative{})
+	if err != nil {
+		t.Fatalf("NewView() = %v", err)
+	}
+
+	want := []string{"a", "b", "c"}
+	vks := v.TagKeys()
+	if len(vks) != len(want) {
+		t.Errorf("Keys = %+v; want %+v", vks, want)
+	}
+
+	for i, v := range want {
+		if got, want := v, vks[i].Name(); got != want {
+			t.Errorf("View name = %q; want %q", got, want)
+		}
+	}
+}
+
+// TODO(songya): add tests for AggregationSum and AggregationMean with Interval Window
 
 // containsRow returns true if rows contain r.
 func containsRow(rows []*Row, r *Row) bool {

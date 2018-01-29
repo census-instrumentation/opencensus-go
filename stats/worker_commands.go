@@ -37,7 +37,12 @@ type getMeasureByNameResp struct {
 }
 
 func (cmd *getMeasureByNameReq) handleCommand(w *worker) {
-	cmd.c <- &getMeasureByNameResp{w.measuresByName[cmd.name]}
+	ref, ok := w.measures[cmd.name]
+	if ok {
+		cmd.c <- &getMeasureByNameResp{ref.measure}
+		return
+	}
+	cmd.c <- &getMeasureByNameResp{nil}
 }
 
 // registerMeasureReq is the command to register a measure with the library.
@@ -57,24 +62,23 @@ type deleteMeasureReq struct {
 }
 
 func (cmd *deleteMeasureReq) handleCommand(w *worker) {
-	m, ok := w.measuresByName[cmd.m.Name()]
+	ref, ok := w.measures[cmd.m.Name()]
 	if !ok {
 		cmd.err <- nil
 		return
 	}
 
-	if m != cmd.m {
+	if ref.measure != cmd.m {
 		cmd.err <- nil
 		return
 	}
 
-	if c := m.viewsCount(); c > 0 {
+	if c := len(ref.views); c > 0 {
 		cmd.err <- fmt.Errorf("cannot delete; measure %q used by %v registered views", cmd.m.Name(), c)
 		return
 	}
 
-	delete(w.measuresByName, cmd.m.Name())
-	delete(w.measures, cmd.m)
+	delete(w.measures, cmd.m.Name())
 	cmd.err <- nil
 }
 
@@ -89,7 +93,7 @@ type getViewByNameResp struct {
 }
 
 func (cmd *getViewByNameReq) handleCommand(w *worker) {
-	cmd.c <- &getViewByNameResp{w.viewsByName[cmd.name]}
+	cmd.c <- &getViewByNameResp{w.views[cmd.name]}
 }
 
 // registerViewReq is the command to register a view with the library.
@@ -109,7 +113,7 @@ type unregisterViewReq struct {
 }
 
 func (cmd *unregisterViewReq) handleCommand(w *worker) {
-	v, ok := w.viewsByName[cmd.v.Name()]
+	v, ok := w.views[cmd.v.Name()]
 	if !ok {
 		cmd.err <- nil
 		return
@@ -122,9 +126,9 @@ func (cmd *unregisterViewReq) handleCommand(w *worker) {
 		cmd.err <- fmt.Errorf("cannot unregister view %q; all subscriptions must be unsubscribed first", cmd.v.Name())
 		return
 	}
-	delete(w.viewsByName, cmd.v.Name())
-	delete(w.views, cmd.v)
-	cmd.v.Measure().removeView(v)
+	delete(w.views, cmd.v.Name())
+	ref := w.measures[v.Measure().Name()]
+	delete(ref.views, v)
 	cmd.err <- nil
 }
 
@@ -181,7 +185,7 @@ type retrieveDataResp struct {
 }
 
 func (cmd *retrieveDataReq) handleCommand(w *worker) {
-	if _, ok := w.views[cmd.v]; !ok {
+	if _, ok := w.views[cmd.v.Name()]; !ok {
 		cmd.c <- &retrieveDataResp{
 			nil,
 			fmt.Errorf("cannot retrieve data; view %q is not registered", cmd.v.Name()),
@@ -212,16 +216,9 @@ type recordReq struct {
 
 func (cmd *recordReq) handleCommand(w *worker) {
 	for _, m := range cmd.ms {
-		switch measurement := m.(type) {
-		case *measurementFloat64:
-			for v := range measurement.m.views {
-				v.addSample(cmd.tm, measurement.v, cmd.now)
-			}
-		case *measurementInt64:
-			for v := range measurement.m.views {
-				v.addSample(cmd.tm, measurement.v, cmd.now)
-			}
-		default:
+		ref := w.measures[m.m.Name()]
+		for v := range ref.views {
+			v.addSample(cmd.tm, m.v, cmd.now)
 		}
 	}
 }

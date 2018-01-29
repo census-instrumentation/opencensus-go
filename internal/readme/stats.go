@@ -55,20 +55,15 @@ func statsExamples() {
 	// START aggs
 	distAgg := stats.DistributionAggregation([]float64{0, 1 << 32, 2 << 32, 3 << 32})
 	countAgg := stats.CountAggregation{}
+	sumAgg := stats.SumAggregation{}
+	meanAgg := stats.MeanAggregation{}
 	// END aggs
 
-	_, _ = distAgg, countAgg
+	_, _, _, _ = distAgg, countAgg, sumAgg, meanAgg
 
 	// START windows
-	interval := stats.Interval{
-		Duration:  10 * time.Second,
-		Intervals: 5,
-	}
-
 	cum := stats.Cumulative{}
 	// END windows
-
-	_, _ = interval, cum
 
 	// START view
 	view, err := stats.NewView(
@@ -97,7 +92,7 @@ func statsExamples() {
 	_ = v
 
 	// START unregisterView
-	if v.Unregister(); err != nil {
+	if err = stats.UnregisterView(v); err != nil {
 		log.Fatal(err)
 	}
 	// END unregisterView
@@ -111,7 +106,7 @@ func statsExamples() {
 	// END record
 
 	// START subscribe
-	if view.Subscribe(); err != nil {
+	if err := view.Subscribe(); err != nil {
 		log.Fatal(err)
 	}
 	// END subscribe
@@ -127,7 +122,7 @@ func statsExamples() {
 
 type exporter struct{}
 
-func (e *exporter) Export(vd *stats.ViewData) {
+func (e *exporter) ExportView(vd *stats.ViewData) {
 	log.Println(vd)
 }
 

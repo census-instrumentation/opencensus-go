@@ -82,3 +82,17 @@ func ExampleFromContext() {
 
 	_ = tagMap // use the tag map
 }
+
+func ExampleDo() {
+	tagMap, err := tag.NewMap(ctx,
+		tag.Insert(key, "macOS-10.12.5"),
+		tag.Upsert(key, "macOS-10.12.7"),
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+	ctx = tag.NewContext(ctx, tagMap)
+	tag.Do(ctx, func(ctx context.Context) {
+		_ = ctx // use context
+	})
+}

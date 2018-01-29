@@ -19,6 +19,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -34,6 +35,23 @@ func TestContext(t *testing.T) {
 	ctx := NewContext(context.Background(), want)
 	got := FromContext(ctx)
 
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("Map = %#v; want %#v", got, want)
+	}
+}
+
+func TestDo(t *testing.T) {
+	k1, _ := NewKey("k1")
+	k2, _ := NewKey("k2")
+	want, _ := NewMap(context.Background(),
+		Insert(k1, "v1"),
+		Insert(k2, "v2"),
+	)
+	ctx := NewContext(context.Background(), want)
+	var got *Map
+	Do(ctx, func(ctx context.Context) {
+		got = FromContext(ctx)
+	})
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("Map = %#v; want %#v", got, want)
 	}
@@ -102,6 +120,25 @@ func TestNewMap(t *testing.T) {
 			},
 			want: makeTestTagMap(4, 5),
 		},
+		{
+			name:    "from empty; invalid",
+			initial: nil,
+			mods: []Mutator{
+				Insert(k5, "v\x19"),
+				Upsert(k5, "v\x19"),
+				Update(k5, "v\x19"),
+			},
+			want: nil,
+		},
+		{
+			name:    "from empty; no partial",
+			initial: nil,
+			mods: []Mutator{
+				Insert(k5, "v1"),
+				Update(k5, "v\x19"),
+			},
+			want: nil,
+		},
 	}
 
 	for _, tt := range tests {
@@ -116,12 +153,58 @@ func TestNewMap(t *testing.T) {
 		mods = append(mods, tt.mods...)
 		ctx := NewContext(context.Background(), tt.initial)
 		got, err := NewMap(ctx, mods...)
-		if err != nil {
+		if tt.want != nil && err != nil {
 			t.Errorf("%v: NewMap = %v", tt.name, err)
 		}
 
 		if !reflect.DeepEqual(got, tt.want) {
 			t.Errorf("%v: got %v; want %v", tt.name, got, tt.want)
+		}
+	}
+}
+
+func TestNewMapValidation(t *testing.T) {
+	tests := []struct {
+		err  string
+		seed *Map
+	}{
+		// Key name validation in seed
+		{err: "invalid key", seed: &Map{m: map[Key]string{{name: ""}: "foo"}}},
+		{err: "", seed: &Map{m: map[Key]string{{name: "key"}: "foo"}}},
+		{err: "", seed: &Map{m: map[Key]string{{name: strings.Repeat("a", 255)}: "census"}}},
+		{err: "invalid key", seed: &Map{m: map[Key]string{{name: strings.Repeat("a", 256)}: "census"}}},
+		{err: "invalid key", seed: &Map{m: map[Key]string{{name: "Приве́т"}: "census"}}},
+
+		// Value validation
+		{err: "", seed: &Map{m: map[Key]string{{name: "key"}: ""}}},
+		{err: "", seed: &Map{m: map[Key]string{{name: "key"}: strings.Repeat("a", 255)}}},
+		{err: "invalid value", seed: &Map{m: map[Key]string{{name: "key"}: "Приве́т"}}},
+		{err: "invalid value", seed: &Map{m: map[Key]string{{name: "key"}: strings.Repeat("a", 256)}}},
+	}
+
+	for i, tt := range tests {
+		ctx := NewContext(context.Background(), tt.seed)
+		m, err := NewMap(ctx)
+		if tt.err != "" {
+			if err == nil {
+				t.Errorf("#%d: got nil error; want %q", i, tt.err)
+				continue
+			} else if s, substr := err.Error(), tt.err; !strings.Contains(s, substr) {
+				t.Errorf("#%d:\ngot %q\nwant %q", i, s, substr)
+			}
+			if m != nil {
+				t.Errorf("#%d: non-nil Map: %+v", i, m)
+			}
+			continue
+		}
+
+		if err != nil {
+			t.Errorf("#%d: got %q want nil", i, err)
+			continue
+		}
+		if m == nil {
+			t.Errorf("#%d: got nil map", i)
+			continue
 		}
 	}
 }

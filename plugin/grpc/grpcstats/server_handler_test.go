@@ -16,7 +16,6 @@
 package grpcstats
 
 import (
-	"errors"
 	"testing"
 
 	"golang.org/x/net/context"
@@ -24,7 +23,9 @@ import (
 	istats "go.opencensus.io/stats"
 	"go.opencensus.io/tag"
 
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/stats"
+	"google.golang.org/grpc/status"
 )
 
 func TestServerDefaultCollections(t *testing.T) {
@@ -75,8 +76,7 @@ func TestServerDefaultCollections(t *testing.T) {
 					[]*istats.Row{
 						{
 							[]tag.Tag{
-								{Key: keyMethod, Value: "method"},
-								{Key: keyService, Value: "package.service"},
+								{Key: keyMethod, Value: "package.service/method"},
 							},
 							newDistributionData(rpcCountBucketBoundaries, []int64{0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 1, 1, 1, 1, 0),
 						},
@@ -87,8 +87,7 @@ func TestServerDefaultCollections(t *testing.T) {
 					[]*istats.Row{
 						{
 							[]tag.Tag{
-								{Key: keyMethod, Value: "method"},
-								{Key: keyService, Value: "package.service"},
+								{Key: keyMethod, Value: "package.service/method"},
 							},
 							newDistributionData(rpcCountBucketBoundaries, []int64{0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 1, 1, 1, 1, 0),
 						},
@@ -99,8 +98,7 @@ func TestServerDefaultCollections(t *testing.T) {
 					[]*istats.Row{
 						{
 							[]tag.Tag{
-								{Key: keyMethod, Value: "method"},
-								{Key: keyService, Value: "package.service"},
+								{Key: keyMethod, Value: "package.service/method"},
 							},
 							newDistributionData(rpcBytesBucketBoundaries, []int64{0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 1, 10, 10, 10, 0),
 						},
@@ -111,8 +109,7 @@ func TestServerDefaultCollections(t *testing.T) {
 					[]*istats.Row{
 						{
 							[]tag.Tag{
-								{Key: keyMethod, Value: "method"},
-								{Key: keyService, Value: "package.service"},
+								{Key: keyMethod, Value: "package.service/method"},
 							},
 							newDistributionData(rpcBytesBucketBoundaries, []int64{0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 1, 10, 10, 10, 0),
 						},
@@ -147,7 +144,7 @@ func TestServerDefaultCollections(t *testing.T) {
 						{Length: 10},
 						{Length: 10},
 					},
-					&stats.End{Error: errors.New("someError")},
+					&stats.End{Error: status.Error(codes.Canceled, "canceled")},
 				},
 			},
 			[]*wantData{
@@ -156,9 +153,8 @@ func TestServerDefaultCollections(t *testing.T) {
 					[]*istats.Row{
 						{
 							[]tag.Tag{
-								{Key: keyMethod, Value: "method"},
-								{Key: keyOpStatus, Value: "someError"},
-								{Key: keyService, Value: "package.service"},
+								{Key: keyStatus, Value: "Canceled"},
+								{Key: keyMethod, Value: "package.service/method"},
 							},
 							newCountData(1),
 						},
@@ -169,8 +165,7 @@ func TestServerDefaultCollections(t *testing.T) {
 					[]*istats.Row{
 						{
 							[]tag.Tag{
-								{Key: keyMethod, Value: "method"},
-								{Key: keyService, Value: "package.service"},
+								{Key: keyMethod, Value: "package.service/method"},
 							},
 							newDistributionData(rpcCountBucketBoundaries, []int64{0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 2, 1, 2, 1.5, 0.5),
 						},
@@ -181,8 +176,7 @@ func TestServerDefaultCollections(t *testing.T) {
 					[]*istats.Row{
 						{
 							[]tag.Tag{
-								{Key: keyMethod, Value: "method"},
-								{Key: keyService, Value: "package.service"},
+								{Key: keyMethod, Value: "package.service/method"},
 							},
 							newDistributionData(rpcCountBucketBoundaries, []int64{0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 2, 2, 3, 2.5, 0.5),
 						},
@@ -216,7 +210,7 @@ func TestServerDefaultCollections(t *testing.T) {
 						{Length: 4096},
 						{Length: 16384},
 					},
-					&stats.End{Error: errors.New("someError1")},
+					&stats.End{Error: status.Error(codes.Aborted, "aborted")},
 				},
 				{
 					[]tagPair{{k1, "v11"}, {k2, "v22"}},
@@ -230,7 +224,7 @@ func TestServerDefaultCollections(t *testing.T) {
 						{Length: 4096},
 						{Length: 16384},
 					},
-					&stats.End{Error: errors.New("someError2")},
+					&stats.End{Error: status.Error(codes.Canceled, "canceled")},
 				},
 			},
 			[]*wantData{
@@ -239,17 +233,15 @@ func TestServerDefaultCollections(t *testing.T) {
 					[]*istats.Row{
 						{
 							[]tag.Tag{
-								{Key: keyMethod, Value: "method"},
-								{Key: keyOpStatus, Value: "someError1"},
-								{Key: keyService, Value: "package.service"},
+								{Key: keyStatus, Value: "Canceled"},
+								{Key: keyMethod, Value: "package.service/method"},
 							},
 							newCountData(1),
 						},
 						{
 							[]tag.Tag{
-								{Key: keyMethod, Value: "method"},
-								{Key: keyOpStatus, Value: "someError2"},
-								{Key: keyService, Value: "package.service"},
+								{Key: keyStatus, Value: "Aborted"},
+								{Key: keyMethod, Value: "package.service/method"},
 							},
 							newCountData(1),
 						},
@@ -260,8 +252,7 @@ func TestServerDefaultCollections(t *testing.T) {
 					[]*istats.Row{
 						{
 							[]tag.Tag{
-								{Key: keyMethod, Value: "method"},
-								{Key: keyService, Value: "package.service"},
+								{Key: keyMethod, Value: "package.service/method"},
 							},
 							newDistributionData(rpcCountBucketBoundaries, []int64{0, 0, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 3, 1, 2, 1.333333333, 0.333333333*2),
 						},
@@ -272,8 +263,7 @@ func TestServerDefaultCollections(t *testing.T) {
 					[]*istats.Row{
 						{
 							[]tag.Tag{
-								{Key: keyMethod, Value: "method"},
-								{Key: keyService, Value: "package.service"},
+								{Key: keyMethod, Value: "package.service/method"},
 							},
 							newDistributionData(rpcCountBucketBoundaries, []int64{0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 3, 2, 3, 2.666666666, 0.333333333*2),
 						},
@@ -284,8 +274,7 @@ func TestServerDefaultCollections(t *testing.T) {
 					[]*istats.Row{
 						{
 							[]tag.Tag{
-								{Key: keyMethod, Value: "method"},
-								{Key: keyService, Value: "package.service"},
+								{Key: keyMethod, Value: "package.service/method"},
 							},
 							newDistributionData(rpcBytesBucketBoundaries, []int64{0, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 4, 1, 16384, 4864.25, 59678208.25*3),
 						},
@@ -296,8 +285,7 @@ func TestServerDefaultCollections(t *testing.T) {
 					[]*istats.Row{
 						{
 							[]tag.Tag{
-								{Key: keyMethod, Value: "method"},
-								{Key: keyService, Value: "package.service"},
+								{Key: keyMethod, Value: "package.service/method"},
 							},
 							newDistributionData(rpcBytesBucketBoundaries, []int64{0, 1, 1, 1, 2, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0}, 8, 1, 65536, 13696.125, 481423542.982143*7),
 						},
@@ -332,11 +320,9 @@ func TestServerDefaultCollections(t *testing.T) {
 			for _, in := range rpc.inPayloads {
 				h.HandleRPC(ctx, in)
 			}
-
 			for _, out := range rpc.outPayloads {
 				h.HandleRPC(ctx, out)
 			}
-
 			h.HandleRPC(ctx, rpc.end)
 		}
 
@@ -374,6 +360,11 @@ func TestServerDefaultCollections(t *testing.T) {
 func newCountData(v int) *istats.CountData {
 	cav := istats.CountData(v)
 	return &cav
+}
+
+func newMeanData(count, mean float64) *istats.MeanData {
+	mav := istats.MeanData{Count: count, Mean: mean}
+	return &mav
 }
 
 func newDistributionData(bounds []float64, countPerBucket []int64, count int64, min, max, mean, sumOfSquaredDev float64) *istats.DistributionData {

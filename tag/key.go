@@ -15,8 +15,7 @@
 
 package tag
 
-// Key represents a tag key. Keys with the same name will return
-// true when compared with the == operator.
+// Key represents a tag key.
 type Key struct {
 	id   uint16
 	name string
@@ -25,6 +24,9 @@ type Key struct {
 // NewKey creates or retrieves a string key identified by name.
 // Calling NewKey consequently with the same name returns the same key.
 func NewKey(name string) (Key, error) {
+	if !checkKeyName(name) {
+		return Key{}, errInvalidKeyName
+	}
 	return km.newStringKey(name)
 }
 

@@ -36,9 +36,24 @@ func TestSanitize(t *testing.T) {
 			want:  "test_key_1",
 		},
 		{
-			name:  "don't modify alphanumeric string",
-			input: "0123456789_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz",
-			want:  "0123456789_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz",
+			name:  "add prefix if starting with digit",
+			input: "0123456789",
+			want:  "key_0123456789",
+		},
+		{
+			name:  "add prefix if starting with _",
+			input: "_0123456789",
+			want:  "key_0123456789",
+		},
+		{
+			name:  "starts with _ after sanitization",
+			input: "/0123456789",
+			want:  "key_0123456789",
+		},
+		{
+			name:  "valid input",
+			input: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_0123456789",
+			want:  "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_0123456789",
 		},
 	}
 

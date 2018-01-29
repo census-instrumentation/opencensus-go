@@ -9,12 +9,9 @@ OpenCensus Go is a Go implementation of OpenCensus, a toolkit for
 collecting application performance and behavior monitoring data.
 Currently it consists of three major components: tags, stats, and tracing.
 
-This project is still at a very early stage of development and
-a lot of the API calls are in the process of being changed and
-might break your code in the future.
+This project is still at a very early stage of development. The API is changing
+rapidly, vendoring is recommended.
 
-TODO: Add a link to the language independent OpenCensus
-doc when it is available.
 
 ## Installation
 
@@ -26,15 +23,24 @@ $ go get -u go.opencensus.io/...
 
 OpenCensus Go libraries require Go 1.8 or later.
 
+## Exporters
+
+OpenCensus can export instrumentation data to various backends. 
+Currently, OpenCensus supports:
+
+* [Prometheus][exporter-prom] for stats
+* [OpenZipkin][exporter-zipkin] for traces
+* Stackdriver [Monitoring][exporter-sdstats] and [Trace][exporter-sdtrace]
+
 ## Tags
 
-Tags represent propagated key values. They can propagated using context.Context
-in the same process or can be encoded to be transmitted on wire and decoded back
+Tags represent propagated key-value pairs. They can be propagated using context.Context
+in the same process or can be encoded to be transmitted on the wire and decoded back
 to a tag.Map at the destination.
 
 ### Getting a key by a name
 
-A key is defined by its name. To use a key a user needs to know its name and type.
+A key is defined by its name. To use a key, a user needs to know its name and type.
 Currently, only keys of type string are supported.
 Other types will be supported in the future.
 
@@ -73,7 +79,7 @@ if err != nil {
 
 ### Propagating a tag map in a context
 
-To propagate a tag map to downstream methods and downstream RPCs, add a tag map
+To propagate a tag map to downstream methods and RPCs, add a tag map
 to the current context. NewContext will return a copy of the current context,
 and put the tag map into the returned one.
 If there is already a tag map in the current context, it will be replaced.
@@ -89,8 +95,7 @@ use NewMap and put the new tag map back to the context.
 [embedmd]:# (tags.go replaceTagMap)
 ```go
 tagMap, err = tag.NewMap(ctx,
-	tag.Insert(key, "macOS-10.12.5"),
-	tag.Upsert(key, "macOS-10.12.7"),
+	tag.Insert(osKey, "macOS-10.12.5"),
 	tag.Upsert(userIDKey, "fff0989878"),
 )
 if err != nil {
@@ -133,34 +138,31 @@ if err := stats.DeleteMeasure(m); err != nil {
 	log.Fatal(err)
 }
 ```
+However, it is an error to delete a Measure that's used by at least one View. The
+View using the Measure has to be unregistered first.
 
 ### Creating an aggregation
 
-Currently only 2 types of aggregations are supported. The CountAggregation is used to count
+Currently 4 types of aggregations are supported. The CountAggregation is used to count
 the number of times a sample was recorded. The DistributionAggregation is used to
-provide a histogram of the values of the samples.
+provide a histogram of the values of the samples. The SumAggregation is used to
+sum up all sample values. The MeanAggregation is used to calculate the mean of
+sample values.
 
 [embedmd]:# (stats.go aggs)
 ```go
 distAgg := stats.DistributionAggregation([]float64{0, 1 << 32, 2 << 32, 3 << 32})
 countAgg := stats.CountAggregation{}
+sumAgg := stats.SumAggregation{}
+meanAgg := stats.MeanAggregation{}
 ```
 
 ### Create an aggregation window
 
-Currently only two types of aggregation windows are supported. The Cumulative
-is used to continuously aggregate the data received.
-The Interval window is used to aggregate the data received over the last specified time interval.
-Currently all aggregation types are compatible with all aggregation windows.
-Later we might provide aggregation types that are incompatible with some windows.
+Use Cumulative to continuously aggregate the recorded data.
 
 [embedmd]:# (stats.go windows)
 ```go
-interval := stats.Interval{
-	Duration:  10 * time.Second,
-	Intervals: 5,
-}
-
 cum := stats.Cumulative{}
 ```
 
@@ -170,7 +172,7 @@ Create and register a view:
 
 [embedmd]:# (stats.go view)
 ```go
-view := stats.NewView(
+view, err := stats.NewView(
 	"my.org/video_size_distribution",
 	"distribution of processed video size over time",
 	nil,
@@ -178,6 +180,9 @@ view := stats.NewView(
 	distAgg,
 	cum,
 )
+if err != nil {
+	log.Fatalf("cannot create view: %v", err)
+}
 if err := stats.RegisterView(view); err != nil {
 	log.Fatal(err)
 }
@@ -197,7 +202,7 @@ Unregister view:
 
 [embedmd]:# (stats.go unregisterView)
 ```go
-if v.Unregister(); err != nil {
+if err = stats.UnregisterView(v); err != nil {
 	log.Fatal(err)
 }
 ```
@@ -229,7 +234,7 @@ Users need to subscribe to a view in order to retrieve collected data.
 
 [embedmd]:# (stats.go subscribe)
 ```go
-if view.Subscribe(); err != nil {
+if err := view.Subscribe(); err != nil {
 	log.Fatal(err)
 }
 ```
@@ -256,9 +261,43 @@ func (e *exporter) Export(vd *stats.ViewData) {
 
 ```
 
-## Tracing
+## Traces
 
-Coming soon.
+### Starting and ending a span
+
+[embedmd]:# (trace.go startend)
+```go
+ctx = trace.StartSpan(ctx, "your choice of name")
+defer trace.EndSpan(ctx)
+```
+
+More tracing examples are coming soon...
+
+## Profiles
+
+OpenCensus tags can be applied as profiler labels
+for users who are on Go 1.9 and above.
+
+[embedmd]:# (tags.go profiler)
+```go
+tagMap, err = tag.NewMap(ctx,
+	tag.Insert(osKey, "macOS-10.12.5"),
+	tag.Insert(userIDKey, "fff0989878"),
+)
+if err != nil {
+	log.Fatal(err)
+}
+ctx = tag.NewContext(ctx, tagMap)
+tag.Do(ctx, func(ctx context.Context) {
+	// Do work.
+	// When profiling is on, samples will be
+	// recorded with the key/values from the tag map.
+})
+```
+
+A screenshot of the CPU profile from the program above:
+
+![CPU profile](https://i.imgur.com/jBKjlkw.png)
 
 
 [travis-image]: https://travis-ci.org/census-instrumentation/opencensus-go.svg?branch=master
@@ -273,3 +312,8 @@ Coming soon.
 
 [newtags-ex]: https://godoc.org/go.opencensus.io/tag#example-NewMap
 [newtags-replace-ex]: https://godoc.org/go.opencensus.io/tag#example-NewMap--Replace
+
+[exporter-prom]: https://godoc.org/go.opencensus.io/exporter/prometheus
+[exporter-sdstats]: https://godoc.org/go.opencensus.io/exporter/stackdriver
+[exporter-zipkin]: https://godoc.org/go.opencensus.io/exporter/zipkin
+[exporter-sdtrace]: https://godoc.org/go.opencensus.io/exporter/trace/stackdriver

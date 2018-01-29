@@ -122,6 +122,6 @@ type traceExporter struct {
 	buffer []*trace.SpanData
 }
 
-func (e *traceExporter) Export(sd *trace.SpanData) {
+func (e *traceExporter) ExportSpan(sd *trace.SpanData) {
 	e.buffer = append(e.buffer, sd)
 }

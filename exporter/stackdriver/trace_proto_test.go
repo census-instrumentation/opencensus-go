@@ -50,7 +50,7 @@ type testExporter struct {
 	spans []*trace.SpanData
 }
 
-func (t *testExporter) Export(s *trace.SpanData) {
+func (t *testExporter) ExportSpan(s *trace.SpanData) {
 	t.spans = append(t.spans, s)
 }
 
@@ -71,8 +71,8 @@ func TestExportTrace(t *testing.T) {
 		{
 			ctx2 := trace.StartSpan(ctx1, "span2")
 			trace.AddMessageSendEvent(ctx2, 0x123, 1024, 512)
-			trace.LazyPrintf(ctx2, "in span%d", 2)
-			trace.LazyPrint(ctx2, big.NewRat(2, 4))
+			trace.Annotatef(ctx2, nil, "in span%d", 2)
+			trace.Annotate(ctx2, nil, big.NewRat(2, 4).String())
 			trace.SetSpanAttributes(ctx2,
 				trace.StringAttribute{Key: "key1", Value: "value1"},
 				trace.StringAttribute{Key: "key2", Value: "value2"})
@@ -81,7 +81,7 @@ func TestExportTrace(t *testing.T) {
 		}
 		{
 			ctx3 := trace.StartSpan(ctx1, "span3")
-			trace.Print(ctx3, "in span3")
+			trace.Annotate(ctx3, nil, "in span3")
 			trace.AddMessageReceiveEvent(ctx3, 0x456, 2048, 1536)
 			trace.SetSpanStatus(ctx3, trace.Status{Code: int32(codepb.Code_UNAVAILABLE)})
 			trace.EndSpan(ctx3)
@@ -93,14 +93,13 @@ func TestExportTrace(t *testing.T) {
 				a3 := []trace.Attribute{trace.StringAttribute{Key: "k3", Value: "v3"}}
 				a4 := map[string]interface{}{"k4": "v4"}
 				r := big.NewRat(2, 4)
-				trace.LazyPrintWithAttributes(ctx4, a1, r)
-				trace.LazyPrintfWithAttributes(ctx4, a2, "foo %d", x)
-				trace.PrintWithAttributes(ctx4, a3, "in span4")
+				trace.Annotate(ctx4, a1, r.String())
+				trace.Annotatef(ctx4, a2, "foo %d", x)
+				trace.Annotate(ctx4, a3, "in span4")
 				trace.AddLink(ctx4, trace.Link{TraceID: trace.TraceID{1, 2}, SpanID: trace.SpanID{3}, Type: trace.LinkTypeParent, Attributes: a4})
 				trace.EndSpan(ctx4)
 			}
 		}
-		trace.SetStackTrace(ctx1)
 		trace.EndSpan(ctx1)
 	}
 	trace.EndSpan(ctx)
@@ -113,22 +112,6 @@ func TestExportTrace(t *testing.T) {
 		spbs = append(spbs, protoFromSpanData(s, "testproject"))
 	}
 	sort.Sort(spbs)
-
-	if st := spbs[1].StackTrace; st == nil {
-		t.Error("expected stack trace in span 1")
-	} else {
-		ok := false
-		if st.StackFrames != nil {
-			for _, frame := range st.StackFrames.Frame {
-				if strings.HasSuffix(frame.FunctionName.Value, "stackdriver.TestExportTrace") {
-					ok = true
-				}
-			}
-		}
-		if !ok {
-			t.Error("expected stack frame for stackdriver.TestExportTrace")
-		}
-	}
 
 	for i, want := range []string{
 		spanID.String(),
@@ -155,9 +138,6 @@ func TestExportTrace(t *testing.T) {
 				checkTime(&te.Time)
 			}
 		}
-		if span.StackTrace != nil {
-			span.StackTrace = nil
-		}
 		if want := fmt.Sprintf("projects/testproject/traces/%s/spans/%s", traceID, span.SpanId); span.Name != want {
 			t.Errorf("got span name %q want %q", span.Name, want)
 		}
@@ -177,27 +157,27 @@ func TestExportTrace(t *testing.T) {
 			DisplayName: trunc("span2", 128),
 			Attributes: &tracepb.Span_Attributes{
 				AttributeMap: map[string]*tracepb.AttributeValue{
-					"key2": &tracepb.AttributeValue{Value: &tracepb.AttributeValue_StringValue{StringValue: trunc("value2", 256)}},
-					"key1": &tracepb.AttributeValue{Value: &tracepb.AttributeValue_IntValue{IntValue: 100}},
+					"key2": {Value: &tracepb.AttributeValue_StringValue{StringValue: trunc("value2", 256)}},
+					"key1": {Value: &tracepb.AttributeValue_IntValue{IntValue: 100}},
 				},
 			},
 			TimeEvents: &tracepb.Span_TimeEvents{
 				TimeEvent: []*tracepb.Span_TimeEvent{
-					&tracepb.Span_TimeEvent{
+					{
 						Value: &tracepb.Span_TimeEvent_Annotation_{
 							Annotation: &tracepb.Span_TimeEvent_Annotation{
 								Description: trunc("in span2", 256),
 							},
 						},
 					},
-					&tracepb.Span_TimeEvent{
+					{
 						Value: &tracepb.Span_TimeEvent_Annotation_{
 							Annotation: &tracepb.Span_TimeEvent_Annotation{
 								Description: trunc("1/2", 256),
 							},
 						},
 					},
-					&tracepb.Span_TimeEvent{
+					{
 						Value: &tracepb.Span_TimeEvent_MessageEvent_{
 							MessageEvent: &tracepb.Span_TimeEvent_MessageEvent{
 								Type: tracepb.Span_TimeEvent_MessageEvent_SENT,
@@ -215,14 +195,14 @@ func TestExportTrace(t *testing.T) {
 			DisplayName: trunc("span3", 128),
 			TimeEvents: &tracepb.Span_TimeEvents{
 				TimeEvent: []*tracepb.Span_TimeEvent{
-					&tracepb.Span_TimeEvent{
+					{
 						Value: &tracepb.Span_TimeEvent_Annotation_{
 							Annotation: &tracepb.Span_TimeEvent_Annotation{
 								Description: trunc("in span3", 256),
 							},
 						},
 					},
-					&tracepb.Span_TimeEvent{
+					{
 						Value: &tracepb.Span_TimeEvent_MessageEvent_{
 							MessageEvent: &tracepb.Span_TimeEvent_MessageEvent{
 								Type: tracepb.Span_TimeEvent_MessageEvent_RECEIVED,
@@ -243,37 +223,37 @@ func TestExportTrace(t *testing.T) {
 			DisplayName: trunc("span4", 128),
 			TimeEvents: &tracepb.Span_TimeEvents{
 				TimeEvent: []*tracepb.Span_TimeEvent{
-					&tracepb.Span_TimeEvent{
+					{
 						Value: &tracepb.Span_TimeEvent_Annotation_{
 							Annotation: &tracepb.Span_TimeEvent_Annotation{
 								Description: trunc("1/2", 256),
 								Attributes: &tracepb.Span_Attributes{
 									AttributeMap: map[string]*tracepb.AttributeValue{
-										"k1": &tracepb.AttributeValue{Value: &tracepb.AttributeValue_StringValue{StringValue: trunc("v1", 256)}},
+										"k1": {Value: &tracepb.AttributeValue_StringValue{StringValue: trunc("v1", 256)}},
 									},
 								},
 							},
 						},
 					},
-					&tracepb.Span_TimeEvent{
+					{
 						Value: &tracepb.Span_TimeEvent_Annotation_{
 							Annotation: &tracepb.Span_TimeEvent_Annotation{
 								Description: trunc("foo 42", 256),
 								Attributes: &tracepb.Span_Attributes{
 									AttributeMap: map[string]*tracepb.AttributeValue{
-										"k2": &tracepb.AttributeValue{Value: &tracepb.AttributeValue_StringValue{StringValue: trunc("v2", 256)}},
+										"k2": {Value: &tracepb.AttributeValue_StringValue{StringValue: trunc("v2", 256)}},
 									},
 								},
 							},
 						},
 					},
-					&tracepb.Span_TimeEvent{
+					{
 						Value: &tracepb.Span_TimeEvent_Annotation_{
 							Annotation: &tracepb.Span_TimeEvent_Annotation{
 								Description: trunc("in span4", 256),
 								Attributes: &tracepb.Span_Attributes{
 									AttributeMap: map[string]*tracepb.AttributeValue{
-										"k3": &tracepb.AttributeValue{Value: &tracepb.AttributeValue_StringValue{StringValue: trunc("v3", 256)}},
+										"k3": {Value: &tracepb.AttributeValue_StringValue{StringValue: trunc("v3", 256)}},
 									},
 								},
 							},
@@ -283,13 +263,13 @@ func TestExportTrace(t *testing.T) {
 			},
 			Links: &tracepb.Span_Links{
 				Link: []*tracepb.Span_Link{
-					&tracepb.Span_Link{
+					{
 						TraceId: "projects/testproject/traces/01020000000000000000000000000000",
 						SpanId:  "0300000000000000",
 						Type:    tracepb.Span_Link_PARENT_LINKED_SPAN,
 						Attributes: &tracepb.Span_Attributes{
 							AttributeMap: map[string]*tracepb.AttributeValue{
-								"k4": &tracepb.AttributeValue{Value: &tracepb.AttributeValue_StringValue{StringValue: trunc("v4", 256)}},
+								"k4": {Value: &tracepb.AttributeValue_StringValue{StringValue: trunc("v4", 256)}},
 							},
 						},
 					},
@@ -350,14 +330,14 @@ func BenchmarkProto(b *testing.B) {
 		EndTime:    time.Now(),
 		Attributes: map[string]interface{}{"foo": "bar"},
 		Annotations: []trace.Annotation{
-			trace.Annotation{
+			{
 				Time:       time.Now().Add(-time.Millisecond),
 				Message:    "hello, world",
 				Attributes: map[string]interface{}{"foo": "bar"},
 			},
 		},
 		MessageEvents: []trace.MessageEvent{
-			trace.MessageEvent{
+			{
 				Time:                 time.Now().Add(-time.Microsecond),
 				EventType:            1,
 				MessageID:            2,

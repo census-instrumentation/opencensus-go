@@ -21,13 +21,13 @@ import (
 
 // Exporter is a type for functions that receive sampled trace spans.
 //
-// The Export method should return quickly; if an Exporter takes a significant
-// amount of time to process a SpanData, that work should be done on another
-// goroutine.
+// The ExportSpan method should be safe for concurrent use and should return
+// quickly; if an Exporter takes a significant amount of time to process a
+// SpanData, that work should be done on another goroutine.
 //
 // The SpanData should not be modified, but a pointer to it can be kept.
 type Exporter interface {
-	Export(s *SpanData)
+	ExportSpan(s *SpanData)
 }
 
 var (
@@ -66,7 +66,6 @@ type SpanData struct {
 	Annotations   []Annotation
 	MessageEvents []MessageEvent
 	Status
-	StackTrace      []uintptr
 	Links           []Link
 	HasRemoteParent bool
 }

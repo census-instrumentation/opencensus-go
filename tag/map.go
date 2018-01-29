@@ -17,10 +17,9 @@ package tag
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"sort"
-
-	"golang.org/x/net/context"
 )
 
 // Tag is a key value pair that can be propagated on wire.
@@ -93,6 +92,9 @@ type Mutator interface {
 func Insert(k Key, v string) Mutator {
 	return &mutator{
 		fn: func(m *Map) (*Map, error) {
+			if !checkValue(v) {
+				return nil, errInvalidValue
+			}
 			m.insert(k, v)
 			return m, nil
 		},
@@ -105,6 +107,9 @@ func Insert(k Key, v string) Mutator {
 func Update(k Key, v string) Mutator {
 	return &mutator{
 		fn: func(m *Map) (*Map, error) {
+			if !checkValue(v) {
+				return nil, errInvalidValue
+			}
 			m.update(k, v)
 			return m, nil
 		},
@@ -118,6 +123,9 @@ func Update(k Key, v string) Mutator {
 func Upsert(k Key, v string) Mutator {
 	return &mutator{
 		fn: func(m *Map) (*Map, error) {
+			if !checkValue(v) {
+				return nil, errInvalidValue
+			}
 			m.upsert(k, v)
 			return m, nil
 		},
@@ -138,11 +146,16 @@ func Delete(k Key) Mutator {
 // NewMap returns a new tag map originated from the incoming context
 // and modified with the provided mutators.
 func NewMap(ctx context.Context, mutator ...Mutator) (*Map, error) {
-	// TODO(jbd): Implement validation of keys and values.
 	m := newMap(0)
 	orig := FromContext(ctx)
 	if orig != nil {
 		for k, v := range orig.m {
+			if !checkKeyName(k.Name()) {
+				return nil, fmt.Errorf("key:%q: %v", k, errInvalidKeyName)
+			}
+			if !checkValue(v) {
+				return nil, fmt.Errorf("key:%q value:%q: %v", k.Name(), v, errInvalidValue)
+			}
 			m.insert(k, v)
 		}
 	}
@@ -154,6 +167,18 @@ func NewMap(ctx context.Context, mutator ...Mutator) (*Map, error) {
 		}
 	}
 	return m, nil
+}
+
+// Do is similar to pprof.Do: a convenience for installing the tags
+// from the context as Go profiler labels. This allows you to
+// correlated runtime profiling with stats.
+//
+// It converts the key/values from the given map to Go profiler labels
+// and calls pprof.Do.
+//
+// Do is going to do nothing if your Go version is below 1.9.
+func Do(ctx context.Context, f func(ctx context.Context)) {
+	do(ctx, f)
 }
 
 type mutator struct {

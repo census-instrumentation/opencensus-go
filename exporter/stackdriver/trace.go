@@ -12,24 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package stackdriver contains an exporter for Stackdriver Trace.
-//
-// Example:
-//
-// 	import "go.opencensus.io/trace/adaptor/stackdriver"
-//
-// 	exporter, err := stackdriver.NewExporter(stackdriver.Options{ProjectID: *project})
-// 	if err != nil {
-// 		log.Println(err)
-// 	} else {
-// 		trace.RegisterExporter(exporter)
-// 	}
-//
-// The package uses Application Default Credentials to authenticate.  See
-// https://developers.google.com/identity/protocols/application-default-credentials
 package stackdriver
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"sync"
@@ -39,15 +25,17 @@ import (
 
 	tracingclient "cloud.google.com/go/trace/apiv2"
 	"go.opencensus.io/trace"
-	"golang.org/x/net/context"
 	"google.golang.org/api/option"
 	"google.golang.org/api/support/bundler"
 	tracepb "google.golang.org/genproto/googleapis/devtools/cloudtrace/v2"
 )
 
-// Exporter is an implementation of trace.Exporter that uploads spans to
+// traceExporter is an implementation of trace.Exporter that uploads spans to
 // Stackdriver.
-type Exporter struct {
+//
+// traceExporter also implements trace/propagation.HTTPFormat and can
+// propagate Stackdriver Traces over HTTP requests.
+type traceExporter struct {
 	projectID string
 	bundler   *bundler.Bundler
 	// uploadFn defaults to uploadToStackdriver; it can be replaced for tests.
@@ -56,26 +44,9 @@ type Exporter struct {
 	client *tracingclient.Client
 }
 
-var _ trace.Exporter = (*Exporter)(nil)
+var _ trace.Exporter = (*traceExporter)(nil)
 
-// Options contains options for configuring an exporter.
-//
-// Only ProjectID is required.
-type Options struct {
-	ProjectID string
-	// ClientOptions contains options used to configure the Stackdriver client.
-	ClientOptions []option.ClientOption
-	// BundleDelayThreshold is maximum length of time to wait before uploading a
-	// bundle of spans to Stackdriver.
-	BundleDelayThreshold time.Duration
-	// BundleCountThreshold is the maximum number of spans to upload in one bundle
-	// to Stackdriver.
-	BundleCountThreshold int
-}
-
-// NewExporter returns an implementation of trace.Exporter that uploads spans
-// to Stackdriver.
-func NewExporter(o Options) (*Exporter, error) {
+func newTraceExporter(o Options) (*traceExporter, error) {
 	co := []option.ClientOption{
 		option.WithUserAgent(internal.UserAgent),
 		// NB: NewClient below adds WithEndpoint, WithScopes options.
@@ -83,15 +54,15 @@ func NewExporter(o Options) (*Exporter, error) {
 	co = append(co, o.ClientOptions...)
 	client, err := tracingclient.NewClient(context.Background(), co...)
 	if err != nil {
-		return nil, fmt.Errorf("stackdriver: couldn't initialize client: %v", err)
+		return nil, fmt.Errorf("stackdriver: couldn't initialize trace client: %v", err)
 	}
-	return newExporter(o, client), nil
+	return newTraceExporterWithClient(o, client), nil
 }
 
-func newExporter(o Options, client *tracingclient.Client) *Exporter {
-	e := &Exporter{
+func newTraceExporterWithClient(o Options, c *tracingclient.Client) *traceExporter {
+	e := &traceExporter{
 		projectID: o.ProjectID,
-		client:    client,
+		client:    c,
 	}
 	bundler := bundler.NewBundler((*trace.SpanData)(nil), func(bundle interface{}) {
 		e.uploadFn(bundle.([]*trace.SpanData))
@@ -116,14 +87,13 @@ func newExporter(o Options, client *tracingclient.Client) *Exporter {
 	return e
 }
 
-// Export exports a SpanData to Stackdriver Trace.
-func (e *Exporter) Export(s *trace.SpanData) {
+// ExportSpan exports a SpanData to Stackdriver Trace.
+func (e *traceExporter) ExportSpan(s *trace.SpanData) {
 	// n is a length heuristic.
 	n := 1
 	n += len(s.Attributes)
 	n += len(s.Annotations)
 	n += len(s.MessageEvents)
-	n += len(s.StackTrace)
 	err := e.bundler.Add(s, n)
 	switch err {
 	case nil:
@@ -141,12 +111,12 @@ func (e *Exporter) Export(s *trace.SpanData) {
 //
 // This is useful if your program is ending and you do not want to lose recent
 // spans.
-func (e *Exporter) Flush() {
+func (e *traceExporter) Flush() {
 	e.bundler.Flush()
 }
 
 // uploadToStackdriver uploads a set of spans to Stackdriver.
-func (e *Exporter) uploadToStackdriver(spans []*trace.SpanData) {
+func (e *traceExporter) uploadToStackdriver(spans []*trace.SpanData) {
 	req := tracepb.BatchWriteSpansRequest{
 		Name:  "projects/" + e.projectID,
 		Spans: make([]*tracepb.Span, 0, len(spans)),

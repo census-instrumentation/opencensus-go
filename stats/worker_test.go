@@ -16,14 +16,14 @@
 package stats
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"sync"
 	"testing"
 	"time"
 
 	"go.opencensus.io/tag"
-
-	"golang.org/x/net/context"
 )
 
 func Test_Worker_MeasureCreation(t *testing.T) {
@@ -442,9 +442,9 @@ func Test_Worker_ViewRegistration(t *testing.T) {
 
 		for _, unreg := range tc.unregs {
 			v := views[unreg.vID]
-			err := v.Unregister()
+			err := UnregisterView(v)
 			if (err != nil) != (unreg.err != nil) {
-				t.Errorf("%v: Unregister() = %v; want %v", tc.label, err, unreg.err)
+				t.Errorf("%v: UnregisterView() = %v; want %v", tc.label, err, unreg.err)
 			}
 		}
 
@@ -605,25 +605,86 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 		}
 
 		for _, v := range tc.registrations {
-			if err := v.Unregister(); err != nil {
+			if err := UnregisterView(v); err != nil {
 				t.Fatalf("%v: Unregistering view %v errrored with %v; want no error", tc.label, v.Name(), err)
 			}
 		}
 	}
 }
 
-// restart stops the current processors and creates a new one.
-func restart() {
-	defaultWorker.stop()
-	defaultWorker = newWorker()
-	go defaultWorker.start()
+func TestReportUsage(t *testing.T) {
+	ctx := context.Background()
+
+	m, err := NewMeasureInt64("measure", "desc", "unit")
+	if err != nil {
+		t.Fatalf("NewMeasureInt64() = %v", err)
+	}
+
+	cum1, _ := NewView("cum1", "", nil, m, CountAggregation{}, Cumulative{})
+	cum2, _ := NewView("cum1", "", nil, m, CountAggregation{}, &Cumulative{})
+	interval, _ := NewView("cum1", "", nil, m, CountAggregation{}, Interval{Duration: 5 * time.Millisecond, Intervals: 1})
+
+	tests := []struct {
+		name         string
+		view         *View
+		wantMaxCount int64
+	}{
+		{
+			name:         "cum",
+			view:         cum1,
+			wantMaxCount: 8,
+		},
+		{
+			name:         "cum2",
+			view:         cum2,
+			wantMaxCount: 8,
+		},
+		{
+			name:         "interval",
+			view:         interval,
+			wantMaxCount: 2,
+		},
+	}
+
+	for _, tt := range tests {
+		restart()
+		SetReportingPeriod(25 * time.Millisecond)
+
+		if err := tt.view.Subscribe(); err != nil {
+			t.Fatalf("%v: cannot subscribe: %v", tt.name, err)
+		}
+
+		e := &countExporter{}
+		RegisterExporter(e)
+
+		Record(ctx, m.M(1))
+		Record(ctx, m.M(1))
+		Record(ctx, m.M(1))
+		Record(ctx, m.M(1))
+
+		time.Sleep(50 * time.Millisecond)
+
+		Record(ctx, m.M(1))
+		Record(ctx, m.M(1))
+		Record(ctx, m.M(1))
+		Record(ctx, m.M(1))
+
+		time.Sleep(50 * time.Millisecond)
+
+		e.Lock()
+		count := e.count
+		e.Unlock()
+		if got, want := count, tt.wantMaxCount; got > want {
+			t.Errorf("%v: got count data = %v; want at most %v", tt.name, got, want)
+		}
+	}
+
 }
 
 func Test_SetReportingPeriodReqNeverBlocks(t *testing.T) {
 	t.Parallel()
 
 	worker := newWorker()
-
 	durations := []time.Duration{-1, 0, 10, 100 * time.Millisecond}
 	for i, duration := range durations {
 		ackChan := make(chan bool, 1)
@@ -636,4 +697,92 @@ func Test_SetReportingPeriodReqNeverBlocks(t *testing.T) {
 			t.Errorf("#%d: duration %v blocks", i, duration)
 		}
 	}
+}
+
+func TestWorkerCumStarttime(t *testing.T) {
+	restart()
+
+	ctx := context.Background()
+	m, err := NewMeasureInt64("measure", "desc", "unit")
+	if err != nil {
+		t.Fatalf("NewMeasureInt64() = %v", err)
+	}
+	view, err := NewView("cum", "", nil, m, CountAggregation{}, Cumulative{})
+	if err != nil {
+		t.Fatalf("NewView() = %v", err)
+	}
+
+	SetReportingPeriod(25 * time.Millisecond)
+	if err := view.Subscribe(); err != nil {
+		t.Fatalf("cannot subscribe to %v: %v", view.Name(), err)
+	}
+
+	e := &vdExporter{}
+	RegisterExporter(e)
+	defer UnregisterExporter(e)
+
+	Record(ctx, m.M(1))
+	Record(ctx, m.M(1))
+	Record(ctx, m.M(1))
+	Record(ctx, m.M(1))
+
+	time.Sleep(50 * time.Millisecond)
+
+	Record(ctx, m.M(1))
+	Record(ctx, m.M(1))
+	Record(ctx, m.M(1))
+	Record(ctx, m.M(1))
+
+	time.Sleep(50 * time.Millisecond)
+
+	e.Lock()
+	if len(e.vds) == 0 {
+		t.Fatal("Got no view data; want at least one")
+	}
+
+	var start time.Time
+	for _, vd := range e.vds {
+		if start.IsZero() {
+			start = vd.Start
+		}
+		if !vd.Start.Equal(start) {
+			t.Errorf("Cumulative view data start time = %v; want %v", vd.Start, start)
+		}
+	}
+	e.Unlock()
+}
+
+type countExporter struct {
+	sync.Mutex
+	count int64
+}
+
+func (e *countExporter) ExportView(vd *ViewData) {
+	if len(vd.Rows) == 0 {
+		return
+	}
+	d := vd.Rows[0].Data.(*CountData)
+
+	e.Lock()
+	defer e.Unlock()
+	e.count = int64(*d)
+}
+
+type vdExporter struct {
+	sync.Mutex
+	vds []*ViewData
+}
+
+func (e *vdExporter) ExportView(vd *ViewData) {
+	e.Lock()
+	defer e.Unlock()
+
+	e.vds = append(e.vds, vd)
+}
+
+// restart stops the current processors and creates a new one.
+func restart() {
+	defaultWorker.stop()
+	defaultWorker = newWorker()
+	go defaultWorker.start()
 }

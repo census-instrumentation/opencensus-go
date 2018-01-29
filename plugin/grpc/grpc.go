@@ -30,8 +30,8 @@ import (
 // on, see grpcstats and grpctrace packages.
 func NewClientStatsHandler() stats.Handler {
 	return handler{
-		&grpcstats.ClientStatsHandler{},
-		&grpctrace.ClientStatsHandler{},
+		grpcstats.NewClientStatsHandler(),
+		grpctrace.NewClientStatsHandler(),
 	}
 }
 
@@ -40,8 +40,8 @@ func NewClientStatsHandler() stats.Handler {
 // on, see grpcstats and grpctrace packages.
 func NewServerStatsHandler() stats.Handler {
 	return handler{
-		&grpcstats.ServerStatsHandler{},
-		&grpctrace.ServerStatsHandler{},
+		grpcstats.NewServerStatsHandler(),
+		grpctrace.NewServerStatsHandler(),
 	}
 }
 

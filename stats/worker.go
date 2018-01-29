@@ -29,11 +29,15 @@ func init() {
 	go defaultWorker.start()
 }
 
+type measureRef struct {
+	measure Measure
+	views   map[*View]struct{}
+}
+
 type worker struct {
-	measuresByName map[string]Measure
-	measures       map[Measure]bool
-	viewsByName    map[string]*View
-	views          map[*View]bool
+	measures   map[string]*measureRef
+	views      map[string]*View
+	startTimes map[*View]time.Time
 
 	timer      *time.Ticker
 	c          chan command
@@ -54,7 +58,6 @@ func NewMeasureFloat64(name, description, unit string) (*MeasureFloat64, error) 
 		name:        name,
 		description: description,
 		unit:        unit,
-		views:       make(map[*View]bool),
 	}
 
 	req := &registerMeasureReq{
@@ -79,7 +82,6 @@ func NewMeasureInt64(name, description, unit string) (*MeasureInt64, error) {
 		name:        name,
 		description: description,
 		unit:        unit,
-		views:       make(map[*View]bool),
 	}
 
 	req := &registerMeasureReq{
@@ -122,10 +124,10 @@ func RegisterView(v *View) error {
 	return <-req.err
 }
 
-// Unregister removes the previously registered view. It returns an error
+// UnregisterView removes the previously registered view. It returns an error
 // if the view wasn't registered. All data collected and not reported for the
 // corresponding view will be lost. The view is automatically be unsubscribed.
-func (v *View) Unregister() error {
+func UnregisterView(v *View) error {
 	req := &unregisterViewReq{
 		v:   v,
 		err: make(chan error),
@@ -204,14 +206,13 @@ func SetReportingPeriod(d time.Duration) {
 
 func newWorker() *worker {
 	return &worker{
-		measuresByName: make(map[string]Measure),
-		measures:       make(map[Measure]bool),
-		viewsByName:    make(map[string]*View),
-		views:          make(map[*View]bool),
-		timer:          time.NewTicker(defaultReportingDuration),
-		c:              make(chan command),
-		quit:           make(chan bool),
-		done:           make(chan bool),
+		measures:   make(map[string]*measureRef),
+		views:      make(map[string]*View),
+		startTimes: make(map[*View]time.Time),
+		timer:      time.NewTicker(defaultReportingDuration),
+		c:          make(chan command),
+		quit:       make(chan bool),
+		done:       make(chan bool),
 	}
 }
 
@@ -239,8 +240,8 @@ func (w *worker) stop() {
 }
 
 func (w *worker) tryRegisterMeasure(m Measure) error {
-	if x, ok := w.measuresByName[m.Name()]; ok {
-		if x != m {
+	if ref, ok := w.measures[m.Name()]; ok {
+		if ref.measure != m {
 			return fmt.Errorf("cannot register measure %q; another measure with the same name is already registered", m.Name())
 		}
 		// the measure is already registered so there is nothing to do and the
@@ -248,13 +249,15 @@ func (w *worker) tryRegisterMeasure(m Measure) error {
 		return nil
 	}
 
-	w.measuresByName[m.Name()] = m
-	w.measures[m] = true
+	w.measures[m.Name()] = &measureRef{
+		measure: m,
+		views:   make(map[*View]struct{}),
+	}
 	return nil
 }
 
 func (w *worker) tryRegisterView(v *View) error {
-	if x, ok := w.viewsByName[v.Name()]; ok {
+	if x, ok := w.views[v.Name()]; ok {
 		if x != v {
 			return fmt.Errorf("cannot register view %q; another view with the same name is already registered", v.Name())
 		}
@@ -270,31 +273,64 @@ func (w *worker) tryRegisterView(v *View) error {
 		return fmt.Errorf("cannot register view %q: %v", v.Name(), err)
 	}
 
-	w.viewsByName[v.Name()] = v
-	w.views[v] = true
-	v.Measure().addView(v)
+	w.views[v.Name()] = v
+	ref := w.measures[v.Measure().Name()]
+	ref.views[v] = struct{}{}
+
 	return nil
 }
 
-func (w *worker) reportUsage(now time.Time) {
-	for v := range w.views {
+func (w *worker) reportUsage(start time.Time) {
+	for _, v := range w.views {
 		if !v.isSubscribed() {
 			continue
 		}
-		rows := v.collectedRows(now)
+		rows := v.collectedRows(start)
+		if isCumulative(v) {
+			s, ok := w.startTimes[v]
+			if !ok {
+				w.startTimes[v] = start
+			} else {
+				start = s
+			}
+		}
+		// Make sure collector is never going
+		// to mutate the exported data.
+		rows = deepCopyRowData(rows)
 		viewData := &ViewData{
 			View:  v,
-			Start: now,
+			Start: start,
 			End:   time.Now(),
 			Rows:  rows,
 		}
 		exportersMu.Lock()
 		for e := range exporters {
-			e.Export(viewData)
+			e.ExportView(viewData)
 		}
 		exportersMu.Unlock()
-		if _, ok := v.Window().(*Cumulative); !ok {
+		if !isCumulative(v) {
 			v.clearRows()
 		}
 	}
+}
+
+func isCumulative(v *View) bool {
+	switch v.Window().(type) {
+	case *Cumulative:
+		return true
+	case Cumulative:
+		return true
+	}
+	return false
+}
+
+func deepCopyRowData(rows []*Row) []*Row {
+	newRows := make([]*Row, 0, len(rows))
+	for _, r := range rows {
+		newRows = append(newRows, &Row{
+			Data: r.Data.clone(),
+			Tags: r.Tags,
+		})
+	}
+	return newRows
 }

@@ -58,8 +58,7 @@ func tagsExamples() {
 
 	// START replaceTagMap
 	tagMap, err = tag.NewMap(ctx,
-		tag.Insert(key, "macOS-10.12.5"),
-		tag.Upsert(key, "macOS-10.12.7"),
+		tag.Insert(osKey, "macOS-10.12.5"),
 		tag.Upsert(userIDKey, "fff0989878"),
 	)
 	if err != nil {
@@ -68,4 +67,19 @@ func tagsExamples() {
 	ctx = tag.NewContext(ctx, tagMap)
 	// END replaceTagMap
 
+	// START profiler
+	tagMap, err = tag.NewMap(ctx,
+		tag.Insert(osKey, "macOS-10.12.5"),
+		tag.Insert(userIDKey, "fff0989878"),
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+	ctx = tag.NewContext(ctx, tagMap)
+	tag.Do(ctx, func(ctx context.Context) {
+		// Do work.
+		// When profiling is on, samples will be
+		// recorded with the key/values from the tag map.
+	})
+	// END profiler
 }

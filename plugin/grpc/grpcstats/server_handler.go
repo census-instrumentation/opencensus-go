@@ -17,7 +17,6 @@ package grpcstats
 
 import (
 	"fmt"
-	"strings"
 	"sync/atomic"
 	"time"
 
@@ -27,6 +26,7 @@ import (
 	"go.opencensus.io/tag"
 	"google.golang.org/grpc/grpclog"
 	"google.golang.org/grpc/stats"
+	"google.golang.org/grpc/status"
 )
 
 // ServerStatsHandler is a stats.Handler implementation
@@ -65,21 +65,8 @@ func (h *ServerStatsHandler) TagRPC(ctx context.Context, info *stats.RPCTagInfo)
 		}
 		return ctx
 	}
-	names := strings.Split(info.FullMethodName, "/")
-	if len(names) != 3 {
-		if grpclog.V(2) {
-			grpclog.Infof("serverHandler.TagRPC called with info.FullMethodName bad format. got %v, want '/$service/$method/'", info.FullMethodName)
-		}
-		return ctx
-	}
-	serviceName := names[1]
-	methodName := names[2]
-
-	d := &rpcData{
-		startTime: startTime,
-	}
-
-	ts, err := h.createTagMap(ctx, serviceName, methodName)
+	d := &rpcData{startTime: startTime}
+	ts, err := h.createTagMap(ctx, info.FullMethodName)
 	if err != nil {
 		return ctx
 	}
@@ -140,23 +127,27 @@ func (h *ServerStatsHandler) handleRPCEnd(ctx context.Context, s *stats.End) {
 		}
 		return
 	}
-	elapsedTime := time.Since(d.startTime)
 
+	elapsedTime := time.Since(d.startTime)
 	reqCount := atomic.LoadInt64(&d.reqCount)
 	respCount := atomic.LoadInt64(&d.respCount)
 
-	var m []istats.Measurement
-	m = append(m, RPCServerRequestCount.M(reqCount))
-	m = append(m, RPCServerResponseCount.M(respCount))
-	m = append(m, RPCServerFinishedCount.M(1))
-	m = append(m, RPCServerServerElapsedTime.M(float64(elapsedTime)/float64(time.Millisecond)))
+	m := []istats.Measurement{
+		RPCServerRequestCount.M(reqCount),
+		RPCServerResponseCount.M(respCount),
+		RPCServerFinishedCount.M(1),
+		RPCServerServerElapsedTime.M(float64(elapsedTime) / float64(time.Millisecond)),
+	}
+
 	if s.Error != nil {
-		errorCode := s.Error.Error()
-		tm, err := tag.NewMap(ctx,
-			tag.Upsert(keyOpStatus, errorCode),
-		)
-		if err == nil {
-			ctx = tag.NewContext(ctx, tm)
+		s, ok := status.FromError(s.Error)
+		if ok {
+			newTagMap, err := tag.NewMap(ctx,
+				tag.Upsert(keyStatus, s.Code().String()),
+			)
+			if err == nil {
+				ctx = tag.NewContext(ctx, newTagMap)
+			}
 		}
 		m = append(m, RPCServerErrorCount.M(1))
 	}
@@ -166,10 +157,9 @@ func (h *ServerStatsHandler) handleRPCEnd(ctx context.Context, s *stats.End) {
 
 // createTagMap creates a new tag map containing the tags extracted from the
 // gRPC metadata.
-func (h *ServerStatsHandler) createTagMap(ctx context.Context, serviceName, methodName string) (*tag.Map, error) {
+func (h *ServerStatsHandler) createTagMap(ctx context.Context, fullinfo string) (*tag.Map, error) {
 	mods := []tag.Mutator{
-		tag.Upsert(keyService, serviceName),
-		tag.Upsert(keyMethod, methodName),
+		tag.Upsert(keyMethod, methodName(fullinfo)),
 	}
 	if tagsBin := stats.Tags(ctx); tagsBin != nil {
 		old, err := tag.Decode([]byte(tagsBin))

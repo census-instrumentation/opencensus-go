@@ -9,12 +9,9 @@ OpenCensus Go is a Go implementation of OpenCensus, a toolkit for
 collecting application performance and behavior monitoring data.
 Currently it consists of three major components: tags, stats, and tracing.
 
-This project is still at a very early stage of development and
-a lot of the API calls are in the process of being changed and
-might break your code in the future.
+This project is still at a very early stage of development. The API is changing
+rapidly, vendoring is recommended.
 
-TODO: Add a link to the language independent OpenCensus
-doc when it is available.
 
 ## Installation
 
@@ -26,15 +23,24 @@ $ go get -u go.opencensus.io/...
 
 OpenCensus Go libraries require Go 1.8 or later.
 
+## Exporters
+
+OpenCensus can export instrumentation data to various backends. 
+Currently, OpenCensus supports:
+
+* [Prometheus][exporter-prom] for stats
+* [OpenZipkin][exporter-zipkin] for traces
+* Stackdriver [Monitoring][exporter-sdstats] and [Trace][exporter-sdtrace]
+
 ## Tags
 
-Tags represent propagated key values. They can propagated using context.Context
-in the same process or can be encoded to be transmitted on wire and decoded back
+Tags represent propagated key-value pairs. They can be propagated using context.Context
+in the same process or can be encoded to be transmitted on the wire and decoded back
 to a tag.Map at the destination.
 
 ### Getting a key by a name
 
-A key is defined by its name. To use a key a user needs to know its name and type.
+A key is defined by its name. To use a key, a user needs to know its name and type.
 Currently, only keys of type string are supported.
 Other types will be supported in the future.
 
@@ -48,7 +54,7 @@ tag.Map is a map of tags. Package tags provide a builder to create tag maps.
 
 ### Propagating a tag map in a context
 
-To propagate a tag map to downstream methods and downstream RPCs, add a tag map
+To propagate a tag map to downstream methods and RPCs, add a tag map
 to the current context. NewContext will return a copy of the current context,
 and put the tag map into the returned one.
 If there is already a tag map in the current context, it will be replaced.
@@ -77,22 +83,22 @@ Delete measure (this can be useful when replacing a measure by
 another measure with the same name):
 
 [embedmd]:# (stats.go deleteMeasure)
+However, it is an error to delete a Measure that's used by at least one View. The
+View using the Measure has to be unregistered first.
 
 ### Creating an aggregation
 
-Currently only 2 types of aggregations are supported. The CountAggregation is used to count
+Currently 4 types of aggregations are supported. The CountAggregation is used to count
 the number of times a sample was recorded. The DistributionAggregation is used to
-provide a histogram of the values of the samples.
+provide a histogram of the values of the samples. The SumAggregation is used to
+sum up all sample values. The MeanAggregation is used to calculate the mean of
+sample values.
 
 [embedmd]:# (stats.go aggs)
 
 ### Create an aggregation window
 
-Currently only two types of aggregation windows are supported. The Cumulative
-is used to continuously aggregate the data received.
-The Interval window is used to aggregate the data received over the last specified time interval.
-Currently all aggregation types are compatible with all aggregation windows.
-Later we might provide aggregation types that are incompatible with some windows.
+Use Cumulative to continuously aggregate the recorded data.
 
 [embedmd]:# (stats.go windows)
 
@@ -139,9 +145,24 @@ An example logger exporter is below:
 
 [embedmd]:# (stats.go exporter)
 
-## Tracing
+## Traces
 
-Coming soon.
+### Starting and ending a span
+
+[embedmd]:# (trace.go startend)
+
+More tracing examples are coming soon...
+
+## Profiles
+
+OpenCensus tags can be applied as profiler labels
+for users who are on Go 1.9 and above.
+
+[embedmd]:# (tags.go profiler)
+
+A screenshot of the CPU profile from the program above:
+
+![CPU profile](https://i.imgur.com/jBKjlkw.png)
 
 
 [travis-image]: https://travis-ci.org/census-instrumentation/opencensus-go.svg?branch=master
@@ -156,3 +177,8 @@ Coming soon.
 
 [newtags-ex]: https://godoc.org/go.opencensus.io/tag#example-NewMap
 [newtags-replace-ex]: https://godoc.org/go.opencensus.io/tag#example-NewMap--Replace
+
+[exporter-prom]: https://godoc.org/go.opencensus.io/exporter/stats/prometheus
+[exporter-sdstats]: https://godoc.org/go.opencensus.io/exporter/stats/stackdriver
+[exporter-zipkin]: https://godoc.org/go.opencensus.io/exporter/trace/zipkin
+[exporter-sdtrace]: https://godoc.org/go.opencensus.io/exporter/trace/stackdriver

@@ -23,13 +23,16 @@ import (
 // They are reported on the view data during exporting.
 // Mosts users won't directly access aggregration data.
 type AggregationData interface {
-	equal(other AggregationData) bool
-	isAggregate() bool
+	isAggregationData() bool
 	addSample(v interface{})
+	addOther(other AggregationData)
 	multiplyByFraction(fraction float64) AggregationData
-	addToIt(other AggregationData)
 	clear()
+	clone() AggregationData
+	equal(other AggregationData) bool
 }
+
+const epsilon = 1e-9
 
 // CountData is the aggregated data for a CountAggregation.
 // A count aggregation processes data and counts the recordings.
@@ -42,18 +45,21 @@ func newCountData(v int64) *CountData {
 	return &tmp
 }
 
-func (a *CountData) isAggregate() bool { return true }
+func (a *CountData) isAggregationData() bool { return true }
 
 func (a *CountData) addSample(v interface{}) {
 	*a = *a + 1
 }
 
-func (a *CountData) multiplyByFraction(fraction float64) AggregationData {
-	return newCountData(int64(float64(int64(*a))*fraction + 0.5)) // adding 0.5 because go runtime will take floor instead of rounding
-
+func (a *CountData) clone() AggregationData {
+	return newCountData(int64(*a))
 }
 
-func (a *CountData) addToIt(av AggregationData) {
+func (a *CountData) multiplyByFraction(fraction float64) AggregationData {
+	return newCountData(int64(float64(int64(*a))*fraction + 0.5)) // adding 0.5 because go runtime will take floor instead of rounding
+}
+
+func (a *CountData) addOther(av AggregationData) {
 	other, ok := av.(*CountData)
 	if !ok {
 		return
@@ -72,6 +78,137 @@ func (a *CountData) equal(other AggregationData) bool {
 	}
 
 	return int64(*a) == int64(*a2)
+}
+
+// SumData is the aggregated data for a SumAggregation.
+// A sum aggregation processes data and sums up the recordings.
+//
+// Most users won't directly access sum data.
+type SumData float64
+
+func newSumData(v float64) *SumData {
+	tmp := SumData(v)
+	return &tmp
+}
+
+func (a *SumData) isAggregationData() bool { return true }
+
+func (a *SumData) addSample(v interface{}) {
+	// Both float64 and int64 values will be cast to float64
+	var f float64
+	switch x := v.(type) {
+	case int64:
+		f = float64(x)
+	case float64:
+		f = x
+	default:
+		return
+	}
+	*a += SumData(f)
+}
+
+func (a *SumData) multiplyByFraction(fraction float64) AggregationData {
+	return newSumData(float64(*a) * fraction)
+}
+
+func (a *SumData) clone() AggregationData {
+	return newSumData(float64(*a))
+}
+
+func (a *SumData) addOther(av AggregationData) {
+	other, ok := av.(*SumData)
+	if !ok {
+		return
+	}
+	*a = *a + *other
+}
+
+func (a *SumData) clear() {
+	*a = 0
+}
+
+func (a *SumData) equal(other AggregationData) bool {
+	a2, ok := other.(*SumData)
+	if !ok {
+		return false
+	}
+	return math.Pow(float64(*a)-float64(*a2), 2) < epsilon
+}
+
+// MeanData is the aggregated data for a MeanAggregation.
+// A mean aggregation processes data and maintains the mean value.
+//
+// Most users won't directly access mean data.
+type MeanData struct {
+	Count float64 // number of data points aggregated
+	Mean  float64 // mean of all data points
+}
+
+func newMeanData(mean float64, count float64) *MeanData {
+	return &MeanData{
+		Mean:  mean,
+		Count: count,
+	}
+}
+
+// Sum returns the sum of all samples collected.
+func (a *MeanData) Sum() float64 { return a.Mean * float64(a.Count) }
+
+func (a *MeanData) isAggregationData() bool { return true }
+
+func (a *MeanData) addSample(v interface{}) {
+	var f float64
+	switch x := v.(type) {
+	case int64:
+		f = float64(x)
+	case float64:
+		f = x
+	default:
+		return
+	}
+
+	a.Count++
+	if a.Count == 1 {
+		a.Mean = f
+		return
+	}
+	a.Mean = a.Mean + (f-a.Mean)/float64(a.Count)
+}
+
+func (a *MeanData) clone() AggregationData {
+	return newMeanData(a.Mean, a.Count)
+}
+
+// Only Count will be mutiplied by the fraction, Mean will remain the same.
+func (a *MeanData) multiplyByFraction(fraction float64) AggregationData {
+	return newMeanData(a.Mean, a.Count*fraction)
+}
+
+func (a *MeanData) addOther(av AggregationData) {
+	other, ok := av.(*MeanData)
+	if !ok {
+		return
+	}
+
+	if other.Count == 0 {
+		return
+	}
+
+	a.Mean = (a.Sum() + other.Sum()) / (a.Count + other.Count)
+	a.Count = a.Count + other.Count
+}
+
+func (a *MeanData) clear() {
+	a.Count = 0
+	a.Mean = 0
+}
+
+func (a *MeanData) equal(other AggregationData) bool {
+	a2, ok := other.(*MeanData)
+	if !ok {
+		return false
+	}
+	return a.Count == a2.Count && math.Pow(a.Mean-a2.Mean, 2) < epsilon
 }
 
 // DistributionData is the aggregated data for an
@@ -107,17 +244,15 @@ func (a *DistributionData) variance() float64 {
 	return a.SumOfSquaredDev / float64(a.Count-1)
 }
 
-func (a *DistributionData) isAggregate() bool { return true }
+func (a *DistributionData) isAggregationData() bool { return true }
 
 func (a *DistributionData) addSample(v interface{}) {
 	var f float64
 	switch x := v.(type) {
 	case int64:
 		f = float64(x)
-		break
 	case float64:
 		f = x
-		break
 	default:
 		return
 	}
@@ -165,9 +300,7 @@ func (a *DistributionData) incrementBucketCount(f float64) {
 // various buckets of the histogram.
 func (a *DistributionData) multiplyByFraction(fraction float64) AggregationData {
 	ret := newDistributionData(a.bounds)
-	for i, c := range a.CountPerBucket {
-		ret.CountPerBucket[i] = c
-	}
+	copy(ret.CountPerBucket, a.CountPerBucket)
 	ret.Count = a.Count
 	ret.Min = a.Min
 	ret.Max = a.Max
@@ -176,7 +309,7 @@ func (a *DistributionData) multiplyByFraction(fraction float64) AggregationData 
 	return ret
 }
 
-func (a *DistributionData) addToIt(av AggregationData) {
+func (a *DistributionData) addOther(av AggregationData) {
 	other, ok := av.(*DistributionData)
 	if !ok {
 		return
@@ -211,6 +344,14 @@ func (a *DistributionData) clear() {
 	}
 }
 
+func (a *DistributionData) clone() AggregationData {
+	counts := make([]int64, len(a.CountPerBucket))
+	copy(counts, a.CountPerBucket)
+	c := *a
+	c.CountPerBucket = counts
+	return &c
+}
+
 func (a *DistributionData) equal(other AggregationData) bool {
 	a2, ok := other.(*DistributionData)
 	if !ok {
@@ -227,6 +368,5 @@ func (a *DistributionData) equal(other AggregationData) bool {
 			return false
 		}
 	}
-	epsilon := math.Pow10(-9)
 	return a.Count == a2.Count && a.Min == a2.Min && a.Max == a2.Max && math.Pow(a.Mean-a2.Mean, 2) < epsilon && math.Pow(a.variance()-a2.variance(), 2) < epsilon
 }

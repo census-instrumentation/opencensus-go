@@ -26,7 +26,6 @@ import (
 	"go.opencensus.io/plugin/grpc/grpcstats"
 	"go.opencensus.io/trace/plugins/zpages"
 	"go.opencensus.io/stats"
-	"go.opencensus.io/trace"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
@@ -42,8 +41,7 @@ func main() {
 
 	// Register stats and trace exporters to export
 	// the collected data.
-	stats.RegisterExporter(&exporter.StatsLogExporter{})
-	trace.RegisterExporter(&exporter.TraceLogExporter{})
+	stats.RegisterExporter(&exporter.Exporter{})
 
 	// Subscribe to collect client request count.
 	if err := grpcstats.RPCClientRequestCountView.Subscribe(); err != nil {

@@ -19,6 +19,7 @@ import (
 	"bytes"
 	"fmt"
 	"reflect"
+	"sort"
 	"sync/atomic"
 	"time"
 
@@ -39,9 +40,6 @@ type View struct {
 	// Examples of measures are cpu:tickCount, diskio:time...
 	m Measure
 
-	// start is time when view collection was started originally.
-	start time.Time
-
 	subscribed uint32 // 1 if someone is subscribed and data need to be exported, use atomic to access
 
 	collector *collector
@@ -61,12 +59,17 @@ func NewView(name, description string, keys []tag.Key, measure Measure, agg Aggr
 	if err := checkViewName(name); err != nil {
 		return nil, err
 	}
+	var ks []tag.Key
+	if len(keys) > 0 {
+		ks = make([]tag.Key, len(keys))
+		copy(ks, keys)
+		sort.Slice(ks, func(i, j int) bool { return ks[i].Name() < ks[j].Name() })
+	}
 	return &View{
 		name:        name,
 		description: description,
-		tagKeys:     keys,
+		tagKeys:     ks,
 		m:           measure,
-		start:       time.Time{},
 		collector:   &collector{make(map[string]aggregator), agg, window},
 	}, nil
 }
@@ -99,7 +102,7 @@ func (v *View) clearRows() {
 	v.collector.clearRows()
 }
 
-// TagKeys returns the list of tag keys assoicated with this view.
+// TagKeys returns the list of tag keys associated with this view.
 func (v *View) TagKeys() []tag.Key {
 	return v.tagKeys
 }
@@ -168,6 +171,5 @@ func (r *Row) Equal(other *Row) bool {
 	if r == other {
 		return true
 	}
-
 	return reflect.DeepEqual(r.Tags, other.Tags) && r.Data.equal(other.Data)
 }

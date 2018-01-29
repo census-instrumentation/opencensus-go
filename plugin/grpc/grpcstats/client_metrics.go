@@ -70,80 +70,221 @@ func defaultClientMeasures() {
 	var err error
 
 	// Creating client measures
-	if RPCClientErrorCount, err = stats.NewMeasureInt64("/grpc.io/client/error_count", "RPC Errors", unitCount); err != nil {
-		log.Fatalf("Cannot create measure /grpc.io/client/error_count: %v", err)
+	if RPCClientErrorCount, err = stats.NewMeasureInt64("grpc.io/client/error_count", "RPC Errors", unitCount); err != nil {
+		log.Fatalf("Cannot create measure grpc.io/client/error_count: %v", err)
 	}
-	if RPCClientRoundTripLatency, err = stats.NewMeasureFloat64("/grpc.io/client/roundtrip_latency", "RPC roundtrip latency in msecs", unitMillisecond); err != nil {
-		log.Fatalf("Cannot create measure /grpc.io/client/roundtrip_latency: %v", err)
+	if RPCClientRoundTripLatency, err = stats.NewMeasureFloat64("grpc.io/client/roundtrip_latency", "RPC roundtrip latency in msecs", unitMillisecond); err != nil {
+		log.Fatalf("Cannot create measure grpc.io/client/roundtrip_latency: %v", err)
 	}
-	if RPCClientRequestBytes, err = stats.NewMeasureInt64("/grpc.io/client/request_bytes", "Request bytes", unitByte); err != nil {
-		log.Fatalf("Cannot create measure /grpc.io/client/request_bytes: %v", err)
+	if RPCClientRequestBytes, err = stats.NewMeasureInt64("grpc.io/client/request_bytes", "Request bytes", unitByte); err != nil {
+		log.Fatalf("Cannot create measure grpc.io/client/request_bytes: %v", err)
 	}
-	if RPCClientResponseBytes, err = stats.NewMeasureInt64("/grpc.io/client/response_bytes", "Response bytes", unitByte); err != nil {
-		log.Fatalf("Cannot create measure /grpc.io/client/response_bytes: %v", err)
+	if RPCClientResponseBytes, err = stats.NewMeasureInt64("grpc.io/client/response_bytes", "Response bytes", unitByte); err != nil {
+		log.Fatalf("Cannot create measure grpc.io/client/response_bytes: %v", err)
 	}
-	if RPCClientStartedCount, err = stats.NewMeasureInt64("/grpc.io/client/started_count", "Number of client RPCs (streams) started", unitCount); err != nil {
-		log.Fatalf("Cannot create measure /grpc.io/client/started_count: %v", err)
+	if RPCClientStartedCount, err = stats.NewMeasureInt64("grpc.io/client/started_count", "Number of client RPCs (streams) started", unitCount); err != nil {
+		log.Fatalf("Cannot create measure grpc.io/client/started_count: %v", err)
 	}
-	if RPCClientFinishedCount, err = stats.NewMeasureInt64("/grpc.io/client/finished_count", "Number of client RPCs (streams) finished", unitCount); err != nil {
-		log.Fatalf("Cannot create measure /grpc.io/client/finished_count: %v", err)
+	if RPCClientFinishedCount, err = stats.NewMeasureInt64("grpc.io/client/finished_count", "Number of client RPCs (streams) finished", unitCount); err != nil {
+		log.Fatalf("Cannot create measure grpc.io/client/finished_count: %v", err)
 	}
-	if RPCClientRequestCount, err = stats.NewMeasureInt64("/grpc.io/client/request_count", "Number of client RPC request messages", unitCount); err != nil {
-		log.Fatalf("Cannot create measure /grpc.io/client/request_count: %v", err)
+	if RPCClientRequestCount, err = stats.NewMeasureInt64("grpc.io/client/request_count", "Number of client RPC request messages", unitCount); err != nil {
+		log.Fatalf("Cannot create measure grpc.io/client/request_count: %v", err)
 	}
-	if RPCClientResponseCount, err = stats.NewMeasureInt64("/grpc.io/client/response_count", "Number of client RPC response messages", unitCount); err != nil {
-		log.Fatalf("Cannot create measure /grpc.io/client/response_count: %v", err)
+	if RPCClientResponseCount, err = stats.NewMeasureInt64("grpc.io/client/response_count", "Number of client RPC response messages", unitCount); err != nil {
+		log.Fatalf("Cannot create measure grpc.io/client/response_count: %v", err)
 	}
 }
 
 func defaultClientViews() {
-	RPCClientErrorCountView, _ = stats.NewView("grpc.io/client/error_count/distribution_cumulative", "RPC Errors", []tag.Key{keyOpStatus, keyService, keyMethod}, RPCClientErrorCount, aggCount, windowCumulative)
-	clientViews = append(clientViews, RPCClientErrorCountView)
-	RPCClientRoundTripLatencyView, _ = stats.NewView("grpc.io/client/roundtrip_latency/distribution_cumulative", "Latency in msecs", []tag.Key{keyService, keyMethod}, RPCClientRoundTripLatency, aggDistMillis, windowCumulative)
-	clientViews = append(clientViews, RPCClientRoundTripLatencyView)
-	RPCClientRequestBytesView, _ = stats.NewView("grpc.io/client/request_bytes/distribution_cumulative", "Request bytes", []tag.Key{keyService, keyMethod}, RPCClientRequestBytes, aggDistBytes, windowCumulative)
-	clientViews = append(clientViews, RPCClientRequestBytesView)
-	RPCClientResponseBytesView, _ = stats.NewView("grpc.io/client/response_bytes/distribution_cumulative", "Response bytes", []tag.Key{keyService, keyMethod}, RPCClientResponseBytes, aggDistBytes, windowCumulative)
-	clientViews = append(clientViews, RPCClientResponseBytesView)
-	RPCClientRequestCountView, _ = stats.NewView("grpc.io/client/request_count/distribution_cumulative", "Count of request messages per client RPC", []tag.Key{keyService, keyMethod}, RPCClientRequestCount, aggDistCounts, windowCumulative)
-	clientViews = append(clientViews, RPCClientRequestCountView)
-	RPCClientResponseCountView, _ = stats.NewView("grpc.io/client/response_count/distribution_cumulative", "Count of response messages per client RPC", []tag.Key{keyService, keyMethod}, RPCClientResponseCount, aggDistCounts, windowCumulative)
-	clientViews = append(clientViews, RPCClientResponseCountView)
+	RPCClientErrorCountView, _ = stats.NewView(
+		"grpc.io/client/error_count/cumulative",
+		"RPC Errors",
+		[]tag.Key{keyStatus, keyMethod},
+		RPCClientErrorCount,
+		aggMean,
+		windowCumulative)
+	RPCClientRoundTripLatencyView, _ = stats.NewView(
+		"grpc.io/client/roundtrip_latency/cumulative",
+		"Latency in msecs",
+		[]tag.Key{keyMethod},
+		RPCClientRoundTripLatency,
+		aggDistMillis,
+		windowCumulative)
+	RPCClientRequestBytesView, _ = stats.NewView(
+		"grpc.io/client/request_bytes/cumulative",
+		"Request bytes",
+		[]tag.Key{keyMethod},
+		RPCClientRequestBytes,
+		aggDistBytes,
+		windowCumulative)
+	RPCClientResponseBytesView, _ = stats.NewView(
+		"grpc.io/client/response_bytes/cumulative",
+		"Response bytes",
+		[]tag.Key{keyMethod},
+		RPCClientResponseBytes,
+		aggDistBytes,
+		windowCumulative)
+	RPCClientRequestCountView, _ = stats.NewView(
+		"grpc.io/client/request_count/cumulative",
+		"Count of request messages per client RPC",
+		[]tag.Key{keyMethod},
+		RPCClientRequestCount,
+		aggDistCounts,
+		windowCumulative)
+	RPCClientResponseCountView, _ = stats.NewView(
+		"grpc.io/client/response_count/cumulative",
+		"Count of response messages per client RPC",
+		[]tag.Key{keyMethod},
+		RPCClientResponseCount,
+		aggDistCounts,
+		windowCumulative)
 
-	RPCClientRoundTripLatencyMinuteView, _ = stats.NewView("grpc.io/client/roundtrip_latency/minute_interval", "Minute stats for latency in msecs", []tag.Key{keyService, keyMethod}, RPCClientRoundTripLatency, aggDistMillis, windowSlidingMinute)
-	clientViews = append(clientViews, RPCClientRoundTripLatencyMinuteView)
-	RPCClientRequestBytesMinuteView, _ = stats.NewView("grpc.io/client/request_bytes/minute_interval", "Minute stats for request size in bytes", []tag.Key{keyService, keyMethod}, RPCClientRequestBytes, aggCount, windowSlidingMinute)
-	clientViews = append(clientViews, RPCClientRequestBytesMinuteView)
-	RPCClientResponseBytesMinuteView, _ = stats.NewView("grpc.io/client/response_bytes/minute_interval", "Minute stats for response size in bytes", []tag.Key{keyService, keyMethod}, RPCClientResponseBytes, aggCount, windowSlidingMinute)
-	clientViews = append(clientViews, RPCClientResponseBytesMinuteView)
-	RPCClientErrorCountMinuteView, _ = stats.NewView("grpc.io/client/error_count/minute_interval", "Minute stats for rpc errors", []tag.Key{keyService, keyMethod}, RPCClientErrorCount, aggCount, windowSlidingMinute)
-	clientViews = append(clientViews, RPCClientErrorCountMinuteView)
-	RPCClientStartedCountMinuteView, _ = stats.NewView("grpc.io/client/started_count/minute_interval", "Minute stats on the number of client RPCs started", []tag.Key{keyService, keyMethod}, RPCClientStartedCount, aggCount, windowSlidingMinute)
-	clientViews = append(clientViews, RPCClientStartedCountMinuteView)
-	RPCClientFinishedCountMinuteView, _ = stats.NewView("grpc.io/client/finished_count/minute_interval", "Minute stats on the number of client RPCs finished", []tag.Key{keyService, keyMethod}, RPCClientFinishedCount, aggCount, windowSlidingMinute)
-	clientViews = append(clientViews, RPCClientFinishedCountMinuteView)
-	RPCClientRequestCountMinuteView, _ = stats.NewView("grpc.io/client/request_count/minute_interval", "Minute stats on the count of request messages per client RPC", []tag.Key{keyService, keyMethod}, RPCClientRequestCount, aggCount, windowSlidingMinute)
-	clientViews = append(clientViews, RPCClientRequestCountMinuteView)
-	RPCClientResponseCountMinuteView, _ = stats.NewView("grpc.io/client/response_count/minute_interval", "Minute stats on the count of response messages per client RPC", []tag.Key{keyService, keyMethod}, RPCClientResponseCount, aggCount, windowSlidingMinute)
-	clientViews = append(clientViews, RPCClientResponseCountMinuteView)
+	clientViews = append(clientViews,
+		RPCClientErrorCountView,
+		RPCClientRoundTripLatencyView,
+		RPCClientRequestBytesView,
+		RPCClientResponseBytesView,
+		RPCClientRequestCountView,
+		RPCClientResponseCountView,
+	)
+	// TODO(jbd): Add roundtrip_latency, uncompressed_request_bytes, uncompressed_response_bytes, request_count, response_count.
 
-	RPCClientRoundTripLatencyHourView, _ = stats.NewView("grpc.io/client/roundtrip_latency/hour_interval", "Hour stats for latency in msecs", []tag.Key{keyService, keyMethod}, RPCClientRoundTripLatency, aggDistMillis, windowSlidingHour)
-	clientViews = append(clientViews, RPCClientRoundTripLatencyHourView)
-	RPCClientRequestBytesHourView, _ = stats.NewView("grpc.io/client/request_bytes/hour_interval", "Hour stats for request size in bytes", []tag.Key{keyService, keyMethod}, RPCClientRequestBytes, aggCount, windowSlidingHour)
-	clientViews = append(clientViews, RPCClientRequestBytesHourView)
-	RPCClientResponseBytesHourView, _ = stats.NewView("grpc.io/client/response_bytes/hour_interval", "Hour stats for response size in bytes", []tag.Key{keyService, keyMethod}, RPCClientResponseBytes, aggCount, windowSlidingHour)
-	clientViews = append(clientViews, RPCClientResponseBytesHourView)
-	RPCClientErrorCountHourView, _ = stats.NewView("grpc.io/client/error_count/hour_interval", "Hour stats for rpc errors", []tag.Key{keyService, keyMethod}, RPCClientErrorCount, aggCount, windowSlidingHour)
-	clientViews = append(clientViews, RPCClientErrorCountHourView)
-	RPCClientStartedCountHourView, _ = stats.NewView("grpc.io/client/started_count/hour_interval", "Hour stats on the number of client RPCs started", []tag.Key{keyService, keyMethod}, RPCClientStartedCount, aggCount, windowSlidingHour)
-	clientViews = append(clientViews, RPCClientStartedCountHourView)
-	RPCClientFinishedCountHourView, _ = stats.NewView("grpc.io/client/finished_count/hour_interval", "Hour stats on the number of client RPCs finished", []tag.Key{keyService, keyMethod}, RPCClientFinishedCount, aggCount, windowSlidingHour)
-	clientViews = append(clientViews, RPCClientFinishedCountHourView)
-	RPCClientRequestCountHourView, _ = stats.NewView("grpc.io/client/request_count/hour_interval", "Hour stats on the count of request messages per client RPC", []tag.Key{keyService, keyMethod}, RPCClientRequestCount, aggCount, windowSlidingHour)
-	clientViews = append(clientViews, RPCClientRequestCountHourView)
-	RPCClientResponseCountHourView, _ = stats.NewView("grpc.io/client/response_count/hour_interval", "Hour stats on the count of response messages per client RPC", []tag.Key{keyService, keyMethod}, RPCClientResponseCount, aggCount, windowSlidingHour)
-	clientViews = append(clientViews, RPCClientResponseCountHourView)
-	// TODO(jbd): Register it when constructing the stats handler.
+	RPCClientRoundTripLatencyMinuteView, _ = stats.NewView(
+		"grpc.io/client/roundtrip_latency/minute",
+		"Minute stats for latency in msecs",
+		[]tag.Key{keyMethod},
+		RPCClientRoundTripLatency,
+		aggMean,
+		windowSlidingMinute)
+	RPCClientRequestBytesMinuteView, _ = stats.NewView(
+		"grpc.io/client/request_bytes/minute",
+		"Minute stats for request size in bytes",
+		[]tag.Key{keyMethod},
+		RPCClientRequestBytes,
+		aggMean,
+		windowSlidingMinute)
+	RPCClientResponseBytesMinuteView, _ = stats.NewView(
+		"grpc.io/client/response_bytes/minute",
+		"Minute stats for response size in bytes",
+		[]tag.Key{keyMethod},
+		RPCClientResponseBytes,
+		aggMean,
+		windowSlidingMinute)
+	RPCClientErrorCountMinuteView, _ = stats.NewView(
+		"grpc.io/client/error_count/minute",
+		"Minute stats for rpc errors",
+		[]tag.Key{keyMethod},
+		RPCClientErrorCount,
+		aggMean,
+		windowSlidingMinute)
+	RPCClientStartedCountMinuteView, _ = stats.NewView(
+		"grpc.io/client/started_count/minute",
+		"Minute stats on the number of client RPCs started",
+		[]tag.Key{keyMethod},
+		RPCClientStartedCount,
+		aggMean,
+		windowSlidingMinute)
+	RPCClientFinishedCountMinuteView, _ = stats.NewView(
+		"grpc.io/client/finished_count/minute",
+		"Minute stats on the number of client RPCs finished",
+		[]tag.Key{keyMethod},
+		RPCClientFinishedCount,
+		aggMean,
+		windowSlidingMinute)
+	RPCClientRequestCountMinuteView, _ = stats.NewView(
+		"grpc.io/client/request_count/minute",
+		"Minute stats on the count of request messages per client RPC",
+		[]tag.Key{keyMethod},
+		RPCClientRequestCount,
+		aggMean,
+		windowSlidingMinute)
+	RPCClientResponseCountMinuteView, _ = stats.NewView(
+		"grpc.io/client/response_count/minute",
+		"Minute stats on the count of response messages per client RPC",
+		[]tag.Key{keyMethod},
+		RPCClientResponseCount,
+		aggMean,
+		windowSlidingMinute)
+
+	clientViews = append(clientViews,
+		RPCClientRoundTripLatencyMinuteView,
+		RPCClientRequestBytesMinuteView,
+		RPCClientResponseBytesMinuteView,
+		RPCClientErrorCountMinuteView,
+		RPCClientStartedCountMinuteView,
+		RPCClientFinishedCountMinuteView,
+		RPCClientRequestCountMinuteView,
+		RPCClientResponseCountMinuteView,
+	)
+
+	RPCClientRoundTripLatencyHourView, _ = stats.NewView(
+		"grpc.io/client/roundtrip_latency/hour",
+		"Hour stats for latency in msecs",
+		[]tag.Key{keyMethod},
+		RPCClientRoundTripLatency,
+		aggMean,
+		windowSlidingHour)
+	RPCClientRequestBytesHourView, _ = stats.NewView(
+		"grpc.io/client/request_bytes/hour",
+		"Hour stats for request size in bytes",
+		[]tag.Key{keyMethod},
+		RPCClientRequestBytes,
+		aggMean,
+		windowSlidingHour)
+	RPCClientResponseBytesHourView, _ = stats.NewView(
+		"grpc.io/client/response_bytes/hour",
+		"Hour stats for response size in bytes",
+		[]tag.Key{keyMethod},
+		RPCClientResponseBytes,
+		aggMean,
+		windowSlidingHour)
+	RPCClientErrorCountHourView, _ = stats.NewView(
+		"grpc.io/client/error_count/hour",
+		"Hour stats for rpc errors",
+		[]tag.Key{keyMethod},
+		RPCClientErrorCount,
+		aggMean,
+		windowSlidingHour)
+	RPCClientStartedCountHourView, _ = stats.NewView(
+		"grpc.io/client/started_count/hour",
+		"Hour stats on the number of client RPCs started",
+		[]tag.Key{keyMethod},
+		RPCClientStartedCount,
+		aggMean,
+		windowSlidingHour)
+	RPCClientFinishedCountHourView, _ = stats.NewView(
+		"grpc.io/client/finished_count/hour",
+		"Hour stats on the number of client RPCs finished",
+		[]tag.Key{keyMethod},
+		RPCClientFinishedCount,
+		aggMean,
+		windowSlidingHour)
+	RPCClientRequestCountHourView, _ = stats.NewView(
+		"grpc.io/client/request_count/hour",
+		"Hour stats on the count of request messages per client RPC",
+		[]tag.Key{keyMethod},
+		RPCClientRequestCount,
+		aggMean,
+		windowSlidingHour)
+	RPCClientResponseCountHourView, _ = stats.NewView(
+		"grpc.io/client/response_count/hour",
+		"Hour stats on the count of response messages per client RPC",
+		[]tag.Key{keyMethod},
+		RPCClientResponseCount,
+		aggMean,
+		windowSlidingHour)
+
+	clientViews = append(clientViews,
+		RPCClientRoundTripLatencyHourView,
+		RPCClientRequestBytesHourView,
+		RPCClientResponseBytesHourView,
+		RPCClientErrorCountHourView,
+		RPCClientStartedCountHourView,
+		RPCClientFinishedCountHourView,
+		RPCClientRequestCountHourView,
+		RPCClientResponseCountHourView,
+	)
 }
 
 // initClient registers the default metrics (measures and views)

@@ -51,6 +51,6 @@ func bar(ctx context.Context) {
 
 type exporter struct{}
 
-func (e *exporter) Export(sd *trace.SpanData) {
+func (e *exporter) ExportSpan(sd *trace.SpanData) {
 	log.Println(sd)
 }

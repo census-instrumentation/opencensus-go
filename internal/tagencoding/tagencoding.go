@@ -17,12 +17,6 @@
 // used interally by the stats collector.
 package tagencoding
 
-import (
-	"unsafe"
-)
-
-var sizeOfUint16 = (int)(unsafe.Sizeof(uint16(0)))
-
 type Values struct {
 	Buffer     []byte
 	WriteIndex int
@@ -38,14 +32,11 @@ func (vb *Values) growIfRequired(expected int) {
 }
 
 func (vb *Values) WriteValue(v []byte) {
-	length := len(v)
-	vb.growIfRequired(sizeOfUint16 + length)
+	length := len(v) & 0xff
+	vb.growIfRequired(1 + length)
 
 	// writing length of v
-	bytes := *(*[2]byte)(unsafe.Pointer(&length))
-	vb.Buffer[vb.WriteIndex] = bytes[0]
-	vb.WriteIndex++
-	vb.Buffer[vb.WriteIndex] = bytes[1]
+	vb.Buffer[vb.WriteIndex] = byte(length)
 	vb.WriteIndex++
 
 	if length == 0 {
@@ -54,15 +45,15 @@ func (vb *Values) WriteValue(v []byte) {
 	}
 
 	// writing v
-	copy(vb.Buffer[vb.WriteIndex:], v)
+	copy(vb.Buffer[vb.WriteIndex:], v[:length])
 	vb.WriteIndex += length
 }
 
 // ReadValue is the helper method to read the values when decoding valuesBytes to a map[Key][]byte.
 func (vb *Values) ReadValue() []byte {
 	// read length of v
-	length := (int)(*(*uint16)(unsafe.Pointer(&vb.Buffer[vb.ReadIndex])))
-	vb.ReadIndex += sizeOfUint16
+	length := int(vb.Buffer[vb.ReadIndex])
+	vb.ReadIndex++
 	if length == 0 {
 		// No value was encoded for this key
 		return nil

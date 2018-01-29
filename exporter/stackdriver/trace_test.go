@@ -23,11 +23,12 @@ import (
 )
 
 func TestBundling(t *testing.T) {
-	exporter := newExporter(Options{
+	exporter := newTraceExporterWithClient(Options{
 		ProjectID:            "fakeProjectID",
 		BundleDelayThreshold: time.Second / 10,
 		BundleCountThreshold: 10,
 	}, nil)
+
 	ch := make(chan []*trace.SpanData)
 	exporter.uploadFn = func(spans []*trace.SpanData) {
 		ch <- spans
