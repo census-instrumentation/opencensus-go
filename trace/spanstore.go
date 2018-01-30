@@ -29,47 +29,8 @@ var (
 	spanStores = make(map[string]*spanStore)
 )
 
-// LatencySampledSpans returns a sample of successful spans.
-//
-// minLatency is the minimum latency of spans to be returned.
-// maxLatency, if nonzero, is the maximum latency of spans to be returned.
-func LatencySampledSpans(name string, minLatency, maxLatency time.Duration) []*SpanData {
-	s := spanStoreForName(name)
-	if s == nil {
-		return nil
-	}
-	var out []*SpanData
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	for i, b := range s.latency {
-		min, max := latencyBucketBounds(i)
-		if i+1 != len(s.latency) && max <= minLatency {
-			continue
-		}
-		if maxLatency != 0 && maxLatency < min {
-			continue
-		}
-		for _, sd := range b.buffer {
-			if sd == nil {
-				break
-			}
-			if minLatency != 0 || maxLatency != 0 {
-				d := sd.EndTime.Sub(sd.StartTime)
-				if d < minLatency {
-					continue
-				}
-				if maxLatency != 0 && d > maxLatency {
-					continue
-				}
-			}
-			out = append(out, sd)
-		}
-	}
-	return out
-}
-
-// ActiveSpans returns the active spans for the given name.
-func ActiveSpans(name string) []*SpanData {
+// ReportActiveSpans returns the active spans for the given name.
+func ReportActiveSpans(name string) []*SpanData {
 	s := spanStoreForName(name)
 	if s == nil {
 		return nil
@@ -83,10 +44,10 @@ func ActiveSpans(name string) []*SpanData {
 	return out
 }
 
-// ErrorSampledSpans returns a sample of error spans.
+// ReportSpansByError returns a sample of error spans.
 //
 // If code is nonzero, only spans with that status code are returned.
-func ErrorSampledSpans(name string, code int32) []*SpanData {
+func ReportSpansByError(name string, code int32) []*SpanData {
 	s := spanStoreForName(name)
 	if s == nil {
 		return nil
@@ -146,27 +107,8 @@ func ConfigureBucketSizes(bcs []BucketConfiguration) {
 	}
 }
 
-// PerMethodSummary is a summary of the spans stored for a single span name.
-type PerMethodSummary struct {
-	Active         int
-	LatencyBuckets []LatencyBucketSummary
-	ErrorBuckets   []ErrorBucketSummary
-}
-
-// LatencyBucketSummary is a summary of a latency bucket.
-type LatencyBucketSummary struct {
-	MinLatency, MaxLatency time.Duration
-	Size                   int
-}
-
-// ErrorBucketSummary is a summary of an error bucket.
-type ErrorBucketSummary struct {
-	ErrorCode int32
-	Size      int
-}
-
-// SampledSpansSummary returns a summary of what spans are being stored for each span name.
-func SampledSpansSummary() map[string]PerMethodSummary {
+// ReportSpansPerMethod returns a summary of what spans are being stored for each span name.
+func ReportSpansPerMethod() map[string]PerMethodSummary {
 	out := make(map[string]PerMethodSummary)
 	ssmu.RLock()
 	defer ssmu.RUnlock()
@@ -193,6 +135,64 @@ func SampledSpansSummary() map[string]PerMethodSummary {
 		out[name] = p
 	}
 	return out
+}
+
+// ReportSpansByLatency returns a sample of successful spans.
+//
+// minLatency is the minimum latency of spans to be returned.
+// maxLatency, if nonzero, is the maximum latency of spans to be returned.
+func ReportSpansByLatency(name string, minLatency, maxLatency time.Duration) []*SpanData {
+	s := spanStoreForName(name)
+	if s == nil {
+		return nil
+	}
+	var out []*SpanData
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for i, b := range s.latency {
+		min, max := latencyBucketBounds(i)
+		if i+1 != len(s.latency) && max <= minLatency {
+			continue
+		}
+		if maxLatency != 0 && maxLatency < min {
+			continue
+		}
+		for _, sd := range b.buffer {
+			if sd == nil {
+				break
+			}
+			if minLatency != 0 || maxLatency != 0 {
+				d := sd.EndTime.Sub(sd.StartTime)
+				if d < minLatency {
+					continue
+				}
+				if maxLatency != 0 && d > maxLatency {
+					continue
+				}
+			}
+			out = append(out, sd)
+		}
+	}
+	return out
+}
+
+// PerMethodSummary is a summary of the spans stored for a single span name.
+type PerMethodSummary struct {
+	Active         int
+	LatencyBuckets []LatencyBucketSummary
+	ErrorBuckets   []ErrorBucketSummary
+}
+
+// LatencyBucketSummary is a summary of a latency bucket.
+type LatencyBucketSummary struct {
+	MinLatency, MaxLatency time.Duration
+	Size                   int
+}
+
+// ErrorBucketSummary is a summary of an error bucket.
+type ErrorBucketSummary struct {
+	ErrorCode int32
+	Size      int
 }
 
 // spanStore keeps track of spans stored for a particular span name.

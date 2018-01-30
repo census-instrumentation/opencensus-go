@@ -67,7 +67,7 @@ const traceContextKey = "grpc-trace-bin"
 // SpanContext added to the outgoing gRPC metadata.
 func (c *ClientStatsHandler) TagRPC(ctx context.Context, rti *stats.RPCTagInfo) context.Context {
 	name := "Sent" + strings.Replace(rti.FullMethodName, "/", ".", -1)
-	ctx = trace.StartSpanWithOptions(ctx, name, trace.StartSpanOptions{RecordEvents: true, RegisterNameForLocalSpanStore: true})
+	ctx, _ = trace.StartSpanWithOptions(ctx, name, trace.StartOptions{RecordEvents: true, RegisterNameForLocalSpanStore: true})
 	traceContextBinary := propagation.Binary(trace.FromContext(ctx).SpanContext())
 	if len(traceContextBinary) == 0 {
 		return ctx
@@ -88,13 +88,15 @@ func (c *ClientStatsHandler) TagRPC(ctx context.Context, rti *stats.RPCTagInfo) 
 func (s *ServerStatsHandler) TagRPC(ctx context.Context, rti *stats.RPCTagInfo) context.Context {
 	md, _ := metadata.FromIncomingContext(ctx)
 	name := "Recv" + strings.Replace(rti.FullMethodName, "/", ".", -1)
-	opt := trace.StartSpanOptions{RecordEvents: true, RegisterNameForLocalSpanStore: true}
+	opt := trace.StartOptions{RecordEvents: true, RegisterNameForLocalSpanStore: true}
 	if s := md[traceContextKey]; len(s) > 0 {
 		if parent, ok := propagation.FromBinary([]byte(s[0])); ok {
-			return trace.StartSpanWithRemoteParent(ctx, name, parent, opt)
+			ctx, _ = trace.StartSpanWithRemoteParent(ctx, name, parent, opt)
+			return ctx
 		}
 	}
-	return trace.StartSpanWithOptions(ctx, name, opt)
+	ctx, _ = trace.StartSpanWithOptions(ctx, name, opt)
+	return ctx
 }
 
 // HandleRPC processes the RPC stats, adding information to the current trace span.
@@ -108,30 +110,31 @@ func (s *ServerStatsHandler) HandleRPC(ctx context.Context, rs stats.RPCStats) {
 }
 
 func handleRPC(ctx context.Context, rs stats.RPCStats) {
+	span := trace.FromContext(ctx)
 	// TODO: compressed and uncompressed sizes are not populated in every message.
 	switch rs := rs.(type) {
 	case *stats.Begin:
-		trace.SetSpanAttributes(ctx,
+		span.SetAttributes(
 			trace.BoolAttribute{Key: "Client", Value: rs.Client},
 			trace.BoolAttribute{Key: "FailFast", Value: rs.FailFast})
 	case *stats.InPayload:
-		trace.AddMessageReceiveEvent(ctx, 0 /* TODO: messageID */, int64(rs.Length), int64(rs.WireLength))
+		span.AddMessageReceiveEvent(0 /* TODO: messageID */, int64(rs.Length), int64(rs.WireLength))
 	case *stats.InHeader:
-		trace.AddMessageReceiveEvent(ctx, 0, int64(rs.WireLength), int64(rs.WireLength))
+		span.AddMessageReceiveEvent(0, int64(rs.WireLength), int64(rs.WireLength))
 	case *stats.InTrailer:
-		trace.AddMessageReceiveEvent(ctx, 0, int64(rs.WireLength), int64(rs.WireLength))
+		span.AddMessageReceiveEvent(0, int64(rs.WireLength), int64(rs.WireLength))
 	case *stats.OutPayload:
-		trace.AddMessageSendEvent(ctx, 0, int64(rs.Length), int64(rs.WireLength))
+		span.AddMessageSendEvent(0, int64(rs.Length), int64(rs.WireLength))
 	case *stats.OutHeader:
-		trace.AddMessageSendEvent(ctx, 0, 0, 0)
+		span.AddMessageSendEvent(0, 0, 0)
 	case *stats.OutTrailer:
-		trace.AddMessageSendEvent(ctx, 0, int64(rs.WireLength), int64(rs.WireLength))
+		span.AddMessageSendEvent(0, int64(rs.WireLength), int64(rs.WireLength))
 	case *stats.End:
 		if rs.Error != nil {
 			code, desc := grpc.Code(rs.Error), grpc.ErrorDesc(rs.Error)
-			trace.SetSpanStatus(ctx, trace.Status{Code: int32(code), Message: desc})
+			span.SetStatus(trace.Status{Code: int32(code), Message: desc})
 		}
-		trace.EndSpan(ctx)
+		span.End()
 	}
 }
 

@@ -37,7 +37,7 @@ func TestNewClientStatsHandler(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	span := trace.NewSpan("/foo", trace.StartSpanOptions{
+	span := trace.NewSpan("/foo", nil, trace.StartOptions{
 		Sampler: trace.AlwaysSample(),
 	})
 	ctx = trace.WithSpan(ctx, span)
@@ -84,7 +84,7 @@ func TestNewServerStatsHandler(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	span := trace.NewSpan("/foo", trace.StartSpanOptions{
+	span := trace.NewSpan("/foo", nil, trace.StartOptions{
 		Sampler: trace.AlwaysSample(),
 	})
 	ctx = trace.WithSpan(ctx, span)
@@ -122,6 +122,6 @@ type traceExporter struct {
 	buffer []*trace.SpanData
 }
 
-func (e *traceExporter) Export(sd *trace.SpanData) {
+func (e *traceExporter) ExportSpan(sd *trace.SpanData) {
 	e.buffer = append(e.buffer, sd)
 }

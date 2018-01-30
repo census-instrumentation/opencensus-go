@@ -30,7 +30,8 @@ Currently, OpenCensus supports:
 
 * [Prometheus][exporter-prom] for stats
 * [OpenZipkin][exporter-zipkin] for traces
-* Stackdriver [Monitoring][exporter-sdstats] and [Trace][exporter-sdtrace]
+* Stackdriver [Monitoring][exporter-stackdriver] and [Trace][exporter-stackdriver]
+* [Jaeger][exporter-jaeger] for traces
 
 ## Tags
 
@@ -178,7 +179,7 @@ A screenshot of the CPU profile from the program above:
 [newtags-ex]: https://godoc.org/go.opencensus.io/tag#example-NewMap
 [newtags-replace-ex]: https://godoc.org/go.opencensus.io/tag#example-NewMap--Replace
 
-[exporter-prom]: https://godoc.org/go.opencensus.io/exporter/stats/prometheus
-[exporter-sdstats]: https://godoc.org/go.opencensus.io/exporter/stats/stackdriver
-[exporter-zipkin]: https://godoc.org/go.opencensus.io/exporter/trace/zipkin
-[exporter-sdtrace]: https://godoc.org/go.opencensus.io/exporter/trace/stackdriver
+[exporter-prom]: https://godoc.org/go.opencensus.io/exporter/prometheus
+[exporter-stackdriver]: https://godoc.org/go.opencensus.io/exporter/stackdriver
+[exporter-zipkin]: https://godoc.org/go.opencensus.io/exporter/zipkin
+[exporter-jaeger]: https://godoc.org/go.opencensus.io/exporter/jaeger

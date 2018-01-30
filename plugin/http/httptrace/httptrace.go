@@ -16,7 +16,6 @@
 package httptrace
 
 import (
-	"context"
 	"io"
 	"net/http"
 	"net/url"
@@ -51,10 +50,9 @@ func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	name := spanNameFromURL("Sent", req.URL)
 	// TODO(jbd): Discuss whether we want to prefix
 	// outgoing requests with Sent.
-	ctx := trace.StartSpan(req.Context(), name)
+	ctx, span := trace.StartSpan(req.Context(), name)
 	req = req.WithContext(ctx)
 
-	span := trace.FromContext(ctx)
 	for _, f := range t.Formats {
 		f.ToRequest(span.SpanContext(), req)
 	}
@@ -63,14 +61,14 @@ func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 
 	// TODO(jbd): Add status and attributes.
 	if err != nil {
-		trace.EndSpan(ctx)
+		span.End()
 		return resp, err
 	}
 
 	// trace.EndSpan(ctx) will be invoked after
 	// a read from resp.Body returns io.EOF or when
 	// resp.Body.Close() is invoked.
-	resp.Body = &spanEndBody{rc: resp.Body, spanCtx: ctx}
+	resp.Body = &spanEndBody{rc: resp.Body, span: span}
 	return resp, err
 }
 
@@ -78,8 +76,8 @@ func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 // trace.EndSpan on encountering io.EOF on reading
 // the body of the original response.
 type spanEndBody struct {
-	rc      io.ReadCloser
-	spanCtx context.Context
+	rc   io.ReadCloser
+	span *trace.Span
 
 	endSpanOnce sync.Once
 }
@@ -96,7 +94,7 @@ func (seb *spanEndBody) Read(b []byte) (int, error) {
 		seb.endSpan()
 	default:
 		// For all other errors, set the span status
-		trace.SetSpanStatus(seb.spanCtx, trace.Status{
+		seb.span.SetStatus(trace.Status{
 			// Code 2 is the error code for Internal server error.
 			Code:    2,
 			Message: err.Error(),
@@ -108,7 +106,7 @@ func (seb *spanEndBody) Read(b []byte) (int, error) {
 // endSpan invokes trace.EndSpan exactly once
 func (seb *spanEndBody) endSpan() {
 	seb.endSpanOnce.Do(func() {
-		trace.EndSpan(seb.spanCtx)
+		seb.span.End()
 	})
 }
 
@@ -178,12 +176,13 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 	}
+	var span *trace.Span
 	if ok {
-		ctx = trace.StartSpanWithRemoteParent(ctx, name, sc, trace.StartSpanOptions{})
+		ctx, span = trace.StartSpanWithRemoteParent(ctx, name, sc, trace.StartOptions{})
 	} else {
-		ctx = trace.StartSpan(ctx, name)
+		ctx, span = trace.StartSpan(ctx, name)
 	}
-	defer trace.EndSpan(ctx)
+	defer span.End()
 
 	// TODO(jbd): Add status and attributes.
 	r = r.WithContext(ctx)

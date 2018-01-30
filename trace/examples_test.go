@@ -21,13 +21,13 @@ import (
 	"golang.org/x/net/context"
 )
 
-// This example shows how to use StartSpan and EndSpan to capture
+// This example shows how to use StartSpan and (*Span).End to capture
 // a function execution in a Span. It assumes that the function
 // has a context.Context argument.
 func ExampleStartSpan() {
 	printEvens := func(ctx context.Context) {
-		ctx = trace.StartSpan(ctx, "my/package.Function")
-		defer trace.EndSpan(ctx)
+		ctx, span := trace.StartSpan(ctx, "my/package.Function")
+		defer span.End()
 
 		for i := 0; i < 10; i++ {
 			if i%2 == 0 {

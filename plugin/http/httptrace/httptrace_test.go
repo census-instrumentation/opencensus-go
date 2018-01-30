@@ -71,7 +71,7 @@ func (t testPropagator) ToRequest(sc trace.SpanContext, req *http.Request) {
 }
 
 func TestTransport_RoundTrip(t *testing.T) {
-	parent := trace.NewSpan("parent", trace.StartSpanOptions{})
+	parent := trace.NewSpan("parent", nil, trace.StartOptions{})
 	tests := []struct {
 		name       string
 		parent     *trace.Span
@@ -162,7 +162,7 @@ var propagators = []propagation.HTTPFormat{testPropagator{}}
 
 type collector []*trace.SpanData
 
-func (c *collector) Export(s *trace.SpanData) {
+func (c *collector) ExportSpan(s *trace.SpanData) {
 	*c = append(*c, s)
 }
 
@@ -171,9 +171,9 @@ func TestEndToEnd(t *testing.T) {
 	trace.RegisterExporter(&spans)
 	defer trace.UnregisterExporter(&spans)
 
-	ctx := trace.StartSpanWithOptions(context.Background(),
+	ctx, _ := trace.StartSpanWithOptions(context.Background(),
 		"top-level",
-		trace.StartSpanOptions{
+		trace.StartOptions{
 			RecordEvents: true,
 			Sampler:      trace.AlwaysSample(),
 		})
