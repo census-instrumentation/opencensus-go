@@ -16,22 +16,23 @@ package zpages
 
 type code int
 
+//go:generate stringer -type=code
 const (
 	OK code = iota
-	CANCELLED
-	UNKNOWN
-	INVALID_ARGUMENT
-	DEADLINE_EXCEEDED
-	NOT_FOUND
-	ALREADY_EXISTS
-	PERMISSION_DENIED
-	RESOURCE_EXHAUSTED
-	FAILED_PRECONDITION
-	ABORTED
-	OUT_OF_RANGE
-	UNIMPLEMENTED
-	INTERNAL
-	UNAVAILABLE
-	DATA_LOSS
-	UNAUTHENTICATED
+	Cancelled
+	Unknown
+	InvalidArgument
+	DeadlineExceeded
+	NotFound
+	AlreadyExists
+	PermissionDenied
+	ResourceExhausted
+	FailedPrecondition
+	Aborted
+	OutOfRange
+	Unimplemented
+	Internal
+	Unavailable
+	DataLoss
+	Unauthenticated
 )
