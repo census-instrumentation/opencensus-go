@@ -56,15 +56,6 @@ func TestOnlyCumulativeWindowSupported(t *testing.T) {
 		},
 		2: {
 			vds: &stats.ViewData{
-				View: newView(stats.CountAggregation{}),
-				Rows: []*stats.Row{
-					{nil, &count1},
-				},
-			},
-			want: 0,
-		},
-		3: {
-			vds: &stats.ViewData{
 				View: newView(stats.MeanAggregation{}),
 				Rows: []*stats.Row{
 					{nil, &mean1},
