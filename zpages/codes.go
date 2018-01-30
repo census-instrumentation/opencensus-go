@@ -11,32 +11,27 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
 
-package stats
+package zpages
 
-import (
-	"testing"
-	"log"
-	"context"
+type code int
+
+const (
+	OK code = iota
+	CANCELLED
+	UNKNOWN
+	INVALID_ARGUMENT
+	DEADLINE_EXCEEDED
+	NOT_FOUND
+	ALREADY_EXISTS
+	PERMISSION_DENIED
+	RESOURCE_EXHAUSTED
+	FAILED_PRECONDITION
+	ABORTED
+	OUT_OF_RANGE
+	UNIMPLEMENTED
+	INTERNAL
+	UNAVAILABLE
+	DATA_LOSS
+	UNAUTHENTICATED
 )
-
-
-func BenchmarkRecord(b *testing.B) {
-	restart()
-	var m = makeMeasure()
-	var ctx = context.Background()
-	b.ResetTimer()
-
-	for i := 0; i < b.N; i++ {
-		Record(ctx, m.M(1), m.M(1), m.M(1), m.M(1), m.M(1), m.M(1), m.M(1), m.M(1), m.M(1), m.M(1))
-	}
-}
-
-func makeMeasure() *MeasureInt64 {
-	m, err := NewMeasureInt64("m", "test measure", "")
-	if err != nil {
-		log.Fatal(err)
-	}
-	return m
-}
