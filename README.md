@@ -30,7 +30,8 @@ Currently, OpenCensus supports:
 
 * [Prometheus][exporter-prom] for stats
 * [OpenZipkin][exporter-zipkin] for traces
-* Stackdriver [Monitoring][exporter-sdstats] and [Trace][exporter-sdtrace]
+* Stackdriver [Monitoring][exporter-stackdriver] and [Trace][exporter-stackdriver]
+* [Jaeger][exporter-jaeger] for traces
 
 ## Tags
 
@@ -246,7 +247,7 @@ An example logger exporter is below:
 
 type exporter struct{}
 
-func (e *exporter) Export(vd *stats.ViewData) {
+func (e *exporter) ExportView(vd *stats.ViewData) {
 	log.Println(vd)
 }
 
@@ -258,8 +259,8 @@ func (e *exporter) Export(vd *stats.ViewData) {
 
 [embedmd]:# (trace.go startend)
 ```go
-ctx = trace.StartSpan(ctx, "your choice of name")
-defer trace.EndSpan(ctx)
+ctx, span := trace.StartSpan(ctx, "your choice of name")
+defer span.End()
 ```
 
 More tracing examples are coming soon...
@@ -305,6 +306,6 @@ A screenshot of the CPU profile from the program above:
 [newtags-replace-ex]: https://godoc.org/go.opencensus.io/tag#example-NewMap--Replace
 
 [exporter-prom]: https://godoc.org/go.opencensus.io/exporter/prometheus
-[exporter-sdstats]: https://godoc.org/go.opencensus.io/exporter/stackdriver
+[exporter-stackdriver]: https://godoc.org/go.opencensus.io/exporter/stackdriver
 [exporter-zipkin]: https://godoc.org/go.opencensus.io/exporter/zipkin
-[exporter-sdtrace]: https://godoc.org/go.opencensus.io/exporter/trace/stackdriver
+[exporter-jaeger]: https://godoc.org/go.opencensus.io/exporter/jaeger

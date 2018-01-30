@@ -19,12 +19,14 @@ package main
 import (
 	"log"
 	"net"
+	"net/http"
 
 	"go.opencensus.io/examples/grpc/exporter"
 	pb "go.opencensus.io/examples/grpc/proto"
 	ocgrpc "go.opencensus.io/plugin/grpc"
 	"go.opencensus.io/plugin/grpc/grpcstats"
 	"go.opencensus.io/stats"
+	"go.opencensus.io/zpages"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
@@ -41,6 +43,8 @@ func (s *server) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloRe
 }
 
 func main() {
+	zpages.AddDefaultHTTPHandlers()
+	go func() { log.Fatal(http.ListenAndServe(":8081", nil)) }()
 	// Register stats and trace exporters to export
 	// the collected data.
 	stats.RegisterExporter(&exporter.Exporter{})
