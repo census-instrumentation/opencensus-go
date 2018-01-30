@@ -110,6 +110,8 @@ type Exporter struct {
 	statsExporter *statsExporter
 }
 
+// NewExporter creates a new Exporter that implements both stats.Exporter and
+// trace.Exporter.
 func NewExporter(o Options) (*Exporter, error) {
 	se, err := newStatsExporter(o)
 	if err != nil {
