@@ -62,7 +62,7 @@ var (
 // NewExporter returns an exporter that exports stats to Prometheus.
 // Only one exporter should exist per instance
 func NewExporter(o Options) (*Exporter, error) {
-	var err error = errSingletonExporter
+	var err = errSingletonExporter
 	var exporter *Exporter
 	newExporterOnce.Do(func() {
 		exporter, err = newExporter(o)
