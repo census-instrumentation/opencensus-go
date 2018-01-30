@@ -19,18 +19,14 @@ import (
 	"context"
 	"time"
 
+	"go.opencensus.io/stats/internal"
 	"go.opencensus.io/tag"
 )
-
-type Recorder func(*tag.Map, time.Time, []Measurement)
-
-// DefaultRecorder will be called for each Record call.
-var DefaultRecorder Recorder = nil
 
 // Record records one or multiple measurements with the same tags at once.
 // If there are any tags in the context, measurements will be tagged with them.
 func Record(ctx context.Context, ms ...Measurement) {
-	if DefaultRecorder != nil {
-		DefaultRecorder(tag.FromContext(ctx), time.Now(), ms)
+	if internal.DefaultRecorder != nil {
+		internal.DefaultRecorder(tag.FromContext(ctx), time.Now(), ms)
 	}
 }

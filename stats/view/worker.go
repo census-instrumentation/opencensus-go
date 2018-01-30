@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"time"
 
+	"go.opencensus.io/stats/internal"
 	"go.opencensus.io/stats/measure"
 	"go.opencensus.io/tag"
 )
@@ -130,17 +131,17 @@ func (v *View) RetrieveData() ([]*Row, error) {
 
 // Record records one or multiple measurements with the same tags at once.
 // If there are any tags in the context, measurements will be tagged with them.
-func record(tags *tag.Map, now time.Time, ms []measure.Measurement) {
+func record(tags *tag.Map, now time.Time, ms interface{}) {
 	req := &recordReq{
 		now: now,
 		tm:  tags,
-		ms:  ms,
+		ms:  ms.([]measure.Measurement),
 	}
 	defaultWorker.c <- req
 }
 
 func init() {
-	measure.DefaultRecorder = record
+	internal.DefaultRecorder = record
 }
 
 // SetReportingPeriod sets the interval between reporting aggregated views in
