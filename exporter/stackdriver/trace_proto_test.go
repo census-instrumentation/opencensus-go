@@ -61,50 +61,50 @@ func TestExportTrace(t *testing.T) {
 	trace.RegisterExporter(&te)
 	defer trace.UnregisterExporter(&te)
 
-	ctx := trace.StartSpanWithRemoteParent(context.Background(), "span0",
+	ctx, span0 := trace.StartSpanWithRemoteParent(context.Background(), "span0",
 		trace.SpanContext{
 			TraceID:      traceID,
 			SpanID:       spanID,
 			TraceOptions: 1,
 		},
-		trace.StartSpanOptions{})
+		trace.StartOptions{})
 	{
-		ctx1 := trace.StartSpan(ctx, "span1")
+		ctx1, span1 := trace.StartSpan(ctx, "span1")
 		{
-			ctx2 := trace.StartSpan(ctx1, "span2")
-			trace.AddMessageSendEvent(ctx2, 0x123, 1024, 512)
-			trace.Annotatef(ctx2, nil, "in span%d", 2)
-			trace.Annotate(ctx2, nil, big.NewRat(2, 4).String())
-			trace.SetSpanAttributes(ctx2,
+			_, span2 := trace.StartSpan(ctx1, "span2")
+			span2.AddMessageSendEvent(0x123, 1024, 512)
+			span2.Annotatef(nil, "in span%d", 2)
+			span2.Annotate(nil, big.NewRat(2, 4).String())
+			span2.SetAttributes(
 				trace.StringAttribute{Key: "key1", Value: "value1"},
 				trace.StringAttribute{Key: "key2", Value: "value2"})
-			trace.SetSpanAttributes(ctx2, trace.Int64Attribute{Key: "key1", Value: 100})
-			trace.EndSpan(ctx2)
+			span2.SetAttributes(trace.Int64Attribute{Key: "key1", Value: 100})
+			span2.End()
 		}
 		{
-			ctx3 := trace.StartSpan(ctx1, "span3")
-			trace.Annotate(ctx3, nil, "in span3")
-			trace.AddMessageReceiveEvent(ctx3, 0x456, 2048, 1536)
-			trace.SetSpanStatus(ctx3, trace.Status{Code: int32(codepb.Code_UNAVAILABLE)})
-			trace.EndSpan(ctx3)
+			ctx3, span3 := trace.StartSpan(ctx1, "span3")
+			span3.Annotate(nil, "in span3")
+			span3.AddMessageReceiveEvent(0x456, 2048, 1536)
+			span3.SetStatus(trace.Status{Code: int32(codepb.Code_UNAVAILABLE)})
+			span3.End()
 			{
-				ctx4 := trace.StartSpan(ctx3, "span4")
+				_, span4 := trace.StartSpan(ctx3, "span4")
 				x := 42
 				a1 := []trace.Attribute{trace.StringAttribute{Key: "k1", Value: "v1"}}
 				a2 := []trace.Attribute{trace.StringAttribute{Key: "k2", Value: "v2"}}
 				a3 := []trace.Attribute{trace.StringAttribute{Key: "k3", Value: "v3"}}
 				a4 := map[string]interface{}{"k4": "v4"}
 				r := big.NewRat(2, 4)
-				trace.Annotate(ctx4, a1, r.String())
-				trace.Annotatef(ctx4, a2, "foo %d", x)
-				trace.Annotate(ctx4, a3, "in span4")
-				trace.AddLink(ctx4, trace.Link{TraceID: trace.TraceID{1, 2}, SpanID: trace.SpanID{3}, Type: trace.LinkTypeParent, Attributes: a4})
-				trace.EndSpan(ctx4)
+				span4.Annotate(a1, r.String())
+				span4.Annotatef(a2, "foo %d", x)
+				span4.Annotate(a3, "in span4")
+				span4.AddLink(trace.Link{TraceID: trace.TraceID{1, 2}, SpanID: trace.SpanID{3}, Type: trace.LinkTypeParent, Attributes: a4})
+				span4.End()
 			}
 		}
-		trace.EndSpan(ctx1)
+		span1.End()
 	}
-	trace.EndSpan(ctx)
+	span0.End()
 	if len(te.spans) != 5 {
 		t.Errorf("got %d exported spans, want 5", len(te.spans))
 	}

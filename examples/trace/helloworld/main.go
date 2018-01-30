@@ -32,19 +32,16 @@ func main() {
 
 	trace.SetDefaultSampler(trace.AlwaysSample())
 
-	span := trace.NewSpan("/foo", trace.StartSpanOptions{})
-
-	ctx = trace.WithSpan(ctx, span)
+	ctx, span := trace.StartSpan(ctx, "/foo")
 	bar(ctx)
-
 	span.End()
 
 	time.Sleep(1 * time.Second) // Wait enough for the exporter to report.
 }
 
 func bar(ctx context.Context) {
-	ctx = trace.StartSpan(ctx, "/bar")
-	defer trace.EndSpan(ctx)
+	ctx, span := trace.StartSpan(ctx, "/bar")
+	defer span.End()
 
 	// Do bar...
 }

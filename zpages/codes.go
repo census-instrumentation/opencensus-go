@@ -12,30 +12,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package trace_test
+package zpages
 
-import (
-	"fmt"
+type code int
 
-	"go.opencensus.io/trace"
-	"golang.org/x/net/context"
+//go:generate stringer -type=code
+const (
+	OK code = iota
+	Cancelled
+	Unknown
+	InvalidArgument
+	DeadlineExceeded
+	NotFound
+	AlreadyExists
+	PermissionDenied
+	ResourceExhausted
+	FailedPrecondition
+	Aborted
+	OutOfRange
+	Unimplemented
+	Internal
+	Unavailable
+	DataLoss
+	Unauthenticated
 )
-
-// This example shows how to use StartSpan and (*Span).End to capture
-// a function execution in a Span. It assumes that the function
-// has a context.Context argument.
-func ExampleStartSpan() {
-	printEvens := func(ctx context.Context) {
-		ctx, span := trace.StartSpan(ctx, "my/package.Function")
-		defer span.End()
-
-		for i := 0; i < 10; i++ {
-			if i%2 == 0 {
-				fmt.Printf("Even!\n")
-			}
-		}
-	}
-
-	ctx := context.Background()
-	printEvens(ctx)
-}

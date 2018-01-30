@@ -37,8 +37,8 @@ func TestBundling(t *testing.T) {
 
 	trace.SetDefaultSampler(trace.AlwaysSample())
 	for i := 0; i < 35; i++ {
-		ctx := trace.StartSpan(context.Background(), "span")
-		trace.EndSpan(ctx)
+		_, span := trace.StartSpan(context.Background(), "span")
+		span.End()
 	}
 
 	// Read the first three bundles.

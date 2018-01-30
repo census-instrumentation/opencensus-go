@@ -16,6 +16,7 @@ package main
 
 import (
 	"log"
+	"net/http"
 	"os"
 	"time"
 
@@ -24,6 +25,7 @@ import (
 	ocgrpc "go.opencensus.io/plugin/grpc"
 	"go.opencensus.io/plugin/grpc/grpcstats"
 	"go.opencensus.io/stats/view"
+	"go.opencensus.io/zpages"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
@@ -34,6 +36,9 @@ const (
 )
 
 func main() {
+	zpages.AddDefaultHTTPHandlers()
+	go func() { log.Fatal(http.ListenAndServe(":8080", nil)) }()
+
 	// Register stats and trace exporters to export
 	// the collected data.
 	view.RegisterExporter(&exporter.Exporter{})
@@ -57,12 +62,14 @@ func main() {
 	if len(os.Args) > 1 {
 		name = os.Args[1]
 	}
-	r, err := c.SayHello(context.Background(), &pb.HelloRequest{Name: name})
-	if err != nil {
-		log.Fatalf("could not greet: %v", err)
-	}
-	log.Printf("Greeting: %s", r.Message)
-
 	view.SetReportingPeriod(time.Second)
-	time.Sleep(2 * time.Second) // Wait for the data collection.
+	for {
+		r, err := c.SayHello(context.Background(), &pb.HelloRequest{Name: name})
+		if err != nil {
+			log.Fatalf("could not greet: %v", err)
+		}
+		log.Printf("Greeting: %s", r.Message)
+
+		time.Sleep(2 * time.Second) // Wait for the data collection.
+	}
 }
