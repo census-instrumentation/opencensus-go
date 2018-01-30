@@ -138,11 +138,10 @@ func WriteTextRpczPage(w io.Writer) {
 			fmt.Fprint(w, "\nReceived:\n")
 		}
 		tw := tabwriter.NewWriter(w, 6, 8, 1, ' ', 0)
-		fmt.Fprint(tw, "Service\tMethod\tCount\t\t\tAvgLat\t\t\tMaxLat\t\t\tRate\t\t\tIn (MiB/s)\t\t\tOut (MiB/s)\t\t\tErrors\t\t\n")
-		fmt.Fprint(tw, "\t\tMin\tHr\tTot\tMin\tHr\tTot\tMin\tHr\tTot\tMin\tHr\tTot\tMin\tHr\tTot\tMin\tHr\tTot\tMin\tHr\tTot\n")
+		fmt.Fprint(tw, "Method\tCount\t\t\tAvgLat\t\t\tMaxLat\t\t\tRate\t\t\tIn (MiB/s)\t\t\tOut (MiB/s)\t\t\tErrors\t\t\n")
+		fmt.Fprint(tw, "\tMin\tHr\tTot\tMin\tHr\tTot\tMin\tHr\tTot\tMin\tHr\tTot\tMin\tHr\tTot\tMin\tHr\tTot\tMin\tHr\tTot\n")
 		for _, s := range sg.Snapshots {
-			fmt.Fprintf(tw, "%s\t%s\t%d\t%d\t%d\t%v\t%v\t%v\t%v\t%v\t%v\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%d\t%d\t%d\n",
-				s.Service,
+			fmt.Fprintf(tw, "%s\t%d\t%d\t%d\t%v\t%v\t%v\t%v\t%v\t%v\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%d\t%d\t%d\n",
 				s.Method,
 				s.CountMinute,
 				s.CountHour,
@@ -246,17 +245,12 @@ func (s *statGroup) Swap(i, j int) {
 }
 
 func (s *statGroup) Less(i, j int) bool {
-	x, y := s.Snapshots[i], s.Snapshots[j]
-	if x.Service != y.Service {
-		return x.Service < y.Service
-	}
-	return x.Method < y.Method
+	return s.Snapshots[i].Method < s.Snapshots[j].Method
 }
 
 // statSnapshot holds the data items that are presented in a single row of RPC
 // stat information.
 type statSnapshot struct {
-	Service          string
 	Method           string
 	Received         bool
 	CountMinute      int
@@ -283,7 +277,6 @@ type statSnapshot struct {
 }
 
 type methodKey struct {
-	service  string
 	method   string
 	received bool
 }
@@ -318,23 +311,18 @@ func (s snapExporter) ExportView(vd *stats.ViewData) {
 	mu.Lock()
 	defer mu.Unlock()
 	for _, row := range vd.Rows {
-		var (
-			service string
-			method  string
-		)
+		var method string
 		for _, tag := range row.Tags {
-			switch tag.Key.Name() {
-			case "grpc.service":
-				service = tag.Value
-			case "grpc.method":
+			if tag.Key.Name() == "method" {
 				method = tag.Value
+				break
 			}
 		}
 
-		key := methodKey{service: service, method: method, received: received}
+		key := methodKey{method: method, received: received}
 		s := snaps[key]
 		if s == nil {
-			s = &statSnapshot{Service: service, Method: method, Received: received}
+			s = &statSnapshot{Method: method, Received: received}
 			snaps[key] = s
 		}
 

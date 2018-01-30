@@ -42,15 +42,43 @@ const (
 	maxTraceMessageLength = 1024
 )
 
-var defaultLatencies = [...]time.Duration{
-	10 * time.Microsecond,
-	100 * time.Microsecond,
-	time.Millisecond,
-	10 * time.Millisecond,
-	100 * time.Millisecond,
-	time.Second,
-	10 * time.Second,
-	100 * time.Second,
+var (
+	defaultLatencies = [...]time.Duration{
+		10 * time.Microsecond,
+		100 * time.Microsecond,
+		time.Millisecond,
+		10 * time.Millisecond,
+		100 * time.Millisecond,
+		time.Second,
+		10 * time.Second,
+		100 * time.Second,
+	}
+	canonicalCodes = [...]string{
+		"OK",
+		"CANCELLED",
+		"UNKNOWN",
+		"INVALID_ARGUMENT",
+		"DEADLINE_EXCEEDED",
+		"NOT_FOUND",
+		"ALREADY_EXISTS",
+		"PERMISSION_DENIED",
+		"RESOURCE_EXHAUSTED",
+		"FAILED_PRECONDITION",
+		"ABORTED",
+		"OUT_OF_RANGE",
+		"UNIMPLEMENTED",
+		"INTERNAL",
+		"UNAVAILABLE",
+		"DATA_LOSS",
+		"UNAUTHENTICATED",
+	}
+)
+
+func canonicalCodeString(code int32) string {
+	if code < 0 || int(code) >= len(canonicalCodes) {
+		return "error code " + strconv.FormatInt(int64(code), 10)
+	}
+	return canonicalCodes[code]
 }
 
 // TracezHandler is a handler for /tracez.
@@ -254,7 +282,8 @@ func traceRows(s *trace.SpanData) []traceRow {
 	}
 
 	if s.Status != (trace.Status{}) {
-		msg := fmt.Sprintf("Status{canonicalCode=%s, description=%q}", code(s.Status.Code), s.Status.Message)
+		msg := fmt.Sprintf("Status{canonicalCode=%s, description=%q}",
+			canonicalCodeString(s.Status.Code), s.Status.Message)
 		out = append(out, traceRow{Fields: [3]string{"", "", msg}})
 	}
 

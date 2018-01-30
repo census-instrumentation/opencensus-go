@@ -137,11 +137,7 @@ When                       Elapsed (sec)
 
 {{range .Snapshots}}
 <tr>
-{{if not .Service}}
 <td><b>{{.Method}}</b></td>
-{{else}}
-<td><b>{{.Service}}.{{.Method}}</b></td>
-{{end}}
 <td></td>
 <td align="right">{{.CountMinute|count}}</td>
 <td align="right">{{.CountHour|count}}</td>
