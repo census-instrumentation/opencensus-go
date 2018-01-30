@@ -17,7 +17,6 @@ package tag
 
 // Key represents a tag key.
 type Key struct {
-	id   uint16
 	name string
 }
 
@@ -27,7 +26,7 @@ func NewKey(name string) (Key, error) {
 	if !checkKeyName(name) {
 		return Key{}, errInvalidKeyName
 	}
-	return km.newStringKey(name)
+	return Key{name: name}, nil
 }
 
 // Name returns the name of the key.
