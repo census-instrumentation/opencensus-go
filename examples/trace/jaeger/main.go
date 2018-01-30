@@ -41,16 +41,16 @@ func main() {
 	// For demoing purposes, always sample.
 	trace.SetDefaultSampler(trace.AlwaysSample())
 
-	ctx = trace.StartSpan(ctx, "/foo")
+	ctx, span := trace.StartSpan(ctx, "/foo")
 	bar(ctx)
-	trace.EndSpan(ctx)
+	span.End()
 
 	exporter.Flush()
 }
 
 func bar(ctx context.Context) {
-	ctx = trace.StartSpan(ctx, "/bar")
-	defer trace.EndSpan(ctx)
+	ctx, span := trace.StartSpan(ctx, "/bar")
+	defer span.End()
 
 	// Do bar...
 }
