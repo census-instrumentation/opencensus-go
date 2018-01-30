@@ -72,10 +72,7 @@ func (f *HTTPFormat) FromRequest(req *http.Request) (sc trace.SpanContext, ok bo
 	if err != nil {
 		return trace.SpanContext{}, false
 	}
-
-	buf = make([]byte, binary.MaxVarintLen64)
-	binary.PutUvarint(buf, sid)
-	copy(sc.SpanID[:], buf)
+	binary.BigEndian.PutUint64(sc.SpanID[:], sid)
 
 	// Parse the options field, options field is optional.
 	if !strings.HasPrefix(h, "o=") {
@@ -91,7 +88,7 @@ func (f *HTTPFormat) FromRequest(req *http.Request) (sc trace.SpanContext, ok bo
 
 // ToRequest modifies the given request to include a Stackdriver Trace header.
 func (f *HTTPFormat) ToRequest(sc trace.SpanContext, req *http.Request) {
-	sid, _ := binary.Uvarint(sc.SpanID[:])
+	sid := binary.BigEndian.Uint64(sc.SpanID[:])
 	header := fmt.Sprintf("%s/%d;o=%d", hex.EncodeToString(sc.TraceID[:]), sid, int64(sc.TraceOptions))
 	req.Header.Set(httpHeader, header)
 }

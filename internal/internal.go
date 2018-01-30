@@ -16,4 +16,4 @@ package internal
 
 // UserAgent is the user agent to be added to the outgoing
 // requests from the exporters.
-const UserAgent = "opencensus-go-v0"
+const UserAgent = "opencensus-go-v0.1.0"

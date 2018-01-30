@@ -20,6 +20,8 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"go.opencensus.io/internal"
+
 	timestamppb "github.com/golang/protobuf/ptypes/timestamp"
 	wrapperspb "github.com/golang/protobuf/ptypes/wrappers"
 	"go.opencensus.io/trace"
@@ -30,6 +32,8 @@ import (
 const (
 	maxAnnotationEventsPerSpan = 32
 	maxMessageEventsPerSpan    = 128
+	maxAttributeStringValue    = 256
+	agentLabel                 = "g.co/agent"
 )
 
 // proto returns a protocol buffer representation of a SpanData.
@@ -65,7 +69,7 @@ func protoFromSpanData(s *trace.SpanData, projectID string) *tracepb.Span {
 			droppedAnnotationsCount = len(as) - i
 			break
 		}
-		annotation := &tracepb.Span_TimeEvent_Annotation{Description: trunc(a.Message, 256)}
+		annotation := &tracepb.Span_TimeEvent_Annotation{Description: trunc(a.Message, maxAttributeStringValue)}
 		copyAttributes(&annotation.Attributes, a.Attributes)
 		event := &tracepb.Span_TimeEvent{
 			Time:  timestampProto(a.Time),
@@ -76,6 +80,17 @@ func protoFromSpanData(s *trace.SpanData, projectID string) *tracepb.Span {
 			sp.TimeEvents = &tracepb.Span_TimeEvents{}
 		}
 		sp.TimeEvents.TimeEvent = append(sp.TimeEvents.TimeEvent, event)
+	}
+
+	if sp.Attributes == nil {
+		sp.Attributes = &tracepb.Span_Attributes{
+			AttributeMap: make(map[string]*tracepb.AttributeValue),
+		}
+	}
+	sp.Attributes.AttributeMap[agentLabel] = &tracepb.AttributeValue{
+		Value: &tracepb.AttributeValue_StringValue{
+			StringValue: trunc(internal.UserAgent, maxAttributeStringValue),
+		},
 	}
 
 	es := s.MessageEvents
@@ -155,7 +170,7 @@ func copyAttributes(out **tracepb.Span_Attributes, in map[string]interface{}) {
 		case int64:
 			av.Value = &tracepb.AttributeValue_IntValue{IntValue: value}
 		case string:
-			av.Value = &tracepb.AttributeValue_StringValue{StringValue: trunc(value, 256)}
+			av.Value = &tracepb.AttributeValue_StringValue{StringValue: trunc(value, maxAttributeStringValue)}
 		default:
 			continue
 		}

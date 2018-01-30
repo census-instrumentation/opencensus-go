@@ -15,7 +15,6 @@
 package google
 
 import (
-	"encoding/binary"
 	"net/http"
 	"reflect"
 	"testing"
@@ -27,17 +26,17 @@ func TestHTTPFormat(t *testing.T) {
 	format := HTTPFormat{}
 
 	traceID := [16]byte{16, 84, 69, 170, 120, 67, 188, 139, 242, 6, 177, 32, 0, 16, 0, 0}
-	var spanID [8]byte
-	binary.PutUvarint(spanID[:], 123)
+	spanID1 := [8]byte{255, 0, 0, 0, 0, 0, 0, 123}
+	spanID2 := [8]byte{0, 0, 0, 0, 0, 0, 0, 123}
 	tests := []struct {
 		incoming        string
 		wantSpanContext trace.SpanContext
 	}{
 		{
-			incoming: "105445aa7843bc8bf206b12000100000/123;o=1",
+			incoming: "105445aa7843bc8bf206b12000100000/18374686479671623803;o=1",
 			wantSpanContext: trace.SpanContext{
 				TraceID:      traceID,
-				SpanID:       spanID,
+				SpanID:       spanID1,
 				TraceOptions: 1,
 			},
 		},
@@ -45,7 +44,7 @@ func TestHTTPFormat(t *testing.T) {
 			incoming: "105445aa7843bc8bf206b12000100000/123;o=0",
 			wantSpanContext: trace.SpanContext{
 				TraceID:      traceID,
-				SpanID:       spanID,
+				SpanID:       spanID2,
 				TraceOptions: 0,
 			},
 		},
