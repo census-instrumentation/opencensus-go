@@ -198,7 +198,7 @@ func getSummaryPageData() summaryPageData {
 		Links:          true,
 		TracesEndpoint: "/tracez",
 	}
-	for name, s := range trace.SampledSpansSummary() {
+	for name, s := range trace.ReportSpansPerMethod() {
 		if len(data.Header) == 0 {
 			data.Header = []string{"Name", "Active"}
 			for _, b := range s.LatencyBuckets {
