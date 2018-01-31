@@ -310,12 +310,12 @@ func TestClientDefaultCollections(t *testing.T) {
 			for _, t := range rpc.tags {
 				mods = append(mods, tag.Upsert(t.k, t.v))
 			}
-			tm, err := tag.NewMap(context.Background(), mods...)
+			ctx, err := tag.New(context.Background(), mods...)
 			if err != nil {
 				t.Errorf("%q: NewMap = %v", tc.label, err)
 			}
-			encoded := tag.Encode(tm)
-			ctx := stats.SetTags(context.Background(), encoded)
+			encoded := tag.Encode(tag.FromContext(ctx))
+			ctx = stats.SetTags(context.Background(), encoded)
 			ctx = h.TagRPC(ctx, rpc.tagInfo)
 			for _, out := range rpc.outPayloads {
 				h.HandleRPC(ctx, out)
