@@ -13,7 +13,7 @@
 // limitations under the License.
 
 // Package httptrace contains OpenCensus tracing integrations with net/http.
-package httptrace
+package httptrace // import "go.opencensus.io/plugin/http/httptrace"
 
 import (
 	"io"
