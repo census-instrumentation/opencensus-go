@@ -129,8 +129,13 @@ type aggregatorInterval struct {
 	idx             int
 }
 
+const defaultSubIntervals = 5
+
 // newAggregatorInterval creates an aggregatorSlidingTime.
 func newAggregatorInterval(now time.Time, d time.Duration, subIntervalsCount int, newAggregationValue func() AggregationData) *aggregatorInterval {
+	if subIntervalsCount == 0 {
+		subIntervalsCount = defaultSubIntervals
+	}
 	subDuration := d / time.Duration(subIntervalsCount)
 	start := now.Add(-subDuration * time.Duration(subIntervalsCount))
 	var entries []*timeSerieEntry
