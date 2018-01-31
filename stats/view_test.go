@@ -163,11 +163,11 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowCumulative(t *testin
 			for _, t := range r.tags {
 				mods = append(mods, tag.Insert(t.k, t.v))
 			}
-			ts, err := tag.NewMap(context.Background(), mods...)
+			ctx, err := tag.New(context.Background(), mods...)
 			if err != nil {
 				t.Errorf("%v: NewMap = %v", tc.label, err)
 			}
-			view.addSample(ts, r.f, time.Now())
+			view.addSample(tag.FromContext(ctx), r.f, time.Now())
 		}
 
 		gotRows := view.collectedRows(time.Now())
@@ -355,11 +355,11 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowSlidingTime(t *testi
 			for _, t := range r.tags {
 				mods = append(mods, tag.Insert(t.k, t.v))
 			}
-			ts, err := tag.NewMap(context.Background(), mods...)
+			ctx, err := tag.New(context.Background(), mods...)
 			if err != nil {
-				t.Errorf("%v: NewMap = %v", tc.label, err)
+				t.Errorf("%v: New = %v", tc.label, err)
 			}
-			view.addSample(ts, r.f, r.now)
+			view.addSample(tag.FromContext(ctx), r.f, r.now)
 		}
 
 		for _, wantRows := range tc.wantRows {
@@ -555,11 +555,11 @@ func Test_View_MeasureFloat64_AggregationCount_WindowSlidingTime(t *testing.T) {
 			for _, t := range r.tags {
 				mods = append(mods, tag.Insert(t.k, t.v))
 			}
-			ts, err := tag.NewMap(context.Background(), mods...)
+			ctx, err := tag.New(context.Background(), mods...)
 			if err != nil {
-				t.Errorf("%v: NewMap = %v", tc.label, err)
+				t.Errorf("%v: New = %v", tc.label, err)
 			}
-			view.addSample(ts, r.f, r.now)
+			view.addSample(tag.FromContext(ctx), r.f, r.now)
 		}
 
 		for _, wantRows := range tc.wantRows {
@@ -674,11 +674,11 @@ func Test_View_MeasureFloat64_AggregationSum_WindowCumulative(t *testing.T) {
 			for _, t := range r.tags {
 				mods = append(mods, tag.Insert(t.k, t.v))
 			}
-			ts, err := tag.NewMap(context.Background(), mods...)
+			ctx, err := tag.New(context.Background(), mods...)
 			if err != nil {
-				t.Errorf("%v: NewMap = %v", tt.label, err)
+				t.Errorf("%v: New = %v", tt.label, err)
 			}
-			view.addSample(ts, r.f, time.Now())
+			view.addSample(tag.FromContext(ctx), r.f, time.Now())
 		}
 
 		gotRows := view.collectedRows(time.Now())
@@ -791,11 +791,11 @@ func Test_View_MeasureFloat64_AggregationMean_WindowCumulative(t *testing.T) {
 			for _, t := range r.tags {
 				mods = append(mods, tag.Insert(t.k, t.v))
 			}
-			ts, err := tag.NewMap(context.Background(), mods...)
+			ctx, err := tag.New(context.Background(), mods...)
 			if err != nil {
-				t.Errorf("%v: NewMap = %v", tt.label, err)
+				t.Errorf("%v: New = %v", tt.label, err)
 			}
-			view.addSample(ts, r.f, time.Now())
+			view.addSample(tag.FromContext(ctx), r.f, time.Now())
 		}
 
 		gotRows := view.collectedRows(time.Now())

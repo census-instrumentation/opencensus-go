@@ -35,35 +35,35 @@ Currently, OpenCensus supports:
 
 ## Tags
 
-Tags represent propagated key-value pairs. They can be propagated using context.Context
+Tags represent propagated key-value pairs. They are propagated using context.Context
 in the same process or can be encoded to be transmitted on the wire and decoded back
 to a tag.Map at the destination.
 
 ### Getting a key by a name
 
 A key is defined by its name. To use a key, a user needs to know its name and type.
-Currently, only keys of type string are supported.
-Other types will be supported in the future.
 
 [embedmd]:# (tags.go stringKey)
 
-### Creating a map of tags associated with keys
+### Creating tags and propagating them
 
-tag.Map is a map of tags. Package tags provide a builder to create tag maps.
+Package tag provides a builder to create tag maps and put it
+into the current context.
+To propagate a tag map to downstream methods and RPCs, New
+will add the produced tag map to the current context.
+If there is already a tag map in the current context, it will be replaced.
 
-[embedmd]:# (tags.go tagMap)
+[embedmd]:# (tags.go new)
 
 ### Propagating a tag map in a context
 
-To propagate a tag map to downstream methods and RPCs, add a tag map
-to the current context. NewContext will return a copy of the current context,
-and put the tag map into the returned one.
-If there is already a tag map in the current context, it will be replaced.
+If you have access to a tag.Map, you can also
+propagate it in the current context:
 
 [embedmd]:# (tags.go newContext)
 
-In order to update an existing tag map, get the tag map from the current context,
-use NewMap and put the new tag map back to the context.
+In order to update existing tags from the current context,
+use New and pass the returned context.
 
 [embedmd]:# (tags.go replaceTagMap)
 
@@ -176,8 +176,8 @@ A screenshot of the CPU profile from the program above:
 [gitter-url]: https://gitter.im/census-instrumentation/lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
 
 
-[newtags-ex]: https://godoc.org/go.opencensus.io/tag#example-NewMap
-[newtags-replace-ex]: https://godoc.org/go.opencensus.io/tag#example-NewMap--Replace
+[new-ex]: https://godoc.org/go.opencensus.io/tag#example-NewMap
+[new-replace-ex]: https://godoc.org/go.opencensus.io/tag#example-NewMap--Replace
 
 [exporter-prom]: https://godoc.org/go.opencensus.io/exporter/prometheus
 [exporter-stackdriver]: https://godoc.org/go.opencensus.io/exporter/stackdriver
