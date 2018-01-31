@@ -60,11 +60,13 @@ type SpanData struct {
 	ParentSpanID SpanID
 	Name         string
 	StartTime    time.Time
-	EndTime      time.Time
+	// The wall clock time of EndTime will be adjusted to always be offset
+	// from StartTime by the duration of the span.
+	EndTime time.Time
 	// The values of Attributes each have type string, bool, or int64.
-	Attributes    map[string]interface{}
-	Annotations   []Annotation
-	MessageEvents []MessageEvent
+	Attributes      map[string]interface{}
+	Annotations     []Annotation
+	MessageEvents   []MessageEvent
 	Status
 	Links           []Link
 	HasRemoteParent bool
