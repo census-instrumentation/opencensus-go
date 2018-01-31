@@ -11,6 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
 package httpstats
 
 import (
@@ -25,7 +26,7 @@ import (
 
 type mockExporter map[string]stats.AggregationData
 
-func (e mockExporter) Export(viewData *stats.ViewData) {
+func (e mockExporter) ExportView(viewData *stats.ViewData) {
 	// keep the last value, since all stats are cumulative
 	e[viewData.View.Name()] = viewData.Rows[0].Data
 }
@@ -38,7 +39,6 @@ func TestClientStats(t *testing.T) {
 
 	ClientLatencyDistribution.Subscribe()
 	ClientRequestCount.Subscribe()
-	ClientConnectionsOpenedCount.Subscribe()
 
 	e := make(mockExporter)
 	stats.RegisterExporter(&e)
@@ -76,7 +76,6 @@ func TestClientStats(t *testing.T) {
 		want int64
 	}{
 		{name: "opencensus.io/http/client/started", want: int64(10)},
-		{name: "opencensus.io/http/client/connections_opened", want: int64(1)},
 		{name: "opencensus.io/http/client/latency", want: int64(10)},
 	}
 	for _, exp := range expect {
