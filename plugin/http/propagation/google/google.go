@@ -14,7 +14,7 @@
 
 // Package google contains a propagation.HTTPFormat implementation
 // for Google Cloud Trace and Stackdriver.
-package google
+package google // import "go.opencensus.io/plugin/http/propagation/google"
 
 import (
 	"encoding/binary"

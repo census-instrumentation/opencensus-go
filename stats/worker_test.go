@@ -622,7 +622,7 @@ func TestReportUsage(t *testing.T) {
 
 	cum1, _ := NewView("cum1", "", nil, m, CountAggregation{}, Cumulative{})
 	cum2, _ := NewView("cum1", "", nil, m, CountAggregation{}, &Cumulative{})
-	interval, _ := NewView("cum1", "", nil, m, CountAggregation{}, Interval{Duration: 5 * time.Millisecond, Intervals: 1})
+	interval, _ := NewView("cum1", "", nil, m, CountAggregation{}, Interval{Duration: 5 * time.Millisecond, SubIntervals: 1})
 
 	tests := []struct {
 		name         string
