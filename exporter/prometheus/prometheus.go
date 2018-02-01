@@ -16,7 +16,7 @@
 // Stackdriver Monitoring.
 //
 // Please note that this exporter is currently work in progress and not complete.
-package prometheus
+package prometheus // import "go.opencensus.io/exporter/prometheus"
 
 import (
 	"bytes"
