@@ -26,6 +26,19 @@ import (
 
 // TODO(jbd): Add godoc examples.
 
+// Attributes recorded on the span for the requests.
+// Only trace exporters will need them.
+const (
+	URLAttribute          = "http.url"
+	HostAttribute         = "http.host"
+	MethodAttribute       = "http.method"
+	PathAttribute         = "http.path"
+	UserAgentAttribute    = "http.user_agent"
+	StatusCodeAttribute   = "http.status"
+	RequestSizeAttribute  = "http.request_size"
+	ResponseSizeAttribute = "http.response_size"
+)
+
 type traceTransport struct {
 	base   http.RoundTripper
 	format propagation.HTTPFormat
@@ -45,15 +58,18 @@ func (t *traceTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 		t.format.ToRequest(span.SpanContext(), req)
 	}
 
+	span.SetAttributes(requestAttrs(req)...)
 	resp, err := t.base.RoundTrip(req)
-
-	// TODO(jbd): Add status and attributes.
 	if err != nil {
+		span.SetStatus(trace.Status{Code: 2, Message: err.Error()})
 		span.End()
 		return resp, err
 	}
 
-	// trace.EndSpan(ctx) will be invoked after
+	// TODO(jbd): Set status based on the status code.
+	span.SetAttributes(responseAttrs(resp)...)
+
+	// span.End() will be invoked after
 	// a read from resp.Body returns io.EOF or when
 	// resp.Body.Close() is invoked.
 	resp.Body = &spanEndBody{rc: resp.Body, span: span}
@@ -150,7 +166,8 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	defer span.End()
 
-	// TODO(jbd): Add status and attributes.
+	span.SetAttributes(requestAttrs(r)...)
+
 	r = r.WithContext(ctx)
 	h.handler.ServeHTTP(w, r)
 }
@@ -162,4 +179,22 @@ func spanNameFromURL(prefix string, u *url.URL) string {
 		port = ""
 	}
 	return prefix + "." + host + port + u.Path
+}
+
+func requestAttrs(r *http.Request) []trace.Attribute {
+	return []trace.Attribute{
+		trace.StringAttribute{Key: URLAttribute, Value: r.URL.String()},
+		trace.StringAttribute{Key: HostAttribute, Value: r.URL.Host},
+		trace.StringAttribute{Key: MethodAttribute, Value: r.Method},
+		trace.StringAttribute{Key: PathAttribute, Value: r.URL.Path},
+		trace.StringAttribute{Key: UserAgentAttribute, Value: r.UserAgent()},
+		trace.Int64Attribute{Key: RequestSizeAttribute, Value: r.ContentLength},
+	}
+}
+
+func responseAttrs(resp *http.Response) []trace.Attribute {
+	return []trace.Attribute{
+		trace.Int64Attribute{Key: ResponseSizeAttribute, Value: resp.ContentLength},
+		trace.Int64Attribute{Key: StatusCodeAttribute, Value: int64(resp.StatusCode)},
+	}
 }
