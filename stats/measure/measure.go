@@ -40,24 +40,29 @@ type Measure interface {
 }
 
 var (
-	measures     sync.Map
+	mu           sync.RWMutex
+	measures     = make(map[string]Measure)
 	errDuplicate = errors.New("duplicate measure name")
 )
 
 func Find(name string) Measure {
-	if m, ok := measures.Load(name); ok {
-		return m.(Measure)
+	mu.RLock()
+	defer mu.RUnlock()
+	if m, ok := measures[name]; ok {
+		return m
 	}
 	return nil
 }
 
 func register(m Measure) (Measure, error) {
-	stored, loaded := measures.LoadOrStore(m.Name(), m)
-	if loaded {
-		return stored.(Measure), errDuplicate
-	} else {
-		return m, nil
+	key := m.Name()
+	mu.Lock()
+	defer mu.Unlock()
+	if stored, ok := measures[key]; ok {
+		return stored, errDuplicate
 	}
+	measures[key] = m
+	return m, nil
 }
 
 // Measurement is the numeric value measured when recording stats. Each measure
