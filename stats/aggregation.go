@@ -15,15 +15,13 @@
 
 package stats
 
-import "time"
-
 // Aggregation represents a data aggregation method. There are several
 // aggregation methods made available in the package such as
 // CountAggregation, SumAggregation, MeanAggregation and
 // DistributionAggregation.
 type Aggregation interface {
 	isAggregation() bool
-	newData() func() AggregationData
+	newData() AggregationData
 }
 
 // CountAggregation indicates that data collected and aggregated
@@ -34,8 +32,8 @@ type CountAggregation struct{}
 
 func (a CountAggregation) isAggregation() bool { return true }
 
-func (a CountAggregation) newData() func() AggregationData {
-	return func() AggregationData { return newCountData(0) }
+func (a CountAggregation) newData() AggregationData {
+	return newCountData(0)
 }
 
 // SumAggregation indicates that data collected and aggregated
@@ -46,8 +44,8 @@ type SumAggregation struct{}
 
 func (a SumAggregation) isAggregation() bool { return true }
 
-func (a SumAggregation) newData() func() AggregationData {
-	return func() AggregationData { return newSumData(0) }
+func (a SumAggregation) newData() AggregationData {
+	return newSumData(0)
 }
 
 // MeanAggregation indicates that collect and aggregate data and maintain
@@ -58,8 +56,8 @@ type MeanAggregation struct{}
 
 func (a MeanAggregation) isAggregation() bool { return true }
 
-func (a MeanAggregation) newData() func() AggregationData {
-	return func() AggregationData { return newMeanData(0, 0) }
+func (a MeanAggregation) newData() AggregationData {
+	return newMeanData(0, 0)
 }
 
 // DistributionAggregation indicates that the desired aggregation is
@@ -84,21 +82,6 @@ type DistributionAggregation []float64
 
 func (a DistributionAggregation) isAggregation() bool { return true }
 
-func (a DistributionAggregation) newData() func() AggregationData {
-	return func() AggregationData { return newDistributionData([]float64(a)) }
-}
-
-// aggregatorDefault indicates that the aggregation occurs over all samples
-// seen since the view collection started.
-type aggregatorDefault struct {
-	data AggregationData
-}
-
-
-func (a *aggregatorDefault) addSample(v interface{}, now time.Time) {
-	a.data.addSample(v)
-}
-
-func (a *aggregatorDefault) retrieveCollected(now time.Time) AggregationData {
-	return a.data
+func (a DistributionAggregation) newData() AggregationData {
+	return newDistributionData([]float64(a))
 }
