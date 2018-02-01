@@ -17,13 +17,8 @@ package stats
 
 import "time"
 
-// aggregator represents the interface for the aggregators for the various windows.
-type aggregator interface {
-	isAggregator() bool
-	addSample(v interface{}, now time.Time)
-	retrieveCollected(now time.Time) AggregationData
-}
-
-func newCumulativeAggregator(now time.Time, newAggregationData func() AggregationData) aggregator {
-	return newAggregatorCumulative(newAggregationData)
+func newCumulativeAggregator(now time.Time, newAggregationData func() AggregationData) *aggregatorDefault {
+	return &aggregatorDefault{
+		data: newAggregationData(),
+	}
 }

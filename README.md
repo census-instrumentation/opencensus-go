@@ -169,7 +169,6 @@ view, err := stats.NewView(
 	nil,
 	videoSize,
 	distAgg,
-	cum,
 )
 if err != nil {
 	log.Fatalf("cannot create view: %v", err)

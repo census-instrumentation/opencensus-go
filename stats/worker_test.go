@@ -619,8 +619,8 @@ func TestReportUsage(t *testing.T) {
 		t.Fatalf("NewMeasureInt64() = %v", err)
 	}
 
-	cum1, _ := NewView("cum1", "", nil, m, CountAggregation{})
-	cum2, _ := NewView("cum1", "", nil, m, CountAggregation{})
+	v1, _ := NewView("v1", "", nil, m, CountAggregation{})
+	v2, _ := NewView("v1", "", nil, m, CountAggregation{})
 
 	tests := []struct {
 		name         string
@@ -628,13 +628,13 @@ func TestReportUsage(t *testing.T) {
 		wantMaxCount int64
 	}{
 		{
-			name:         "cum",
-			view:         cum1,
+			name:         "v1",
+			view:         v1,
 			wantMaxCount: 8,
 		},
 		{
-			name:         "cum2",
-			view:         cum2,
+			name:         "v2",
+			view:         v2,
 			wantMaxCount: 8,
 		},
 	}
@@ -700,7 +700,7 @@ func TestWorkerCumStarttime(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewMeasureInt64() = %v", err)
 	}
-	view, err := NewView("cum", "", nil, m, CountAggregation{})
+	view, err := NewView("view1", "", nil, m, CountAggregation{})
 	if err != nil {
 		t.Fatalf("NewView() = %v", err)
 	}

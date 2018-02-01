@@ -124,9 +124,9 @@ func TestExporter_makeReq(t *testing.T) {
 		want   []*monitoringpb.CreateTimeSeriesRequest
 	}{
 		{
-			name:   "count agg + cum timeline",
+			name:   "count agg + timeline",
 			projID: "proj-id",
-			vd:     newTestCumViewData(cumView, start, end, &count1, &count2),
+			vd:     newTestViewData(cumView, start, end, &count1, &count2),
 			want: []*monitoringpb.CreateTimeSeriesRequest{{
 				Name: monitoring.MetricProjectPath("proj-id"),
 				TimeSeries: []*monitoringpb.TimeSeries{
@@ -192,9 +192,9 @@ func TestExporter_makeReq(t *testing.T) {
 			}},
 		},
 		{
-			name:   "sum agg + cum timeline",
+			name:   "sum agg + timeline",
 			projID: "proj-id",
-			vd:     newTestCumViewData(cumView, start, end, &sum1, &sum2),
+			vd:     newTestViewData(cumView, start, end, &sum1, &sum2),
 			want: []*monitoringpb.CreateTimeSeriesRequest{{
 				Name: monitoring.MetricProjectPath("proj-id"),
 				TimeSeries: []*monitoringpb.TimeSeries{
@@ -260,9 +260,9 @@ func TestExporter_makeReq(t *testing.T) {
 			}},
 		},
 		{
-			name:   "mean agg + cum timeline",
+			name:   "mean agg + timeline",
 			projID: "proj-id",
-			vd:     newTestCumViewData(cumView, start, end, &mean1, &mean2),
+			vd:     newTestViewData(cumView, start, end, &mean1, &mean2),
 			want: []*monitoringpb.CreateTimeSeriesRequest{{
 				Name: monitoring.MetricProjectPath("proj-id"),
 				TimeSeries: []*monitoringpb.TimeSeries{
@@ -429,7 +429,7 @@ func TestExporter_makeReq_batching(t *testing.T) {
 	for _, tt := range tests {
 		var vds []*stats.ViewData
 		for i := 0; i < tt.iter; i++ {
-			vds = append(vds, newTestCumViewData(view, time.Now(), time.Now(), &count1, &count2))
+			vds = append(vds, newTestViewData(view, time.Now(), time.Now(), &count1, &count2))
 		}
 
 		e := &statsExporter{}
@@ -459,7 +459,7 @@ func TestEqualAggWindowTagKeys(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "count agg + cum",
+			name: "count agg",
 			md: &metricpb.MetricDescriptor{
 				MetricKind: metricpb.MetricDescriptor_CUMULATIVE,
 				ValueType:  metricpb.MetricDescriptor_INT64,
@@ -469,7 +469,7 @@ func TestEqualAggWindowTagKeys(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "sum agg + cum",
+			name: "sum agg",
 			md: &metricpb.MetricDescriptor{
 				MetricKind: metricpb.MetricDescriptor_CUMULATIVE,
 				ValueType:  metricpb.MetricDescriptor_DOUBLE,
@@ -479,7 +479,7 @@ func TestEqualAggWindowTagKeys(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "mean agg + cum",
+			name: "mean agg",
 			md: &metricpb.MetricDescriptor{
 				MetricKind: metricpb.MetricDescriptor_CUMULATIVE,
 				ValueType:  metricpb.MetricDescriptor_DISTRIBUTION,
@@ -489,7 +489,7 @@ func TestEqualAggWindowTagKeys(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "distribution agg + cum - mismatch",
+			name: "distribution agg - mismatch",
 			md: &metricpb.MetricDescriptor{
 				MetricKind: metricpb.MetricDescriptor_CUMULATIVE,
 				ValueType:  metricpb.MetricDescriptor_DISTRIBUTION,
@@ -499,7 +499,7 @@ func TestEqualAggWindowTagKeys(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "mean agg + cum - mismatch",
+			name: "mean agg - mismatch",
 			md: &metricpb.MetricDescriptor{
 				MetricKind: metricpb.MetricDescriptor_CUMULATIVE,
 				ValueType:  metricpb.MetricDescriptor_DOUBLE,
@@ -509,7 +509,7 @@ func TestEqualAggWindowTagKeys(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "distribution agg + cum with keys",
+			name: "distribution agg with keys",
 			md: &metricpb.MetricDescriptor{
 				MetricKind: metricpb.MetricDescriptor_CUMULATIVE,
 				ValueType:  metricpb.MetricDescriptor_DISTRIBUTION,
@@ -524,7 +524,7 @@ func TestEqualAggWindowTagKeys(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "distribution agg + cum with keys -- mismatch",
+			name: "distribution agg with keys -- mismatch",
 			md: &metricpb.MetricDescriptor{
 				MetricKind: metricpb.MetricDescriptor_CUMULATIVE,
 				ValueType:  metricpb.MetricDescriptor_DISTRIBUTION,
@@ -534,7 +534,7 @@ func TestEqualAggWindowTagKeys(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "count agg + cum with pointers",
+			name: "count agg with pointers",
 			md: &metricpb.MetricDescriptor{
 				MetricKind: metricpb.MetricDescriptor_CUMULATIVE,
 				ValueType:  metricpb.MetricDescriptor_INT64,
@@ -580,7 +580,7 @@ func TestExporter_createMeasure(t *testing.T) {
 	}
 
 	data := stats.CountData(0)
-	vd := newTestCumViewData(view, time.Now(), time.Now(), &data, &data)
+	vd := newTestViewData(view, time.Now(), time.Now(), &data, &data)
 
 	e := &statsExporter{
 		createdViews: make(map[string]*metricpb.MetricDescriptor),
@@ -661,9 +661,9 @@ func TestExporter_makeReq_withCustomMonitoredResource(t *testing.T) {
 		want   []*monitoringpb.CreateTimeSeriesRequest
 	}{
 		{
-			name:   "count agg + cum timeline",
+			name:   "count agg timeline",
 			projID: "proj-id",
-			vd:     newTestCumViewData(cumView, start, end, &count1, &count2),
+			vd:     newTestViewData(cumView, start, end, &count1, &count2),
 			want: []*monitoringpb.CreateTimeSeriesRequest{{
 				Name: monitoring.MetricProjectPath("proj-id"),
 				TimeSeries: []*monitoringpb.TimeSeries{
@@ -745,7 +745,7 @@ func TestExporter_makeReq_withCustomMonitoredResource(t *testing.T) {
 	}
 }
 
-func newTestCumViewData(v *stats.View, start, end time.Time, data1, data2 stats.AggregationData) *stats.ViewData {
+func newTestViewData(v *stats.View, start, end time.Time, data1, data2 stats.AggregationData) *stats.ViewData {
 	key, _ := tag.NewKey("test-key")
 	tag1 := tag.Tag{Key: key, Value: "test-value-1"}
 	tag2 := tag.Tag{Key: key, Value: "test-value-2"}
@@ -766,20 +766,3 @@ func newTestCumViewData(v *stats.View, start, end time.Time, data1, data2 stats.
 	}
 }
 
-func newTestDistViewData(v *stats.View, start, end time.Time) *stats.ViewData {
-	return &stats.ViewData{
-		View: v,
-		Rows: []*stats.Row{
-			{Data: &stats.DistributionData{
-				Count:           5,
-				Min:             1,
-				Max:             7,
-				Mean:            3,
-				SumOfSquaredDev: 1.5,
-				CountPerBucket:  []int64{2, 2, 1},
-			}},
-		},
-		Start: start,
-		End:   end,
-	}
-}

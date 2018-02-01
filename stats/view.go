@@ -69,7 +69,7 @@ func NewView(name, description string, keys []tag.Key, measure Measure, agg Aggr
 		description: description,
 		tagKeys:     ks,
 		m:           measure,
-		collector:   &collector{make(map[string]aggregator), agg},
+		collector:   &collector{make(map[string]*aggregatorDefault), agg},
 	}, nil
 }
 
