@@ -28,12 +28,12 @@ var (
 	unitDimensionless = "1"
 	unitMillisecond   = "ms"
 
-	rpcBytesBucketBoundaries  = []float64{0, 1024, 2048, 4096, 16384, 65536, 262144, 1048576, 4194304, 16777216, 67108864, 268435456, 1073741824, 4294967296}
-	rpcMillisBucketBoundaries = []float64{0, 1, 2, 3, 4, 5, 6, 8, 10, 13, 16, 20, 25, 30, 40, 50, 65, 80, 100, 130, 160, 200, 250, 300, 400, 500, 650, 800, 1000, 2000, 5000, 10000, 20000, 50000, 100000}
+	bytesBucketBoundaries  = []float64{0, 1024, 2048, 4096, 16384, 65536, 262144, 1048576, 4194304, 16777216, 67108864, 268435456, 1073741824, 4294967296}
+	millisBucketBoundaries = []float64{0, 1, 2, 3, 4, 5, 6, 8, 10, 13, 16, 20, 25, 30, 40, 50, 65, 80, 100, 130, 160, 200, 250, 300, 400, 500, 650, 800, 1000, 2000, 5000, 10000, 20000, 50000, 100000}
 
 	aggCount      = stats.CountAggregation{}
-	aggDistBytes  = stats.DistributionAggregation(rpcBytesBucketBoundaries)
-	aggDistMillis = stats.DistributionAggregation(rpcMillisBucketBoundaries)
+	aggDistBytes  = stats.DistributionAggregation(bytesBucketBoundaries)
+	aggDistMillis = stats.DistributionAggregation(millisBucketBoundaries)
 )
 
 var (
@@ -55,7 +55,7 @@ var (
 	// ClientLatencyDistribution is a view of the latency distribution of all instrumented requests.
 	ClientLatencyDistribution = defaultView(ClientLatency, aggDistMillis)
 	// ClientResponseCountByStatusCode is a view of response counts by StatusCode.
-	ClientResponseCountByStatusCode = mustView(stats.NewView(
+	ClientRequestCountByMethod = mustView(stats.NewView(
 		qualify("request_count_by_method"),
 		"Client request count by HTTP method",
 		[]tag.Key{Method},
@@ -63,7 +63,7 @@ var (
 		aggCount,
 		&stats.Cumulative{}))
 	// ClientRequestCountByMethod is a count of all instrumented HTTP requests by Method.
-	ClientRequestCountByMethod = mustView(stats.NewView(
+	ClientResponseCountByStatusCode = mustView(stats.NewView(
 		qualify("response_count_by_status_code"),
 		"Client response count by status code",
 		[]tag.Key{StatusCode},
@@ -72,14 +72,14 @@ var (
 		&stats.Cumulative{}))
 
 	// Host is the value of the HTTP Host header.
-	Host       = key("host")
+	Host = key("host")
 	// StatusCode is the numeric HTTP response status code, or "error" if a transport error occurred and no status code
 	// was read.
 	StatusCode = key("status_code")
 	// Path is the URL path (not including query string) in the request.
-	Path       = key("path")
+	Path = key("path")
 	// Method is the HTTP method of the request, capitalized (GET, POST, etc.).
-	Method     = key("method")
+	Method = key("method")
 )
 
 func defaultView(m stats.Measure, agg stats.Aggregation) *stats.View {
