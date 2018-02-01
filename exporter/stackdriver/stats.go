@@ -238,7 +238,7 @@ func (e *statsExporter) createMeasure(ctx context.Context, vd *stats.ViewData) e
 	viewName := vd.View.Name()
 
 	if md, ok := e.createdViews[viewName]; ok {
-		return equalAggWindowTagKeys(md, agg, tagKeys)
+		return equalAggTagKeys(md, agg, tagKeys)
 	}
 
 	metricName := monitoring.MetricMetricDescriptorPath(e.o.ProjectID, namespacedViewName(viewName, true))
@@ -246,7 +246,7 @@ func (e *statsExporter) createMeasure(ctx context.Context, vd *stats.ViewData) e
 		Name: metricName,
 	})
 	if err == nil {
-		if err := equalAggWindowTagKeys(md, agg, tagKeys); err != nil {
+		if err := equalAggTagKeys(md, agg, tagKeys); err != nil {
 			return err
 		}
 		e.createdViews[viewName] = md
@@ -396,7 +396,7 @@ func newLabelDescriptors(keys []tag.Key) []*labelpb.LabelDescriptor {
 	return labelDescriptors
 }
 
-func equalAggWindowTagKeys(md *metricpb.MetricDescriptor, agg stats.Aggregation, keys []tag.Key) error {
+func equalAggTagKeys(md *metricpb.MetricDescriptor, agg stats.Aggregation, keys []tag.Key) error {
 	aggType := reflect.TypeOf(agg)
 	if aggType.Kind() == reflect.Ptr { // if pointer, find out the concrete type
 		aggType = reflect.ValueOf(agg).Elem().Type()
