@@ -63,8 +63,8 @@ var (
 	aggDistCounts = view.DistributionAggregation(rpcCountBucketBoundaries)
 
 	windowCumulative    = view.Cumulative{}
-	windowSlidingHour   = view.Interval{Duration: 1 * time.Hour, Intervals: 6}
-	windowSlidingMinute = view.Interval{Duration: 1 * time.Minute, Intervals: 6}
+	windowSlidingHour   = view.Interval{Duration: 1 * time.Hour, SubIntervals: 6}
+	windowSlidingMinute = view.Interval{Duration: 1 * time.Minute, SubIntervals: 6}
 
 	keyMethod tag.Key
 	keyStatus tag.Key

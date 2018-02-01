@@ -44,12 +44,12 @@ func (w Cumulative) newAggregator(now time.Time, newAggregationData func() Aggre
 // Interval is a window that indicates that the aggregation occurs over a sliding
 // window of time: last n seconds, minutes, hours.
 type Interval struct {
-	Duration  time.Duration
-	Intervals int
+	Duration     time.Duration
+	SubIntervals int
 }
 
 func (w Interval) isWindow() {}
 
 func (w Interval) newAggregator(now time.Time, newAggregationData func() AggregationData) aggregator {
-	return newAggregatorInterval(now, w.Duration, w.Intervals, newAggregationData)
+	return newAggregatorInterval(now, w.Duration, w.SubIntervals, newAggregationData)
 }

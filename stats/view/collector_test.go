@@ -42,10 +42,15 @@ func TestEncodeDecodeTags(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	m1, _ := tag.NewMap(ctx)
-	m2, _ := tag.NewMap(ctx, tag.Insert(k2, "v2"))
-	m3, _ := tag.NewMap(ctx, tag.Insert(k1, "v1"), tag.Insert(k2, "v2"))
-	m4, _ := tag.NewMap(ctx, tag.Insert(k1, "v1"), tag.Insert(k2, "v2"), tag.Insert(k3, "v3"))
+	ctx1, _ := tag.New(ctx)
+	ctx2, _ := tag.New(ctx, tag.Insert(k2, "v2"))
+	ctx3, _ := tag.New(ctx, tag.Insert(k1, "v1"), tag.Insert(k2, "v2"))
+	ctx4, _ := tag.New(ctx, tag.Insert(k1, "v1"), tag.Insert(k2, "v2"), tag.Insert(k3, "v3"))
+
+	m1 := tag.FromContext(ctx1)
+	m2 := tag.FromContext(ctx2)
+	m3 := tag.FromContext(ctx3)
+	m4 := tag.FromContext(ctx4)
 
 	tests := []testData{
 		{

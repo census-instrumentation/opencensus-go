@@ -56,7 +56,7 @@
 //
 // All outgoing requests from client will include a Stackdriver Trace header.
 // See the httptrace package for how to handle incoming requests.
-package stackdriver
+package stackdriver // import "go.opencensus.io/exporter/stackdriver"
 
 import (
 	"time"
