@@ -87,6 +87,9 @@ func defaultView(m stats.Measure, agg stats.Aggregation) *stats.View {
 	if err != nil {
 		panic(err)
 	}
+	if err := stats.RegisterView(v); err != nil {
+		panic(err)
+	}
 	return v
 }
 
@@ -99,7 +102,7 @@ func key(name string) tag.Key {
 }
 
 func int64Measure(name, desc, unit string) *stats.MeasureInt64 {
-	m, err := stats.NewMeasureInt64(name, desc, unit)
+	m, err := stats.NewMeasureInt64(qualify(name), desc, unit)
 	if err != nil {
 		panic(err)
 	}
@@ -107,7 +110,7 @@ func int64Measure(name, desc, unit string) *stats.MeasureInt64 {
 }
 
 func floatMeasure(name, desc, unit string) *stats.MeasureFloat64 {
-	m, err := stats.NewMeasureFloat64(name, desc, unit)
+	m, err := stats.NewMeasureFloat64(qualify(name), desc, unit)
 	if err != nil {
 		panic(err)
 	}

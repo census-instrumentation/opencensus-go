@@ -43,10 +43,6 @@ func (t Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 		tag.Upsert(Path, req.URL.Path),
 		tag.Upsert(Method, req.Method))
 	req = req.WithContext(ctx)
-	var (
-		resp *http.Response
-		err  error
-	)
 	track := &tracker{
 		start: time.Now(),
 		ctx:   ctx,
@@ -60,7 +56,7 @@ func (t Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	stats.Record(ctx, ClientRequest.M(1))
 
 	// Perform request
-	resp, err = t.base().RoundTrip(req)
+	resp, err := t.base().RoundTrip(req)
 
 	if err != nil {
 		track.statusCode = "error"
@@ -70,7 +66,8 @@ func (t Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 		if resp.Body == nil {
 			track.end()
 		} else {
-			track.body, resp.Body = resp.Body, track
+			track.body = resp.Body
+			resp.Body = track
 		}
 	}
 
