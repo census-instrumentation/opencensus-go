@@ -16,7 +16,6 @@
 package grpcstats
 
 import (
-	"fmt"
 	"sync/atomic"
 	"time"
 
@@ -153,12 +152,6 @@ func (h *ServerStatsHandler) createTags(ctx context.Context, fullinfo string) (c
 	mods := []tag.Mutator{
 		tag.Upsert(keyMethod, methodName(fullinfo)),
 	}
-	if tagsBin := stats.Tags(ctx); tagsBin != nil {
-		old, err := tag.Decode([]byte(tagsBin))
-		if err != nil {
-			return nil, fmt.Errorf("serverHandler.createTags failed to decode tagsBin %v: %v", tagsBin, err)
-		}
-		return tag.New(tag.NewContext(ctx, old), mods...)
-	}
+	// TODO: tag propagation
 	return tag.New(ctx, mods...)
 }

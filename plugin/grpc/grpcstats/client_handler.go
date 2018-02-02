@@ -68,9 +68,7 @@ func (h *ClientStatsHandler) TagRPC(ctx context.Context, info *stats.RPCTagInfo)
 	}
 
 	d := &rpcData{startTime: startTime}
-	ts := tag.FromContext(ctx)
-	encoded := tag.Encode(ts)
-	ctx = stats.SetTags(ctx, encoded)
+	// TODO: tag propagation
 	ctx, _ = tag.New(ctx,
 		tag.Upsert(keyMethod, methodName(info.FullMethodName)),
 	)
