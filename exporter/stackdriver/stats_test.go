@@ -20,8 +20,8 @@ import (
 	"testing"
 	"time"
 
-	monitoring "cloud.google.com/go/monitoring/apiv3"
-	timestamp "github.com/golang/protobuf/ptypes/timestamp"
+	"cloud.google.com/go/monitoring/apiv3"
+	"github.com/golang/protobuf/ptypes/timestamp"
 	"go.opencensus.io/stats"
 	"go.opencensus.io/tag"
 	"google.golang.org/api/option"
@@ -83,16 +83,16 @@ func TestExporter_makeReq(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	cumView, err := stats.NewView("cumview", "desc", []tag.Key{key}, m, stats.CountAggregation{}, stats.Cumulative{})
+	view, err := stats.NewView("testview", "desc", []tag.Key{key}, m, stats.CountAggregation{})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := stats.RegisterView(cumView); err != nil {
+	if err := stats.RegisterView(view); err != nil {
 		t.Fatal(err)
 	}
-	defer stats.UnregisterView(cumView)
+	defer stats.UnregisterView(view)
 
-	distView, err := stats.NewView("distview", "desc", nil, m, stats.DistributionAggregation([]float64{2, 4, 7}), stats.Interval{})
+	distView, err := stats.NewView("distview", "desc", nil, m, stats.DistributionAggregation([]float64{2, 4, 7}))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -124,15 +124,15 @@ func TestExporter_makeReq(t *testing.T) {
 		want   []*monitoringpb.CreateTimeSeriesRequest
 	}{
 		{
-			name:   "count agg + cum timeline",
+			name:   "count agg + timeline",
 			projID: "proj-id",
-			vd:     newTestCumViewData(cumView, start, end, &count1, &count2),
+			vd:     newTestViewData(view, start, end, &count1, &count2),
 			want: []*monitoringpb.CreateTimeSeriesRequest{{
 				Name: monitoring.MetricProjectPath("proj-id"),
 				TimeSeries: []*monitoringpb.TimeSeries{
 					{
 						Metric: &metricpb.Metric{
-							Type: "custom.googleapis.com/opencensus/cumview",
+							Type: "custom.googleapis.com/opencensus/testview",
 							Labels: map[string]string{
 								"test_key":        "test-value-1",
 								opencensusTaskKey: taskValue,
@@ -161,7 +161,7 @@ func TestExporter_makeReq(t *testing.T) {
 					},
 					{
 						Metric: &metricpb.Metric{
-							Type: "custom.googleapis.com/opencensus/cumview",
+							Type: "custom.googleapis.com/opencensus/testview",
 							Labels: map[string]string{
 								"test_key":        "test-value-2",
 								opencensusTaskKey: taskValue,
@@ -192,15 +192,15 @@ func TestExporter_makeReq(t *testing.T) {
 			}},
 		},
 		{
-			name:   "sum agg + cum timeline",
+			name:   "sum agg + timeline",
 			projID: "proj-id",
-			vd:     newTestCumViewData(cumView, start, end, &sum1, &sum2),
+			vd:     newTestViewData(view, start, end, &sum1, &sum2),
 			want: []*monitoringpb.CreateTimeSeriesRequest{{
 				Name: monitoring.MetricProjectPath("proj-id"),
 				TimeSeries: []*monitoringpb.TimeSeries{
 					{
 						Metric: &metricpb.Metric{
-							Type: "custom.googleapis.com/opencensus/cumview",
+							Type: "custom.googleapis.com/opencensus/testview",
 							Labels: map[string]string{
 								"test_key":        "test-value-1",
 								opencensusTaskKey: taskValue,
@@ -229,7 +229,7 @@ func TestExporter_makeReq(t *testing.T) {
 					},
 					{
 						Metric: &metricpb.Metric{
-							Type: "custom.googleapis.com/opencensus/cumview",
+							Type: "custom.googleapis.com/opencensus/testview",
 							Labels: map[string]string{
 								"test_key":        "test-value-2",
 								opencensusTaskKey: taskValue,
@@ -260,15 +260,15 @@ func TestExporter_makeReq(t *testing.T) {
 			}},
 		},
 		{
-			name:   "mean agg + cum timeline",
+			name:   "mean agg + timeline",
 			projID: "proj-id",
-			vd:     newTestCumViewData(cumView, start, end, &mean1, &mean2),
+			vd:     newTestViewData(view, start, end, &mean1, &mean2),
 			want: []*monitoringpb.CreateTimeSeriesRequest{{
 				Name: monitoring.MetricProjectPath("proj-id"),
 				TimeSeries: []*monitoringpb.TimeSeries{
 					{
 						Metric: &metricpb.Metric{
-							Type: "custom.googleapis.com/opencensus/cumview",
+							Type: "custom.googleapis.com/opencensus/testview",
 							Labels: map[string]string{
 								"test_key":        "test-value-1",
 								opencensusTaskKey: taskValue,
@@ -291,8 +291,8 @@ func TestExporter_makeReq(t *testing.T) {
 								},
 								Value: &monitoringpb.TypedValue{Value: &monitoringpb.TypedValue_DistributionValue{
 									DistributionValue: &distributionpb.Distribution{
-										Count: 7,
-										Mean:  3.3,
+										Count:                 7,
+										Mean:                  3.3,
 										SumOfSquaredDeviation: 0,
 										BucketOptions: &distributionpb.Distribution_BucketOptions{
 											Options: &distributionpb.Distribution_BucketOptions_ExplicitBuckets{
@@ -309,7 +309,7 @@ func TestExporter_makeReq(t *testing.T) {
 					},
 					{
 						Metric: &metricpb.Metric{
-							Type: "custom.googleapis.com/opencensus/cumview",
+							Type: "custom.googleapis.com/opencensus/testview",
 							Labels: map[string]string{
 								"test_key":        "test-value-2",
 								opencensusTaskKey: taskValue,
@@ -332,8 +332,8 @@ func TestExporter_makeReq(t *testing.T) {
 								},
 								Value: &monitoringpb.TypedValue{Value: &monitoringpb.TypedValue_DistributionValue{
 									DistributionValue: &distributionpb.Distribution{
-										Count: 5,
-										Mean:  -7.7,
+										Count:                 5,
+										Mean:                  -7.7,
 										SumOfSquaredDeviation: 0,
 										BucketOptions: &distributionpb.Distribution_BucketOptions{
 											Options: &distributionpb.Distribution_BucketOptions_ExplicitBuckets{
@@ -355,7 +355,7 @@ func TestExporter_makeReq(t *testing.T) {
 			name:   "dist agg + time window",
 			projID: "proj-id",
 			vd:     newTestDistViewData(distView, start, end),
-			want:   []*monitoringpb.CreateTimeSeriesRequest{},
+			want:   nil, //TODO: add expectation for distribution
 		},
 	}
 	for _, tt := range tests {
@@ -365,6 +365,9 @@ func TestExporter_makeReq(t *testing.T) {
 				taskValue: taskValue,
 			}
 			resps := e.makeReq([]*stats.ViewData{tt.vd}, maxTimeSeriesPerUpload)
+			if tt.want == nil {
+				t.Skip("Missing expectation")
+			}
 			if got, want := len(resps), len(tt.want); got != want {
 				t.Fatalf("%v: Exporter.makeReq() returned %d responses; want %d", tt.name, got, want)
 			}
@@ -390,7 +393,7 @@ func TestExporter_makeReq_batching(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	view, err := stats.NewView("view", "desc", []tag.Key{key}, m, stats.CountAggregation{}, stats.Cumulative{})
+	view, err := stats.NewView("view", "desc", []tag.Key{key}, m, stats.CountAggregation{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -435,7 +438,7 @@ func TestExporter_makeReq_batching(t *testing.T) {
 	for _, tt := range tests {
 		var vds []*stats.ViewData
 		for i := 0; i < tt.iter; i++ {
-			vds = append(vds, newTestCumViewData(view, time.Now(), time.Now(), &count1, &count2))
+			vds = append(vds, newTestViewData(view, time.Now(), time.Now(), &count1, &count2))
 		}
 
 		e := &statsExporter{}
@@ -462,88 +465,60 @@ func TestEqualAggWindowTagKeys(t *testing.T) {
 		md      *metricpb.MetricDescriptor
 		agg     stats.Aggregation
 		keys    []tag.Key
-		window  stats.Window
 		wantErr bool
 	}{
 		{
-			name: "count agg + cum",
+			name: "count agg",
 			md: &metricpb.MetricDescriptor{
 				MetricKind: metricpb.MetricDescriptor_CUMULATIVE,
 				ValueType:  metricpb.MetricDescriptor_INT64,
 				Labels:     []*label.LabelDescriptor{{Key: opencensusTaskKey}},
 			},
 			agg:     stats.CountAggregation{},
-			window:  stats.Cumulative{},
 			wantErr: false,
 		},
 		{
-			name: "sum agg + cum",
+			name: "sum agg",
 			md: &metricpb.MetricDescriptor{
 				MetricKind: metricpb.MetricDescriptor_CUMULATIVE,
 				ValueType:  metricpb.MetricDescriptor_DOUBLE,
 				Labels:     []*label.LabelDescriptor{{Key: opencensusTaskKey}},
 			},
 			agg:     stats.SumAggregation{},
-			window:  stats.Cumulative{},
 			wantErr: false,
 		},
 		{
-			name: "mean agg + cum",
+			name: "mean agg",
 			md: &metricpb.MetricDescriptor{
 				MetricKind: metricpb.MetricDescriptor_CUMULATIVE,
 				ValueType:  metricpb.MetricDescriptor_DISTRIBUTION,
 				Labels:     []*label.LabelDescriptor{{Key: opencensusTaskKey}},
 			},
 			agg:     stats.MeanAggregation{},
-			window:  stats.Cumulative{},
 			wantErr: false,
 		},
 		{
-			name: "distribution agg + cum - mismatch",
+			name: "distribution agg - mismatch",
 			md: &metricpb.MetricDescriptor{
 				MetricKind: metricpb.MetricDescriptor_CUMULATIVE,
 				ValueType:  metricpb.MetricDescriptor_DISTRIBUTION,
 				Labels:     []*label.LabelDescriptor{{Key: opencensusTaskKey}},
 			},
 			agg:     stats.CountAggregation{},
-			window:  stats.Cumulative{},
 			wantErr: true,
 		},
 		{
-			name: "mean agg + cum - mismatch",
+			name: "mean agg - mismatch",
 			md: &metricpb.MetricDescriptor{
 				MetricKind: metricpb.MetricDescriptor_CUMULATIVE,
 				ValueType:  metricpb.MetricDescriptor_DOUBLE,
 				Labels:     []*label.LabelDescriptor{{Key: opencensusTaskKey}},
 			},
 			agg:     stats.MeanAggregation{},
-			window:  stats.Cumulative{},
 			wantErr: true,
 		},
 		{
-			name: "distribution agg + delta",
-			md: &metricpb.MetricDescriptor{
-				MetricKind: metricpb.MetricDescriptor_DELTA,
-				ValueType:  metricpb.MetricDescriptor_DISTRIBUTION,
-				Labels:     []*label.LabelDescriptor{{Key: opencensusTaskKey}},
-			},
-			agg:     stats.DistributionAggregation{},
-			window:  stats.Interval{},
-			wantErr: false,
-		},
-		{
-			name: "distribution agg + cum",
-			md: &metricpb.MetricDescriptor{
-				MetricKind: metricpb.MetricDescriptor_CUMULATIVE,
-				ValueType:  metricpb.MetricDescriptor_DISTRIBUTION,
-				Labels:     []*label.LabelDescriptor{{Key: opencensusTaskKey}},
-			},
-			agg:     stats.DistributionAggregation{},
-			window:  stats.Interval{},
-			wantErr: true,
-		},
-		{
-			name: "distribution agg + cum with keys",
+			name: "distribution agg with keys",
 			md: &metricpb.MetricDescriptor{
 				MetricKind: metricpb.MetricDescriptor_CUMULATIVE,
 				ValueType:  metricpb.MetricDescriptor_DISTRIBUTION,
@@ -554,41 +529,38 @@ func TestEqualAggWindowTagKeys(t *testing.T) {
 				},
 			},
 			agg:     stats.DistributionAggregation{},
-			window:  stats.Cumulative{},
 			keys:    []tag.Key{key1, key2},
 			wantErr: false,
 		},
 		{
-			name: "distribution agg + cum with keys -- mismatch",
+			name: "distribution agg with keys -- mismatch",
 			md: &metricpb.MetricDescriptor{
 				MetricKind: metricpb.MetricDescriptor_CUMULATIVE,
 				ValueType:  metricpb.MetricDescriptor_DISTRIBUTION,
 			},
 			agg:     stats.DistributionAggregation{},
-			window:  stats.Cumulative{},
 			keys:    []tag.Key{key1, key2},
 			wantErr: true,
 		},
 		{
-			name: "count agg + cum with pointers",
+			name: "count agg with pointers",
 			md: &metricpb.MetricDescriptor{
 				MetricKind: metricpb.MetricDescriptor_CUMULATIVE,
 				ValueType:  metricpb.MetricDescriptor_INT64,
 				Labels:     []*label.LabelDescriptor{{Key: opencensusTaskKey}},
 			},
 			agg:     &stats.CountAggregation{},
-			window:  &stats.Cumulative{},
 			wantErr: false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := equalAggWindowTagKeys(tt.md, tt.agg, tt.window, tt.keys)
+			err := equalAggTagKeys(tt.md, tt.agg, tt.keys)
 			if err != nil && !tt.wantErr {
-				t.Errorf("equalAggWindowTagKeys() = %q; want no error", err)
+				t.Errorf("equalAggTagKeys() = %q; want no error", err)
 			}
 			if err == nil && tt.wantErr {
-				t.Errorf("equalAggWindowTagKeys() = %q; want error", err)
+				t.Errorf("equalAggTagKeys() = %q; want error", err)
 			}
 
 		})
@@ -611,13 +583,13 @@ func TestExporter_createMeasure(t *testing.T) {
 	}
 	defer stats.DeleteMeasure(m)
 
-	view, err := stats.NewView("cumview", "desc", []tag.Key{key}, m, stats.CountAggregation{}, stats.Cumulative{})
+	view, err := stats.NewView("testview", "desc", []tag.Key{key}, m, stats.CountAggregation{})
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	data := stats.CountData(0)
-	vd := newTestCumViewData(view, time.Now(), time.Now(), &data, &data)
+	vd := newTestViewData(view, time.Now(), time.Now(), &data, &data)
 
 	e := &statsExporter{
 		createdViews: make(map[string]*metricpb.MetricDescriptor),
@@ -671,14 +643,14 @@ func TestExporter_makeReq_withCustomMonitoredResource(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	cumView, err := stats.NewView("cumview", "desc", []tag.Key{key}, m, stats.CountAggregation{}, stats.Cumulative{})
+	view, err := stats.NewView("testview", "desc", []tag.Key{key}, m, stats.CountAggregation{})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := cumView.Subscribe(); err != nil {
+	if err := view.Subscribe(); err != nil {
 		t.Fatal(err)
 	}
-	defer cumView.Unsubscribe()
+	defer view.Unsubscribe()
 
 	start := time.Now()
 	end := start.Add(time.Minute)
@@ -698,15 +670,15 @@ func TestExporter_makeReq_withCustomMonitoredResource(t *testing.T) {
 		want   []*monitoringpb.CreateTimeSeriesRequest
 	}{
 		{
-			name:   "count agg + cum timeline",
+			name:   "count agg timeline",
 			projID: "proj-id",
-			vd:     newTestCumViewData(cumView, start, end, &count1, &count2),
+			vd:     newTestViewData(view, start, end, &count1, &count2),
 			want: []*monitoringpb.CreateTimeSeriesRequest{{
 				Name: monitoring.MetricProjectPath("proj-id"),
 				TimeSeries: []*monitoringpb.TimeSeries{
 					{
 						Metric: &metricpb.Metric{
-							Type: "custom.googleapis.com/opencensus/cumview",
+							Type: "custom.googleapis.com/opencensus/testview",
 							Labels: map[string]string{
 								"test_key":        "test-value-1",
 								opencensusTaskKey: taskValue,
@@ -733,7 +705,7 @@ func TestExporter_makeReq_withCustomMonitoredResource(t *testing.T) {
 					},
 					{
 						Metric: &metricpb.Metric{
-							Type: "custom.googleapis.com/opencensus/cumview",
+							Type: "custom.googleapis.com/opencensus/testview",
 							Labels: map[string]string{
 								"test_key":        "test-value-2",
 								opencensusTaskKey: taskValue,
@@ -782,7 +754,7 @@ func TestExporter_makeReq_withCustomMonitoredResource(t *testing.T) {
 	}
 }
 
-func newTestCumViewData(v *stats.View, start, end time.Time, data1, data2 stats.AggregationData) *stats.ViewData {
+func newTestViewData(v *stats.View, start, end time.Time, data1, data2 stats.AggregationData) *stats.ViewData {
 	key, _ := tag.NewKey("test-key")
 	tag1 := tag.Tag{Key: key, Value: "test-value-1"}
 	tag2 := tag.Tag{Key: key, Value: "test-value-2"}

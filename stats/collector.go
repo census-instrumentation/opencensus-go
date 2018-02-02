@@ -25,37 +25,34 @@ import (
 
 type collector struct {
 	// signatures holds the aggregations values for each unique tag signature
-	// (values for all keys) to its Window.
-	signatures map[string]aggregator
+	// (values for all keys) to its aggregator.
+	signatures map[string]AggregationData
 	// Aggregation is the description of the aggregation to perform for this
 	// view.
 	a Aggregation
-
-	// window is the window under which the aggregation is performed.
-	w Window
 }
 
 func (c *collector) addSample(s string, v interface{}, now time.Time) {
 	aggregator, ok := c.signatures[s]
 	if !ok {
-		aggregator = c.w.newAggregator(now, c.a.newData())
+		aggregator = c.a.newData()
 		c.signatures[s] = aggregator
 	}
-	aggregator.addSample(v, now)
+	aggregator.addSample(v)
 }
 
 func (c *collector) collectedRows(keys []tag.Key, now time.Time) []*Row {
 	var rows []*Row
 	for sig, aggregator := range c.signatures {
 		tags := decodeTags([]byte(sig), keys)
-		row := &Row{tags, aggregator.retrieveCollected(now)}
+		row := &Row{tags, aggregator}
 		rows = append(rows, row)
 	}
 	return rows
 }
 
 func (c *collector) clearRows() {
-	c.signatures = make(map[string]aggregator)
+	c.signatures = make(map[string]AggregationData)
 }
 
 // encodeWithKeys encodes the map by using values

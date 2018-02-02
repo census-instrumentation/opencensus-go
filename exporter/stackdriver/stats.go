@@ -172,11 +172,6 @@ func (e *statsExporter) upload(vds []*stats.ViewData) error {
 	ctx := context.Background()
 
 	for _, vd := range vds {
-		if _, ok := vd.View.Window().(stats.Cumulative); !ok {
-			// TODO(jbd): Only Cumulative window will be exported to Stackdriver in this version.
-			// Support others when custom delta metrics are supported.
-			continue
-		}
 		if err := e.createMeasure(ctx, vd); err != nil {
 			return err
 		}
@@ -202,11 +197,6 @@ func (e *statsExporter) makeReq(vds []*stats.ViewData, limit int) []*monitoringp
 	}
 
 	for _, vd := range vds {
-		if _, ok := vd.View.Window().(stats.Cumulative); !ok {
-			// TODO(jbd): Only Cumulative window will be exported to Stackdriver in this version.
-			// Support others when custom delta metrics are supported.
-			continue
-		}
 		for _, row := range vd.Rows {
 			ts := &monitoringpb.TimeSeries{
 				Metric: &metricpb.Metric{
@@ -237,20 +227,18 @@ func (e *statsExporter) makeReq(vds []*stats.ViewData, limit int) []*monitoringp
 
 // createMeasure creates a MetricDescriptor for the given view data in Stackdriver Monitoring.
 // An error will be returned if there is already a metric descriptor created with the same name
-// but it has a different aggregation, window or keys.
+// but it has a different aggregation or keys.
 func (e *statsExporter) createMeasure(ctx context.Context, vd *stats.ViewData) error {
 	e.createdViewsMu.Lock()
 	defer e.createdViewsMu.Unlock()
 
 	m := vd.View.Measure()
 	agg := vd.View.Aggregation()
-	window := vd.View.Window()
 	tagKeys := vd.View.TagKeys()
 	viewName := vd.View.Name()
 
 	if md, ok := e.createdViews[viewName]; ok {
-		// Check agg, window and keys.
-		return equalAggWindowTagKeys(md, agg, window, tagKeys)
+		return equalAggTagKeys(md, agg, tagKeys)
 	}
 
 	metricName := monitoring.MetricMetricDescriptorPath(e.o.ProjectID, namespacedViewName(viewName, true))
@@ -258,7 +246,7 @@ func (e *statsExporter) createMeasure(ctx context.Context, vd *stats.ViewData) e
 		Name: metricName,
 	})
 	if err == nil {
-		if err := equalAggWindowTagKeys(md, agg, window, tagKeys); err != nil {
+		if err := equalAggTagKeys(md, agg, tagKeys); err != nil {
 			return err
 		}
 		e.createdViews[viewName] = md
@@ -284,14 +272,7 @@ func (e *statsExporter) createMeasure(ctx context.Context, vd *stats.ViewData) e
 		return fmt.Errorf("unsupported aggregation type: %T", agg)
 	}
 
-	switch window.(type) {
-	case stats.Cumulative:
-		metricKind = metricpb.MetricDescriptor_CUMULATIVE
-	case stats.Interval:
-		metricKind = metricpb.MetricDescriptor_DELTA
-	default:
-		return fmt.Errorf("unsupported window type: %T", window)
-	}
+	metricKind = metricpb.MetricDescriptor_CUMULATIVE
 
 	md, err = createMetricDescriptor(ctx, e.c, &monitoringpb.CreateMetricDescriptorRequest{
 		Name: monitoring.MetricProjectPath(e.o.ProjectID),
@@ -415,16 +396,7 @@ func newLabelDescriptors(keys []tag.Key) []*labelpb.LabelDescriptor {
 	return labelDescriptors
 }
 
-func equalAggWindowTagKeys(md *metricpb.MetricDescriptor, agg stats.Aggregation, window stats.Window, keys []tag.Key) error {
-	var w stats.Window
-
-	switch md.MetricKind {
-	case metricpb.MetricDescriptor_DELTA:
-		w = stats.Interval{}
-	case metricpb.MetricDescriptor_CUMULATIVE:
-		w = stats.Cumulative{}
-	}
-
+func equalAggTagKeys(md *metricpb.MetricDescriptor, agg stats.Aggregation, keys []tag.Key) error {
 	aggType := reflect.TypeOf(agg)
 	if aggType.Kind() == reflect.Ptr { // if pointer, find out the concrete type
 		aggType = reflect.ValueOf(agg).Elem().Type()
@@ -441,14 +413,6 @@ func equalAggWindowTagKeys(md *metricpb.MetricDescriptor, agg stats.Aggregation,
 
 	if !aggTypeMatch {
 		return fmt.Errorf("stackdriver metric descriptor was not created with aggregation type %T", aggType)
-	}
-
-	winType := reflect.TypeOf(window)
-	if winType.Kind() == reflect.Ptr { // if pointer, find out the concrete type
-		winType = reflect.ValueOf(window).Elem().Type()
-	}
-	if winType != reflect.TypeOf(w) {
-		return fmt.Errorf("stackdriver metric descriptor was not created with window type %T", w)
 	}
 
 	if len(md.Labels) != len(keys)+1 {
