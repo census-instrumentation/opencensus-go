@@ -45,7 +45,7 @@ func TestExport(t *testing.T) {
 		{
 			span: &trace.SpanData{
 				SpanContext: trace.SpanContext{
-					TraceID:      trace.TraceID{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+					ID:           trace.ID{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
 					SpanID:       trace.SpanID{17, 18, 19, 20, 21, 22, 23, 24},
 					TraceOptions: 1,
 				},
@@ -121,7 +121,7 @@ func TestExport(t *testing.T) {
 		{
 			span: &trace.SpanData{
 				SpanContext: trace.SpanContext{
-					TraceID:      trace.TraceID{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+					ID:           trace.ID{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
 					SpanID:       trace.SpanID{17, 18, 19, 20, 21, 22, 23, 24},
 					TraceOptions: 1,
 				},
@@ -147,7 +147,7 @@ func TestExport(t *testing.T) {
 		{
 			span: &trace.SpanData{
 				SpanContext: trace.SpanContext{
-					TraceID:      trace.TraceID{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+					ID:           trace.ID{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
 					SpanID:       trace.SpanID{17, 18, 19, 20, 21, 22, 23, 24},
 					TraceOptions: 1,
 				},
@@ -180,7 +180,7 @@ func TestExport(t *testing.T) {
 		{
 			span: &trace.SpanData{
 				SpanContext: trace.SpanContext{
-					TraceID:      trace.TraceID{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+					ID:           trace.ID{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
 					SpanID:       trace.SpanID{17, 18, 19, 20, 21, 22, 23, 24},
 					TraceOptions: 1,
 				},

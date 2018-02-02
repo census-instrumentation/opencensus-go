@@ -35,7 +35,7 @@ func TestHTTPFormat(t *testing.T) {
 		{
 			incoming: "105445aa7843bc8bf206b12000100000/18374686479671623803;o=1",
 			wantSpanContext: trace.SpanContext{
-				TraceID:      traceID,
+				ID:           traceID,
 				SpanID:       spanID1,
 				TraceOptions: 1,
 			},
@@ -43,7 +43,7 @@ func TestHTTPFormat(t *testing.T) {
 		{
 			incoming: "105445aa7843bc8bf206b12000100000/123;o=0",
 			wantSpanContext: trace.SpanContext{
-				TraceID:      traceID,
+				ID:           traceID,
 				SpanID:       spanID2,
 				TraceOptions: 0,
 			},

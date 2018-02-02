@@ -23,14 +23,14 @@ import (
 )
 
 func TestBinary(t *testing.T) {
-	tid := TraceID{0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48, 0x49, 0x4a, 0x4b, 0x4c, 0x4d, 0x4e, 0x4f}
+	tid := ID{0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48, 0x49, 0x4a, 0x4b, 0x4c, 0x4d, 0x4e, 0x4f}
 	sid := SpanID{0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68}
 	b := []byte{
 		0, 0, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 1, 97, 98, 99, 100,
 		101, 102, 103, 104, 2, 1,
 	}
 	if b2 := Binary(SpanContext{
-		TraceID:      tid,
+		ID:           tid,
 		SpanID:       sid,
 		TraceOptions: 1,
 	}); !bytes.Equal(b2, b) {
@@ -41,7 +41,7 @@ func TestBinary(t *testing.T) {
 	if !ok {
 		t.Errorf("FromBinary: got ok==%t, want true", ok)
 	}
-	if got := sc.TraceID; got != tid {
+	if got := sc.ID; got != tid {
 		t.Errorf("FromBinary: got trace ID %s want %s", got, tid)
 	}
 	if got := sc.SpanID; got != sid {
@@ -70,7 +70,7 @@ func TestFromBinary(t *testing.T) {
 	tests := []struct {
 		name        string
 		data        []byte
-		wantTraceID TraceID
+		wantTraceID ID
 		wantSpanID  SpanID
 		wantOpts    TraceOptions
 		wantOk      bool
@@ -93,7 +93,7 @@ func TestFromBinary(t *testing.T) {
 		{
 			name:        "valid data",
 			data:        validData,
-			wantTraceID: TraceID{64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79},
+			wantTraceID: ID{64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79},
 			wantSpanID:  SpanID{97, 98, 99, 100, 101, 102, 103, 104},
 			wantOpts:    1,
 			wantOk:      true,
@@ -101,7 +101,7 @@ func TestFromBinary(t *testing.T) {
 	}
 	for _, tt := range tests {
 		sc, gotOk := FromBinary(tt.data)
-		gotTraceID, gotSpanID, gotOpts := sc.TraceID, sc.SpanID, sc.TraceOptions
+		gotTraceID, gotSpanID, gotOpts := sc.ID, sc.SpanID, sc.TraceOptions
 		if gotTraceID != tt.wantTraceID {
 			t.Errorf("%s: Decode() gotTraceID = %v, want %v", tt.name, gotTraceID, tt.wantTraceID)
 		}
@@ -118,11 +118,11 @@ func TestFromBinary(t *testing.T) {
 }
 
 func BenchmarkBinary(b *testing.B) {
-	tid := TraceID{0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48, 0x49, 0x4a, 0x4b, 0x4c, 0x4d, 0x4e, 0x4f}
+	tid := ID{0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48, 0x49, 0x4a, 0x4b, 0x4c, 0x4d, 0x4e, 0x4f}
 	sid := SpanID{0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68}
 	sc := SpanContext{
-		TraceID: tid,
-		SpanID:  sid,
+		ID:     tid,
+		SpanID: sid,
 	}
 	var x byte
 	for i := 0; i < b.N; i++ {
@@ -142,7 +142,7 @@ func BenchmarkFromBinary(b *testing.B) {
 	var x byte
 	for i := 0; i < b.N; i++ {
 		sc, _ := FromBinary(bin)
-		x += sc.TraceID[0]
+		x += sc.ID[0]
 	}
 	if x == 1 {
 		fmt.Println(x) // try to prevent optimizing-out

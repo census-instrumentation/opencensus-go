@@ -78,7 +78,7 @@ func (t TraceOptions) IsSampled() bool {
 // SpanContext is not an implementation of context.Context.
 // TODO: add reference to external Census docs for SpanContext.
 type SpanContext struct {
-	TraceID
+	ID
 	SpanID
 	TraceOptions
 }
@@ -163,7 +163,7 @@ func startSpanInternal(name string, hasParent bool, parent SpanContext, remotePa
 	span.spanContext = parent
 	mu.Lock()
 	if !hasParent {
-		span.spanContext.TraceID = newTraceIDLocked()
+		span.spanContext.ID = newTraceIDLocked()
 	}
 	span.spanContext.SpanID = newSpanIDLocked()
 	sampler := defaultSampler
@@ -180,7 +180,7 @@ func startSpanInternal(name string, hasParent bool, parent SpanContext, remotePa
 		}
 		span.spanContext.setIsSampled(sampler.Sample(SamplingParameters{
 			ParentContext:   parent,
-			TraceID:         span.spanContext.TraceID,
+			ID:              span.spanContext.ID,
 			SpanID:          span.spanContext.SpanID,
 			Name:            name,
 			HasRemoteParent: remoteParent}).Sample)
@@ -453,8 +453,8 @@ func newSpanIDLocked() SpanID {
 
 // newTraceIDLocked returns a non-zero TraceID from a randomly-chosen sequence.
 // mu should be held while this function is called.
-func newTraceIDLocked() TraceID {
-	var tid TraceID
+func newTraceIDLocked() ID {
+	var tid ID
 	// Construct the trace ID from two outputs of traceIDRand, with a constant
 	// added to each half for additional entropy.
 	binary.LittleEndian.PutUint64(tid[0:8], traceIDRand.Uint64()+traceIDAdd[0])

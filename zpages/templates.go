@@ -218,9 +218,9 @@ func traceIDFormatter(r traceRow) template.HTML {
 		col = "blue"
 	}
 	if r.ParentSpanID != (trace.SpanID{}) {
-		return template.HTML(fmt.Sprintf(`trace_id: <b style="color:%s">%s</b> span_id: %s parent_span_id: %s`, col, sc.TraceID, sc.SpanID, r.ParentSpanID))
+		return template.HTML(fmt.Sprintf(`trace_id: <b style="color:%s">%s</b> span_id: %s parent_span_id: %s`, col, sc.ID, sc.SpanID, r.ParentSpanID))
 	}
-	return template.HTML(fmt.Sprintf(`trace_id: <b style="color:%s">%s</b> span_id: %s`, col, sc.TraceID, sc.SpanID))
+	return template.HTML(fmt.Sprintf(`trace_id: <b style="color:%s">%s</b> span_id: %s`, col, sc.ID, sc.SpanID))
 }
 
 func even(x int) bool {

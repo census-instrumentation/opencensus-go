@@ -106,7 +106,7 @@ func canonicalCodeString(code int32) string {
 	return canonicalCodes[code]
 }
 
-func convertTraceID(t trace.TraceID) model.TraceID {
+func convertTraceID(t trace.ID) model.TraceID {
 	return model.TraceID{
 		High: binary.BigEndian.Uint64(t[:8]),
 		Low:  binary.BigEndian.Uint64(t[8:]),
@@ -142,7 +142,7 @@ func zipkinSpan(s *trace.SpanData, localEndpoint *model.Endpoint) model.SpanMode
 	sc := s.SpanContext
 	z := model.SpanModel{
 		SpanContext: model.SpanContext{
-			TraceID: convertTraceID(sc.TraceID),
+			TraceID: convertTraceID(sc.ID),
 			ID:      convertSpanID(sc.SpanID),
 			Sampled: &sampledTrue,
 		},

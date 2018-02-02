@@ -49,7 +49,7 @@ type Sampler interface {
 // SamplingParameters contains the values passed to a Sampler.
 type SamplingParameters struct {
 	ParentContext SpanContext
-	TraceID
+	ID
 	SpanID
 	Name            string
 	HasRemoteParent bool
@@ -84,7 +84,7 @@ func (s probabilitySampler) Sample(p SamplingParameters) (d SamplingDecision) {
 	if p.ParentContext.IsSampled() {
 		return SamplingDecision{Sample: true}
 	}
-	x := binary.BigEndian.Uint64(p.TraceID[0:8]) >> 1
+	x := binary.BigEndian.Uint64(p.ID[0:8]) >> 1
 	return SamplingDecision{Sample: x < s.traceIDUpperBound}
 }
 

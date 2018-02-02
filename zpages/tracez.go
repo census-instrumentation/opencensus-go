@@ -374,7 +374,7 @@ func writeTextTraces(w io.Writer, data traceData) {
 		tw.Write([]byte("\t"))
 		tw.Write([]byte(r.Fields[2]))
 		if sc := r.SpanContext; sc != (trace.SpanContext{}) {
-			fmt.Fprintf(tw, "trace_id: %s span_id: %s", sc.TraceID, sc.SpanID)
+			fmt.Fprintf(tw, "trace_id: %s span_id: %s", sc.ID, sc.SpanID)
 			if r.ParentSpanID != (trace.SpanID{}) {
 				fmt.Fprintf(tw, " parent_span_id: %s", r.ParentSpanID)
 			}
