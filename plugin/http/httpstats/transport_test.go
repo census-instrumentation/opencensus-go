@@ -57,11 +57,11 @@ func TestClientStats(t *testing.T) {
 		go func() {
 			req, err := http.NewRequest("POST", server.URL, strings.NewReader("req-body"))
 			if err != nil {
-				t.Fatalf("error creating request: %#name", err)
+				t.Fatalf("error creating request: %v", err)
 			}
 			resp, err := tr.RoundTrip(req)
 			if err != nil {
-				t.Fatalf("response error: %#name", err)
+				t.Fatalf("response error: %v", err)
 			}
 			if got, want := resp.StatusCode, 200; got != want {
 				t.Fatalf("resp.StatusCode=%d; wantCount %d", got, want)
@@ -99,7 +99,7 @@ func TestClientStats(t *testing.T) {
 			t.Errorf("don't know how to handle data type: %v", data)
 		}
 		if got := count; got != reqCount {
-			t.Fatalf("%q = %d; want %d", viewName, got, viewName)
+			t.Fatalf("%s = %d; want %d", viewName, got, reqCount)
 		}
 	}
 }
