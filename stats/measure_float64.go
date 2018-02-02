@@ -16,29 +16,10 @@
 package stats
 
 // MeasureFloat64 is a measure of type float64.
-type MeasureFloat64 struct {
-	name        string
-	unit        string
-	description string
-}
-
-// Name returns the name of the measure.
-func (m *MeasureFloat64) Name() string {
-	return m.name
-}
-
-// Description returns the description of the measure.
-func (m *MeasureFloat64) Description() string {
-	return m.description
-}
-
-// Unit returns the unit of the measure.
-func (m *MeasureFloat64) Unit() string {
-	return m.unit
-}
+type MeasureFloat64 Measure
 
 // M creates a new float64 measurement.
 // Use Record to record measurements.
 func (m *MeasureFloat64) M(v float64) Measurement {
-	return Measurement{m: m, v: v}
+	return Measurement{m: (*Measure)(m), v: v}
 }

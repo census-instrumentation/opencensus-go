@@ -33,7 +33,7 @@ type getMeasureByNameReq struct {
 }
 
 type getMeasureByNameResp struct {
-	m Measure
+	m *Measure
 }
 
 func (cmd *getMeasureByNameReq) handleCommand(w *worker) {
@@ -47,7 +47,7 @@ func (cmd *getMeasureByNameReq) handleCommand(w *worker) {
 
 // registerMeasureReq is the command to register a measure with the library.
 type registerMeasureReq struct {
-	m   Measure
+	m   *Measure
 	err chan error
 }
 
@@ -57,12 +57,12 @@ func (cmd *registerMeasureReq) handleCommand(w *worker) {
 
 // deleteMeasureReq is the command to delete a measure from the library.
 type deleteMeasureReq struct {
-	m   Measure
+	m   *Measure
 	err chan error
 }
 
 func (cmd *deleteMeasureReq) handleCommand(w *worker) {
-	ref, ok := w.measures[cmd.m.Name()]
+	ref, ok := w.measures[cmd.m.Name]
 	if !ok {
 		cmd.err <- nil
 		return
@@ -74,11 +74,11 @@ func (cmd *deleteMeasureReq) handleCommand(w *worker) {
 	}
 
 	if c := len(ref.views); c > 0 {
-		cmd.err <- fmt.Errorf("cannot delete; measure %q used by %v registered views", cmd.m.Name(), c)
+		cmd.err <- fmt.Errorf("cannot delete; measure %q used by %v registered views", cmd.m.Name, c)
 		return
 	}
 
-	delete(w.measures, cmd.m.Name())
+	delete(w.measures, cmd.m.Name)
 	cmd.err <- nil
 }
 
@@ -127,7 +127,7 @@ func (cmd *unregisterViewReq) handleCommand(w *worker) {
 		return
 	}
 	delete(w.views, cmd.v.Name())
-	ref := w.measures[v.Measure().Name()]
+	ref := w.measures[v.Measure().Name]
 	delete(ref.views, v)
 	cmd.err <- nil
 }
@@ -216,7 +216,7 @@ type recordReq struct {
 
 func (cmd *recordReq) handleCommand(w *worker) {
 	for _, m := range cmd.ms {
-		ref := w.measures[m.m.Name()]
+		ref := w.measures[m.m.Name]
 		for v := range ref.views {
 			v.addSample(cmd.tm, m.v, cmd.now)
 		}

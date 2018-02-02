@@ -25,10 +25,10 @@ package stats
 // by the given name.
 // Each registered measure needs to be unique by name.
 // Measures also have a description and a unit.
-type Measure interface {
-	Name() string
-	Description() string
-	Unit() string
+type Measure struct {
+	Name        string
+	Description string
+	Unit        string
 }
 
 // Measurement is the numeric value measured when recording stats. Each measure
@@ -36,12 +36,12 @@ type Measure interface {
 // provides M to convert an int64 into a measurement.
 type Measurement struct {
 	v interface{} // int64 or float64
-	m Measure
+	m *Measure
 }
 
 // FindMeasure returns the registered measure associated with name.
 // If no registered measure is not found, nil is returned.
-func FindMeasure(name string) (m Measure) {
+func FindMeasure(name string) (m *Measure) {
 	req := &getMeasureByNameReq{
 		name: name,
 		c:    make(chan *getMeasureByNameResp),
@@ -54,7 +54,7 @@ func FindMeasure(name string) (m Measure) {
 // DeleteMeasure deletes an existing measure to allow for creation of a new
 // measure with the same name. It returns an error if the measure cannot be
 // deleted, such as one or multiple registered views refer to it.
-func DeleteMeasure(m Measure) error {
+func DeleteMeasure(m *Measure) error {
 	req := &deleteMeasureReq{
 		m:   m,
 		err: make(chan error),

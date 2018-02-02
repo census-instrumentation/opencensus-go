@@ -30,7 +30,7 @@ func init() {
 }
 
 type measureRef struct {
-	measure Measure
+	measure *Measure
 	views   map[*View]struct{}
 }
 
@@ -55,13 +55,13 @@ func NewMeasureFloat64(name, description, unit string) (*MeasureFloat64, error) 
 		return nil, err
 	}
 	m := &MeasureFloat64{
-		name:        name,
-		description: description,
-		unit:        unit,
+		Name:        name,
+		Description: description,
+		Unit:        unit,
 	}
 
 	req := &registerMeasureReq{
-		m:   m,
+		m:   (*Measure)(m),
 		err: make(chan error),
 	}
 	defaultWorker.c <- req
@@ -79,13 +79,13 @@ func NewMeasureInt64(name, description, unit string) (*MeasureInt64, error) {
 		return nil, err
 	}
 	m := &MeasureInt64{
-		name:        name,
-		description: description,
-		unit:        unit,
+		Name:        name,
+		Description: description,
+		Unit:        unit,
 	}
 
 	req := &registerMeasureReq{
-		m:   m,
+		m:   (*Measure)(m),
 		err: make(chan error),
 	}
 	defaultWorker.c <- req
@@ -239,17 +239,17 @@ func (w *worker) stop() {
 	<-w.done
 }
 
-func (w *worker) tryRegisterMeasure(m Measure) error {
-	if ref, ok := w.measures[m.Name()]; ok {
+func (w *worker) tryRegisterMeasure(m *Measure) error {
+	if ref, ok := w.measures[m.Name]; ok {
 		if ref.measure != m {
-			return fmt.Errorf("cannot register measure %q; another measure with the same name is already registered", m.Name())
+			return fmt.Errorf("cannot register measure %q; another measure with the same name is already registered", m.Name)
 		}
 		// the measure is already registered so there is nothing to do and the
 		// command is considered successful.
 		return nil
 	}
 
-	w.measures[m.Name()] = &measureRef{
+	w.measures[m.Name] = &measureRef{
 		measure: m,
 		views:   make(map[*View]struct{}),
 	}
@@ -274,7 +274,7 @@ func (w *worker) tryRegisterView(v *View) error {
 	}
 
 	w.views[v.Name()] = v
-	ref := w.measures[v.Measure().Name()]
+	ref := w.measures[v.Measure().Name]
 	ref.views[v] = struct{}{}
 
 	return nil
