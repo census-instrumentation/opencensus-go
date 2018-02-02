@@ -60,7 +60,7 @@ func (f *HTTPFormat) FromRequest(req *http.Request) (sc trace.SpanContext, ok bo
 	if err != nil {
 		return trace.SpanContext{}, false
 	}
-	copy(sc.TraceID[:], buf)
+	copy(sc.ID[:], buf)
 
 	// Parse the span id field.
 	spanstr := h
@@ -89,6 +89,6 @@ func (f *HTTPFormat) FromRequest(req *http.Request) (sc trace.SpanContext, ok bo
 // ToRequest modifies the given request to include a Stackdriver Trace header.
 func (f *HTTPFormat) ToRequest(sc trace.SpanContext, req *http.Request) {
 	sid := binary.BigEndian.Uint64(sc.SpanID[:])
-	header := fmt.Sprintf("%s/%d;o=%d", hex.EncodeToString(sc.TraceID[:]), sid, int64(sc.TraceOptions))
+	header := fmt.Sprintf("%s/%d;o=%d", hex.EncodeToString(sc.ID[:]), sid, int64(sc.TraceOptions))
 	req.Header.Set(httpHeader, header)
 }

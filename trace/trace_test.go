@@ -23,7 +23,7 @@ import (
 )
 
 var (
-	tid = TraceID{1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 4, 8, 16, 32, 64, 128}
+	tid = ID{1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 4, 8, 16, 32, 64, 128}
 	sid = SpanID{1, 2, 4, 8, 16, 32, 64, 128}
 )
 
@@ -61,7 +61,7 @@ func checkChild(p SpanContext, c *Span, expectRecordingEvents bool) error {
 	if c == nil {
 		return fmt.Errorf("got nil child span, want non-nil")
 	}
-	if got, want := c.spanContext.TraceID, p.TraceID; got != want {
+	if got, want := c.spanContext.ID, p.ID; got != want {
 		return fmt.Errorf("got child trace ID %s, want %s", got, want)
 	}
 	if childID, parentID := c.spanContext.SpanID, p.SpanID; childID == parentID {
@@ -132,7 +132,7 @@ func TestSampling(t *testing.T) {
 		var ctx context.Context
 		if test.remoteParent {
 			sc := SpanContext{
-				TraceID:      tid,
+				ID:           tid,
 				SpanID:       sid,
 				TraceOptions: test.parentTraceOptions,
 			}
@@ -234,7 +234,7 @@ func TestProbabilitySampler(t *testing.T) {
 
 func TestStartSpanWithRemoteParent(t *testing.T) {
 	sc := SpanContext{
-		TraceID:      tid,
+		ID:           tid,
 		SpanID:       sid,
 		TraceOptions: 0x0,
 	}
@@ -249,7 +249,7 @@ func TestStartSpanWithRemoteParent(t *testing.T) {
 	}
 
 	sc = SpanContext{
-		TraceID:      tid,
+		ID:           tid,
 		SpanID:       sid,
 		TraceOptions: 0x1,
 	}
@@ -274,7 +274,7 @@ func TestStartSpanWithRemoteParent(t *testing.T) {
 func startSpan() *Span {
 	return NewSpanWithRemoteParent("span0",
 		SpanContext{
-			TraceID:      tid,
+			ID:           tid,
 			SpanID:       sid,
 			TraceOptions: 1,
 		},
@@ -342,7 +342,7 @@ func TestSetSpanAttributes(t *testing.T) {
 
 	want := &SpanData{
 		SpanContext: SpanContext{
-			TraceID:      tid,
+			ID:           tid,
 			SpanID:       SpanID{},
 			TraceOptions: 0x1,
 		},
@@ -373,7 +373,7 @@ func TestAnnotations(t *testing.T) {
 
 	want := &SpanData{
 		SpanContext: SpanContext{
-			TraceID:      tid,
+			ID:           tid,
 			SpanID:       SpanID{},
 			TraceOptions: 0x1,
 		},
@@ -407,7 +407,7 @@ func TestMessageEvents(t *testing.T) {
 
 	want := &SpanData{
 		SpanContext: SpanContext{
-			TraceID:      tid,
+			ID:           tid,
 			SpanID:       SpanID{},
 			TraceOptions: 0x1,
 		},
@@ -434,7 +434,7 @@ func TestSetSpanStatus(t *testing.T) {
 
 	want := &SpanData{
 		SpanContext: SpanContext{
-			TraceID:      tid,
+			ID:           tid,
 			SpanID:       SpanID{},
 			TraceOptions: 0x1,
 		},
@@ -463,7 +463,7 @@ func TestAddLink(t *testing.T) {
 
 	want := &SpanData{
 		SpanContext: SpanContext{
-			TraceID:      tid,
+			ID:           tid,
 			SpanID:       SpanID{},
 			TraceOptions: 0x1,
 		},
@@ -500,14 +500,14 @@ func TestBucket(t *testing.T) {
 	for i := 1; i <= 10; i++ {
 		b.nextTime = time.Time{} // reset the time so that the next span is accepted.
 		// add a span, with i stored in the TraceID so we can test for it later.
-		b.add(&SpanData{SpanContext: SpanContext{TraceID: TraceID{byte(i)}}, EndTime: time.Now()})
+		b.add(&SpanData{SpanContext: SpanContext{ID: ID{byte(i)}}, EndTime: time.Now()})
 		if i <= 5 {
 			if b.size() != i {
 				t.Fatalf("got bucket size %d, want %d %#v\n", b.size(), i, b)
 			}
 			for j := 0; j < i; j++ {
-				if b.span(j).TraceID[0] != byte(j+1) {
-					t.Errorf("got span index %d, want %d\n", b.span(j).TraceID[0], j+1)
+				if b.span(j).ID[0] != byte(j+1) {
+					t.Errorf("got span index %d, want %d\n", b.span(j).ID[0], j+1)
 				}
 			}
 		} else {
@@ -516,8 +516,8 @@ func TestBucket(t *testing.T) {
 			}
 			for j := 0; j < 5; j++ {
 				want := i - 4 + j
-				if b.span(j).TraceID[0] != byte(want) {
-					t.Errorf("got span index %d, want %d\n", b.span(j).TraceID[0], want)
+				if b.span(j).ID[0] != byte(want) {
+					t.Errorf("got span index %d, want %d\n", b.span(j).ID[0], want)
 				}
 			}
 		}
@@ -529,8 +529,8 @@ func TestBucket(t *testing.T) {
 	}
 	for i := 0; i < 5; i++ {
 		want := 6 + i
-		if b.span(i).TraceID[0] != byte(want) {
-			t.Errorf("after resizing upwards: got span index %d, want %d\n", b.span(i).TraceID[0], want)
+		if b.span(i).ID[0] != byte(want) {
+			t.Errorf("after resizing upwards: got span index %d, want %d\n", b.span(i).ID[0], want)
 		}
 	}
 	// shrink the bucket
@@ -540,8 +540,8 @@ func TestBucket(t *testing.T) {
 	}
 	for i := 0; i < 3; i++ {
 		want := 8 + i
-		if b.span(i).TraceID[0] != byte(want) {
-			t.Errorf("after resizing downwards: got span index %d, want %d\n", b.span(i).TraceID[0], want)
+		if b.span(i).ID[0] != byte(want) {
+			t.Errorf("after resizing downwards: got span index %d, want %d\n", b.span(i).ID[0], want)
 		}
 	}
 }
@@ -582,10 +582,10 @@ func TestStartSpanAfterEnd(t *testing.T) {
 	if got, want := len(spans), 3; got != want {
 		t.Fatalf("len(%#v) = %d; want %d", spans, got, want)
 	}
-	if got, want := spans["span-1"].TraceID, spans["parent"].TraceID; got != want {
+	if got, want := spans["span-1"].ID, spans["parent"].ID; got != want {
 		t.Errorf("span-1.TraceID=%q; want %q", got, want)
 	}
-	if got, want := spans["span-2"].TraceID, spans["parent"].TraceID; got != want {
+	if got, want := spans["span-2"].ID, spans["parent"].ID; got != want {
 		t.Errorf("span-2.TraceID=%q; want %q", got, want)
 	}
 	if got, want := spans["span-1"].ParentSpanID, spans["parent"].SpanID; got != want {

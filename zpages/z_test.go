@@ -25,7 +25,7 @@ import (
 )
 
 var (
-	tid  = trace.TraceID{1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 4, 8, 16, 32, 64, 128}
+	tid  = trace.ID{1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 4, 8, 16, 32, 64, 128}
 	sid  = trace.SpanID{1, 2, 4, 8, 16, 32, 64, 128}
 	sid2 = trace.SpanID{0, 3, 5, 9, 17, 33, 65, 129}
 )
@@ -34,7 +34,7 @@ func TestTraceRows(t *testing.T) {
 	now := time.Now()
 	later := now.Add(2 * time.Second)
 	data := traceDataFromSpans("foo", []*trace.SpanData{{
-		SpanContext:  trace.SpanContext{TraceID: tid, SpanID: sid},
+		SpanContext:  trace.SpanContext{ID: tid, SpanID: sid},
 		ParentSpanID: sid2,
 		Name:         "foo",
 		StartTime:    now,
@@ -61,7 +61,7 @@ func TestTraceRows(t *testing.T) {
 		Name: "foo",
 		Num:  1,
 		Rows: []traceRow{
-			{Fields: [3]string{fakeTime, "    2.000000", ""}, SpanContext: trace.SpanContext{TraceID: tid, SpanID: sid}, ParentSpanID: sid2},
+			{Fields: [3]string{fakeTime, "    2.000000", ""}, SpanContext: trace.SpanContext{ID: tid, SpanID: sid}, ParentSpanID: sid2},
 			{Fields: [3]string{fakeTime, "", `Status{canonicalCode=CANCELLED, description="d'oh!"}`}},
 			{Fields: [3]string{fakeTime, "", `Attributes:{boolkey=true, intkey=42, stringkey="stringvalue"}`}},
 			{Fields: [3]string{fakeTime, "     .     0", "received message [400 bytes, 300 compressed bytes]"}},

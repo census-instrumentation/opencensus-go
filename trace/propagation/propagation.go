@@ -59,7 +59,7 @@ func Binary(sc trace.SpanContext) []byte {
 		return nil
 	}
 	var b [29]byte
-	copy(b[2:18], sc.TraceID[:])
+	copy(b[2:18], sc.ID[:])
 	b[18] = 1
 	copy(b[19:27], sc.SpanID[:])
 	b[27] = 2
@@ -77,7 +77,7 @@ func FromBinary(b []byte) (sc trace.SpanContext, ok bool) {
 	}
 	b = b[1:]
 	if len(b) >= 17 && b[0] == 0 {
-		copy(sc.TraceID[:], b[1:17])
+		copy(sc.ID[:], b[1:17])
 		b = b[17:]
 	} else {
 		return trace.SpanContext{}, false

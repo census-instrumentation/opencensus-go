@@ -20,13 +20,13 @@ import (
 )
 
 type (
-	// TraceID is a 16-byte identifier for a set of spans.
-	TraceID [16]byte
+	// ID is a 16-byte identifier for a set of spans.
+	ID [16]byte
 	// SpanID is an 8-byte identifier for a single span.
 	SpanID [8]byte
 )
 
-func (t TraceID) String() string {
+func (t ID) String() string {
 	return fmt.Sprintf("%02x", [16]byte(t))
 }
 
@@ -84,7 +84,7 @@ const (
 
 // Link represents a reference from one span to another span.
 type Link struct {
-	TraceID TraceID
+	TraceID ID
 	SpanID  SpanID
 	Type    LinkType
 	// Attributes is a set of attributes on the link.

@@ -171,7 +171,7 @@ func TestSpanCreation(t *testing.T) {
 		if got, want := s2.Name, "Recv"+methodName; got != want {
 			t.Errorf("%#v: got name %q want %q", test, got, want)
 		}
-		if got, want := s2.SpanContext.TraceID, s1.SpanContext.TraceID; got != want {
+		if got, want := s2.SpanContext.ID, s1.SpanContext.ID; got != want {
 			t.Errorf("%#v: got trace IDs %s and %s, want them equal", test, got, want)
 		}
 		if got, want := s2.ParentSpanID, s1.SpanContext.SpanID; got != want {

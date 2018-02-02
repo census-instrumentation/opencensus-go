@@ -52,7 +52,7 @@ func (t testPropagator) FromRequest(req *http.Request) (sc trace.SpanContext, ok
 		log.Fatalf("Cannot decode trace header: %q", header)
 	}
 	r := bytes.NewReader(buf)
-	r.Read(sc.TraceID[:])
+	r.Read(sc.ID[:])
 	r.Read(sc.SpanID[:])
 	opts, err := r.ReadByte()
 	if err != nil {
@@ -64,7 +64,7 @@ func (t testPropagator) FromRequest(req *http.Request) (sc trace.SpanContext, ok
 
 func (t testPropagator) ToRequest(sc trace.SpanContext, req *http.Request) {
 	var buf bytes.Buffer
-	buf.Write(sc.TraceID[:])
+	buf.Write(sc.ID[:])
 	buf.Write(sc.SpanID[:])
 	buf.WriteByte(byte(sc.TraceOptions))
 	req.Header.Set("trace", hex.EncodeToString(buf.Bytes()))
@@ -109,7 +109,7 @@ func TestTransport_RoundTrip(t *testing.T) {
 				t.Fatalf("Got no spans in req context; want one")
 			}
 			if tt.parent != nil {
-				if got, want := span.SpanContext().TraceID, tt.parent.SpanContext().TraceID; got != want {
+				if got, want := span.SpanContext().ID, tt.parent.SpanContext().ID; got != want {
 					t.Errorf("span.SpanContext().TraceID=%v; want %v", got, want)
 				}
 			}
@@ -121,7 +121,7 @@ func TestHandler(t *testing.T) {
 	traceID := [16]byte{16, 84, 69, 170, 120, 67, 188, 139, 242, 6, 177, 32, 0, 16, 0, 0}
 	tests := []struct {
 		header           string
-		wantTraceID      trace.TraceID
+		wantTraceID      trace.ID
 		wantTraceOptions trace.TraceOptions
 	}{
 		{
@@ -143,7 +143,7 @@ func TestHandler(t *testing.T) {
 			handler := NewHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				span := trace.FromContext(r.Context())
 				sc := span.SpanContext()
-				if got, want := sc.TraceID, tt.wantTraceID; got != want {
+				if got, want := sc.ID, tt.wantTraceID; got != want {
 					t.Errorf("TraceID = %q; want %q", got, want)
 				}
 				if got, want := sc.TraceOptions, tt.wantTraceOptions; got != want {
@@ -238,8 +238,8 @@ func TestEndToEnd(t *testing.T) {
 	if server == nil || client == nil {
 		t.Fatalf("server or client span missing")
 	}
-	if server.TraceID != client.TraceID {
-		t.Errorf("TraceID does not match: server.TraceID=%q client.TraceID=%q", server.TraceID, client.TraceID)
+	if server.ID != client.ID {
+		t.Errorf("TraceID does not match: server.TraceID=%q client.TraceID=%q", server.ID, client.ID)
 	}
 	if server.StartTime.Before(client.StartTime) {
 		t.Errorf("server span starts before client span")

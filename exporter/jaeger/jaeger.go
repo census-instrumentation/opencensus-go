@@ -136,8 +136,8 @@ func (e *Exporter) ExportSpan(data *trace.SpanData) {
 		})
 	}
 	span := &gen.Span{
-		TraceIdLow:    bytesToInt64(data.TraceID[0:8]),
-		TraceIdHigh:   bytesToInt64(data.TraceID[8:16]),
+		TraceIdLow:    bytesToInt64(data.ID[0:8]),
+		TraceIdHigh:   bytesToInt64(data.ID[8:16]),
 		SpanId:        bytesToInt64(data.SpanID[:]),
 		ParentSpanId:  bytesToInt64(data.ParentSpanID[:]),
 		OperationName: data.Name,

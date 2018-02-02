@@ -38,7 +38,7 @@ import (
 const projectID = "testproject"
 
 var (
-	traceID = trace.TraceID{0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48, 0x49, 0x4a, 0x4b, 0x4c, 0x4d, 0x4e, 0x4f}
+	traceID = trace.ID{0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48, 0x49, 0x4a, 0x4b, 0x4c, 0x4d, 0x4e, 0x4f}
 	spanID  = trace.SpanID{0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1}
 )
 
@@ -63,7 +63,7 @@ func TestExportTrace(t *testing.T) {
 
 	ctx, span0 := trace.StartSpanWithRemoteParent(context.Background(), "span0",
 		trace.SpanContext{
-			TraceID:      traceID,
+			ID:           traceID,
 			SpanID:       spanID,
 			TraceOptions: 1,
 		},
@@ -98,7 +98,7 @@ func TestExportTrace(t *testing.T) {
 				span4.Annotate(a1, r.String())
 				span4.Annotatef(a2, "foo %d", x)
 				span4.Annotate(a3, "in span4")
-				span4.AddLink(trace.Link{TraceID: trace.TraceID{1, 2}, SpanID: trace.SpanID{3}, Type: trace.LinkTypeParent, Attributes: a4})
+				span4.AddLink(trace.Link{TraceID: trace.ID{1, 2}, SpanID: trace.SpanID{3}, Type: trace.LinkTypeParent, Attributes: a4})
 				span4.End()
 			}
 		}
@@ -345,8 +345,8 @@ func TestEnums(t *testing.T) {
 func BenchmarkProto(b *testing.B) {
 	sd := &trace.SpanData{
 		SpanContext: trace.SpanContext{
-			TraceID: traceID,
-			SpanID:  spanID,
+			ID:     traceID,
+			SpanID: spanID,
 		},
 		Name:       "foo",
 		StartTime:  time.Now().Add(-time.Second),
