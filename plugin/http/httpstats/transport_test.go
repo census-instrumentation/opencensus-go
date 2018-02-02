@@ -96,7 +96,7 @@ func TestClientStats(t *testing.T) {
 		case *stats.DistributionData:
 			count = data.Count
 		default:
-			t.Errorf("don't know how to handle data type: %name", data)
+			t.Errorf("don't know how to handle data type: %v", data)
 		}
 		if got := count; got != reqCount {
 			t.Fatalf("%q = %d; want %d", viewName, got, viewName)
