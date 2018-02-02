@@ -28,6 +28,7 @@ import (
 func init() {
 	defaultWorker = newWorker()
 	go defaultWorker.start()
+	internal.DefaultRecorder = record
 }
 
 type measureRef struct {
@@ -129,8 +130,6 @@ func (v *View) RetrieveData() ([]*Row, error) {
 	return resp.rows, resp.err
 }
 
-// Record records one or multiple measurements with the same tags at once.
-// If there are any tags in the context, measurements will be tagged with them.
 func record(tags *tag.Map, now time.Time, ms interface{}) {
 	req := &recordReq{
 		now: now,
@@ -138,10 +137,6 @@ func record(tags *tag.Map, now time.Time, ms interface{}) {
 		ms:  ms.([]measure.Measurement),
 	}
 	defaultWorker.c <- req
-}
-
-func init() {
-	internal.DefaultRecorder = record
 }
 
 // SetReportingPeriod sets the interval between reporting aggregated views in
