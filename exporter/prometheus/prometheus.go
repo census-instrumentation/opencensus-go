@@ -203,7 +203,10 @@ func (c *collector) Describe(ch chan<- *prometheus.Desc) {
 // Collect is invoked everytime a prometheus.Gatherer is run
 // for example when the HTTP endpoint is invoked by Prometheus.
 func (c *collector) Collect(ch chan<- prometheus.Metric) {
-	for _, vd := range c.viewData {
+	// We need a copy of all the view data up until this point.
+	viewData := c.cloneViewData()
+
+	for _, vd := range viewData {
 		if !allowedWindowType(vd.View) {
 			continue
 		}
@@ -295,4 +298,15 @@ func viewSignature(namespace string, v *stats.View) string {
 		buf.WriteString("-" + k.Name())
 	}
 	return buf.String()
+}
+
+func (c *collector) cloneViewData() map[string]*stats.ViewData {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	viewDataCopy := make(map[string]*stats.ViewData)
+	for sig, viewData := range c.viewData {
+		viewDataCopy[sig] = viewData
+	}
+	return viewDataCopy
 }
