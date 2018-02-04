@@ -15,7 +15,9 @@
 package prometheus
 
 import (
+	"sync"
 	"testing"
+	"time"
 
 	"go.opencensus.io/stats"
 
@@ -106,4 +108,77 @@ func TestSingletonExporter(t *testing.T) {
 	if exp != nil {
 		t.Fatal("Non-nil exporter")
 	}
+}
+
+func TestCollectNonRacy(t *testing.T) {
+	// Despite enforcing the singleton, for this case we
+	// need an exporter hence won't be using NewExporter.
+	exp, err := newExporter(Options{})
+	if err != nil {
+		t.Fatalf("NewExporter: %v", err)
+	}
+	collector := exp.c
+
+	// Synchronize and make sure every goroutine has terminated before we exit
+	var waiter sync.WaitGroup
+	waiter.Add(3)
+	defer waiter.Wait()
+
+	doneCh := make(chan bool)
+	// 1. Viewdata write routine at 700ns
+	go func() {
+		defer waiter.Done()
+		tick := time.NewTicker(700 * time.Nanosecond)
+		defer tick.Stop()
+
+		defer func() {
+			close(doneCh)
+		}()
+
+		for i := 0; i < 1e3; i++ {
+			count1 := stats.CountData(1)
+			mean1 := &stats.MeanData{Mean: 4.5, Count: 5}
+			vds := []*stats.ViewData{
+				{View: newView(stats.MeanAggregation{}, stats.Cumulative{}), Rows: []*stats.Row{{nil, mean1}}},
+				{View: newView(stats.CountAggregation{}, stats.Cumulative{}), Rows: []*stats.Row{{nil, &count1}}},
+			}
+			for _, v := range vds {
+				exp.ExportView(v)
+			}
+			<-tick.C
+		}
+	}()
+
+	inMetricsChan := make(chan prometheus.Metric, 1000)
+	// 2. Simulating the Prometheus metrics consumption routine running at 900ns
+	go func() {
+		defer waiter.Done()
+		tick := time.NewTicker(900 * time.Nanosecond)
+		defer tick.Stop()
+
+		for {
+			select {
+			case <-doneCh:
+				return
+			case <-inMetricsChan:
+			}
+		}
+	}()
+
+	// 3. Collect/Read routine at 800ns
+	go func() {
+		defer waiter.Done()
+		tick := time.NewTicker(800 * time.Nanosecond)
+		defer tick.Stop()
+
+		for {
+			select {
+			case <-doneCh:
+				return
+			case <-tick.C:
+				// Perform some collection here
+				collector.Collect(inMetricsChan)
+			}
+		}
+	}()
 }
