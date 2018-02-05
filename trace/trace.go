@@ -78,9 +78,9 @@ func (t TraceOptions) IsSampled() bool {
 // SpanContext is not an implementation of context.Context.
 // TODO: add reference to external Census docs for SpanContext.
 type SpanContext struct {
-	TraceID
-	SpanID
-	TraceOptions
+	TraceID      TraceID
+	SpanID       SpanID
+	TraceOptions TraceOptions
 }
 
 type contextKey struct{}
