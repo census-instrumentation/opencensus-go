@@ -1,0 +1,3 @@
+[submodule "proto/opencensus-proto"]
+	path = proto/opencensus-proto
+	url = https://github.com/census-instrumentation/opencensus-proto
