@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Packaage opencensus_proto_trace contains Protobuf generated code for recording traces.
+// Package opencensus_proto_trace contains Protobuf generated code for recording traces.
 package opencensus_proto_trace // import "go.opencensus.io/proto/traceproto"
 
 //go:generate protoc --go_out=./ -I../opencensus-proto/opencensus/proto/trace ../opencensus-proto/opencensus/proto/trace/trace.proto
