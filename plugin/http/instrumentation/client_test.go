@@ -11,6 +11,8 @@ import (
 	"go.opencensus.io/stats"
 )
 
+const reqCount = 5
+
 func TestClient(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
 		resp.Write([]byte("Hello, world!"))
