@@ -28,12 +28,7 @@ import (
 
 // statsTransport is an http.RoundTripper that collects stats for the outgoing requests.
 type statsTransport struct {
-	// Base represents the underlying roundtripper that does the actual requests.
-	// If none is given, http.DefaultTransport is used.
-	//
-	// If base HTTP roundtripper implements CancelRequest,
-	// the returned round tripper will be cancelable.
-	Base http.RoundTripper
+	base http.RoundTripper
 }
 
 // RoundTrip implements http.RoundTripper, delegating to Base and recording stats for the request.
@@ -56,7 +51,7 @@ func (t statsTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	stats.Record(ctx, ClientRequest.M(1))
 
 	// Perform request
-	resp, err := t.base().RoundTrip(req)
+	resp, err := t.base.RoundTrip(req)
 
 	if err != nil {
 		track.statusCode = "error"
@@ -74,19 +69,12 @@ func (t statsTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	return resp, err
 }
 
-func (t statsTransport) base() http.RoundTripper {
-	if t.Base != nil {
-		return t.Base
-	}
-	return http.DefaultTransport
-}
-
 // CancelRequest cancels an in-flight request by closing its connection.
 func (t statsTransport) CancelRequest(req *http.Request) {
 	type canceler interface {
 		CancelRequest(*http.Request)
 	}
-	if cr, ok := t.base().(canceler); ok {
+	if cr, ok := t.base.(canceler); ok {
 		cr.CancelRequest(req)
 	}
 }

@@ -12,5 +12,5 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package instrumentation provides OpenCensus stats instrumentation for the standard library http package.
+// Package instrumentation provides OpenCensus instrumentation for the standard library http package.
 package instrumentation // import "go.opencensus.io/plugin/http/instrumentation"

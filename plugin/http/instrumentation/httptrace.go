@@ -30,16 +30,8 @@ import (
 //
 // Use newTraceTransport to create new transports.
 type traceTransport struct {
-	// Base represents the underlying roundtripper that does the actual requests.
-	// If none is given, http.DefaultTransport is used.
-	//
-	// If base HTTP roundtripper implements CancelRequest,
-	// the returned round tripper will be cancelable.
-	Base http.RoundTripper
-
-	// Formats are the mechanisms that propagate
-	// the outgoing trace in an HTTP request.
-	Formats []propagation.HTTPFormat
+	base   http.RoundTripper
+	format propagation.HTTPFormat
 }
 
 // RoundTrip creates a trace.Span and inserts it into the outgoing request's headers.
@@ -52,11 +44,11 @@ func (t *traceTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	ctx, span := trace.StartSpan(req.Context(), name)
 	req = req.WithContext(ctx)
 
-	for _, f := range t.Formats {
-		f.ToRequest(span.SpanContext(), req)
+	if t.format != nil {
+		t.format.ToRequest(span.SpanContext(), req)
 	}
 
-	resp, err := t.base().RoundTrip(req)
+	resp, err := t.base.RoundTrip(req)
 
 	// TODO(jbd): Add status and attributes.
 	if err != nil {
@@ -122,23 +114,9 @@ func (t *traceTransport) CancelRequest(req *http.Request) {
 	type canceler interface {
 		CancelRequest(*http.Request)
 	}
-	if cr, ok := t.base().(canceler); ok {
+	if cr, ok := t.base.(canceler); ok {
 		cr.CancelRequest(req)
 	}
-}
-
-func (t *traceTransport) base() http.RoundTripper {
-	if t.Base != nil {
-		return t.Base
-	}
-	return http.DefaultTransport
-}
-
-// newTraceTransport returns an http.RoundTripper that traces the outgoing requests.
-//
-// Traces are propagated via the provided HTTP propagation mechanisms.
-func newTraceTransport(format ...propagation.HTTPFormat) *traceTransport {
-	return &traceTransport{Formats: format}
 }
 
 // NewHandler returns a http.Handler from the given handler

@@ -24,12 +24,15 @@ import (
 // stats and tracing. The zero value is intended to be a useful default, but for
 // now it's recommended that you explicitly set Propagation.
 type Transport struct {
-	// Base may be set to wrap another http.RoundTripper, by default
-	// http.DefaultTransport is used.
+	// Base may be set to wrap another http.RoundTripper that does the actual
+	// requests. By default http.DefaultTransport is used.
+	//
+	// If base HTTP roundtripper implements CancelRequest,
+	// the returned round tripper will be cancelable.
 	Base http.RoundTripper
 	// NoStats may be set to disable recording of stats.
 	NoStats bool
-	// NoTrace may be set to disable both recording of traces.
+	// NoTrace may be set to disable recording of traces.
 	NoTrace bool
 	// Propagation defines how traces (and, in future, tags) are propagated.
 	// If unset, a default will be selected (currently, the default is no
@@ -42,18 +45,16 @@ type Transport struct {
 
 // RoundTrip implements http.RoundTripper, delegating to Base and recording stats and traces for the request.
 func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
-	rt := t.Base
+	rt := t.base()
+	//TODO: remove excessive nesting of http.RoundTrippers here
 	if !t.NoTrace {
-		formats := []propagation.HTTPFormat{}
-		if t.Propagation != nil {
-			formats = append(formats, t.Propagation)
+		rt = &traceTransport{
+			format: t.Propagation,
+			base:   rt,
 		}
-		trace := newTraceTransport(formats...)
-		trace.Base = rt
-		rt = trace
 	}
 	if !t.NoStats {
-		rt = statsTransport{Base: rt}
+		rt = statsTransport{base: rt}
 	}
 	return rt.RoundTrip(req)
 }
