@@ -26,9 +26,6 @@ import (
 
 // TODO(jbd): Add godoc examples.
 
-// traceTransport is an http.RoundTripper that traces the outgoing requests.
-//
-// Use newTraceTransport to create new transports.
 type traceTransport struct {
 	base   http.RoundTripper
 	format propagation.HTTPFormat
