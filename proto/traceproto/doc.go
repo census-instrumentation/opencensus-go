@@ -1,4 +1,4 @@
-// Copyright 2017, OpenCensus Authors
+// Copyright 2018, OpenCensus Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,5 +15,6 @@
 // Package opencensus_proto_trace contains Protobuf generated code for recording traces.
 package opencensus_proto_trace // import "go.opencensus.io/proto/traceproto"
 
+// make sure you run "git submodule update" before "git generate"
 //go:generate protoc --go_out=./ -I../opencensus-proto/opencensus/proto/trace ../opencensus-proto/opencensus/proto/trace/trace.proto
 
