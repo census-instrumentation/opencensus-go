@@ -53,7 +53,7 @@ var (
 	ClientResponseBodySizeDistribution = defaultView(ClientResponseBodySize, aggDistBytes)
 	// ClientLatencyDistribution is a view of the latency distribution of all instrumented requests.
 	ClientLatencyDistribution = defaultView(ClientLatency, aggDistMillis)
-	// ClientResponseCountByStatusCode is a view of response counts by StatusCode.
+	// ClientRequestCountByMethod is a view of response counts by HTTP method.
 	ClientRequestCountByMethod = mustView(stats.NewView(
 		qualify("request_count_by_method"),
 		"Client request count by HTTP method",
@@ -61,7 +61,7 @@ var (
 		ClientRequest,
 		aggCount,
 		&stats.Cumulative{}))
-	// ClientRequestCountByMethod is a count of all instrumented HTTP requests by Method.
+	// ClientResponseCountByStatusCode is a count of all instrumented HTTP responses HTTP status code.
 	ClientResponseCountByStatusCode = mustView(stats.NewView(
 		qualify("response_count_by_status_code"),
 		"Client response count by status code",

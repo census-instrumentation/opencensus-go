@@ -20,6 +20,9 @@ import (
 	"go.opencensus.io/trace/propagation"
 )
 
+// Transport is an http.RoundTripper that instruments all outgoing requests with
+// stats and tracing. The zero value is intended to be a useful default, but for
+// now it's recommended that you explicitly set Propagation.
 type Transport struct {
 	// Base may be set to wrap another http.RoundTripper, by default
 	// http.DefaultTransport is used.
