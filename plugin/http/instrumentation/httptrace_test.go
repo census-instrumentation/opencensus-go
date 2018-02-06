@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package httptrace
+package instrumentation
 
 import (
 	"bytes"
@@ -90,7 +90,7 @@ func TestTransport_RoundTrip(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			transport := &testTransport{ch: make(chan *http.Request, 1)}
-			rt := NewTransport(&testPropagator{})
+			rt := newTraceTransport(&testPropagator{})
 			rt.Base = transport
 
 			req, _ := http.NewRequest("GET", "http://foo.com", nil)
@@ -157,7 +157,7 @@ func TestHandler(t *testing.T) {
 	}
 }
 
-var _ http.RoundTripper = (*Transport)(nil)
+var _ http.RoundTripper = (*traceTransport)(nil)
 var propagators = []propagation.HTTPFormat{testPropagator{}}
 
 type collector []*trace.SpanData
@@ -191,7 +191,7 @@ func TestEndToEnd(t *testing.T) {
 	}
 	req = req.WithContext(ctx)
 
-	rt := &Transport{Formats: propagators}
+	rt := &traceTransport{Formats: propagators}
 	resp, err := rt.RoundTrip(req)
 	if err != nil {
 		t.Fatalf("unexpected error %#v", err)

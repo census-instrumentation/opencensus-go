@@ -12,20 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package httpstats_test
+package instrumentation_test
 
 import (
 	"net/http"
 
-	"go.opencensus.io/plugin/http/httpstats"
+	"go.opencensus.io/plugin/http/instrumentation"
+	"go.opencensus.io/plugin/http/propagation/google"
 )
 
 func ExampleTransport() {
-	client := &http.Client{Transport: httpstats.Transport{}}
+	client := &http.Client{Transport: &instrumentation.Transport{Propagation: &google.HTTPFormat{}}}
 	_ = client // use client
-
-	// Instrument all requests made through package http.DefaultClient:
-	http.DefaultTransport = httpstats.Transport{Base: http.DefaultTransport}
-	// use http.Get, http.Post, etc.
-	// If possible, avoid this and explicitly configure an http.Client.
 }

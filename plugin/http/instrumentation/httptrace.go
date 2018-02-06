@@ -12,8 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package httptrace contains OpenCensus tracing integrations with net/http.
-package httptrace // import "go.opencensus.io/plugin/http/httptrace"
+package instrumentation
 
 import (
 	"io"
@@ -27,10 +26,10 @@ import (
 
 // TODO(jbd): Add godoc examples.
 
-// Transport is an http.RoundTripper that traces the outgoing requests.
+// traceTransport is an http.RoundTripper that traces the outgoing requests.
 //
-// Use NewTransport to create new transports.
-type Transport struct {
+// Use newTraceTransport to create new transports.
+type traceTransport struct {
 	// Base represents the underlying roundtripper that does the actual requests.
 	// If none is given, http.DefaultTransport is used.
 	//
@@ -46,7 +45,7 @@ type Transport struct {
 // RoundTrip creates a trace.Span and inserts it into the outgoing request's headers.
 // The created span can follow a parent span, if a parent is presented in
 // the request's context.
-func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
+func (t *traceTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	name := spanNameFromURL("Sent", req.URL)
 	// TODO(jbd): Discuss whether we want to prefix
 	// outgoing requests with Sent.
@@ -119,7 +118,7 @@ func (seb *spanEndBody) Close() error {
 }
 
 // CancelRequest cancels an in-flight request by closing its connection.
-func (t *Transport) CancelRequest(req *http.Request) {
+func (t *traceTransport) CancelRequest(req *http.Request) {
 	type canceler interface {
 		CancelRequest(*http.Request)
 	}
@@ -128,18 +127,18 @@ func (t *Transport) CancelRequest(req *http.Request) {
 	}
 }
 
-func (t *Transport) base() http.RoundTripper {
+func (t *traceTransport) base() http.RoundTripper {
 	if t.Base != nil {
 		return t.Base
 	}
 	return http.DefaultTransport
 }
 
-// NewTransport returns an http.RoundTripper that traces the outgoing requests.
+// newTraceTransport returns an http.RoundTripper that traces the outgoing requests.
 //
 // Traces are propagated via the provided HTTP propagation mechanisms.
-func NewTransport(format ...propagation.HTTPFormat) *Transport {
-	return &Transport{Formats: format}
+func newTraceTransport(format ...propagation.HTTPFormat) *traceTransport {
+	return &traceTransport{Formats: format}
 }
 
 // NewHandler returns a http.Handler from the given handler

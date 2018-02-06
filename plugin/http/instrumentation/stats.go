@@ -12,8 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package httpstats provides OpenCensus stats instrumentation for the standard library http package.
-package httpstats
+package instrumentation
 
 import (
 	"fmt"
