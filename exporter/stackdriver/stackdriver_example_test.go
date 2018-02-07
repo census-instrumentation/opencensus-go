@@ -12,20 +12,34 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package ochttp_test
+package stackdriver_test
 
 import (
+	"log"
 	"net/http"
 
+	"go.opencensus.io/exporter/stackdriver"
 	"go.opencensus.io/plugin/ochttp"
 	"go.opencensus.io/plugin/ochttp/propagation/google"
+	"go.opencensus.io/stats"
+	"go.opencensus.io/trace"
 )
 
 func Example() {
-	client := &http.Client{
-		Transport: &ochttp.Transport{
-			Propagation: &google.HTTPFormat{},
-		},
+	exporter, err := stackdriver.NewExporter(stackdriver.Options{ProjectID: "google-project-id"})
+	if err != nil {
+		log.Fatal(err)
 	}
-	_ = client // use client to perform requests
+	// Export to Stackdriver Monitoring:
+	stats.RegisterExporter(exporter)
+	// Export to Stackdriver Trace:
+	trace.RegisterExporter(exporter)
+
+	// To add a Stackdriver trace header to outgoing requests, use:
+	client := &http.Client{
+		Transport: &ochttp.Transport{Propagation: &google.HTTPFormat{}},
+	}
+	_ = client // use client
+	// All outgoing requests from client will include a Stackdriver Trace header.
+	// See the ochttp package for how to handle incoming requests.
 }

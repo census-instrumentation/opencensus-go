@@ -12,10 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package stackdriver contains the OpenCensus exporters for
-// Stackdriver Monitoring.
-//
-// Please note that the Stackdriver exporter is currently experimental.
 package stackdriver
 
 import (
