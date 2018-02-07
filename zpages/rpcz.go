@@ -26,9 +26,9 @@ import (
 	"text/tabwriter"
 	"time"
 
+	"go.opencensus.io/internal"
 	"go.opencensus.io/plugin/grpc/grpcstats"
 	"go.opencensus.io/stats"
-	"go.opencensus.io/trace"
 )
 
 var (
@@ -198,7 +198,10 @@ func getSummaryPageData() summaryPageData {
 		Links:          true,
 		TracesEndpoint: "/tracez",
 	}
-	for name, s := range trace.ReportSpansPerMethod() {
+	internalTrace := internal.Trace.(interface {
+		ReportSpansPerMethod() map[string]internal.PerMethodSummary
+	})
+	for name, s := range internalTrace.ReportSpansPerMethod() {
 		if len(data.Header) == 0 {
 			data.Header = []string{"Name", "Active"}
 			for _, b := range s.LatencyBuckets {

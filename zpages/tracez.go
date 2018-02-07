@@ -26,6 +26,7 @@ import (
 	"text/tabwriter"
 	"time"
 
+	"go.opencensus.io/internal"
 	"go.opencensus.io/trace"
 )
 
@@ -332,10 +333,15 @@ func traceRows(s *trace.SpanData) []traceRow {
 }
 
 func traceSpans(spanName string, spanType, spanSubtype int) []*trace.SpanData {
+	internalTrace := internal.Trace.(interface {
+		ReportActiveSpans(name string) []*trace.SpanData
+		ReportSpansByError(name string, code int32) []*trace.SpanData
+		ReportSpansByLatency(name string, minLatency, maxLatency time.Duration) []*trace.SpanData
+	})
 	var spans []*trace.SpanData
 	switch spanType {
 	case 0: // active
-		spans = trace.ReportActiveSpans(spanName)
+		spans = internalTrace.ReportActiveSpans(spanName)
 	case 1: // latency
 		var min, max time.Duration
 		n := len(defaultLatencies)
@@ -346,9 +352,9 @@ func traceSpans(spanName string, spanType, spanSubtype int) []*trace.SpanData {
 		} else if 0 < spanSubtype && spanSubtype < n {
 			min, max = defaultLatencies[spanSubtype-1], defaultLatencies[spanSubtype]
 		}
-		spans = trace.ReportSpansByLatency(spanName, min, max)
+		spans = internalTrace.ReportSpansByLatency(spanName, min, max)
 	case 2: // error
-		spans = trace.ReportSpansByError(spanName, 0)
+		spans = internalTrace.ReportSpansByError(spanName, 0)
 	}
 	return spans
 }
