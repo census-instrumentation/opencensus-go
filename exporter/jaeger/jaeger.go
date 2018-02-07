@@ -143,7 +143,7 @@ func (e *Exporter) ExportSpan(data *trace.SpanData) {
 		OperationName: data.Name,
 		Flags:         int32(data.TraceOptions),
 		StartTime:     data.StartTime.UnixNano() / 1000,
-		Duration:      int64(data.EndTime.Sub(data.StartTime)),
+		Duration:      data.EndTime.Sub(data.StartTime).Nanoseconds() / 1000,
 		Tags:          tags,
 		Logs:          logs,
 		References:    refs,
