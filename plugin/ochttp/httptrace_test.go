@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package httptrace
+package ochttp
 
 import (
 	"bytes"
@@ -31,7 +31,6 @@ import (
 	"time"
 
 	"go.opencensus.io/trace"
-	"go.opencensus.io/trace/propagation"
 )
 
 type testTransport struct {
@@ -90,8 +89,8 @@ func TestTransport_RoundTrip(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			transport := &testTransport{ch: make(chan *http.Request, 1)}
-			rt := NewTransport(&testPropagator{})
-			rt.Base = transport
+			rt := &traceTransport{format: &testPropagator{}}
+			rt.base = transport
 
 			req, _ := http.NewRequest("GET", "http://foo.com", nil)
 			if tt.parent != nil {
@@ -157,8 +156,7 @@ func TestHandler(t *testing.T) {
 	}
 }
 
-var _ http.RoundTripper = (*Transport)(nil)
-var propagators = []propagation.HTTPFormat{testPropagator{}}
+var _ http.RoundTripper = (*traceTransport)(nil)
 
 type collector []*trace.SpanData
 
@@ -191,10 +189,10 @@ func TestEndToEnd(t *testing.T) {
 	}
 	req = req.WithContext(ctx)
 
-	rt := &Transport{Formats: propagators}
+	rt := &traceTransport{format: defaultFormat, base: http.DefaultTransport}
 	resp, err := rt.RoundTrip(req)
 	if err != nil {
-		t.Fatalf("unexpected error %#v", err)
+		t.Fatalf("unexpected error %s", err)
 	}
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("unexpected stats: %d", resp.StatusCode)
@@ -215,8 +213,8 @@ func TestEndToEnd(t *testing.T) {
 	<-serverDone
 	trace.UnregisterExporter(&spans)
 
-	if len(spans) != 2 {
-		t.Fatalf("expected two spans, got: %#v", spans)
+	if got, want := len(spans), 2; got != want {
+		t.Fatalf("len(%#v) = %d; want %d", spans, got, want)
 	}
 
 	var client, server *trace.SpanData
@@ -268,7 +266,7 @@ func serveHTTP(done chan struct{}, wait chan time.Time) string {
 
 		io.WriteString(w, "expected-response")
 		close(done)
-	}), propagators...))
+	}), nil))
 	go func() {
 		<-done
 		server.Close()

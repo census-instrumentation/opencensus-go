@@ -175,9 +175,9 @@ func TestHTTPFormat_ToRequest(t *testing.T) {
 				TraceOptions: trace.TraceOptions(1),
 			},
 			wantHeaders: map[string]string{
-				"X─B3─TraceId": "463ac35c9f6413ad48485a3953bb6124",
-				"X─B3─SpanId":  "0020000000000001",
-				"X─B3─Sampled": "1",
+				"X-B3-TraceId": "463ac35c9f6413ad48485a3953bb6124",
+				"X-B3-SpanId":  "0020000000000001",
+				"X-B3-Sampled": "1",
 			},
 		},
 		{
@@ -188,9 +188,9 @@ func TestHTTPFormat_ToRequest(t *testing.T) {
 				TraceOptions: trace.TraceOptions(0),
 			},
 			wantHeaders: map[string]string{
-				"X─B3─TraceId": "463ac35c9f6413ad48485a3953bb6124",
-				"X─B3─SpanId":  "0020000000000001",
-				"X─B3─Sampled": "0",
+				"X-B3-TraceId": "463ac35c9f6413ad48485a3953bb6124",
+				"X-B3-SpanId":  "0020000000000001",
+				"X-B3-Sampled": "0",
 			},
 		},
 	}

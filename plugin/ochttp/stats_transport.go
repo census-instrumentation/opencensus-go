@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package httpstats
+package ochttp
 
 import (
 	"context"
@@ -26,18 +26,13 @@ import (
 	"go.opencensus.io/tag"
 )
 
-// Transport is an http.RoundTripper that collects stats for the outgoing requests.
-type Transport struct {
-	// Base represents the underlying roundtripper that does the actual requests.
-	// If none is given, http.DefaultTransport is used.
-	//
-	// If base HTTP roundtripper implements CancelRequest,
-	// the returned round tripper will be cancelable.
-	Base http.RoundTripper
+// statsTransport is an http.RoundTripper that collects stats for the outgoing requests.
+type statsTransport struct {
+	base http.RoundTripper
 }
 
 // RoundTrip implements http.RoundTripper, delegating to Base and recording stats for the request.
-func (t Transport) RoundTrip(req *http.Request) (*http.Response, error) {
+func (t statsTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	ctx, _ := tag.New(req.Context(),
 		tag.Upsert(Host, req.URL.Host),
 		tag.Upsert(Path, req.URL.Path),
@@ -56,7 +51,7 @@ func (t Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	stats.Record(ctx, ClientRequest.M(1))
 
 	// Perform request
-	resp, err := t.base().RoundTrip(req)
+	resp, err := t.base.RoundTrip(req)
 
 	if err != nil {
 		track.statusCode = "error"
@@ -74,19 +69,12 @@ func (t Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	return resp, err
 }
 
-func (t Transport) base() http.RoundTripper {
-	if t.Base != nil {
-		return t.Base
-	}
-	return http.DefaultTransport
-}
-
 // CancelRequest cancels an in-flight request by closing its connection.
-func (t Transport) CancelRequest(req *http.Request) {
+func (t statsTransport) CancelRequest(req *http.Request) {
 	type canceler interface {
 		CancelRequest(*http.Request)
 	}
-	if cr, ok := t.base().(canceler); ok {
+	if cr, ok := t.base.(canceler); ok {
 		cr.CancelRequest(req)
 	}
 }

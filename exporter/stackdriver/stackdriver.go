@@ -13,49 +13,12 @@
 // limitations under the License.
 
 // Package stackdriver contains the OpenCensus exporters for
-// Stackdriver Monitoring and Tracing.
+// Stackdriver Monitoring and Stackdriver Tracing.
 //
 // Please note that the Stackdriver exporter is currently experimental.
 //
-// Create an exporter:
-//
-// 	import (
-// 		"go.opencensus.io/exporter/stackdriver"
-// 		"go.opencensus.io/trace"
-// 		"go.opencensus.io/stats"
-// 	)
-//
-// 	exporter, err := stackdriver.NewExporter(stackdriver.Options{ProjectID: "google-project-id"})
-// 	if err != nil {
-// 		log.Fatal(err)
-// 	}
-//
-// Export to Stackdriver Stats:
-//
-// 	stats.RegisterExporter(exporter)
-//
-// Export to Stackdriver Trace:
-//
-// 	trace.RegisterExporter(exporter)
-//
 // The package uses Application Default Credentials to authenticate.  See
 // https://developers.google.com/identity/protocols/application-default-credentials
-//
-// Exporter can be used to propagate traces over HTTP requests for Stackdriver Trace.
-//
-// Example:
-//
-// 	import (
-// 		"go.opencensus.io/plugin/http/httptrace"
-// 		"go.opencensus.io/plugin/http/propagation/google"
-// 	)
-//
-//	client := &http.Client {
-//		Transport: httptrace.NewTransport(nil, &google.HTTPFormat{}),
-//	}
-//
-// All outgoing requests from client will include a Stackdriver Trace header.
-// See the httptrace package for how to handle incoming requests.
 package stackdriver // import "go.opencensus.io/exporter/stackdriver"
 
 import (

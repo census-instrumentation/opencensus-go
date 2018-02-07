@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package httpstats
+package ochttp_test
 
 import (
 	"io/ioutil"
@@ -22,12 +22,13 @@ import (
 	"sync"
 	"testing"
 
+	"go.opencensus.io/plugin/ochttp"
 	"go.opencensus.io/stats"
 )
 
 const reqCount = 5
 
-func TestClientStats(t *testing.T) {
+func TestClient(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
 		resp.Write([]byte("Hello, world!"))
 	}))
@@ -50,7 +51,7 @@ func TestClientStats(t *testing.T) {
 
 	var (
 		w  sync.WaitGroup
-		tr Transport
+		tr ochttp.Transport
 	)
 	w.Add(reqCount)
 	for i := 0; i < reqCount; i++ {
