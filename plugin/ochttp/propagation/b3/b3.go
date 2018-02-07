@@ -26,9 +26,9 @@ import (
 )
 
 const (
-	traceIDHeader = "X─B3─TraceId"
-	spanIDHeader  = "X─B3─SpanId"
-	sampledHeader = "X─B3─Sampled"
+	traceIDHeader = "X-B3-TraceId"
+	spanIDHeader  = "X-B3-SpanId"
+	sampledHeader = "X-B3-Sampled"
 )
 
 // HTTPFormat implements propagation.HTTPFormat to propagate
