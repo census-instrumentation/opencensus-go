@@ -194,16 +194,14 @@ func (s *summaryPageData) Less(i, j int) bool { return s.Rows[i].Name < s.Rows[j
 func (s *summaryPageData) Swap(i, j int)      { s.Rows[i], s.Rows[j] = s.Rows[j], s.Rows[i] }
 
 func getSummaryPageData() summaryPageData {
-	type traceReporter interface {
-		ReportSpansPerMethod() map[string]internal.PerMethodSummary
-	}
-
 	data := summaryPageData{
 		Links:          true,
 		TracesEndpoint: "/tracez",
 	}
-	tr := internal.TraceInternal.(traceReporter)
-	for name, s := range tr.ReportSpansPerMethod() {
+	internalTrace := internal.Trace.(interface {
+		ReportSpansPerMethod() map[string]internal.PerMethodSummary
+	})
+	for name, s := range internalTrace.ReportSpansPerMethod() {
 		if len(data.Header) == 0 {
 			data.Header = []string{"Name", "Active"}
 			for _, b := range s.LatencyBuckets {

@@ -35,7 +35,7 @@ var (
 type internalOnly struct{}
 func init() {
 	//TODO(#412): remove
-	internal.TraceInternal = &internalOnly{}
+	internal.Trace = &internalOnly{}
 }
 
 // ReportActiveSpans returns the active spans for the given name.
