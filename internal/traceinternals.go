@@ -20,7 +20,6 @@ import "time"
 // TODO(#412): remove this
 var Trace interface{}
 
-
 // BucketConfiguration stores the number of samples to store for span buckets
 // for successful and failed spans for a particular span name.
 type BucketConfiguration struct {

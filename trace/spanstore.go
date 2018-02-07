@@ -33,13 +33,14 @@ var (
 
 // This exists purely to avoid exposing internal methods used by z-Pages externally.
 type internalOnly struct{}
+
 func init() {
 	//TODO(#412): remove
 	internal.Trace = &internalOnly{}
 }
 
 // ReportActiveSpans returns the active spans for the given name.
-func (_ internalOnly) ReportActiveSpans(name string) []*SpanData {
+func (i internalOnly) ReportActiveSpans(name string) []*SpanData {
 	s := spanStoreForName(name)
 	if s == nil {
 		return nil
@@ -56,7 +57,7 @@ func (_ internalOnly) ReportActiveSpans(name string) []*SpanData {
 // ReportSpansByError returns a sample of error spans.
 //
 // If code is nonzero, only spans with that status code are returned.
-func (_ internalOnly) ReportSpansByError(name string, code int32) []*SpanData {
+func (i internalOnly) ReportSpansByError(name string, code int32) []*SpanData {
 	s := spanStoreForName(name)
 	if s == nil {
 		return nil
@@ -88,7 +89,7 @@ func (_ internalOnly) ReportSpansByError(name string, code int32) []*SpanData {
 
 // ConfigureBucketSizes sets the number of spans to keep per latency and error
 // bucket for different span names.
-func (_ internalOnly) ConfigureBucketSizes(bcs []internal.BucketConfiguration) {
+func (i internalOnly) ConfigureBucketSizes(bcs []internal.BucketConfiguration) {
 	for _, bc := range bcs {
 		latencyBucketSize := bc.MaxRequestsSucceeded
 		if latencyBucketSize < 0 {
@@ -109,7 +110,7 @@ func (_ internalOnly) ConfigureBucketSizes(bcs []internal.BucketConfiguration) {
 }
 
 // ReportSpansPerMethod returns a summary of what spans are being stored for each span name.
-func (_ internalOnly) ReportSpansPerMethod() map[string]internal.PerMethodSummary {
+func (i internalOnly) ReportSpansPerMethod() map[string]internal.PerMethodSummary {
 	out := make(map[string]internal.PerMethodSummary)
 	ssmu.RLock()
 	defer ssmu.RUnlock()
@@ -142,7 +143,7 @@ func (_ internalOnly) ReportSpansPerMethod() map[string]internal.PerMethodSummar
 //
 // minLatency is the minimum latency of spans to be returned.
 // maxLatency, if nonzero, is the maximum latency of spans to be returned.
-func (_ internalOnly) ReportSpansByLatency(name string, minLatency, maxLatency time.Duration) []*SpanData {
+func (i internalOnly) ReportSpansByLatency(name string, minLatency, maxLatency time.Duration) []*SpanData {
 	s := spanStoreForName(name)
 	if s == nil {
 		return nil
