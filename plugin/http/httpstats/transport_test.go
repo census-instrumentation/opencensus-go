@@ -33,7 +33,7 @@ func TestClientStats(t *testing.T) {
 	}))
 	defer server.Close()
 
-	views := []string {
+	views := []string{
 		"opencensus.io/http/client/requests",
 		"opencensus.io/http/client/latency",
 		"opencensus.io/http/client/request_size",
