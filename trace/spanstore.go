@@ -17,6 +17,8 @@ package trace
 import (
 	"sync"
 	"time"
+
+	"go.opencensus.io/internal"
 )
 
 const (
@@ -29,8 +31,15 @@ var (
 	spanStores = make(map[string]*spanStore)
 )
 
+// This exists purely to avoid exposing internal methods used by z-Pages externally.
+type internalOnly struct{}
+func init() {
+	//TODO(#412): remove
+	internal.TraceInternal = &internalOnly{}
+}
+
 // ReportActiveSpans returns the active spans for the given name.
-func ReportActiveSpans(name string) []*SpanData {
+func (_ internalOnly) ReportActiveSpans(name string) []*SpanData {
 	s := spanStoreForName(name)
 	if s == nil {
 		return nil
@@ -47,7 +56,7 @@ func ReportActiveSpans(name string) []*SpanData {
 // ReportSpansByError returns a sample of error spans.
 //
 // If code is nonzero, only spans with that status code are returned.
-func ReportSpansByError(name string, code int32) []*SpanData {
+func (_ internalOnly) ReportSpansByError(name string, code int32) []*SpanData {
 	s := spanStoreForName(name)
 	if s == nil {
 		return nil
@@ -87,7 +96,7 @@ type BucketConfiguration struct {
 
 // ConfigureBucketSizes sets the number of spans to keep per latency and error
 // bucket for different span names.
-func ConfigureBucketSizes(bcs []BucketConfiguration) {
+func (_ internalOnly) ConfigureBucketSizes(bcs []BucketConfiguration) {
 	for _, bc := range bcs {
 		latencyBucketSize := bc.MaxRequestsSucceeded
 		if latencyBucketSize < 0 {
@@ -108,7 +117,7 @@ func ConfigureBucketSizes(bcs []BucketConfiguration) {
 }
 
 // ReportSpansPerMethod returns a summary of what spans are being stored for each span name.
-func ReportSpansPerMethod() map[string]PerMethodSummary {
+func (_ internalOnly) ReportSpansPerMethod() map[string]PerMethodSummary {
 	out := make(map[string]PerMethodSummary)
 	ssmu.RLock()
 	defer ssmu.RUnlock()
@@ -141,7 +150,7 @@ func ReportSpansPerMethod() map[string]PerMethodSummary {
 //
 // minLatency is the minimum latency of spans to be returned.
 // maxLatency, if nonzero, is the maximum latency of spans to be returned.
-func ReportSpansByLatency(name string, minLatency, maxLatency time.Duration) []*SpanData {
+func (_ internalOnly) ReportSpansByLatency(name string, minLatency, maxLatency time.Duration) []*SpanData {
 	s := spanStoreForName(name)
 	if s == nil {
 		return nil
