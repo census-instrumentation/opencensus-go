@@ -15,7 +15,7 @@
 package httpstats
 
 import (
-	"io/ioutil"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -49,29 +49,41 @@ func TestClientStats(t *testing.T) {
 	}
 
 	var (
-		w  sync.WaitGroup
-		tr Transport
+		w    sync.WaitGroup
+		tr   Transport
+		errs = make(chan error, reqCount)
 	)
 	w.Add(reqCount)
 	for i := 0; i < reqCount; i++ {
 		go func() {
+			defer w.Done()
 			req, err := http.NewRequest("POST", server.URL, strings.NewReader("req-body"))
 			if err != nil {
-				t.Fatalf("error creating request: %v", err)
+				errs <- fmt.Errorf("error creating request: %v", err)
 			}
 			resp, err := tr.RoundTrip(req)
 			if err != nil {
-				t.Fatalf("response error: %v", err)
+				errs <- fmt.Errorf("response error: %v", err)
+			}
+			if err := resp.Body.Close(); err != nil {
+				errs <- fmt.Errorf("error closing response body: %v", err)
 			}
 			if got, want := resp.StatusCode, 200; got != want {
-				t.Fatalf("resp.StatusCode=%d; wantCount %d", got, want)
+				errs <- fmt.Errorf("resp.StatusCode=%d; wantCount %d", got, want)
 			}
-			ioutil.ReadAll(resp.Body)
-			resp.Body.Close()
-			w.Done()
 		}()
 	}
-	w.Wait()
+
+	go func() {
+		w.Wait()
+		close(errs)
+	}()
+
+	for err := range errs {
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
 
 	for _, viewName := range views {
 		v := stats.FindView(viewName)
