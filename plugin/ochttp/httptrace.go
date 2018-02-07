@@ -126,32 +126,24 @@ func (t *traceTransport) CancelRequest(req *http.Request) {
 // The span will be automatically ended by the handler.
 //
 // Incoming propagation mechanism is determined by the given HTTP propagators.
-func NewHandler(base http.Handler, format ...propagation.HTTPFormat) http.Handler {
-	return &handler{handler: base, formats: format}
+func NewHandler(base http.Handler, format propagation.HTTPFormat) http.Handler {
+	if format == nil {
+		format = defaultFormat
+	}
+	return &handler{handler: base, format: format}
 }
 
 type handler struct {
 	handler http.Handler
-	formats []propagation.HTTPFormat
+	format  propagation.HTTPFormat
 }
 
 func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	name := spanNameFromURL("Recv", r.URL)
 
-	var (
-		sc trace.SpanContext
-		ok bool
-	)
-
 	ctx := r.Context()
-	for _, f := range h.formats {
-		sc, ok = f.FromRequest(r)
-		if ok {
-			break
-		}
-	}
 	var span *trace.Span
-	if ok {
+	if sc, ok := h.format.FromRequest(r); ok {
 		ctx, span = trace.StartSpanWithRemoteParent(ctx, name, sc, trace.StartOptions{})
 	} else {
 		ctx, span = trace.StartSpan(ctx, name)

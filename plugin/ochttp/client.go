@@ -34,7 +34,8 @@ type Transport struct {
 	NoStats bool
 	// NoTrace may be set to disable recording of traces.
 	NoTrace bool
-	// Propagation defines how traces are propagated.
+	// Propagation defines how traces are propagated. If unspecified, a default
+	// (currently B3 format) will be used.
 	Propagation propagation.HTTPFormat
 	//TODO: implement default propagation
 	//TODO: implement tag propagation for HTTP
@@ -45,8 +46,12 @@ func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	rt := t.base()
 	//TODO: remove excessive nesting of http.RoundTrippers here
 	if !t.NoTrace {
+		format := t.Propagation
+		if format == nil {
+			format = defaultFormat
+		}
 		rt = &traceTransport{
-			format: t.Propagation,
+			format: format,
 			base:   rt,
 		}
 	}
