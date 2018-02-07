@@ -29,7 +29,6 @@ import (
 	"go.opencensus.io/internal"
 	"go.opencensus.io/plugin/grpc/grpcstats"
 	"go.opencensus.io/stats"
-	"go.opencensus.io/trace"
 )
 
 var (
@@ -196,7 +195,7 @@ func (s *summaryPageData) Swap(i, j int)      { s.Rows[i], s.Rows[j] = s.Rows[j]
 
 func getSummaryPageData() summaryPageData {
 	type traceReporter interface {
-		ReportSpansPerMethod() map[string]trace.PerMethodSummary
+		ReportSpansPerMethod() map[string]internal.PerMethodSummary
 	}
 
 	data := summaryPageData{
