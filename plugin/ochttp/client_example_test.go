@@ -12,5 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package instrumentation provides OpenCensus instrumentation for the standard library http package.
-package instrumentation // import "go.opencensus.io/plugin/http/instrumentation"
+package ochttp_test
+
+import (
+	"net/http"
+
+	"go.opencensus.io/plugin/ochttp"
+	"go.opencensus.io/plugin/ochttp/propagation/google"
+)
+
+func ExampleTransport() {
+	client := &http.Client{
+		Transport: &ochttp.Transport{
+			Propagation: &google.HTTPFormat{},
+		},
+	}
+	_ = client // use client
+}

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package instrumentation
+package ochttp
 
 import (
 	"net/http"
@@ -34,10 +34,7 @@ type Transport struct {
 	NoStats bool
 	// NoTrace may be set to disable recording of traces.
 	NoTrace bool
-	// Propagation defines how traces (and, in future, tags) are propagated.
-	// If unset, a default will be selected (currently, the default is no
-	// propagation but we expect this to change).
-	// For now, it is recommended to always set this.
+	// Propagation defines how traces are propagated.
 	Propagation propagation.HTTPFormat
 	//TODO: implement default propagation
 	//TODO: implement tag propagation for HTTP

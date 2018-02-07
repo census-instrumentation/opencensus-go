@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package instrumentation
+package ochttp_test
 
 import (
 	"io/ioutil"
@@ -22,6 +22,7 @@ import (
 	"sync"
 	"testing"
 
+	"go.opencensus.io/plugin/ochttp"
 	"go.opencensus.io/stats"
 )
 
@@ -50,7 +51,7 @@ func TestClient(t *testing.T) {
 
 	var (
 		w  sync.WaitGroup
-		tr Transport
+		tr ochttp.Transport
 	)
 	w.Add(reqCount)
 	for i := 0; i < reqCount; i++ {
