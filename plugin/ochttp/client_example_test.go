@@ -18,14 +18,11 @@ import (
 	"net/http"
 
 	"go.opencensus.io/plugin/ochttp"
-	"go.opencensus.io/plugin/ochttp/propagation/google"
 )
 
-func Example() {
+func ExampleTransport() {
 	client := &http.Client{
-		Transport: &ochttp.Transport{
-			Propagation: &google.HTTPFormat{},
-		},
+		Transport: &ochttp.Transport{},
 	}
 	_ = client // use client to perform requests
 }

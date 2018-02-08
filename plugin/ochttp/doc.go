@@ -12,5 +12,5 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package ochttp provides OpenCensus instrumentation for the standard library http package.
+// Package ochttp provides OpenCensus instrumentation for net/http package.
 package ochttp // import "go.opencensus.io/plugin/ochttp"
