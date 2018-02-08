@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-package measure
+package stats
 
 // Int64 is a measure of type int64.
 type Int64 struct {

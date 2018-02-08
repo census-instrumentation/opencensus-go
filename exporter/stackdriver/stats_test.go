@@ -22,7 +22,7 @@ import (
 
 	monitoring "cloud.google.com/go/monitoring/apiv3"
 	timestamp "github.com/golang/protobuf/ptypes/timestamp"
-	"go.opencensus.io/stats/measure"
+	"go.opencensus.io/stats"
 	"go.opencensus.io/stats/view"
 	"go.opencensus.io/tag"
 	"google.golang.org/api/option"
@@ -73,7 +73,7 @@ func TestNewExporterSingletonPerProcess(t *testing.T) {
 }
 
 func TestExporter_makeReq(t *testing.T) {
-	m, err := measure.NewFloat64("test-measure", "measure desc", "unit")
+	m, err := stats.NewFloat64("test-measure", "measure desc", "unit")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -379,7 +379,7 @@ func TestExporter_makeReq(t *testing.T) {
 }
 
 func TestExporter_makeReq_batching(t *testing.T) {
-	m, err := measure.NewFloat64("test-measure/makeReq_batching", "measure desc", "unit")
+	m, err := stats.NewFloat64("test-measure/makeReq_batching", "measure desc", "unit")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -604,7 +604,7 @@ func TestExporter_createMeasure(t *testing.T) {
 	}()
 
 	key, _ := tag.NewKey("test-key-one")
-	m, err := measure.NewFloat64("test-measure/TestExporter_createMeasure", "measure desc", "unit")
+	m, err := stats.NewFloat64("test-measure/TestExporter_createMeasure", "measure desc", "unit")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -658,7 +658,7 @@ func TestExporter_createMeasure(t *testing.T) {
 }
 
 func TestExporter_makeReq_withCustomMonitoredResource(t *testing.T) {
-	m, err := measure.NewFloat64("test-measure/TestExporter_makeReq_withCustomMonitoredResource", "measure desc", "unit")
+	m, err := stats.NewFloat64("test-measure/TestExporter_makeReq_withCustomMonitoredResource", "measure desc", "unit")
 	if err != nil {
 		t.Fatal(err)
 	}

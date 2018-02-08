@@ -20,7 +20,7 @@ import (
 	"log"
 	"time"
 
-	"go.opencensus.io/stats/measure"
+	"go.opencensus.io/stats"
 	"go.opencensus.io/stats/view"
 )
 
@@ -31,7 +31,7 @@ func statsExamples() {
 	ctx := context.Background()
 
 	// START measure
-	videoSize, err := measure.NewInt64("my.org/video_size", "processed video size", "MB")
+	videoSize, err := stats.NewInt64("my.org/video_size", "processed video size", "MB")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -39,7 +39,7 @@ func statsExamples() {
 	_ = videoSize
 
 	// START findMeasure
-	m := measure.Find("my.org/video_size")
+	m := view.Find("my.org/video_size")
 	if m == nil {
 		log.Fatalln("measure not found")
 	}
@@ -97,7 +97,7 @@ func statsExamples() {
 	// END reportingPeriod
 
 	// START record
-	measure.Record(ctx, videoSize.M(102478))
+	stats.Record(ctx, videoSize.M(102478))
 	// END record
 
 	// START subscribe

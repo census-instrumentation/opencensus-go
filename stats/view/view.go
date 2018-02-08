@@ -24,7 +24,7 @@ import (
 	"time"
 
 	"go.opencensus.io/stats/internal"
-	"go.opencensus.io/stats/measure"
+	"go.opencensus.io/stats"
 	"go.opencensus.io/tag"
 )
 
@@ -40,7 +40,7 @@ type View struct {
 	tagKeys []tag.Key
 
 	// Examples of measures are cpu:tickCount, diskio:time...
-	m measure.Measure
+	m stats.Measure
 
 	subscribed uint32 // 1 if someone is subscribed and data need to be exported, use atomic to access
 
@@ -63,7 +63,7 @@ type Definition struct {
 // Views need to be subscribed toin order to retrieve collection data.
 //
 // Once the view is no longer required, the view can be unregistered.
-func New(name, description string, keys []tag.Key, measure measure.Measure, agg Aggregation, window Window) (*View, error) {
+func New(name, description string, keys []tag.Key, measure stats.Measure, agg Aggregation, window Window) (*View, error) {
 	if err := checkViewName(name); err != nil {
 		return nil, err
 	}
@@ -128,7 +128,7 @@ func (v *View) Aggregation() Aggregation {
 }
 
 // Measure returns the measure the view is collecting measurements for.
-func (v *View) Measure() measure.Measure {
+func (v *View) Measure() stats.Measure {
 	return v.m
 }
 

@@ -17,7 +17,7 @@ package ochttp
 import (
 	"fmt"
 
-	"go.opencensus.io/stats/measure"
+	"go.opencensus.io/stats"
 	"go.opencensus.io/stats/view"
 	"go.opencensus.io/tag"
 )
@@ -82,7 +82,7 @@ var (
 	Method = key("method")
 )
 
-func defaultView(m measure.Measure, agg view.Aggregation) *view.View {
+func defaultView(m stats.Measure, agg view.Aggregation) *view.View {
 	v, err := view.New(m.Name(), m.Description(), nil, m, agg, view.Cumulative{})
 	if err != nil {
 		panic(err)
@@ -101,16 +101,16 @@ func key(name string) tag.Key {
 	return k
 }
 
-func int64Measure(name, desc, unit string) *measure.Int64 {
-	m, err := measure.NewInt64(qualify(name), desc, unit)
+func int64Measure(name, desc, unit string) *stats.Int64 {
+	m, err := stats.NewInt64(qualify(name), desc, unit)
 	if err != nil {
 		panic(err)
 	}
 	return m
 }
 
-func floatMeasure(name, desc, unit string) *measure.Float64 {
-	m, err := measure.NewFloat64(qualify(name), desc, unit)
+func floatMeasure(name, desc, unit string) *stats.Float64 {
+	m, err := stats.NewFloat64(qualify(name), desc, unit)
 	if err != nil {
 		panic(err)
 	}

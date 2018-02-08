@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-package measure
+package stats
 
 // Float64 is a measure of type float64.
 type Float64 struct {

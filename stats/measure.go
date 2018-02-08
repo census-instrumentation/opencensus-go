@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-package measure
+package stats
 
 import (
 	"errors"

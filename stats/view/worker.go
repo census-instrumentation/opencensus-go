@@ -21,7 +21,7 @@ import (
 	"time"
 
 	"go.opencensus.io/stats/internal"
-	"go.opencensus.io/stats/measure"
+	"go.opencensus.io/stats"
 	"go.opencensus.io/tag"
 )
 
@@ -32,7 +32,7 @@ func init() {
 }
 
 type measureRef struct {
-	measure measure.Measure
+	measure stats.Measure
 	views   map[*View]struct{}
 }
 
@@ -134,7 +134,7 @@ func record(tags *tag.Map, now time.Time, ms interface{}) {
 	req := &recordReq{
 		now: now,
 		tm:  tags,
-		ms:  ms.([]measure.Measurement),
+		ms:  ms.([]stats.Measurement),
 	}
 	defaultWorker.c <- req
 }
@@ -188,7 +188,7 @@ func (w *worker) stop() {
 	<-w.done
 }
 
-func (w *worker) getMeasureRef(m measure.Measure) *measureRef {
+func (w *worker) getMeasureRef(m stats.Measure) *measureRef {
 	if mr, ok := w.measures[m.Name()]; ok {
 		return mr
 	}

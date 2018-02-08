@@ -22,7 +22,7 @@ import (
 	"sync"
 	"time"
 
-	"go.opencensus.io/stats/measure"
+	"go.opencensus.io/stats"
 	"go.opencensus.io/tag"
 )
 
@@ -48,7 +48,7 @@ func (t statsTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	} else if req.ContentLength > 0 {
 		track.reqSize = req.ContentLength
 	}
-	measure.Record(ctx, ClientRequest.M(1))
+	stats.Record(ctx, ClientRequest.M(1))
 
 	// Perform request
 	resp, err := t.base.RoundTrip(req)
@@ -91,7 +91,7 @@ type tracker struct {
 
 func (t *tracker) end() {
 	t.endOnce.Do(func() {
-		m := []measure.Measurement{
+		m := []stats.Measurement{
 			ClientLatency.M(float64(time.Since(t.start)) / float64(time.Millisecond)),
 			ClientResponseBodySize.M(t.respSize),
 		}
@@ -99,7 +99,7 @@ func (t *tracker) end() {
 			m = append(m, ClientRequestBodySize.M(t.reqSize))
 		}
 		ctx, _ := tag.New(t.ctx, tag.Upsert(StatusCode, t.statusCode))
-		measure.Record(ctx, m...)
+		stats.Record(ctx, m...)
 	})
 }
 

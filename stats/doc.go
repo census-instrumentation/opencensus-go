@@ -49,7 +49,7 @@ Libraries can always record measurements, and end-users can later decide
 on which measurements they want to collect by registering views. This allows
 libraries to turn on the instrumentation by default.
 */
-package measure // import "go.opencensus.io/stats/measure"
+package stats // import "go.opencensus.io/stats"
 
 // TODO(acetechnologist): Add a link to the language independent OpenCensus
 // spec when it is available.
