@@ -44,7 +44,7 @@ type HTTPFormat struct{}
 var _ propagation.HTTPFormat = (*HTTPFormat)(nil)
 
 // FromRequest extracts a B3 span context from incoming requests.
-func (f HTTPFormat) FromRequest(req *http.Request) (sc trace.SpanContext, ok bool) {
+func (f *HTTPFormat) FromRequest(req *http.Request) (sc trace.SpanContext, ok bool) {
 	tid, ok := parseTraceID(req.Header.Get(traceIDHeader))
 	if !ok {
 		return trace.SpanContext{}, false

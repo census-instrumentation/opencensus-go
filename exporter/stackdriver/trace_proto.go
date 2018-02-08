@@ -21,6 +21,7 @@ import (
 	"unicode/utf8"
 
 	"go.opencensus.io/internal"
+	"go.opencensus.io/plugin/ochttp"
 
 	timestamppb "github.com/golang/protobuf/ptypes/timestamp"
 	wrapperspb "github.com/golang/protobuf/ptypes/wrappers"
@@ -34,6 +35,15 @@ const (
 	maxMessageEventsPerSpan    = 128
 	maxAttributeStringValue    = 256
 	agentLabel                 = "g.co/agent"
+
+	labelErrorMessage     = `trace.cloud.google.com/error/message`
+	labelHTTPHost         = `trace.cloud.google.com/http/host`
+	labelHTTPMethod       = `trace.cloud.google.com/http/method`
+	labelHTTPRequestSize  = `trace.cloud.google.com/http/request/size`
+	labelHTTPResponseSize = `trace.cloud.google.com/http/response/size`
+	labelHTTPStatusCode   = `trace.cloud.google.com/http/status_code`
+	labelHTTPURL          = `trace.cloud.google.com/http/url`
+	labelHTTPUserAgent    = `trace.cloud.google.com/http/user_agent`
 )
 
 // proto returns a protocol buffer representation of a SpanData.
@@ -163,24 +173,52 @@ func copyAttributes(out **tracepb.Span_Attributes, in map[string]interface{}) {
 	}
 	var dropped int32
 	for key, value := range in {
-		av := tracepb.AttributeValue{}
-		switch value := value.(type) {
-		case bool:
-			av.Value = &tracepb.AttributeValue_BoolValue{BoolValue: value}
-		case int64:
-			av.Value = &tracepb.AttributeValue_IntValue{IntValue: value}
-		case string:
-			av.Value = &tracepb.AttributeValue_StringValue{StringValue: trunc(value, maxAttributeStringValue)}
+		av := attributeValue(value)
+		if av == nil {
+			continue
+		}
+		switch key {
+		case ochttp.URLAttribute:
+			(*out).AttributeMap[labelHTTPURL] = av
+		case ochttp.HostAttribute:
+			(*out).AttributeMap[labelHTTPHost] = av
+		case ochttp.MethodAttribute:
+			(*out).AttributeMap[labelHTTPMethod] = av
+		case ochttp.UserAgentAttribute:
+			(*out).AttributeMap[labelHTTPUserAgent] = av
+		case ochttp.StatusCodeAttribute:
+			(*out).AttributeMap[labelHTTPStatusCode] = av
+		case ochttp.RequestSizeAttribute:
+			(*out).AttributeMap[labelHTTPRequestSize] = av
+		case ochttp.ResponseSizeAttribute:
+			(*out).AttributeMap[labelHTTPResponseSize] = av
 		default:
-			continue
+			if len(key) > 128 {
+				dropped++
+				continue
+			}
+			(*out).AttributeMap[key] = av
 		}
-		if len(key) > 128 {
-			dropped++
-			continue
-		}
-		(*out).AttributeMap[key] = &av
 	}
 	(*out).DroppedAttributesCount = dropped
+}
+
+func attributeValue(v interface{}) *tracepb.AttributeValue {
+	switch value := v.(type) {
+	case bool:
+		return &tracepb.AttributeValue{
+			Value: &tracepb.AttributeValue_BoolValue{BoolValue: value},
+		}
+	case int64:
+		return &tracepb.AttributeValue{
+			Value: &tracepb.AttributeValue_IntValue{IntValue: value},
+		}
+	case string:
+		return &tracepb.AttributeValue{
+			Value: &tracepb.AttributeValue_StringValue{StringValue: trunc(value, maxAttributeStringValue)},
+		}
+	}
+	return nil
 }
 
 // trunc returns a TruncatableString truncated to the given limit.

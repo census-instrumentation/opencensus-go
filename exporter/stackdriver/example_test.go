@@ -30,16 +30,21 @@ func Example() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	// Export to Stackdriver Monitoring:
-	view.RegisterExporter(exporter)
-	// Export to Stackdriver Trace:
+
+	// Export to Stackdriver Monitoring.
+	stats.RegisterExporter(exporter)
+
+	// Export to Stackdriver Trace.
 	trace.RegisterExporter(exporter)
 
-	// To add a Stackdriver trace header to outgoing requests, use:
+	// Automatically add a Stackdriver trace header to outgoing requests:
 	client := &http.Client{
-		Transport: &ochttp.Transport{Propagation: &google.HTTPFormat{}},
+		Transport: &ochttp.Transport{
+			Propagation: &google.HTTPFormat{},
+		},
 	}
 	_ = client // use client
+
 	// All outgoing requests from client will include a Stackdriver Trace header.
 	// See the ochttp package for how to handle incoming requests.
 }

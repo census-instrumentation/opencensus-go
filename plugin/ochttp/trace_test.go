@@ -26,6 +26,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -72,9 +73,8 @@ func (t testPropagator) ToRequest(sc trace.SpanContext, req *http.Request) {
 func TestTransport_RoundTrip(t *testing.T) {
 	parent := trace.NewSpan("parent", nil, trace.StartOptions{})
 	tests := []struct {
-		name       string
-		parent     *trace.Span
-		wantHeader string
+		name   string
+		parent *trace.Span
 	}{
 		{
 			name:   "no parent",
@@ -309,6 +309,75 @@ func TestSpanNameFromURL(t *testing.T) {
 			}
 			if got := spanNameFromURL(tt.prefix, u); got != tt.want {
 				t.Errorf("spanNameFromURL() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestRequestAttributes(t *testing.T) {
+	tests := []struct {
+		name      string
+		makeReq   func() *http.Request
+		wantAttrs []trace.Attribute
+	}{
+		{
+			name: "GET example.com/hello",
+			makeReq: func() *http.Request {
+				req, _ := http.NewRequest("GET", "http://example.com/hello", nil)
+				req.Header.Add("User-Agent", "ua")
+				req.ContentLength = 128
+				return req
+			},
+			wantAttrs: []trace.Attribute{
+				trace.StringAttribute{Key: URLAttribute, Value: "http://example.com/hello"},
+				trace.StringAttribute{Key: HostAttribute, Value: "example.com"},
+				trace.StringAttribute{Key: MethodAttribute, Value: "GET"},
+				trace.StringAttribute{Key: PathAttribute, Value: "/hello"},
+				trace.StringAttribute{Key: UserAgentAttribute, Value: "ua"},
+				trace.Int64Attribute{Key: RequestSizeAttribute, Value: 128},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := tt.makeReq()
+			attrs := requestAttrs(req)
+
+			if got, want := attrs, tt.wantAttrs; !reflect.DeepEqual(got, want) {
+				t.Errorf("Request attributes = %#v; want %#v", got, want)
+			}
+		})
+	}
+}
+
+func TestResponseAttributes(t *testing.T) {
+	tests := []struct {
+		name      string
+		resp      *http.Response
+		wantAttrs []trace.Attribute
+	}{
+		{
+			name: "non-zero HTTP 200 response",
+			resp: &http.Response{StatusCode: 200, ContentLength: 128},
+			wantAttrs: []trace.Attribute{
+				trace.Int64Attribute{Key: ResponseSizeAttribute, Value: 128},
+				trace.Int64Attribute{Key: StatusCodeAttribute, Value: 200},
+			},
+		},
+		{
+			name: "zero HTTP 500 response",
+			resp: &http.Response{StatusCode: 500, ContentLength: 0},
+			wantAttrs: []trace.Attribute{
+				trace.Int64Attribute{Key: ResponseSizeAttribute, Value: 0},
+				trace.Int64Attribute{Key: StatusCodeAttribute, Value: 500},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			attrs := responseAttrs(tt.resp)
+			if got, want := attrs, tt.wantAttrs; !reflect.DeepEqual(got, want) {
+				t.Errorf("Response attributes = %#v; want %#v", got, want)
 			}
 		})
 	}
