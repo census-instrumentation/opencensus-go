@@ -139,16 +139,19 @@ func TestHandler(t *testing.T) {
 		t.Run(tt.header, func(t *testing.T) {
 			propagator := &testPropagator{}
 
-			handler := NewHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				span := trace.FromContext(r.Context())
-				sc := span.SpanContext()
-				if got, want := sc.TraceID, tt.wantTraceID; got != want {
-					t.Errorf("TraceID = %q; want %q", got, want)
-				}
-				if got, want := sc.TraceOptions, tt.wantTraceOptions; got != want {
-					t.Errorf("TraceOptions = %v; want %v", got, want)
-				}
-			}), propagator)
+			handler := &Handler{
+				Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					span := trace.FromContext(r.Context())
+					sc := span.SpanContext()
+					if got, want := sc.TraceID, tt.wantTraceID; got != want {
+						t.Errorf("TraceID = %q; want %q", got, want)
+					}
+					if got, want := sc.TraceOptions, tt.wantTraceOptions; got != want {
+						t.Errorf("TraceOptions = %v; want %v", got, want)
+					}
+				}),
+			}
+			handler.Propagation = propagator
 			req, _ := http.NewRequest("GET", "http://foo.com", nil)
 			req.Header.Add("trace", tt.header)
 			handler.ServeHTTP(nil, req)
@@ -254,19 +257,23 @@ func TestEndToEnd(t *testing.T) {
 }
 
 func serveHTTP(done chan struct{}, wait chan time.Time) string {
-	server := httptest.NewServer(NewHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(200)
-		w.(http.Flusher).Flush()
+	handler := &Handler{
+		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(200)
+			w.(http.Flusher).Flush()
 
-		// simulate a slow-responding server
-		sleepUntil := <-wait
-		for time.Now().Before(sleepUntil) {
-			time.Sleep(sleepUntil.Sub(time.Now()))
-		}
+			// simulate a slow-responding server
+			sleepUntil := <-wait
+			for time.Now().Before(sleepUntil) {
+				time.Sleep(sleepUntil.Sub(time.Now()))
+			}
 
-		io.WriteString(w, "expected-response")
-		close(done)
-	}), nil))
+			io.WriteString(w, "expected-response")
+			close(done)
+		}),
+	}
+
+	server := httptest.NewServer(handler)
 	go func() {
 		<-done
 		server.Close()

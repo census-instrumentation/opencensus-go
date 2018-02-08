@@ -132,34 +132,38 @@ func (t *traceTransport) CancelRequest(req *http.Request) {
 	}
 }
 
-// NewHandler returns a http.Handler from the given handler
-// that is aware of the incoming request's span.
-// The span can be extracted from the incoming request in handler
-// functions from incoming request's context:
+// Handler is a http.Handler that is aware of the incoming request's span.
+//
+// The extracted span can be accessed from the incoming request's
+// context.
 //
 //    span := trace.FromContext(r.Context())
 //
-// The span will be automatically ended by the handler.
+// The server span will be automatically ended at the end of ServeHTTP.
 //
 // Incoming propagation mechanism is determined by the given HTTP propagators.
-func NewHandler(base http.Handler, format propagation.HTTPFormat) http.Handler {
-	if format == nil {
-		format = defaultFormat
-	}
-	return &handler{handler: base, format: format}
+type Handler struct {
+	// Propagation defines how traces are propagated. If unspecified,
+	// B3 propagation will be used.
+	Propagation propagation.HTTPFormat
+
+	// Handler is the handler used to handle the incoming request.
+	Handler http.Handler
 }
 
-type handler struct {
-	handler http.Handler
-	format  propagation.HTTPFormat
-}
+// TODO(jbd): Add Handler.NoTrace and Handler.NoStats.
 
-func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	name := spanNameFromURL("Recv", r.URL)
+
+	p := h.Propagation
+	if p == nil {
+		p = defaultFormat
+	}
 
 	ctx := r.Context()
 	var span *trace.Span
-	if sc, ok := h.format.FromRequest(r); ok {
+	if sc, ok := p.FromRequest(r); ok {
 		ctx, span = trace.StartSpanWithRemoteParent(ctx, name, sc, trace.StartOptions{})
 	} else {
 		ctx, span = trace.StartSpan(ctx, name)
@@ -169,7 +173,12 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	span.SetAttributes(requestAttrs(r)...)
 
 	r = r.WithContext(ctx)
-	h.handler.ServeHTTP(w, r)
+
+	handler := h.Handler
+	if handler == nil {
+		handler = http.DefaultServeMux
+	}
+	handler.ServeHTTP(w, r)
 }
 
 func spanNameFromURL(prefix string, u *url.URL) string {

@@ -41,8 +41,7 @@ type Transport struct {
 	// (currently B3 format) will be used.
 	Propagation propagation.HTTPFormat
 
-	//TODO: implement default propagation
-	//TODO: implement tag propagation for HTTP
+	// TODO: Implement tag propagation for HTTP.
 }
 
 // RoundTrip implements http.RoundTripper, delegating to Base and recording stats and traces for the request.
