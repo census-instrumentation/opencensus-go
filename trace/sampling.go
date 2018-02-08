@@ -48,9 +48,9 @@ type Sampler interface {
 
 // SamplingParameters contains the values passed to a Sampler.
 type SamplingParameters struct {
-	ParentContext SpanContext
-	TraceID
-	SpanID
+	ParentContext   SpanContext
+	TraceID         TraceID
+	SpanID          SpanID
 	Name            string
 	HasRemoteParent bool
 }

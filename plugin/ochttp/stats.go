@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package httpstats provides OpenCensus stats instrumentation for the standard library http package.
-package httpstats
+package ochttp
 
 import (
 	"fmt"
 
-	"go.opencensus.io/stats"
+	"go.opencensus.io/stats/measure"
+	"go.opencensus.io/stats/view"
 	"go.opencensus.io/tag"
 )
 
@@ -31,9 +31,9 @@ var (
 	bytesBucketBoundaries  = []float64{0, 1024, 2048, 4096, 16384, 65536, 262144, 1048576, 4194304, 16777216, 67108864, 268435456, 1073741824, 4294967296}
 	millisBucketBoundaries = []float64{0, 1, 2, 3, 4, 5, 6, 8, 10, 13, 16, 20, 25, 30, 40, 50, 65, 80, 100, 130, 160, 200, 250, 300, 400, 500, 650, 800, 1000, 2000, 5000, 10000, 20000, 50000, 100000}
 
-	aggCount      = stats.CountAggregation{}
-	aggDistBytes  = stats.DistributionAggregation(bytesBucketBoundaries)
-	aggDistMillis = stats.DistributionAggregation(millisBucketBoundaries)
+	aggCount      = view.CountAggregation{}
+	aggDistBytes  = view.DistributionAggregation(bytesBucketBoundaries)
+	aggDistMillis = view.DistributionAggregation(millisBucketBoundaries)
 )
 
 var (
@@ -54,22 +54,22 @@ var (
 	ClientResponseBodySizeDistribution = defaultView(ClientResponseBodySize, aggDistBytes)
 	// ClientLatencyDistribution is a view of the latency distribution of all instrumented requests.
 	ClientLatencyDistribution = defaultView(ClientLatency, aggDistMillis)
-	// ClientResponseCountByStatusCode is a view of response counts by StatusCode.
-	ClientRequestCountByMethod = mustView(stats.NewView(
+	// ClientRequestCountByMethod is a view of response counts by HTTP method.
+	ClientRequestCountByMethod = mustView(view.New(
 		qualify("request_count_by_method"),
 		"Client request count by HTTP method",
 		[]tag.Key{Method},
 		ClientRequest,
 		aggCount,
-		&stats.Cumulative{}))
-	// ClientRequestCountByMethod is a count of all instrumented HTTP requests by Method.
-	ClientResponseCountByStatusCode = mustView(stats.NewView(
+		&view.Cumulative{}))
+	// ClientResponseCountByStatusCode is a count of all instrumented HTTP responses HTTP status code.
+	ClientResponseCountByStatusCode = mustView(view.New(
 		qualify("response_count_by_status_code"),
 		"Client response count by status code",
 		[]tag.Key{StatusCode},
 		ClientLatency,
 		aggCount,
-		&stats.Cumulative{}))
+		&view.Cumulative{}))
 
 	// Host is the value of the HTTP Host header.
 	Host = key("host")
@@ -82,12 +82,12 @@ var (
 	Method = key("method")
 )
 
-func defaultView(m stats.Measure, agg stats.Aggregation) *stats.View {
-	v, err := stats.NewView(m.Name(), m.Description(), nil, m, agg, stats.Cumulative{})
+func defaultView(m measure.Measure, agg view.Aggregation) *view.View {
+	v, err := view.New(m.Name(), m.Description(), nil, m, agg, view.Cumulative{})
 	if err != nil {
 		panic(err)
 	}
-	if err := stats.RegisterView(v); err != nil {
+	if err := view.Register(v); err != nil {
 		panic(err)
 	}
 	return v
@@ -101,23 +101,23 @@ func key(name string) tag.Key {
 	return k
 }
 
-func int64Measure(name, desc, unit string) *stats.MeasureInt64 {
-	m, err := stats.NewMeasureInt64(qualify(name), desc, unit)
+func int64Measure(name, desc, unit string) *measure.Int64 {
+	m, err := measure.NewInt64(qualify(name), desc, unit)
 	if err != nil {
 		panic(err)
 	}
 	return m
 }
 
-func floatMeasure(name, desc, unit string) *stats.MeasureFloat64 {
-	m, err := stats.NewMeasureFloat64(qualify(name), desc, unit)
+func floatMeasure(name, desc, unit string) *measure.Float64 {
+	m, err := measure.NewFloat64(qualify(name), desc, unit)
 	if err != nil {
 		panic(err)
 	}
 	return m
 }
 
-func mustView(v *stats.View, err error) *stats.View {
+func mustView(v *view.View, err error) *view.View {
 	if err != nil {
 		panic(err)
 	}

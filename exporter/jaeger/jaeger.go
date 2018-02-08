@@ -123,7 +123,7 @@ func (e *Exporter) ExportSpan(data *trace.SpanData) {
 			}
 		}
 		logs = append(logs, &gen.Log{
-			Timestamp: a.Time.Unix() * 1000 * 1000,
+			Timestamp: a.Time.UnixNano() / 1000,
 			Fields:    fields,
 		})
 	}
@@ -142,8 +142,8 @@ func (e *Exporter) ExportSpan(data *trace.SpanData) {
 		ParentSpanId:  bytesToInt64(data.ParentSpanID[:]),
 		OperationName: data.Name,
 		Flags:         int32(data.TraceOptions),
-		StartTime:     data.StartTime.Unix() * 1000 * 1000, // Add nanosecs.
-		Duration:      int64(data.EndTime.Sub(data.StartTime)),
+		StartTime:     data.StartTime.UnixNano() / 1000,
+		Duration:      data.EndTime.Sub(data.StartTime).Nanoseconds() / 1000,
 		Tags:          tags,
 		Logs:          logs,
 		References:    refs,

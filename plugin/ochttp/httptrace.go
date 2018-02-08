@@ -12,8 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package httptrace contains OpenCensus tracing integrations with net/http.
-package httptrace // import "go.opencensus.io/plugin/http/httptrace"
+package ochttp
 
 import (
 	"io"
@@ -27,37 +26,26 @@ import (
 
 // TODO(jbd): Add godoc examples.
 
-// Transport is an http.RoundTripper that traces the outgoing requests.
-//
-// Use NewTransport to create new transports.
-type Transport struct {
-	// Base represents the underlying roundtripper that does the actual requests.
-	// If none is given, http.DefaultTransport is used.
-	//
-	// If base HTTP roundtripper implements CancelRequest,
-	// the returned round tripper will be cancelable.
-	Base http.RoundTripper
-
-	// Formats are the mechanisms that propagate
-	// the outgoing trace in an HTTP request.
-	Formats []propagation.HTTPFormat
+type traceTransport struct {
+	base   http.RoundTripper
+	format propagation.HTTPFormat
 }
 
 // RoundTrip creates a trace.Span and inserts it into the outgoing request's headers.
 // The created span can follow a parent span, if a parent is presented in
 // the request's context.
-func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
+func (t *traceTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	name := spanNameFromURL("Sent", req.URL)
 	// TODO(jbd): Discuss whether we want to prefix
 	// outgoing requests with Sent.
 	ctx, span := trace.StartSpan(req.Context(), name)
 	req = req.WithContext(ctx)
 
-	for _, f := range t.Formats {
-		f.ToRequest(span.SpanContext(), req)
+	if t.format != nil {
+		t.format.ToRequest(span.SpanContext(), req)
 	}
 
-	resp, err := t.base().RoundTrip(req)
+	resp, err := t.base.RoundTrip(req)
 
 	// TODO(jbd): Add status and attributes.
 	if err != nil {
@@ -119,27 +107,13 @@ func (seb *spanEndBody) Close() error {
 }
 
 // CancelRequest cancels an in-flight request by closing its connection.
-func (t *Transport) CancelRequest(req *http.Request) {
+func (t *traceTransport) CancelRequest(req *http.Request) {
 	type canceler interface {
 		CancelRequest(*http.Request)
 	}
-	if cr, ok := t.base().(canceler); ok {
+	if cr, ok := t.base.(canceler); ok {
 		cr.CancelRequest(req)
 	}
-}
-
-func (t *Transport) base() http.RoundTripper {
-	if t.Base != nil {
-		return t.Base
-	}
-	return http.DefaultTransport
-}
-
-// NewTransport returns an http.RoundTripper that traces the outgoing requests.
-//
-// Traces are propagated via the provided HTTP propagation mechanisms.
-func NewTransport(format ...propagation.HTTPFormat) *Transport {
-	return &Transport{Formats: format}
 }
 
 // NewHandler returns a http.Handler from the given handler
@@ -152,32 +126,24 @@ func NewTransport(format ...propagation.HTTPFormat) *Transport {
 // The span will be automatically ended by the handler.
 //
 // Incoming propagation mechanism is determined by the given HTTP propagators.
-func NewHandler(base http.Handler, format ...propagation.HTTPFormat) http.Handler {
-	return &handler{handler: base, formats: format}
+func NewHandler(base http.Handler, format propagation.HTTPFormat) http.Handler {
+	if format == nil {
+		format = defaultFormat
+	}
+	return &handler{handler: base, format: format}
 }
 
 type handler struct {
 	handler http.Handler
-	formats []propagation.HTTPFormat
+	format  propagation.HTTPFormat
 }
 
 func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	name := spanNameFromURL("Recv", r.URL)
 
-	var (
-		sc trace.SpanContext
-		ok bool
-	)
-
 	ctx := r.Context()
-	for _, f := range h.formats {
-		sc, ok = f.FromRequest(r)
-		if ok {
-			break
-		}
-	}
 	var span *trace.Span
-	if ok {
+	if sc, ok := h.format.FromRequest(r); ok {
 		ctx, span = trace.StartSpanWithRemoteParent(ctx, name, sc, trace.StartOptions{})
 	} else {
 		ctx, span = trace.StartSpan(ctx, name)
