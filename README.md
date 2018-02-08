@@ -123,7 +123,7 @@ Retrieve measure by name:
 
 [embedmd]:# (stats.go findMeasure)
 ```go
-m := measure.Find("my.org/video_size")
+m := view.Find("my.org/video_size")
 if m == nil {
 	log.Fatalln("measure not found")
 }
