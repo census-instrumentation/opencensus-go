@@ -211,55 +211,55 @@ func Test_Worker_ViewRegistration(t *testing.T) {
 
 	for _, tc := range tcs {
 		t.Run(tc.label, func(t *testing.T) {
-		restart()
+			restart()
 
-		v1, _ := New("VF1", "desc VF1", nil, mf1, nil, nil)
-		v11, _ := New("VF1", "desc duplicate name VF1", nil, mf1, nil, nil)
-		v2, _ := New("VF2", "desc VF2", nil, mf2, nil, nil)
+			v1, _ := New("VF1", "desc VF1", nil, mf1, nil, nil)
+			v11, _ := New("VF1", "desc duplicate name VF1", nil, mf1, nil, nil)
+			v2, _ := New("VF2", "desc VF2", nil, mf2, nil, nil)
 
-		views := map[string]*View{
-			"v1ID":         v1,
-			"v1SameNameID": v11,
-			"v2ID":         v2,
-			"vNilID":       nil,
-		}
-
-		for _, reg := range tc.regs {
-			v := views[reg.vID]
-			err := Register(v)
-			if (err != nil) != (reg.err != nil) {
-				t.Errorf("%v: Register() = %v, want %v", tc.label, err, reg.err)
-			}
-			v.subscribe()
-		}
-
-		for _, s := range tc.subscriptions {
-			v := views[s.vID]
-			err := v.Subscribe()
-			if (err != nil) != (s.err != nil) {
-				t.Errorf("%v: Subscribe() = %v, want %v", tc.label, err, s.err)
-			}
-		}
-
-		for _, unreg := range tc.unregs {
-			v := views[unreg.vID]
-			err := Unregister(v)
-			if (err != nil) != (unreg.err != nil) {
-				t.Errorf("%v: Unregister() = %v; want %v", tc.label, err, unreg.err)
-			}
-		}
-
-		for _, byname := range tc.bynames {
-			v := Find(byname.name)
-			if v == nil && byname.ok {
-				t.Errorf("%v: ViewByName(%q) = nil, want non-nil view", tc.label, byname.name)
+			views := map[string]*View{
+				"v1ID":         v1,
+				"v1SameNameID": v11,
+				"v2ID":         v2,
+				"vNilID":       nil,
 			}
 
-			wantV := views[byname.vID]
-			if v != wantV {
-				t.Errorf("%v: ViewByName(%q) = %v; want %v", tc.label, byname.name, v, wantV)
+			for _, reg := range tc.regs {
+				v := views[reg.vID]
+				err := Register(v)
+				if (err != nil) != (reg.err != nil) {
+					t.Errorf("%v: Register() = %v, want %v", tc.label, err, reg.err)
+				}
+				v.subscribe()
 			}
-		}
+
+			for _, s := range tc.subscriptions {
+				v := views[s.vID]
+				err := v.Subscribe()
+				if (err != nil) != (s.err != nil) {
+					t.Errorf("%v: Subscribe() = %v, want %v", tc.label, err, s.err)
+				}
+			}
+
+			for _, unreg := range tc.unregs {
+				v := views[unreg.vID]
+				err := Unregister(v)
+				if (err != nil) != (unreg.err != nil) {
+					t.Errorf("%v: Unregister() = %v; want %v", tc.label, err, unreg.err)
+				}
+			}
+
+			for _, byname := range tc.bynames {
+				v := Find(byname.name)
+				if v == nil && byname.ok {
+					t.Errorf("%v: ViewByName(%q) = nil, want non-nil view", tc.label, byname.name)
+				}
+
+				wantV := views[byname.vID]
+				if v != wantV {
+					t.Errorf("%v: ViewByName(%q) = %v; want %v", tc.label, byname.name, v, wantV)
+				}
+			}
 		})
 	}
 }

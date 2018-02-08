@@ -23,8 +23,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	"go.opencensus.io/stats/internal"
 	"go.opencensus.io/stats"
+	"go.opencensus.io/stats/internal"
 	"go.opencensus.io/tag"
 )
 
