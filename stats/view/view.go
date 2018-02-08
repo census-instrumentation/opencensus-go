@@ -47,12 +47,6 @@ type View struct {
 	collector *collector
 }
 
-type Definition struct {
-	Name string
-	Description string
-	GroupBy []tag.Key
-}
-
 // New creates a new view with the given name and description.
 // View names need to be unique globally in the entire system.
 //
