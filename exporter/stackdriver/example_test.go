@@ -32,7 +32,7 @@ func Example() {
 	}
 
 	// Export to Stackdriver Monitoring.
-	stats.RegisterExporter(exporter)
+	view.RegisterExporter(exporter)
 
 	// Export to Stackdriver Trace.
 	trace.RegisterExporter(exporter)
