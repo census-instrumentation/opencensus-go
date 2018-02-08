@@ -34,7 +34,7 @@ func TestRoundTripAllFormats(t *testing.T) {
 			if !ok {
 				resp.WriteHeader(http.StatusBadRequest)
 			}
-			fmt.Fprintf(resp,"trace_id=%x, span_id=%x, options=%d", sc.TraceID, sc.SpanID, sc.TraceOptions)
+			fmt.Fprintf(resp, "trace_id=%x, span_id=%x, options=%d", sc.TraceID, sc.SpanID, sc.TraceOptions)
 		}))
 		req, err := http.NewRequest("GET", srv.URL, nil)
 		if err != nil {

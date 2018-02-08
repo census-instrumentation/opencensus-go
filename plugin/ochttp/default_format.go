@@ -20,4 +20,3 @@ import (
 )
 
 var defaultFormat propagation.HTTPFormat = &b3.HTTPFormat{}
-

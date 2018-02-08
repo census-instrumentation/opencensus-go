@@ -3,5 +3,4 @@
 
 package agent
 
-var GoUnusedProtection__ int;
-
+var GoUnusedProtection__ int
