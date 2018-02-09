@@ -135,11 +135,6 @@ func TestStreaming(t *testing.T) {
 }
 
 func TestStreamingFail(t *testing.T) {
-	t.Skipf("Skipping due to the behavioral change at https://github.com/grpc/grpc-go/pull/1854")
-
-	// TODO(jbd): Enable test again as soon as span.End is invoked
-	// for the outgoing RPCs properly.
-
 	trace.SetDefaultSampler(trace.AlwaysSample())
 	te := testExporter{make(chan *trace.SpanData)}
 	trace.RegisterExporter(&te)
@@ -163,11 +158,10 @@ func TestStreamingFail(t *testing.T) {
 
 	for {
 		_, err := stream.Recv()
-		if err == io.EOF {
+		if err == nil || err == io.EOF {
+			t.Errorf("stream.Recv() = %v; want errors", err)
+		} else {
 			break
-		}
-		if err == nil {
-			t.Error("stream.Recv() = nil; want errors")
 		}
 	}
 
