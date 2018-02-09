@@ -15,9 +15,11 @@
 package ochttp_test
 
 import (
+	"log"
 	"net/http"
 
 	"go.opencensus.io/plugin/ochttp"
+	"go.opencensus.io/plugin/ochttp/propagation/google"
 )
 
 func ExampleTransport() {
@@ -25,4 +27,23 @@ func ExampleTransport() {
 		Transport: &ochttp.Transport{},
 	}
 	_ = client // use client to perform requests
+}
+
+var usersHandler http.Handler
+
+func ExampleHandler() {
+	// Enables OpenCensus for the default serve mux.
+	// By default, B3 propagation is used.
+	http.Handle("/users", usersHandler)
+	log.Fatal(http.ListenAndServe("localhost:8080", &ochttp.Handler{}))
+}
+
+func ExampleHandler_mux() {
+	mux := http.NewServeMux()
+	mux.Handle("/users", usersHandler)
+
+	log.Fatal(http.ListenAndServe("localhost:8080", &ochttp.Handler{
+		Handler:     mux,
+		Propagation: &google.HTTPFormat{}, // Uses Google's propagation format.
+	}))
 }
