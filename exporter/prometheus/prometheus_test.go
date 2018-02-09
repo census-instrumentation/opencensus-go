@@ -20,55 +20,56 @@ import (
 	"time"
 
 	"go.opencensus.io/stats"
+	"go.opencensus.io/stats/view"
 
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-func newView(agg stats.Aggregation, window stats.Window) *stats.View {
-	m, _ := stats.NewMeasureInt64("tests/foo1", "bytes", "byte")
-	view, _ := stats.NewView("foo", "bar", nil, m, agg, window)
+func newView(agg view.Aggregation, window view.Window) *view.View {
+	m, _ := stats.NewInt64("tests/foo1", "bytes", "byte")
+	view, _ := view.New("foo", "bar", nil, m, agg, window)
 	return view
 }
 
 func TestOnlyCumulativeWindowSupported(t *testing.T) {
 	// See Issue https://github.com/census-instrumentation/opencensus-go/issues/214.
-	count1 := stats.CountData(1)
-	mean1 := stats.MeanData{
+	count1 := view.CountData(1)
+	mean1 := view.MeanData{
 		Mean:  4.5,
 		Count: 5,
 	}
 	tests := []struct {
-		vds  *stats.ViewData
+		vds  *view.Data
 		want int
 	}{
 		0: {
-			vds: &stats.ViewData{
-				View: newView(stats.CountAggregation{}, stats.Cumulative{}),
+			vds: &view.Data{
+				View: newView(view.CountAggregation{}, view.Cumulative{}),
 			},
 			want: 0, // no rows present
 		},
 		1: {
-			vds: &stats.ViewData{
-				View: newView(stats.CountAggregation{}, stats.Cumulative{}),
-				Rows: []*stats.Row{
+			vds: &view.Data{
+				View: newView(view.CountAggregation{}, view.Cumulative{}),
+				Rows: []*view.Row{
 					{nil, &count1},
 				},
 			},
 			want: 1,
 		},
 		2: {
-			vds: &stats.ViewData{
-				View: newView(stats.CountAggregation{}, stats.Interval{}),
-				Rows: []*stats.Row{
+			vds: &view.Data{
+				View: newView(view.CountAggregation{}, view.Interval{}),
+				Rows: []*view.Row{
 					{nil, &count1},
 				},
 			},
 			want: 0,
 		},
 		3: {
-			vds: &stats.ViewData{
-				View: newView(stats.MeanAggregation{}, stats.Cumulative{}),
-				Rows: []*stats.Row{
+			vds: &view.Data{
+				View: newView(view.MeanAggregation{}, view.Cumulative{}),
+				Rows: []*view.Row{
 					{nil, &mean1},
 				},
 			},
@@ -136,11 +137,11 @@ func TestCollectNonRacy(t *testing.T) {
 		}()
 
 		for i := 0; i < 1e3; i++ {
-			count1 := stats.CountData(1)
-			mean1 := &stats.MeanData{Mean: 4.5, Count: 5}
-			vds := []*stats.ViewData{
-				{View: newView(stats.MeanAggregation{}, stats.Cumulative{}), Rows: []*stats.Row{{nil, mean1}}},
-				{View: newView(stats.CountAggregation{}, stats.Cumulative{}), Rows: []*stats.Row{{nil, &count1}}},
+			count1 := view.CountData(1)
+			mean1 := &view.MeanData{Mean: 4.5, Count: 5}
+			vds := []*view.Data{
+				{View: newView(view.MeanAggregation{}, view.Cumulative{}), Rows: []*view.Row{{nil, mean1}}},
+				{View: newView(view.CountAggregation{}, view.Cumulative{}), Rows: []*view.Row{{nil, &count1}}},
 			}
 			for _, v := range vds {
 				exp.ExportView(v)

@@ -24,7 +24,7 @@ import (
 	pb "go.opencensus.io/examples/grpc/proto"
 	ocgrpc "go.opencensus.io/plugin/grpc"
 	"go.opencensus.io/plugin/grpc/grpcstats"
-	"go.opencensus.io/stats"
+	"go.opencensus.io/stats/view"
 	"go.opencensus.io/zpages"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -41,7 +41,7 @@ func main() {
 
 	// Register stats and trace exporters to export
 	// the collected data.
-	stats.RegisterExporter(&exporter.Exporter{})
+	view.RegisterExporter(&exporter.Exporter{})
 
 	// Subscribe to collect client request count.
 	if err := grpcstats.RPCClientRequestCountView.Subscribe(); err != nil {
@@ -62,7 +62,7 @@ func main() {
 	if len(os.Args) > 1 {
 		name = os.Args[1]
 	}
-	stats.SetReportingPeriod(time.Second)
+	view.SetReportingPeriod(time.Second)
 	for {
 		r, err := c.SayHello(context.Background(), &pb.HelloRequest{Name: name})
 		if err != nil {

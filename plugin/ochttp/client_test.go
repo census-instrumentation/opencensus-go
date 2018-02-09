@@ -23,7 +23,7 @@ import (
 	"testing"
 
 	"go.opencensus.io/plugin/ochttp"
-	"go.opencensus.io/stats"
+	"go.opencensus.io/stats/view"
 )
 
 const reqCount = 5
@@ -41,7 +41,7 @@ func TestClient(t *testing.T) {
 		"opencensus.io/http/client/response_size",
 	}
 	for _, name := range views {
-		v := stats.FindView(name)
+		v := view.Find(name)
 		if v == nil {
 			t.Errorf("view not found %q", name)
 			continue
@@ -87,7 +87,7 @@ func TestClient(t *testing.T) {
 	}
 
 	for _, viewName := range views {
-		v := stats.FindView(viewName)
+		v := view.Find(viewName)
 		if v == nil {
 			t.Errorf("view not found %q", viewName)
 			continue
@@ -104,9 +104,9 @@ func TestClient(t *testing.T) {
 		data := rows[0].Data
 		var count int64
 		switch data := data.(type) {
-		case *stats.CountData:
+		case *view.CountData:
 			count = *(*int64)(data)
-		case *stats.DistributionData:
+		case *view.DistributionData:
 			count = data.Count
 		default:
 			t.Errorf("don't know how to handle data type: %v", data)

@@ -20,7 +20,7 @@ import (
 	"runtime"
 	"testing"
 
-	"go.opencensus.io/stats"
+	"go.opencensus.io/stats/view"
 )
 
 func TestViewsAggregationsConform(t *testing.T) {
@@ -30,7 +30,7 @@ func TestViewsAggregationsConform(t *testing.T) {
 	// https://github.com/census-instrumentation/opencensus-java/blob/2b464864e3dd3f80e8e4c9dc72fccc225444a939/contrib/grpc_metrics/src/main/java/io/opencensus/contrib/grpc/metrics/RpcViewConstants.java#L113-L658
 	// Add any other defined views to be type checked during tests to ensure we don't regress.
 
-	assertTypeOf := func(v *stats.View, wantSample stats.Aggregation) {
+	assertTypeOf := func(v *view.View, wantSample view.Aggregation) {
 		aggregation := v.Aggregation()
 		gotValue := reflect.ValueOf(aggregation)
 		wantValue := reflect.ValueOf(wantSample)
@@ -40,33 +40,33 @@ func TestViewsAggregationsConform(t *testing.T) {
 		}
 	}
 
-	assertTypeOf(RPCClientErrorCountView, stats.MeanAggregation{})
-	assertTypeOf(RPCClientRoundTripLatencyView, stats.DistributionAggregation{})
-	assertTypeOf(RPCClientRequestBytesView, stats.DistributionAggregation{})
-	assertTypeOf(RPCClientResponseBytesView, stats.DistributionAggregation{})
-	assertTypeOf(RPCClientRequestCountView, stats.DistributionAggregation{})
-	assertTypeOf(RPCClientResponseCountView, stats.DistributionAggregation{})
-	assertTypeOf(RPCClientRoundTripLatencyMinuteView, stats.MeanAggregation{})
-	assertTypeOf(RPCClientRequestBytesMinuteView, stats.MeanAggregation{})
-	assertTypeOf(RPCClientResponseBytesMinuteView, stats.MeanAggregation{})
-	assertTypeOf(RPCClientErrorCountMinuteView, stats.MeanAggregation{})
-	assertTypeOf(RPCClientStartedCountMinuteView, stats.MeanAggregation{})
-	assertTypeOf(RPCClientFinishedCountMinuteView, stats.MeanAggregation{})
-	assertTypeOf(RPCClientRequestCountMinuteView, stats.MeanAggregation{})
-	assertTypeOf(RPCClientResponseCountMinuteView, stats.MeanAggregation{})
-	assertTypeOf(RPCClientRoundTripLatencyHourView, stats.MeanAggregation{})
-	assertTypeOf(RPCClientRequestBytesHourView, stats.MeanAggregation{})
-	assertTypeOf(RPCClientResponseBytesHourView, stats.MeanAggregation{})
-	assertTypeOf(RPCClientErrorCountHourView, stats.MeanAggregation{})
-	assertTypeOf(RPCClientStartedCountHourView, stats.MeanAggregation{})
-	assertTypeOf(RPCClientFinishedCountHourView, stats.MeanAggregation{})
-	assertTypeOf(RPCClientRequestCountHourView, stats.MeanAggregation{})
-	assertTypeOf(RPCClientResponseCountHourView, stats.MeanAggregation{})
+	assertTypeOf(RPCClientErrorCountView, view.MeanAggregation{})
+	assertTypeOf(RPCClientRoundTripLatencyView, view.DistributionAggregation{})
+	assertTypeOf(RPCClientRequestBytesView, view.DistributionAggregation{})
+	assertTypeOf(RPCClientResponseBytesView, view.DistributionAggregation{})
+	assertTypeOf(RPCClientRequestCountView, view.DistributionAggregation{})
+	assertTypeOf(RPCClientResponseCountView, view.DistributionAggregation{})
+	assertTypeOf(RPCClientRoundTripLatencyMinuteView, view.MeanAggregation{})
+	assertTypeOf(RPCClientRequestBytesMinuteView, view.MeanAggregation{})
+	assertTypeOf(RPCClientResponseBytesMinuteView, view.MeanAggregation{})
+	assertTypeOf(RPCClientErrorCountMinuteView, view.MeanAggregation{})
+	assertTypeOf(RPCClientStartedCountMinuteView, view.MeanAggregation{})
+	assertTypeOf(RPCClientFinishedCountMinuteView, view.MeanAggregation{})
+	assertTypeOf(RPCClientRequestCountMinuteView, view.MeanAggregation{})
+	assertTypeOf(RPCClientResponseCountMinuteView, view.MeanAggregation{})
+	assertTypeOf(RPCClientRoundTripLatencyHourView, view.MeanAggregation{})
+	assertTypeOf(RPCClientRequestBytesHourView, view.MeanAggregation{})
+	assertTypeOf(RPCClientResponseBytesHourView, view.MeanAggregation{})
+	assertTypeOf(RPCClientErrorCountHourView, view.MeanAggregation{})
+	assertTypeOf(RPCClientStartedCountHourView, view.MeanAggregation{})
+	assertTypeOf(RPCClientFinishedCountHourView, view.MeanAggregation{})
+	assertTypeOf(RPCClientRequestCountHourView, view.MeanAggregation{})
+	assertTypeOf(RPCClientResponseCountHourView, view.MeanAggregation{})
 }
 
 func TestStrictViewNames(t *testing.T) {
 	alreadySeen := make(map[string]int)
-	assertName := func(v *stats.View, want string) {
+	assertName := func(v *view.View, want string) {
 		_, _, line, _ := runtime.Caller(1)
 		if prevLine, ok := alreadySeen[v.Name()]; ok {
 			t.Errorf("Item's Name on line %d was already used on line %d", line, prevLine)

@@ -28,7 +28,7 @@ import (
 
 	"go.opencensus.io/internal"
 	"go.opencensus.io/plugin/grpc/grpcstats"
-	"go.opencensus.io/stats"
+	"go.opencensus.io/stats/view"
 )
 
 var (
@@ -39,7 +39,7 @@ var (
 	// viewType lists the views we are interested in for RPC stats.
 	// A view's map value indicates whether that view contains data for received
 	// RPCs.
-	viewType = map[*stats.View]bool{
+	viewType = map[*view.View]bool{
 		grpcstats.RPCClientErrorCountHourView:          false,
 		grpcstats.RPCClientErrorCountMinuteView:        false,
 		grpcstats.RPCClientErrorCountView:              false,
@@ -93,7 +93,7 @@ func init() {
 			log.Printf("error subscribing to view %q: %v", view.Name(), err)
 		}
 	}
-	stats.RegisterExporter(snapExporter{})
+	view.RegisterExporter(snapExporter{})
 }
 
 // RpczHandler is a handler for /rpcz.
@@ -286,7 +286,7 @@ type methodKey struct {
 
 type snapExporter struct{}
 
-func (s snapExporter) ExportView(vd *stats.ViewData) {
+func (s snapExporter) ExportView(vd *view.Data) {
 	received, ok := viewType[vd.View]
 	if !ok {
 		return
@@ -330,22 +330,22 @@ func (s snapExporter) ExportView(vd *stats.ViewData) {
 		}
 
 		var (
-			dist  = &stats.DistributionData{}
+			dist  = &view.DistributionData{}
 			sum   float64
 			count float64
 		)
 		switch v := row.Data.(type) {
-		case *stats.CountData:
+		case *view.CountData:
 			sum = float64(*v)
 			count = float64(*v)
-		case *stats.DistributionData:
+		case *view.DistributionData:
 			dist = v
 			sum = v.Sum()
 			count = float64(v.Count)
-		case *stats.MeanData:
+		case *view.MeanData:
 			sum = v.Sum()
 			count = v.Count
-		case *stats.SumData:
+		case *view.SumData:
 			sum = float64(*v)
 			count = float64(*v)
 		}

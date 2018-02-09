@@ -24,7 +24,7 @@ package stackdriver // import "go.opencensus.io/exporter/stackdriver"
 import (
 	"time"
 
-	"go.opencensus.io/stats"
+	"go.opencensus.io/stats/view"
 	"go.opencensus.io/trace"
 	"google.golang.org/api/option"
 	monitoredrespb "google.golang.org/genproto/googleapis/api/monitoredres"
@@ -92,7 +92,7 @@ func NewExporter(o Options) (*Exporter, error) {
 
 // ExportView exports to the Stackdriver Monitoring if view data
 // has one or more rows.
-func (e *Exporter) ExportView(vd *stats.ViewData) {
+func (e *Exporter) ExportView(vd *view.Data) {
 	e.statsExporter.ExportView(vd)
 }
 
