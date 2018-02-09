@@ -40,18 +40,18 @@ var (
 	// A view's map value indicates whether that view contains data for received
 	// RPCs.
 	viewType = map[*view.View]bool{
-		grpcstats.RPCClientErrorCountView:              false,
-		grpcstats.RPCClientRequestBytesView:            false,
-		grpcstats.RPCClientRequestCountView:            false,
-		grpcstats.RPCClientResponseBytesView:           false,
-		grpcstats.RPCClientResponseCountView:           false,
-		grpcstats.RPCClientRoundTripLatencyView:        false,
-		grpcstats.RPCServerErrorCountView:              true,
-		grpcstats.RPCServerRequestBytesView:            true,
-		grpcstats.RPCServerRequestCountView:            true,
-		grpcstats.RPCServerResponseBytesView:           true,
-		grpcstats.RPCServerResponseCountView:           true,
-		grpcstats.RPCServerServerElapsedTimeView:       true,
+		grpcstats.RPCClientErrorCountView:        false,
+		grpcstats.RPCClientRequestBytesView:      false,
+		grpcstats.RPCClientRequestCountView:      false,
+		grpcstats.RPCClientResponseBytesView:     false,
+		grpcstats.RPCClientResponseCountView:     false,
+		grpcstats.RPCClientRoundTripLatencyView:  false,
+		grpcstats.RPCServerErrorCountView:        true,
+		grpcstats.RPCServerRequestBytesView:      true,
+		grpcstats.RPCServerRequestCountView:      true,
+		grpcstats.RPCServerResponseBytesView:     true,
+		grpcstats.RPCServerResponseCountView:     true,
+		grpcstats.RPCServerServerElapsedTimeView: true,
 	}
 )
 

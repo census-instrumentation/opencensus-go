@@ -27,14 +27,14 @@ import (
 // Server needs to use a ServerStatsHandler in order to enable collection.
 var (
 	// Available server measures
-	RPCServerErrorCount        *stats.Int64
-	RPCServerServerElapsedTime *stats.Float64
-	RPCServerRequestBytes      *stats.Int64
-	RPCServerResponseBytes     *stats.Int64
-	RPCServerStartedCount      *stats.Int64
-	RPCServerFinishedCount     *stats.Int64
-	RPCServerRequestCount      *stats.Int64
-	RPCServerResponseCount     *stats.Int64
+	RPCServerErrorCount        *stats.Int64Measure
+	RPCServerServerElapsedTime *stats.Float64Measure
+	RPCServerRequestBytes      *stats.Int64Measure
+	RPCServerResponseBytes     *stats.Int64Measure
+	RPCServerStartedCount      *stats.Int64Measure
+	RPCServerFinishedCount     *stats.Int64Measure
+	RPCServerRequestCount      *stats.Int64Measure
+	RPCServerResponseCount     *stats.Int64Measure
 
 	// Predefined server views
 	RPCServerErrorCountView        *view.View
@@ -52,28 +52,28 @@ var (
 func defaultServerMeasures() {
 	var err error
 
-	if RPCServerErrorCount, err = stats.NewInt64("grpc.io/server/error_count", "RPC Errors", unitCount); err != nil {
+	if RPCServerErrorCount, err = stats.Int64("grpc.io/server/error_count", "RPC Errors", unitCount); err != nil {
 		log.Fatalf("Cannot create measure grpc.io/server/error_count: %v", err)
 	}
-	if RPCServerServerElapsedTime, err = stats.NewFloat64("grpc.io/server/server_elapsed_time", "Server elapsed time in msecs", unitMillisecond); err != nil {
+	if RPCServerServerElapsedTime, err = stats.Float64("grpc.io/server/server_elapsed_time", "Server elapsed time in msecs", unitMillisecond); err != nil {
 		log.Fatalf("Cannot create measure grpc.io/server/server_elapsed_time: %v", err)
 	}
-	if RPCServerRequestBytes, err = stats.NewInt64("grpc.io/server/request_bytes", "Request bytes", unitByte); err != nil {
+	if RPCServerRequestBytes, err = stats.Int64("grpc.io/server/request_bytes", "Request bytes", unitByte); err != nil {
 		log.Fatalf("Cannot create measure grpc.io/server/request_bytes: %v", err)
 	}
-	if RPCServerResponseBytes, err = stats.NewInt64("grpc.io/server/response_bytes", "Response bytes", unitByte); err != nil {
+	if RPCServerResponseBytes, err = stats.Int64("grpc.io/server/response_bytes", "Response bytes", unitByte); err != nil {
 		log.Fatalf("Cannot create measure grpc.io/server/response_bytes: %v", err)
 	}
-	if RPCServerStartedCount, err = stats.NewInt64("grpc.io/server/started_count", "Number of server RPCs (streams) started", unitCount); err != nil {
+	if RPCServerStartedCount, err = stats.Int64("grpc.io/server/started_count", "Number of server RPCs (streams) started", unitCount); err != nil {
 		log.Fatalf("Cannot create measure grpc.io/server/started_count: %v", err)
 	}
-	if RPCServerFinishedCount, err = stats.NewInt64("grpc.io/server/finished_count", "Number of server RPCs (streams) finished", unitCount); err != nil {
+	if RPCServerFinishedCount, err = stats.Int64("grpc.io/server/finished_count", "Number of server RPCs (streams) finished", unitCount); err != nil {
 		log.Fatalf("Cannot create measure grpc.io/server/finished_count: %v", err)
 	}
-	if RPCServerRequestCount, err = stats.NewInt64("grpc.io/server/request_count", "Number of server RPC request messages", unitCount); err != nil {
+	if RPCServerRequestCount, err = stats.Int64("grpc.io/server/request_count", "Number of server RPC request messages", unitCount); err != nil {
 		log.Fatalf("Cannot create measure grpc.io/server/request_count: %v", err)
 	}
-	if RPCServerResponseCount, err = stats.NewInt64("grpc.io/server/response_count", "Number of server RPC response messages", unitCount); err != nil {
+	if RPCServerResponseCount, err = stats.Int64("grpc.io/server/response_count", "Number of server RPC response messages", unitCount); err != nil {
 		log.Fatalf("Cannot create measure grpc.io/server/response_count: %v", err)
 	}
 }

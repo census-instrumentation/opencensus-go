@@ -26,7 +26,7 @@ import (
 )
 
 func newView(agg view.Aggregation) *view.View {
-	m, _ := stats.NewInt64("tests/foo1", "bytes", "byte")
+	m, _ := stats.Int64("tests/foo1", "bytes", "byte")
 	view, _ := view.New("foo", "bar", nil, m, agg)
 	return view
 }

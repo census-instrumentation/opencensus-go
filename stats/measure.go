@@ -28,8 +28,8 @@ import (
 // to collect from a server.
 //
 // Each measure needs to be registered before being used.
-// Measure constructors such as NewInt64 and
-// NewFloat64 automatically registers the measure
+// Measure constructors such as Int64 and
+// Float64 automatically registers the measure
 // by the given name.
 // Each registered measure needs to be unique by name.
 // Measures also have a description and a unit.
@@ -66,7 +66,7 @@ func register(m Measure) (Measure, error) {
 }
 
 // Measurement is the numeric value measured when recording stats. Each measure
-// provides methods to create measurements of their kind. For example, Int64
+// provides methods to create measurements of their kind. For example, Int64Measure
 // provides M to convert an int64 into a measurement.
 type Measurement struct {
 	Value   interface{} // int64 or float64

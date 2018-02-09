@@ -113,7 +113,7 @@ Create and load measures with units:
 
 [embedmd]:# (stats.go measure)
 ```go
-videoSize, err := stats.NewInt64("my.org/video_size", "processed video size", "MB")
+videoSize, err := stats.Int64("my.org/video_size", "processed video size", "MB")
 if err != nil {
 	log.Fatal(err)
 }

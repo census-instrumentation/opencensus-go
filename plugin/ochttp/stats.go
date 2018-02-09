@@ -99,16 +99,16 @@ func key(name string) tag.Key {
 	return k
 }
 
-func int64Measure(name, desc, unit string) *stats.Int64 {
-	m, err := stats.NewInt64(qualify(name), desc, unit)
+func int64Measure(name, desc, unit string) *stats.Int64Measure {
+	m, err := stats.Int64(qualify(name), desc, unit)
 	if err != nil {
 		panic(err)
 	}
 	return m
 }
 
-func floatMeasure(name, desc, unit string) *stats.Float64 {
-	m, err := stats.NewFloat64(qualify(name), desc, unit)
+func floatMeasure(name, desc, unit string) *stats.Float64Measure {
+	m, err := stats.Float64(qualify(name), desc, unit)
 	if err != nil {
 		panic(err)
 	}

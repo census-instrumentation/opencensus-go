@@ -26,7 +26,7 @@ For example, latency, request Mb/s, and response Mb/s are measures
 to collect from a server.
 
 Each measure needs to be registered before being used. Measure
-constructors such as NewInt64 and NewFloat64 automatically
+constructors such as Int64 and Float64 automatically
 register the measure by the given name. Each registered measure needs
 to be unique by name. Measures also have a description and a unit.
 

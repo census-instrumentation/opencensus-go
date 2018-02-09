@@ -22,7 +22,7 @@ import (
 )
 
 func Example_view() {
-	m, err := stats.NewInt64("my.org/measure/openconns", "open connections", "")
+	m, err := stats.Int64("my.org/measure/openconns", "open connections", "")
 	if err != nil {
 		log.Fatal(err)
 	}
