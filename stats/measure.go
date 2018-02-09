@@ -45,7 +45,7 @@ var (
 	errDuplicate = errors.New("duplicate measure name")
 )
 
-func Find(name string) Measure {
+func FindMeasure(name string) Measure {
 	mu.RLock()
 	defer mu.RUnlock()
 	if m, ok := measures[name]; ok {

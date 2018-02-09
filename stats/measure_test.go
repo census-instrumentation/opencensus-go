@@ -95,9 +95,9 @@ func Test_FindMeasure(t *testing.T) {
 	}
 
 	for _, tc := range tcs {
-		m := Find(tc.name)
+		m := FindMeasure(tc.name)
 		if m != tc.m {
-			t.Errorf("Find(%q) got measure %v; want %v", tc.label, m, tc.m)
+			t.Errorf("FindMeasure(%q) got measure %v; want %v", tc.label, m, tc.m)
 		}
 	}
 }
