@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-package stats
+package view
 
 import (
 	"bytes"
@@ -23,12 +23,14 @@ import (
 	"sync/atomic"
 	"time"
 
+	"go.opencensus.io/stats"
+	"go.opencensus.io/stats/internal"
 	"go.opencensus.io/tag"
 )
 
 // View allows users to filter and aggregate the recorded events
 // over a time window. Each view has to be registered to enable
-// data retrieval. Use NewView to initiate new views.
+// data retrieval. Use New to initiate new views.
 // Unregister views once you don't want to collect any more events.
 type View struct {
 	name        string // name of View. Must be unique.
@@ -38,14 +40,14 @@ type View struct {
 	tagKeys []tag.Key
 
 	// Examples of measures are cpu:tickCount, diskio:time...
-	m Measure
+	m stats.Measure
 
 	subscribed uint32 // 1 if someone is subscribed and data need to be exported, use atomic to access
 
 	collector *collector
 }
 
-// NewView creates a new view with the given name and description.
+// New creates a new view with the given name and description.
 // View names need to be unique globally in the entire system.
 //
 // Data collection will only filter measurements recorded by the given keys.
@@ -55,7 +57,7 @@ type View struct {
 // Views need to be subscribed toin order to retrieve collection data.
 //
 // Once the view is no longer required, the view can be unregistered.
-func NewView(name, description string, keys []tag.Key, measure Measure, agg Aggregation, window Window) (*View, error) {
+func New(name, description string, keys []tag.Key, measure stats.Measure, agg Aggregation, window Window) (*View, error) {
 	if err := checkViewName(name); err != nil {
 		return nil, err
 	}
@@ -120,7 +122,7 @@ func (v *View) Aggregation() Aggregation {
 }
 
 // Measure returns the measure the view is collecting measurements for.
-func (v *View) Measure() Measure {
+func (v *View) Measure() stats.Measure {
 	return v.m
 }
 
@@ -136,10 +138,10 @@ func (v *View) addSample(m *tag.Map, val interface{}, now time.Time) {
 	v.collector.addSample(sig, val, now)
 }
 
-// A ViewData is a set of rows about usage of the single measure associated
+// A Data is a set of rows about usage of the single measure associated
 // with the given view during a particular window. Each row is specific to a
 // unique set of tags.
-type ViewData struct {
+type Data struct {
 	View       *View
 	Start, End time.Time
 	Rows       []*Row
@@ -172,4 +174,14 @@ func (r *Row) Equal(other *Row) bool {
 		return true
 	}
 	return reflect.DeepEqual(r.Tags, other.Tags) && r.Data.equal(other.Data)
+}
+
+func checkViewName(name string) error {
+	if len(name) > internal.MaxNameLength {
+		return fmt.Errorf("view name cannot be larger than %v", internal.MaxNameLength)
+	}
+	if !internal.IsPrintable(name) {
+		return fmt.Errorf("view name needs to be an ASCII string")
+	}
+	return nil
 }

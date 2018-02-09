@@ -80,13 +80,6 @@ Retrieve measure by name:
 
 [embedmd]:# (stats.go findMeasure)
 
-Delete measure (this can be useful when replacing a measure by
-another measure with the same name):
-
-[embedmd]:# (stats.go deleteMeasure)
-However, it is an error to delete a Measure that's used by at least one View. The
-View using the Measure has to be unregistered first.
-
 ### Creating an aggregation
 
 Currently 4 types of aggregations are supported. The CountAggregation is used to count

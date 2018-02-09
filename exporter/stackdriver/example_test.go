@@ -21,7 +21,7 @@ import (
 	"go.opencensus.io/exporter/stackdriver"
 	"go.opencensus.io/plugin/ochttp"
 	"go.opencensus.io/plugin/ochttp/propagation/google"
-	"go.opencensus.io/stats"
+	"go.opencensus.io/stats/view"
 	"go.opencensus.io/trace"
 )
 
@@ -32,7 +32,7 @@ func Example() {
 	}
 
 	// Export to Stackdriver Monitoring.
-	stats.RegisterExporter(exporter)
+	view.RegisterExporter(exporter)
 
 	// Export to Stackdriver Trace.
 	trace.RegisterExporter(exporter)

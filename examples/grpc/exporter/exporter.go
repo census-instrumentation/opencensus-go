@@ -17,7 +17,7 @@ package exporter
 import (
 	"log"
 
-	"go.opencensus.io/stats"
+	"go.opencensus.io/stats/view"
 	"go.opencensus.io/trace"
 )
 
@@ -26,7 +26,7 @@ import (
 type Exporter struct{}
 
 // ExportView logs the view data.
-func (e *Exporter) ExportView(vd *stats.ViewData) {
+func (e *Exporter) ExportView(vd *view.Data) {
 	log.Println(vd)
 }
 

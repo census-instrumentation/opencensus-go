@@ -1,4 +1,4 @@
-package propagation_test
+package ochttp
 
 import (
 	"context"

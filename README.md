@@ -113,7 +113,7 @@ Create and load measures with units:
 
 [embedmd]:# (stats.go measure)
 ```go
-videoSize, err := stats.NewMeasureInt64("my.org/video_size", "processed video size", "MB")
+videoSize, err := stats.NewInt64("my.org/video_size", "processed video size", "MB")
 if err != nil {
 	log.Fatal(err)
 }
@@ -129,18 +129,6 @@ if m == nil {
 }
 ```
 
-Delete measure (this can be useful when replacing a measure by
-another measure with the same name):
-
-[embedmd]:# (stats.go deleteMeasure)
-```go
-if err := stats.DeleteMeasure(m); err != nil {
-	log.Fatal(err)
-}
-```
-However, it is an error to delete a Measure that's used by at least one View. The
-View using the Measure has to be unregistered first.
-
 ### Creating an aggregation
 
 Currently 4 types of aggregations are supported. The CountAggregation is used to count
@@ -151,10 +139,10 @@ sample values.
 
 [embedmd]:# (stats.go aggs)
 ```go
-distAgg := stats.DistributionAggregation([]float64{0, 1 << 32, 2 << 32, 3 << 32})
-countAgg := stats.CountAggregation{}
-sumAgg := stats.SumAggregation{}
-meanAgg := stats.MeanAggregation{}
+distAgg := view.DistributionAggregation([]float64{0, 1 << 32, 2 << 32, 3 << 32})
+countAgg := view.CountAggregation{}
+sumAgg := view.SumAggregation{}
+meanAgg := view.MeanAggregation{}
 ```
 
 ### Create an aggregation window
@@ -163,7 +151,7 @@ Use Cumulative to continuously aggregate the recorded data.
 
 [embedmd]:# (stats.go windows)
 ```go
-cum := stats.Cumulative{}
+cum := view.Cumulative{}
 ```
 
 ### Creating, registering and unregistering a view
@@ -172,7 +160,7 @@ Create and register a view:
 
 [embedmd]:# (stats.go view)
 ```go
-view, err := stats.NewView(
+v, err := view.New(
 	"my.org/video_size_distribution",
 	"distribution of processed video size over time",
 	nil,
@@ -183,7 +171,7 @@ view, err := stats.NewView(
 if err != nil {
 	log.Fatalf("cannot create view: %v", err)
 }
-if err := stats.RegisterView(view); err != nil {
+if err := view.Register(v); err != nil {
 	log.Fatal(err)
 }
 ```
@@ -192,7 +180,7 @@ Find view by name:
 
 [embedmd]:# (stats.go findView)
 ```go
-v := stats.FindView("my.org/video_size_distribution")
+v = view.Find("my.org/video_size_distribution")
 if v == nil {
 	log.Fatalln("view not found")
 }
@@ -202,7 +190,7 @@ Unregister view:
 
 [embedmd]:# (stats.go unregisterView)
 ```go
-if err = stats.UnregisterView(v); err != nil {
+if err = view.Unregister(v); err != nil {
 	log.Fatal(err)
 }
 ```
@@ -214,7 +202,7 @@ a duration less than a certain minimum (maybe 1s) should have no effect.
 
 [embedmd]:# (stats.go reportingPeriod)
 ```go
-stats.SetReportingPeriod(5 * time.Second)
+view.SetReportingPeriod(5 * time.Second)
 ```
 
 ### Recording measurements
@@ -234,7 +222,7 @@ Users need to subscribe to a view in order to retrieve collected data.
 
 [embedmd]:# (stats.go subscribe)
 ```go
-if err := view.Subscribe(); err != nil {
+if err := v.Subscribe(); err != nil {
 	log.Fatal(err)
 }
 ```
@@ -245,7 +233,7 @@ Subscribed views' data will be exported via the registered exporters.
 ```go
 // Register an exporter to be able to retrieve
 // the data from the subscribed views.
-stats.RegisterExporter(&exporter{})
+view.RegisterExporter(&exporter{})
 ```
 
 An example logger exporter is below:
@@ -255,7 +243,7 @@ An example logger exporter is below:
 
 type exporter struct{}
 
-func (e *exporter) ExportView(vd *stats.ViewData) {
+func (e *exporter) ExportView(vd *view.Data) {
 	log.Println(vd)
 }
 

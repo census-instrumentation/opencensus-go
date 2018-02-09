@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package stats
+package view
 
 import "sync"
 
@@ -25,11 +25,11 @@ var (
 //
 // The ExportView method should return quickly; if an
 // Exporter takes a significant amount of time to
-// process a ViewData, that work should be done on another goroutine.
+// process a Data, that work should be done on another goroutine.
 //
-// The ViewData should not be modified.
+// The Data should not be modified.
 type Exporter interface {
-	ExportView(viewData *ViewData)
+	ExportView(viewData *Data)
 }
 
 // RegisterExporter registers an exporter.
