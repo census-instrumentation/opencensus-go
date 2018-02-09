@@ -15,41 +15,41 @@
 
 package stats
 
-// Int64 is a measure of type int64.
-type Int64 struct {
+// Int64Measure is a measure of type int64.
+type Int64Measure struct {
 	name        string
 	unit        string
 	description string
 }
 
 // Name returns the name of the measure.
-func (m *Int64) Name() string {
+func (m *Int64Measure) Name() string {
 	return m.name
 }
 
 // Description returns the description of the measure.
-func (m *Int64) Description() string {
+func (m *Int64Measure) Description() string {
 	return m.description
 }
 
 // Unit returns the unit of the measure.
-func (m *Int64) Unit() string {
+func (m *Int64Measure) Unit() string {
 	return m.unit
 }
 
 // M creates a new int64 measurement.
 // Use Record to record measurements.
-func (m *Int64) M(v int64) Measurement {
+func (m *Int64Measure) M(v int64) Measurement {
 	return Measurement{Measure: m, Value: v}
 }
 
-// NewInt64 creates a new measure of type Int64. It returns an
+// Int64 creates a new measure of type Int64Measure. It returns an
 // error if a measure with the same name already exists.
-func NewInt64(name, description, unit string) (*Int64, error) {
+func Int64(name, description, unit string) (*Int64Measure, error) {
 	if err := checkName(name); err != nil {
 		return nil, err
 	}
-	m := &Int64{
+	m := &Int64Measure{
 		name:        name,
 		description: description,
 		unit:        unit,

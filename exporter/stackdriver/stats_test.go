@@ -73,7 +73,7 @@ func TestNewExporterSingletonPerProcess(t *testing.T) {
 }
 
 func TestExporter_makeReq(t *testing.T) {
-	m, err := stats.NewFloat64("test-measure", "measure desc", "unit")
+	m, err := stats.Float64("test-measure", "measure desc", "unit")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -283,8 +283,8 @@ func TestExporter_makeReq(t *testing.T) {
 								},
 								Value: &monitoringpb.TypedValue{Value: &monitoringpb.TypedValue_DistributionValue{
 									DistributionValue: &distributionpb.Distribution{
-										Count:                 7,
-										Mean:                  3.3,
+										Count: 7,
+										Mean:  3.3,
 										SumOfSquaredDeviation: 0,
 										BucketOptions: &distributionpb.Distribution_BucketOptions{
 											Options: &distributionpb.Distribution_BucketOptions_ExplicitBuckets{
@@ -324,8 +324,8 @@ func TestExporter_makeReq(t *testing.T) {
 								},
 								Value: &monitoringpb.TypedValue{Value: &monitoringpb.TypedValue_DistributionValue{
 									DistributionValue: &distributionpb.Distribution{
-										Count:                 5,
-										Mean:                  -7.7,
+										Count: 5,
+										Mean:  -7.7,
 										SumOfSquaredDeviation: 0,
 										BucketOptions: &distributionpb.Distribution_BucketOptions{
 											Options: &distributionpb.Distribution_BucketOptions_ExplicitBuckets{
@@ -374,7 +374,7 @@ func TestExporter_makeReq(t *testing.T) {
 }
 
 func TestExporter_makeReq_batching(t *testing.T) {
-	m, err := stats.NewFloat64("test-measure/makeReq_batching", "measure desc", "unit")
+	m, err := stats.Float64("test-measure/makeReq_batching", "measure desc", "unit")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -568,7 +568,7 @@ func TestExporter_createMeasure(t *testing.T) {
 	}()
 
 	key, _ := tag.NewKey("test-key-one")
-	m, err := stats.NewFloat64("test-measure/TestExporter_createMeasure", "measure desc", "unit")
+	m, err := stats.Float64("test-measure/TestExporter_createMeasure", "measure desc", "unit")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -622,7 +622,7 @@ func TestExporter_createMeasure(t *testing.T) {
 }
 
 func TestExporter_makeReq_withCustomMonitoredResource(t *testing.T) {
-	m, err := stats.NewFloat64("test-measure/TestExporter_makeReq_withCustomMonitoredResource", "measure desc", "unit")
+	m, err := stats.Float64("test-measure/TestExporter_makeReq_withCustomMonitoredResource", "measure desc", "unit")
 	if err != nil {
 		t.Fatal(err)
 	}

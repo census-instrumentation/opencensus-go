@@ -37,17 +37,17 @@ func TestCheckMeasureName(t *testing.T) {
 }
 
 func Test_FindMeasure(t *testing.T) {
-	mf1, err := NewFloat64("MF1", "desc MF1", "unit")
+	mf1, err := Float64("MF1", "desc MF1", "unit")
 	if err != nil {
-		t.Errorf("stats.NewFloat64(\"MF1\", \"desc MF1\") got error %v, want no error", err)
+		t.Errorf("stats.Float64(\"MF1\", \"desc MF1\") got error %v, want no error", err)
 	}
-	mf2, err := NewFloat64("MF2", "desc MF2", "unit")
+	mf2, err := Float64("MF2", "desc MF2", "unit")
 	if err != nil {
-		t.Errorf("stats.NewFloat64(\"MF2\", \"desc MF2\") got error %v, want no error", err)
+		t.Errorf("stats.Float64(\"MF2\", \"desc MF2\") got error %v, want no error", err)
 	}
-	mi1, err := NewInt64("MI1", "desc MI1", "unit")
+	mi1, err := Int64("MI1", "desc MI1", "unit")
 	if err != nil {
-		t.Errorf("stats.NewInt64(\"MI1\", \"desc MI1\") got error %v, want no error", err)
+		t.Errorf("stats.Int64(\"MI1\", \"desc MI1\") got error %v, want no error", err)
 	}
 
 	type testCase struct {

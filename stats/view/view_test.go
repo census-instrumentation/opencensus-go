@@ -187,7 +187,6 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowCumulative(t *testin
 	}
 }
 
-
 func Test_View_MeasureFloat64_AggregationSum(t *testing.T) {
 	k1, _ := tag.NewKey("k1")
 	k2, _ := tag.NewKey("k2")

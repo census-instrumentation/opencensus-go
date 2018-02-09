@@ -15,41 +15,41 @@
 
 package stats
 
-// Float64 is a measure of type float64.
-type Float64 struct {
+// Float64Measure is a measure of type float64.
+type Float64Measure struct {
 	name        string
 	unit        string
 	description string
 }
 
 // Name returns the name of the measure.
-func (m *Float64) Name() string {
+func (m *Float64Measure) Name() string {
 	return m.name
 }
 
 // Description returns the description of the measure.
-func (m *Float64) Description() string {
+func (m *Float64Measure) Description() string {
 	return m.description
 }
 
 // Unit returns the unit of the measure.
-func (m *Float64) Unit() string {
+func (m *Float64Measure) Unit() string {
 	return m.unit
 }
 
 // M creates a new float64 measurement.
 // Use Record to record measurements.
-func (m *Float64) M(v float64) Measurement {
+func (m *Float64Measure) M(v float64) Measurement {
 	return Measurement{Measure: m, Value: v}
 }
 
-// NewFloat64 creates a new measure of type Float64. It returns
+// Float64 creates a new measure of type Float64Measure. It returns
 // an error if a measure with the same name already exists.
-func NewFloat64(name, description, unit string) (*Float64, error) {
+func Float64(name, description, unit string) (*Float64Measure, error) {
 	if err := checkName(name); err != nil {
 		return nil, err
 	}
-	m := &Float64{
+	m := &Float64Measure{
 		name:        name,
 		description: description,
 		unit:        unit,

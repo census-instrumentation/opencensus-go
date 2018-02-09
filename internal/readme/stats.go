@@ -31,7 +31,7 @@ func statsExamples() {
 	ctx := context.Background()
 
 	// START measure
-	videoSize, err := stats.NewInt64("my.org/video_size", "processed video size", "MB")
+	videoSize, err := stats.Int64("my.org/video_size", "processed video size", "MB")
 	if err != nil {
 		log.Fatal(err)
 	}

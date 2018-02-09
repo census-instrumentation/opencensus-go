@@ -18,8 +18,8 @@ func BenchmarkRecord(b *testing.B) {
 	}
 }
 
-func makeMeasure() *stats.Int64 {
-	m, err := stats.NewInt64("m", "test measure", "")
+func makeMeasure() *stats.Int64Measure {
+	m, err := stats.Int64("m", "test measure", "")
 	if err != nil {
 		log.Fatal(err)
 	}
