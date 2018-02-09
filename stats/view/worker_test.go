@@ -213,9 +213,9 @@ func Test_Worker_ViewRegistration(t *testing.T) {
 		t.Run(tc.label, func(t *testing.T) {
 			restart()
 
-			v1, _ := New("VF1", "desc VF1", nil, mf1, nil, nil)
-			v11, _ := New("VF1", "desc duplicate name VF1", nil, mf1, nil, nil)
-			v2, _ := New("VF2", "desc VF2", nil, mf2, nil, nil)
+			v1, _ := New("VF1", "desc VF1", nil, mf1, nil)
+			v11, _ := New("VF1", "desc duplicate name VF1", nil, mf1, nil)
+			v2, _ := New("VF2", "desc VF2", nil, mf2, nil)
 
 			views := map[string]*View{
 				"v1ID":         v1,
@@ -283,11 +283,11 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	v1, err := New("VF1", "desc VF1", []tag.Key{k1, k2}, m, CountAggregation{}, Cumulative{})
+	v1, err := New("VF1", "desc VF1", []tag.Key{k1, k2}, m, CountAggregation{})
 	if err != nil {
 		t.Fatal(err)
 	}
-	v2, err := New("VF2", "desc VF2", []tag.Key{k1, k2}, m, CountAggregation{}, Cumulative{})
+	v2, err := New("VF2", "desc VF2", []tag.Key{k1, k2}, m, CountAggregation{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -421,9 +421,8 @@ func TestReportUsage(t *testing.T) {
 		t.Fatalf("stats.NewInt64() = %v", err)
 	}
 
-	cum1, _ := New("cum1", "", nil, m, CountAggregation{}, Cumulative{})
-	cum2, _ := New("cum1", "", nil, m, CountAggregation{}, &Cumulative{})
-	interval, _ := New("cum1", "", nil, m, CountAggregation{}, Interval{Duration: 5 * time.Millisecond, SubIntervals: 1})
+	cum1, _ := New("cum1", "", nil, m, CountAggregation{})
+	cum2, _ := New("cum1", "", nil, m, CountAggregation{})
 
 	tests := []struct {
 		name         string
@@ -439,11 +438,6 @@ func TestReportUsage(t *testing.T) {
 			name:         "cum2",
 			view:         cum2,
 			wantMaxCount: 8,
-		},
-		{
-			name:         "interval",
-			view:         interval,
-			wantMaxCount: 2,
 		},
 	}
 
@@ -500,22 +494,22 @@ func Test_SetReportingPeriodReqNeverBlocks(t *testing.T) {
 	}
 }
 
-func TestWorkerCumStarttime(t *testing.T) {
+func TestWorkerStarttime(t *testing.T) {
 	restart()
 
 	ctx := context.Background()
-	m, err := stats.NewInt64("measure/TestWorkerCumStarttime", "desc", "unit")
+	m, err := stats.NewInt64("measure/TestWorkerStarttime", "desc", "unit")
 	if err != nil {
 		t.Fatalf("stats.NewInt64() = %v", err)
 	}
-	view, err := New("cum", "", nil, m, CountAggregation{}, Cumulative{})
+	v, err := New("testview", "", nil, m, CountAggregation{})
 	if err != nil {
 		t.Fatalf("New() = %v", err)
 	}
 
 	SetReportingPeriod(25 * time.Millisecond)
-	if err := view.Subscribe(); err != nil {
-		t.Fatalf("cannot subscribe to %v: %v", view.Name(), err)
+	if err := v.Subscribe(); err != nil {
+		t.Fatalf("cannot subscribe to %v: %v", v.Name(), err)
 	}
 
 	e := &vdExporter{}

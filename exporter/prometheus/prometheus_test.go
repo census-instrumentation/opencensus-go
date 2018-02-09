@@ -25,9 +25,9 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-func newView(agg view.Aggregation, window view.Window) *view.View {
+func newView(agg view.Aggregation) *view.View {
 	m, _ := stats.NewInt64("tests/foo1", "bytes", "byte")
-	view, _ := view.New("foo", "bar", nil, m, agg, window)
+	view, _ := view.New("foo", "bar", nil, m, agg)
 	return view
 }
 
@@ -44,13 +44,13 @@ func TestOnlyCumulativeWindowSupported(t *testing.T) {
 	}{
 		0: {
 			vds: &view.Data{
-				View: newView(view.CountAggregation{}, view.Cumulative{}),
+				View: newView(view.CountAggregation{}),
 			},
 			want: 0, // no rows present
 		},
 		1: {
 			vds: &view.Data{
-				View: newView(view.CountAggregation{}, view.Cumulative{}),
+				View: newView(view.CountAggregation{}),
 				Rows: []*view.Row{
 					{nil, &count1},
 				},
@@ -59,16 +59,7 @@ func TestOnlyCumulativeWindowSupported(t *testing.T) {
 		},
 		2: {
 			vds: &view.Data{
-				View: newView(view.CountAggregation{}, view.Interval{}),
-				Rows: []*view.Row{
-					{nil, &count1},
-				},
-			},
-			want: 0,
-		},
-		3: {
-			vds: &view.Data{
-				View: newView(view.MeanAggregation{}, view.Cumulative{}),
+				View: newView(view.MeanAggregation{}),
 				Rows: []*view.Row{
 					{nil, &mean1},
 				},
@@ -140,8 +131,8 @@ func TestCollectNonRacy(t *testing.T) {
 			count1 := view.CountData(1)
 			mean1 := &view.MeanData{Mean: 4.5, Count: 5}
 			vds := []*view.Data{
-				{View: newView(view.MeanAggregation{}, view.Cumulative{}), Rows: []*view.Row{{nil, mean1}}},
-				{View: newView(view.CountAggregation{}, view.Cumulative{}), Rows: []*view.Row{{nil, &count1}}},
+				{View: newView(view.MeanAggregation{}), Rows: []*view.Row{{nil, mean1}}},
+				{View: newView(view.CountAggregation{}), Rows: []*view.Row{{nil, &count1}}},
 			}
 			for _, v := range vds {
 				exp.ExportView(v)

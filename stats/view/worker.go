@@ -231,13 +231,11 @@ func (w *worker) reportUsage(start time.Time) {
 			continue
 		}
 		rows := v.collectedRows(start)
-		if isCumulative(v) {
-			s, ok := w.startTimes[v]
-			if !ok {
-				w.startTimes[v] = start
-			} else {
-				start = s
-			}
+		s, ok := w.startTimes[v]
+		if !ok {
+			w.startTimes[v] = start
+		} else {
+			start = s
 		}
 		// Make sure collector is never going
 		// to mutate the exported data.
@@ -253,20 +251,7 @@ func (w *worker) reportUsage(start time.Time) {
 			e.ExportView(viewData)
 		}
 		exportersMu.Unlock()
-		if !isCumulative(v) {
-			v.clearRows()
-		}
 	}
-}
-
-func isCumulative(v *View) bool {
-	switch v.Window().(type) {
-	case *Cumulative:
-		return true
-	case Cumulative:
-		return true
-	}
-	return false
 }
 
 func deepCopyRowData(rows []*Row) []*Row {

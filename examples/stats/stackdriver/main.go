@@ -13,7 +13,7 @@
 // limitations under the License.
 
 // Command stackdriver is an example program that collects data for
-// video size over a time window. Collected data is exported to
+// video size. Collected data is exported to
 // Stackdriver Monitoring.
 package main
 
@@ -63,7 +63,6 @@ func main() {
 		nil,
 		videoSize,
 		view.DistributionAggregation([]float64{0, 1 << 16, 1 << 32}),
-		view.Cumulative{},
 	)
 	if err != nil {
 		log.Fatalf("Cannot create view: %v", err)

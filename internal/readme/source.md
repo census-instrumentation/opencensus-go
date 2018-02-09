@@ -90,12 +90,6 @@ sample values.
 
 [embedmd]:# (stats.go aggs)
 
-### Create an aggregation window
-
-Use Cumulative to continuously aggregate the recorded data.
-
-[embedmd]:# (stats.go windows)
-
 ### Creating, registering and unregistering a view
 
 Create and register a view:

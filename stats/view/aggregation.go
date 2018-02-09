@@ -15,15 +15,13 @@
 
 package view
 
-import "time"
-
 // Aggregation represents a data aggregation method. There are several
 // aggregation methods made available in the package such as
 // CountAggregation, SumAggregation, MeanAggregation and
 // DistributionAggregation.
 type Aggregation interface {
 	isAggregation() bool
-	newData() func() AggregationData
+	newData() AggregationData
 }
 
 // CountAggregation indicates that data collected and aggregated
@@ -34,8 +32,8 @@ type CountAggregation struct{}
 
 func (a CountAggregation) isAggregation() bool { return true }
 
-func (a CountAggregation) newData() func() AggregationData {
-	return func() AggregationData { return newCountData(0) }
+func (a CountAggregation) newData() AggregationData {
+	return newCountData(0)
 }
 
 // SumAggregation indicates that data collected and aggregated
@@ -46,8 +44,8 @@ type SumAggregation struct{}
 
 func (a SumAggregation) isAggregation() bool { return true }
 
-func (a SumAggregation) newData() func() AggregationData {
-	return func() AggregationData { return newSumData(0) }
+func (a SumAggregation) newData() AggregationData {
+	return newSumData(0)
 }
 
 // MeanAggregation indicates that collect and aggregate data and maintain
@@ -58,8 +56,8 @@ type MeanAggregation struct{}
 
 func (a MeanAggregation) isAggregation() bool { return true }
 
-func (a MeanAggregation) newData() func() AggregationData {
-	return func() AggregationData { return newMeanData(0, 0) }
+func (a MeanAggregation) newData() AggregationData {
+	return newMeanData(0, 0)
 }
 
 // DistributionAggregation indicates that the desired aggregation is
@@ -84,122 +82,6 @@ type DistributionAggregation []float64
 
 func (a DistributionAggregation) isAggregation() bool { return true }
 
-func (a DistributionAggregation) newData() func() AggregationData {
-	return func() AggregationData { return newDistributionData([]float64(a)) }
-}
-
-// aggregatorCumulative indicates that the aggregation occurs over all samples
-// seen since the view collection started.
-type aggregatorCumulative struct {
-	data AggregationData
-}
-
-// newAggregatorCumulative creates an aggregatorCumulative.
-func newAggregatorCumulative(now time.Time, newAggregationValue func() AggregationData) *aggregatorCumulative {
-	return &aggregatorCumulative{
-		data: newAggregationValue(),
-	}
-}
-
-func (a *aggregatorCumulative) isAggregator() bool {
-	return true
-}
-
-func (a *aggregatorCumulative) addSample(v interface{}, now time.Time) {
-	a.data.addSample(v)
-}
-
-func (a *aggregatorCumulative) retrieveCollected(now time.Time) AggregationData {
-	return a.data
-}
-
-// aggregatorInterval indicates that the aggregation occurs over a
-// window of time.
-type aggregatorInterval struct {
-	// keptDuration is the full duration that needs to be kept in memory in
-	// order to retrieve the aggregated data whenever it is requested. Its size
-	// is subDuration*len(entries+1). The actual desiredDuration interval is
-	// slightly shorter: subDuration*len(entries). The extra subDuration is
-	// needed to compute an approximation of the collected stats over the last
-	// desiredDuration without storing every instance with its timestamp.
-	keptDuration    time.Duration
-	desiredDuration time.Duration
-	subDuration     time.Duration
-	entries         []*timeSerieEntry
-	idx             int
-}
-
-const defaultSubIntervals = 5
-
-// newAggregatorInterval creates an aggregatorSlidingTime.
-func newAggregatorInterval(now time.Time, d time.Duration, subIntervalsCount int, newAggregationValue func() AggregationData) *aggregatorInterval {
-	if subIntervalsCount == 0 {
-		subIntervalsCount = defaultSubIntervals
-	}
-	subDuration := d / time.Duration(subIntervalsCount)
-	start := now.Add(-subDuration * time.Duration(subIntervalsCount))
-	var entries []*timeSerieEntry
-	// Keeps track of subIntervalsCount+1 entries in order to approximate the
-	// collected stats without storing every instance with its timestamp.
-	for i := 0; i <= subIntervalsCount; i++ {
-		entries = append(entries, &timeSerieEntry{
-			endTime: start.Add(subDuration),
-			av:      newAggregationValue(),
-		})
-		start = start.Add(subDuration)
-	}
-
-	return &aggregatorInterval{
-		keptDuration:    subDuration * time.Duration(len(entries)),
-		desiredDuration: subDuration * time.Duration(len(entries)-1), // this is equal to d
-		subDuration:     subDuration,
-		entries:         entries,
-		idx:             subIntervalsCount,
-	}
-}
-
-func (a *aggregatorInterval) isAggregator() bool {
-	return true
-}
-
-func (a *aggregatorInterval) addSample(v interface{}, now time.Time) {
-	a.moveToCurrentEntry(now)
-	e := a.entries[a.idx]
-	e.av.addSample(v)
-}
-
-func (a *aggregatorInterval) retrieveCollected(now time.Time) AggregationData {
-	a.moveToCurrentEntry(now)
-
-	e := a.entries[a.idx]
-	remaining := float64(e.endTime.Sub(now)) / float64(a.subDuration)
-	oldestIdx := (a.idx + 1) % len(a.entries)
-
-	e = a.entries[oldestIdx]
-	ret := e.av.multiplyByFraction(remaining)
-
-	for j := 1; j < len(a.entries); j++ {
-		oldestIdx = (oldestIdx + 1) % len(a.entries)
-		e = a.entries[oldestIdx]
-		ret.addOther(e.av)
-	}
-	return ret
-}
-
-func (a *aggregatorInterval) moveToCurrentEntry(now time.Time) {
-	e := a.entries[a.idx]
-	for {
-		if e.endTime.After(now) {
-			break
-		}
-		a.idx = (a.idx + 1) % len(a.entries)
-		e = a.entries[a.idx]
-		e.endTime = e.endTime.Add(a.keptDuration)
-		e.av.clear()
-	}
-}
-
-type timeSerieEntry struct {
-	endTime time.Time
-	av      AggregationData
+func (a DistributionAggregation) newData() AggregationData {
+	return newDistributionData([]float64(a))
 }

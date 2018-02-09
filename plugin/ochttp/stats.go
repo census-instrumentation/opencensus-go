@@ -60,16 +60,14 @@ var (
 		"Client request count by HTTP method",
 		[]tag.Key{Method},
 		ClientRequest,
-		aggCount,
-		&view.Cumulative{}))
+		aggCount))
 	// ClientResponseCountByStatusCode is a count of all instrumented HTTP responses HTTP status code.
 	ClientResponseCountByStatusCode = mustView(view.New(
 		qualify("response_count_by_status_code"),
 		"Client response count by status code",
 		[]tag.Key{StatusCode},
 		ClientLatency,
-		aggCount,
-		&view.Cumulative{}))
+		aggCount))
 
 	// Host is the value of the HTTP Host header.
 	Host = key("host")
@@ -83,7 +81,7 @@ var (
 )
 
 func defaultView(m stats.Measure, agg view.Aggregation) *view.View {
-	v, err := view.New(m.Name(), m.Description(), nil, m, agg, view.Cumulative{})
+	v, err := view.New(m.Name(), m.Description(), nil, m, agg)
 	if err != nil {
 		panic(err)
 	}

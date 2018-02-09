@@ -40,50 +40,18 @@ var (
 	// A view's map value indicates whether that view contains data for received
 	// RPCs.
 	viewType = map[*view.View]bool{
-		grpcstats.RPCClientErrorCountHourView:          false,
-		grpcstats.RPCClientErrorCountMinuteView:        false,
 		grpcstats.RPCClientErrorCountView:              false,
-		grpcstats.RPCClientFinishedCountHourView:       false,
-		grpcstats.RPCClientFinishedCountMinuteView:     false,
-		grpcstats.RPCClientRequestBytesHourView:        false,
-		grpcstats.RPCClientRequestBytesMinuteView:      false,
 		grpcstats.RPCClientRequestBytesView:            false,
-		grpcstats.RPCClientRequestCountHourView:        false,
-		grpcstats.RPCClientRequestCountMinuteView:      false,
 		grpcstats.RPCClientRequestCountView:            false,
-		grpcstats.RPCClientResponseBytesHourView:       false,
-		grpcstats.RPCClientResponseBytesMinuteView:     false,
 		grpcstats.RPCClientResponseBytesView:           false,
-		grpcstats.RPCClientResponseCountHourView:       false,
-		grpcstats.RPCClientResponseCountMinuteView:     false,
 		grpcstats.RPCClientResponseCountView:           false,
-		grpcstats.RPCClientRoundTripLatencyHourView:    false,
-		grpcstats.RPCClientRoundTripLatencyMinuteView:  false,
 		grpcstats.RPCClientRoundTripLatencyView:        false,
-		grpcstats.RPCClientStartedCountHourView:        false,
-		grpcstats.RPCClientStartedCountMinuteView:      false,
-		grpcstats.RPCServerErrorCountHourView:          true,
-		grpcstats.RPCServerErrorCountMinuteView:        true,
 		grpcstats.RPCServerErrorCountView:              true,
-		grpcstats.RPCServerFinishedCountHourView:       true,
-		grpcstats.RPCServerFinishedCountMinuteView:     true,
-		grpcstats.RPCServerRequestBytesHourView:        true,
-		grpcstats.RPCServerRequestBytesMinuteView:      true,
 		grpcstats.RPCServerRequestBytesView:            true,
-		grpcstats.RPCServerRequestCountHourView:        true,
-		grpcstats.RPCServerRequestCountMinuteView:      true,
 		grpcstats.RPCServerRequestCountView:            true,
-		grpcstats.RPCServerResponseBytesHourView:       true,
-		grpcstats.RPCServerResponseBytesMinuteView:     true,
 		grpcstats.RPCServerResponseBytesView:           true,
-		grpcstats.RPCServerResponseCountHourView:       true,
-		grpcstats.RPCServerResponseCountMinuteView:     true,
 		grpcstats.RPCServerResponseCountView:           true,
-		grpcstats.RPCServerServerElapsedTimeHourView:   true,
-		grpcstats.RPCServerServerElapsedTimeMinuteView: true,
 		grpcstats.RPCServerServerElapsedTimeView:       true,
-		grpcstats.RPCServerStartedCountHourView:        true,
-		grpcstats.RPCServerStartedCountMinuteView:      true,
 	}
 )
 
@@ -254,6 +222,7 @@ func (s *statGroup) Less(i, j int) bool {
 // statSnapshot holds the data items that are presented in a single row of RPC
 // stat information.
 type statSnapshot struct {
+	// TODO: compute hour/minute values from cumulative
 	Method           string
 	Received         bool
 	CountMinute      int
@@ -316,7 +285,7 @@ func (s snapExporter) ExportView(vd *view.Data) {
 	for _, row := range vd.Rows {
 		var method string
 		for _, tag := range row.Tags {
-			if tag.Key.Name() == "method" {
+			if tag.Key == grpcstats.KeyMethod {
 				method = tag.Value
 				break
 			}
@@ -352,115 +321,40 @@ func (s snapExporter) ExportView(vd *view.Data) {
 
 		// Update field of s corresponding to the view.
 		switch vd.View {
-		case grpcstats.RPCClientErrorCountHourView:
-			s.ErrorsHour = int(count)
-		case grpcstats.RPCClientErrorCountMinuteView:
-			s.ErrorsMinute = int(count)
 		case grpcstats.RPCClientErrorCountView:
 			s.ErrorsTotal = int(count)
 
-		case grpcstats.RPCClientRoundTripLatencyHourView:
-			s.AvgLatencyHour = convertTime(sum / count)
-			s.MaxLatencyHour = convertTime(dist.Max)
-		case grpcstats.RPCClientRoundTripLatencyMinuteView:
-			s.AvgLatencyMinute = convertTime(sum / count)
-			s.MaxLatencyMinute = convertTime(dist.Max)
 		case grpcstats.RPCClientRoundTripLatencyView:
 			s.AvgLatencyTotal = convertTime(sum / count)
 			s.MaxLatencyTotal = convertTime(dist.Max)
 
-		case grpcstats.RPCClientRequestBytesHourView:
-			s.OutputRateHour = computeRate(3600, sum)
-		case grpcstats.RPCClientRequestBytesMinuteView:
-			s.OutputRateMinute = computeRate(60, sum)
 		case grpcstats.RPCClientRequestBytesView:
 			s.OutputRateTotal = computeRate(0, sum)
 
-		case grpcstats.RPCClientResponseBytesHourView:
-			s.InputRateHour = computeRate(3600, sum)
-		case grpcstats.RPCClientResponseBytesMinuteView:
-			s.InputRateMinute = computeRate(60, sum)
 		case grpcstats.RPCClientResponseBytesView:
 			s.InputRateTotal = computeRate(0, sum)
 
-		case grpcstats.RPCClientStartedCountHourView:
-			s.CountHour = int(count)
-			s.RPCRateHour = computeRate(3600, count)
-		case grpcstats.RPCClientStartedCountMinuteView:
-			s.CountMinute = int(count)
-			s.RPCRateMinute = computeRate(60, count)
-
-		case grpcstats.RPCClientFinishedCountHourView:
-			// currently unused
-		case grpcstats.RPCClientFinishedCountMinuteView:
-			// currently unused
-
-		case grpcstats.RPCClientRequestCountHourView:
-		case grpcstats.RPCClientRequestCountMinuteView:
 		case grpcstats.RPCClientRequestCountView:
 			s.CountTotal = int(count)
 			s.RPCRateTotal = computeRate(0, count)
 
-		case grpcstats.RPCClientResponseCountHourView:
-			// currently unused
-		case grpcstats.RPCClientResponseCountMinuteView:
-			// currently unused
 		case grpcstats.RPCClientResponseCountView:
 			// currently unused
 
-		case grpcstats.RPCServerErrorCountHourView:
-			s.ErrorsHour = int(count)
-		case grpcstats.RPCServerErrorCountMinuteView:
-			s.ErrorsMinute = int(count)
 		case grpcstats.RPCServerErrorCountView:
 			s.ErrorsTotal = int(count)
 
-		case grpcstats.RPCServerServerElapsedTimeHourView:
-			s.AvgLatencyHour = convertTime(sum / count)
-			s.MaxLatencyHour = convertTime(dist.Max)
-		case grpcstats.RPCServerServerElapsedTimeMinuteView:
-			s.AvgLatencyMinute = convertTime(sum / count)
-			s.MaxLatencyMinute = convertTime(dist.Max)
 		case grpcstats.RPCServerServerElapsedTimeView:
 			s.AvgLatencyTotal = convertTime(sum / count)
 			s.MaxLatencyTotal = convertTime(dist.Max)
 
-		case grpcstats.RPCServerRequestBytesHourView:
-			s.InputRateHour = computeRate(3600, sum)
-		case grpcstats.RPCServerRequestBytesMinuteView:
-			s.InputRateMinute = computeRate(60, sum)
-		case grpcstats.RPCServerRequestBytesView:
-			s.InputRateTotal = computeRate(0, sum)
-
-		case grpcstats.RPCServerResponseBytesHourView:
-			s.OutputRateHour = computeRate(3600, sum)
-		case grpcstats.RPCServerResponseBytesMinuteView:
-			s.OutputRateMinute = computeRate(60, sum)
 		case grpcstats.RPCServerResponseBytesView:
 			s.OutputRateTotal = computeRate(0, sum)
 
-		case grpcstats.RPCServerStartedCountHourView:
-			s.CountHour = int(count)
-			s.RPCRateHour = computeRate(3600, count)
-		case grpcstats.RPCServerStartedCountMinuteView:
-			s.CountMinute = int(count)
-			s.RPCRateMinute = computeRate(60, count)
-
-		case grpcstats.RPCServerFinishedCountHourView:
-			// currently unused
-		case grpcstats.RPCServerFinishedCountMinuteView:
-			// currently unused
-
-		case grpcstats.RPCServerRequestCountHourView:
-		case grpcstats.RPCServerRequestCountMinuteView:
 		case grpcstats.RPCServerRequestCountView:
 			s.CountTotal = int(count)
 			s.RPCRateTotal = computeRate(0, count)
 
-		case grpcstats.RPCServerResponseCountHourView:
-			// currently unused
-		case grpcstats.RPCServerResponseCountMinuteView:
-			// currently unused
 		case grpcstats.RPCServerResponseCountView:
 			// currently unused
 		}
