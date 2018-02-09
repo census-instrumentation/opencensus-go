@@ -16,7 +16,6 @@ package view_test
 
 import (
 	"log"
-	"time"
 
 	"go.opencensus.io/stats"
 	"go.opencensus.io/stats/view"
@@ -28,18 +27,17 @@ func Example_view() {
 		log.Fatal(err)
 	}
 
-	view, err := view.New(
+	v, err := view.New(
 		"my.org/views/openconns",
 		"open connections distribution over one second time window",
 		nil,
 		m,
 		view.DistributionAggregation([]float64{0, 1000, 2000}),
-		view.Interval{Duration: time.Second},
 	)
 	if err != nil {
 		log.Fatal(err)
 	}
-	if err := view.Subscribe(); err != nil {
+	if err := v.Subscribe(); err != nil {
 		log.Fatal(err)
 	}
 

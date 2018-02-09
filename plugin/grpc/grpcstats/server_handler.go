@@ -138,7 +138,7 @@ func (h *ServerStatsHandler) handleRPCEnd(ctx context.Context, s *stats.End) {
 		s, ok := status.FromError(s.Error)
 		if ok {
 			ctx, _ = tag.New(ctx,
-				tag.Upsert(keyStatus, s.Code().String()),
+				tag.Upsert(KeyStatus, s.Code().String()),
 			)
 		}
 		m = append(m, RPCServerErrorCount.M(1))
@@ -151,7 +151,7 @@ func (h *ServerStatsHandler) handleRPCEnd(ctx context.Context, s *stats.End) {
 // gRPC metadata.
 func (h *ServerStatsHandler) createTags(ctx context.Context, fullinfo string) (context.Context, error) {
 	mods := []tag.Mutator{
-		tag.Upsert(keyMethod, methodName(fullinfo)),
+		tag.Upsert(KeyMethod, methodName(fullinfo)),
 	}
 	if tagsBin := stats.Tags(ctx); tagsBin != nil {
 		old, err := tag.Decode([]byte(tagsBin))

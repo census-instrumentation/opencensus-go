@@ -28,10 +28,10 @@ import (
 	"go.opencensus.io/tag"
 )
 
-// View allows users to filter and aggregate the recorded events
-// over a time window. Each view has to be registered to enable
-// data retrieval. Use New to initiate new views.
-// Unregister views once you don't want to collect any more events.
+// View allows users to filter and aggregate the recorded events.
+// Each view has to be registered to enable data retrieval. Use New to
+// initiate new views. Unregister views once you don't want to collect any more
+// events.
 type View struct {
 	name        string // name of View. Must be unique.
 	description string
@@ -51,13 +51,12 @@ type View struct {
 // View names need to be unique globally in the entire system.
 //
 // Data collection will only filter measurements recorded by the given keys.
-// Collected data will be processed by the given aggregation algorithm for
-// the given time window.
+// Collected data will be processed by the given aggregation algorithm.
 //
 // Views need to be subscribed toin order to retrieve collection data.
 //
 // Once the view is no longer required, the view can be unregistered.
-func New(name, description string, keys []tag.Key, measure stats.Measure, agg Aggregation, window Window) (*View, error) {
+func New(name, description string, keys []tag.Key, measure stats.Measure, agg Aggregation) (*View, error) {
 	if err := checkViewName(name); err != nil {
 		return nil, err
 	}
@@ -72,7 +71,7 @@ func New(name, description string, keys []tag.Key, measure stats.Measure, agg Ag
 		description: description,
 		tagKeys:     ks,
 		m:           measure,
-		collector:   &collector{make(map[string]aggregator), agg, window},
+		collector:   &collector{make(map[string]AggregationData), agg},
 	}, nil
 }
 
@@ -109,12 +108,6 @@ func (v *View) TagKeys() []tag.Key {
 	return v.tagKeys
 }
 
-// Window returns the timing window being used to collect
-// metrics from this view.
-func (v *View) Window() Window {
-	return v.collector.w
-}
-
 // Aggregation returns the data aggregation method used to aggregate
 // the measurements collected by this view.
 func (v *View) Aggregation() Aggregation {
@@ -139,8 +132,7 @@ func (v *View) addSample(m *tag.Map, val interface{}, now time.Time) {
 }
 
 // A Data is a set of rows about usage of the single measure associated
-// with the given view during a particular window. Each row is specific to a
-// unique set of tags.
+// with the given view. Each row is specific to a unique set of tags.
 type Data struct {
 	View       *View
 	Start, End time.Time

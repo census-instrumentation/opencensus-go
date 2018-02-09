@@ -117,6 +117,9 @@ func TestTransport_RoundTrip(t *testing.T) {
 }
 
 func TestHandler(t *testing.T) {
+	// TODO(#431): remove SetDefaultSampler
+	trace.SetDefaultSampler(trace.ProbabilitySampler(0.0))
+
 	traceID := [16]byte{16, 84, 69, 170, 120, 67, 188, 139, 242, 6, 177, 32, 0, 16, 0, 0}
 	tests := []struct {
 		header           string

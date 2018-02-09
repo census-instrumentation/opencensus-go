@@ -56,10 +56,6 @@ func statsExamples() {
 
 	_, _, _, _ = distAgg, countAgg, sumAgg, meanAgg
 
-	// START windows
-	cum := view.Cumulative{}
-	// END windows
-
 	// START view
 	v, err := view.New(
 		"my.org/video_size_distribution",
@@ -67,7 +63,6 @@ func statsExamples() {
 		nil,
 		videoSize,
 		distAgg,
-		cum,
 	)
 	if err != nil {
 		log.Fatalf("cannot create view: %v", err)

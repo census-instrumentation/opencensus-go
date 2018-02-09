@@ -62,20 +62,16 @@ var (
 	aggDistMillis = view.DistributionAggregation(rpcMillisBucketBoundaries)
 	aggDistCounts = view.DistributionAggregation(rpcCountBucketBoundaries)
 
-	windowCumulative    = view.Cumulative{}
-	windowSlidingHour   = view.Interval{Duration: 1 * time.Hour, SubIntervals: 6}
-	windowSlidingMinute = view.Interval{Duration: 1 * time.Minute, SubIntervals: 6}
-
-	keyMethod tag.Key
-	keyStatus tag.Key
+	KeyMethod tag.Key
+	KeyStatus tag.Key
 )
 
 func init() {
 	var err error
-	if keyMethod, err = tag.NewKey("method"); err != nil {
+	if KeyMethod, err = tag.NewKey("method"); err != nil {
 		log.Fatalf("Cannot create method key: %v", err)
 	}
-	if keyStatus, err = tag.NewKey("canonical_status"); err != nil {
+	if KeyStatus, err = tag.NewKey("canonical_status"); err != nil {
 		log.Fatalf("Cannot create canonical_status key: %v", err)
 	}
 	initServer()
