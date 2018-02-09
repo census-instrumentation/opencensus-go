@@ -27,7 +27,7 @@ import (
 	"time"
 
 	"go.opencensus.io/internal"
-	"go.opencensus.io/plugin/grpc/grpcstats"
+	"go.opencensus.io/plugin/ocgrpc/grpcstats"
 	"go.opencensus.io/stats/view"
 )
 

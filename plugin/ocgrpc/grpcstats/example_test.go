@@ -12,13 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package grpc_test
+package grpcstats_test
 
 import (
 	"log"
 
-	ocgrpc "go.opencensus.io/plugin/grpc"
-	"go.opencensus.io/plugin/grpc/grpcstats"
+	"go.opencensus.io/plugin/ocgrpc/grpcstats"
 	"google.golang.org/grpc"
 )
 
@@ -28,9 +27,9 @@ func ExampleNewClientStatsHandler() {
 		log.Fatal(err)
 	}
 
-	// Set up a connection to the server with the OpenCensus
-	// stats handler to enable stats and tracing.
-	conn, err := grpc.Dial("address", grpc.WithStatsHandler(ocgrpc.NewClientStatsHandler()))
+	// Set up a new client connection with the OpenCensus
+	// stats handler to enable stats collection from the views.
+	conn, err := grpc.Dial("address", grpc.WithStatsHandler(grpcstats.NewClientStatsHandler()))
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 	}
@@ -43,8 +42,8 @@ func ExampleNewServerStatsHandler() {
 		log.Fatal(err)
 	}
 
-	// Set up a new server with the OpenCensus
-	// stats handler to enable stats and tracing.
-	s := grpc.NewServer(grpc.StatsHandler(ocgrpc.NewServerStatsHandler()))
+	// Set up a new server with the OpenCensus stats handler
+	// to enable stats collection from the views.
+	s := grpc.NewServer(grpc.StatsHandler(grpcstats.NewClientStatsHandler()))
 	_ = s // use s
 }

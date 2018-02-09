@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package grpc
+package ocgrpc
 
 import (
 	"testing"
@@ -20,7 +20,7 @@ import (
 
 	"golang.org/x/net/context"
 
-	"go.opencensus.io/plugin/grpc/grpcstats"
+	"go.opencensus.io/plugin/ocgrpc/grpcstats"
 	"go.opencensus.io/trace"
 
 	"google.golang.org/grpc/stats"

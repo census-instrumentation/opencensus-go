@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package grpc contains OpenCensus stats and trace
+// Package ocgrpc contains OpenCensus stats and trace
 // integrations with gRPC.
-package grpc
+package ocgrpc // import "go.opencensus.io/plugin/ocgrpc"
 
 import (
 	"golang.org/x/net/context"
 
-	"go.opencensus.io/plugin/grpc/grpcstats"
-	"go.opencensus.io/plugin/grpc/grpctrace"
+	"go.opencensus.io/plugin/ocgrpc/grpcstats"
+	"go.opencensus.io/plugin/ocgrpc/grpctrace"
 
 	"google.golang.org/grpc/stats"
 )
