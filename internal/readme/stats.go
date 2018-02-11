@@ -21,6 +21,7 @@ import (
 	"time"
 
 	"go.opencensus.io/stats"
+	"go.opencensus.io/stats/view"
 )
 
 // README.md is generated with the examples here by using embedmd.
@@ -30,7 +31,7 @@ func statsExamples() {
 	ctx := context.Background()
 
 	// START measure
-	videoSize, err := stats.NewMeasureInt64("my.org/video_size", "processed video size", "MB")
+	videoSize, err := stats.NewInt64("my.org/video_size", "processed video size", "MB")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -46,27 +47,21 @@ func statsExamples() {
 
 	_ = m
 
-	// START deleteMeasure
-	if err := stats.DeleteMeasure(m); err != nil {
-		log.Fatal(err)
-	}
-	// END deleteMeasure
-
 	// START aggs
-	distAgg := stats.DistributionAggregation([]float64{0, 1 << 32, 2 << 32, 3 << 32})
-	countAgg := stats.CountAggregation{}
-	sumAgg := stats.SumAggregation{}
-	meanAgg := stats.MeanAggregation{}
+	distAgg := view.DistributionAggregation([]float64{0, 1 << 32, 2 << 32, 3 << 32})
+	countAgg := view.CountAggregation{}
+	sumAgg := view.SumAggregation{}
+	meanAgg := view.MeanAggregation{}
 	// END aggs
 
 	_, _, _, _ = distAgg, countAgg, sumAgg, meanAgg
 
 	// START windows
-	cum := stats.Cumulative{}
+	cum := view.Cumulative{}
 	// END windows
 
 	// START view
-	view, err := stats.NewView(
+	v, err := view.New(
 		"my.org/video_size_distribution",
 		"distribution of processed video size over time",
 		nil,
@@ -77,13 +72,13 @@ func statsExamples() {
 	if err != nil {
 		log.Fatalf("cannot create view: %v", err)
 	}
-	if err := stats.RegisterView(view); err != nil {
+	if err := view.Register(v); err != nil {
 		log.Fatal(err)
 	}
 	// END view
 
 	// START findView
-	v := stats.FindView("my.org/video_size_distribution")
+	v = view.Find("my.org/video_size_distribution")
 	if v == nil {
 		log.Fatalln("view not found")
 	}
@@ -92,13 +87,13 @@ func statsExamples() {
 	_ = v
 
 	// START unregisterView
-	if err = stats.UnregisterView(v); err != nil {
+	if err = view.Unregister(v); err != nil {
 		log.Fatal(err)
 	}
 	// END unregisterView
 
 	// START reportingPeriod
-	stats.SetReportingPeriod(5 * time.Second)
+	view.SetReportingPeriod(5 * time.Second)
 	// END reportingPeriod
 
 	// START record
@@ -106,7 +101,7 @@ func statsExamples() {
 	// END record
 
 	// START subscribe
-	if err := view.Subscribe(); err != nil {
+	if err := v.Subscribe(); err != nil {
 		log.Fatal(err)
 	}
 	// END subscribe
@@ -114,7 +109,7 @@ func statsExamples() {
 	// START registerExporter
 	// Register an exporter to be able to retrieve
 	// the data from the subscribed views.
-	stats.RegisterExporter(&exporter{})
+	view.RegisterExporter(&exporter{})
 	// END registerExporter
 }
 
@@ -122,7 +117,7 @@ func statsExamples() {
 
 type exporter struct{}
 
-func (e *exporter) ExportView(vd *stats.ViewData) {
+func (e *exporter) ExportView(vd *view.Data) {
 	log.Println(vd)
 }
 

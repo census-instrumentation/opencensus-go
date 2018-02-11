@@ -20,7 +20,7 @@ import (
 
 	"golang.org/x/net/context"
 
-	istats "go.opencensus.io/stats"
+	"go.opencensus.io/stats/view"
 	"go.opencensus.io/tag"
 
 	"google.golang.org/grpc/codes"
@@ -38,8 +38,8 @@ func TestServerDefaultCollections(t *testing.T) {
 	}
 
 	type wantData struct {
-		v    func() *istats.View
-		rows []*istats.Row
+		v    func() *view.View
+		rows []*view.Row
 	}
 	type rpc struct {
 		tags        []tagPair
@@ -72,8 +72,8 @@ func TestServerDefaultCollections(t *testing.T) {
 			},
 			[]*wantData{
 				{
-					func() *istats.View { return RPCServerRequestCountView },
-					[]*istats.Row{
+					func() *view.View { return RPCServerRequestCountView },
+					[]*view.Row{
 						{
 							[]tag.Tag{
 								{Key: keyMethod, Value: "package.service/method"},
@@ -83,8 +83,8 @@ func TestServerDefaultCollections(t *testing.T) {
 					},
 				},
 				{
-					func() *istats.View { return RPCServerResponseCountView },
-					[]*istats.Row{
+					func() *view.View { return RPCServerResponseCountView },
+					[]*view.Row{
 						{
 							[]tag.Tag{
 								{Key: keyMethod, Value: "package.service/method"},
@@ -94,8 +94,8 @@ func TestServerDefaultCollections(t *testing.T) {
 					},
 				},
 				{
-					func() *istats.View { return RPCServerRequestBytesView },
-					[]*istats.Row{
+					func() *view.View { return RPCServerRequestBytesView },
+					[]*view.Row{
 						{
 							[]tag.Tag{
 								{Key: keyMethod, Value: "package.service/method"},
@@ -105,8 +105,8 @@ func TestServerDefaultCollections(t *testing.T) {
 					},
 				},
 				{
-					func() *istats.View { return RPCServerResponseBytesView },
-					[]*istats.Row{
+					func() *view.View { return RPCServerResponseBytesView },
+					[]*view.Row{
 						{
 							[]tag.Tag{
 								{Key: keyMethod, Value: "package.service/method"},
@@ -149,8 +149,8 @@ func TestServerDefaultCollections(t *testing.T) {
 			},
 			[]*wantData{
 				{
-					func() *istats.View { return RPCServerErrorCountView },
-					[]*istats.Row{
+					func() *view.View { return RPCServerErrorCountView },
+					[]*view.Row{
 						{
 							[]tag.Tag{
 								{Key: keyStatus, Value: "Canceled"},
@@ -161,8 +161,8 @@ func TestServerDefaultCollections(t *testing.T) {
 					},
 				},
 				{
-					func() *istats.View { return RPCServerRequestCountView },
-					[]*istats.Row{
+					func() *view.View { return RPCServerRequestCountView },
+					[]*view.Row{
 						{
 							[]tag.Tag{
 								{Key: keyMethod, Value: "package.service/method"},
@@ -172,8 +172,8 @@ func TestServerDefaultCollections(t *testing.T) {
 					},
 				},
 				{
-					func() *istats.View { return RPCServerResponseCountView },
-					[]*istats.Row{
+					func() *view.View { return RPCServerResponseCountView },
+					[]*view.Row{
 						{
 							[]tag.Tag{
 								{Key: keyMethod, Value: "package.service/method"},
@@ -229,8 +229,8 @@ func TestServerDefaultCollections(t *testing.T) {
 			},
 			[]*wantData{
 				{
-					func() *istats.View { return RPCServerErrorCountView },
-					[]*istats.Row{
+					func() *view.View { return RPCServerErrorCountView },
+					[]*view.Row{
 						{
 							[]tag.Tag{
 								{Key: keyStatus, Value: "Canceled"},
@@ -248,8 +248,8 @@ func TestServerDefaultCollections(t *testing.T) {
 					},
 				},
 				{
-					func() *istats.View { return RPCServerRequestCountView },
-					[]*istats.Row{
+					func() *view.View { return RPCServerRequestCountView },
+					[]*view.Row{
 						{
 							[]tag.Tag{
 								{Key: keyMethod, Value: "package.service/method"},
@@ -259,8 +259,8 @@ func TestServerDefaultCollections(t *testing.T) {
 					},
 				},
 				{
-					func() *istats.View { return RPCServerResponseCountView },
-					[]*istats.Row{
+					func() *view.View { return RPCServerResponseCountView },
+					[]*view.Row{
 						{
 							[]tag.Tag{
 								{Key: keyMethod, Value: "package.service/method"},
@@ -270,8 +270,8 @@ func TestServerDefaultCollections(t *testing.T) {
 					},
 				},
 				{
-					func() *istats.View { return RPCServerRequestBytesView },
-					[]*istats.Row{
+					func() *view.View { return RPCServerRequestBytesView },
+					[]*view.Row{
 						{
 							[]tag.Tag{
 								{Key: keyMethod, Value: "package.service/method"},
@@ -281,8 +281,8 @@ func TestServerDefaultCollections(t *testing.T) {
 					},
 				},
 				{
-					func() *istats.View { return RPCServerResponseBytesView },
-					[]*istats.Row{
+					func() *view.View { return RPCServerResponseBytesView },
+					[]*view.Row{
 						{
 							[]tag.Tag{
 								{Key: keyMethod, Value: "package.service/method"},
@@ -356,18 +356,18 @@ func TestServerDefaultCollections(t *testing.T) {
 	}
 }
 
-func newCountData(v int) *istats.CountData {
-	cav := istats.CountData(v)
+func newCountData(v int) *view.CountData {
+	cav := view.CountData(v)
 	return &cav
 }
 
-func newMeanData(count, mean float64) *istats.MeanData {
-	mav := istats.MeanData{Count: count, Mean: mean}
+func newMeanData(count, mean float64) *view.MeanData {
+	mav := view.MeanData{Count: count, Mean: mean}
 	return &mav
 }
 
-func newDistributionData(bounds []float64, countPerBucket []int64, count int64, min, max, mean, sumOfSquaredDev float64) *istats.DistributionData {
-	return &istats.DistributionData{
+func newDistributionData(bounds []float64, countPerBucket []int64, count int64, min, max, mean, sumOfSquaredDev float64) *view.DistributionData {
+	return &view.DistributionData{
 		Count:           count,
 		Min:             min,
 		Max:             max,

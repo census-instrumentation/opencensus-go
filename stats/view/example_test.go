@@ -1,4 +1,4 @@
-// Copyright 2017, OpenCensus Authors
+// Copyright 2018, OpenCensus Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,20 +12,36 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package stats_test
+package view_test
 
 import (
-	"context"
 	"log"
+	"time"
 
 	"go.opencensus.io/stats"
+	"go.opencensus.io/stats/view"
 )
 
-func Example_record() {
+func Example_view() {
 	m, err := stats.NewInt64("my.org/measure/openconns", "open connections", "")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	stats.Record(context.TODO(), m.M(124)) // Record 124 open connections.
+	view, err := view.New(
+		"my.org/views/openconns",
+		"open connections distribution over one second time window",
+		nil,
+		m,
+		view.DistributionAggregation([]float64{0, 1000, 2000}),
+		view.Interval{Duration: time.Second},
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if err := view.Subscribe(); err != nil {
+		log.Fatal(err)
+	}
+
+	// Use stats.RegisterExporter to export collected data.
 }
