@@ -34,6 +34,10 @@ func TestClient(t *testing.T) {
 	}))
 	defer server.Close()
 
+	for _, v := range ochttp.DefaultViews {
+		v.Subscribe()
+	}
+
 	views := []string{
 		"opencensus.io/http/client/requests",
 		"opencensus.io/http/client/latency",
@@ -46,7 +50,6 @@ func TestClient(t *testing.T) {
 			t.Errorf("view not found %q", name)
 			continue
 		}
-		v.Subscribe()
 	}
 
 	var (
