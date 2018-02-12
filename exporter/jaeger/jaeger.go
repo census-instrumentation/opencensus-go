@@ -130,14 +130,14 @@ func (e *Exporter) ExportSpan(data *trace.SpanData) {
 	var refs []*gen.SpanRef
 	for _, link := range data.Links {
 		refs = append(refs, &gen.SpanRef{
-			TraceIdLow:  bytesToInt64(link.TraceID[0:8]),
-			TraceIdHigh: bytesToInt64(link.TraceID[8:16]),
+			TraceIdHigh: bytesToInt64(link.TraceID[0:8]),
+			TraceIdLow:  bytesToInt64(link.TraceID[8:16]),
 			SpanId:      bytesToInt64(link.SpanID[:]),
 		})
 	}
 	span := &gen.Span{
-		TraceIdLow:    bytesToInt64(data.TraceID[0:8]),
-		TraceIdHigh:   bytesToInt64(data.TraceID[8:16]),
+		TraceIdHigh:   bytesToInt64(data.TraceID[0:8]),
+		TraceIdLow:    bytesToInt64(data.TraceID[8:16]),
 		SpanId:        bytesToInt64(data.SpanID[:]),
 		ParentSpanId:  bytesToInt64(data.ParentSpanID[:]),
 		OperationName: data.Name,
