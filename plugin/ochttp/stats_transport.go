@@ -48,7 +48,7 @@ func (t statsTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	} else if req.ContentLength > 0 {
 		track.reqSize = req.ContentLength
 	}
-	stats.Record(ctx, ClientRequest.M(1))
+	stats.Record(ctx, ClientRequests.M(1))
 
 	// Perform request.
 	resp, err := t.base.RoundTrip(req)
