@@ -72,7 +72,11 @@ func (c *ClientStatsHandler) TagRPC(ctx context.Context, rti *stats.RPCTagInfo) 
 	if len(traceContextBinary) == 0 {
 		return ctx
 	}
-	return metadata.AppendToOutgoingContext(ctx, traceContextKey, string(traceContextBinary))
+	md := metadata.Pairs(traceContextKey, string(traceContextBinary))
+	if oldMD, ok := metadata.FromOutgoingContext(ctx); ok {
+		md = metadata.Join(oldMD, md)
+	}
+	return metadata.NewOutgoingContext(ctx, md)
 }
 
 // TagRPC creates a new trace span for the server side of the RPC.
