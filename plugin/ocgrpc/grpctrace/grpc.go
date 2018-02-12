@@ -13,7 +13,7 @@
 // limitations under the License.
 
 // Package grpctrace is a package to assist with tracing incoming and outgoing gRPC requests.
-package grpctrace
+package grpctrace // import "go.opencensus.io/plugin/ocgrpc/grpctrace"
 
 import (
 	"strings"
