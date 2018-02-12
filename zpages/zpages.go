@@ -24,6 +24,9 @@
 // 	zpages.AddDefaultHTTPHandlers()
 // If your program does not already start an HTTP server, you can use:
 // 	go func() { log.Fatal(http.ListenAndServe(":8080", nil)) }()
+//
+// zpages are currrently work-in-process and cannot display minutely and
+// hourly stats correctly.
 package zpages // import "go.opencensus.io/zpages"
 
 import (
