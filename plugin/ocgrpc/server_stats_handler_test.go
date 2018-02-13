@@ -78,7 +78,7 @@ func TestServerDefaultCollections(t *testing.T) {
 							[]tag.Tag{
 								{Key: KeyMethod, Value: "package.service/method"},
 							},
-							newDistributionData([]float64{0, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65536}, []int64{0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 1, 1, 1, 1, 0),
+							newDistributionData([]int64{0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 1, 1, 1, 1, 0),
 						},
 					},
 				},
@@ -89,7 +89,7 @@ func TestServerDefaultCollections(t *testing.T) {
 							[]tag.Tag{
 								{Key: KeyMethod, Value: "package.service/method"},
 							},
-							newDistributionData([]float64{0, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65536}, []int64{0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 1, 1, 1, 1, 0),
+							newDistributionData([]int64{0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 1, 1, 1, 1, 0),
 						},
 					},
 				},
@@ -100,7 +100,7 @@ func TestServerDefaultCollections(t *testing.T) {
 							[]tag.Tag{
 								{Key: KeyMethod, Value: "package.service/method"},
 							},
-							newDistributionData([]float64{0, 1024, 2048, 4096, 16384, 65536, 262144, 1048576, 4194304, 16777216, 67108864, 268435456, 1073741824, 4294967296}, []int64{0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 1, 10, 10, 10, 0),
+							newDistributionData([]int64{0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 1, 10, 10, 10, 0),
 						},
 					},
 				},
@@ -111,7 +111,7 @@ func TestServerDefaultCollections(t *testing.T) {
 							[]tag.Tag{
 								{Key: KeyMethod, Value: "package.service/method"},
 							},
-							newDistributionData([]float64{0, 1024, 2048, 4096, 16384, 65536, 262144, 1048576, 4194304, 16777216, 67108864, 268435456, 1073741824, 4294967296}, []int64{0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 1, 10, 10, 10, 0),
+							newDistributionData([]int64{0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 1, 10, 10, 10, 0),
 						},
 					},
 				},
@@ -167,7 +167,7 @@ func TestServerDefaultCollections(t *testing.T) {
 							[]tag.Tag{
 								{Key: KeyMethod, Value: "package.service/method"},
 							},
-							newDistributionData([]float64{0, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65536}, []int64{0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 2, 1, 2, 1.5, 0.5),
+							newDistributionData([]int64{0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 2, 1, 2, 1.5, 0.5),
 						},
 					},
 				},
@@ -178,7 +178,7 @@ func TestServerDefaultCollections(t *testing.T) {
 							[]tag.Tag{
 								{Key: KeyMethod, Value: "package.service/method"},
 							},
-							newDistributionData([]float64{0, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65536}, []int64{0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 2, 2, 3, 2.5, 0.5),
+							newDistributionData([]int64{0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 2, 2, 3, 2.5, 0.5),
 						},
 					},
 				},
@@ -254,7 +254,7 @@ func TestServerDefaultCollections(t *testing.T) {
 							[]tag.Tag{
 								{Key: KeyMethod, Value: "package.service/method"},
 							},
-							newDistributionData([]float64{0, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65536}, []int64{0, 0, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 3, 1, 2, 1.333333333, 0.333333333*2),
+							newDistributionData([]int64{0, 0, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 3, 1, 2, 1.333333333, 0.333333333*2),
 						},
 					},
 				},
@@ -265,7 +265,7 @@ func TestServerDefaultCollections(t *testing.T) {
 							[]tag.Tag{
 								{Key: KeyMethod, Value: "package.service/method"},
 							},
-							newDistributionData([]float64{0, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65536}, []int64{0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 3, 2, 3, 2.666666666, 0.333333333*2),
+							newDistributionData([]int64{0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 3, 2, 3, 2.666666666, 0.333333333*2),
 						},
 					},
 				},
@@ -276,7 +276,7 @@ func TestServerDefaultCollections(t *testing.T) {
 							[]tag.Tag{
 								{Key: KeyMethod, Value: "package.service/method"},
 							},
-							newDistributionData([]float64{0, 1024, 2048, 4096, 16384, 65536, 262144, 1048576, 4194304, 16777216, 67108864, 268435456, 1073741824, 4294967296}, []int64{0, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 4, 1, 16384, 4864.25, 59678208.25*3),
+							newDistributionData([]int64{0, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 4, 1, 16384, 4864.25, 59678208.25*3),
 						},
 					},
 				},
@@ -287,7 +287,7 @@ func TestServerDefaultCollections(t *testing.T) {
 							[]tag.Tag{
 								{Key: KeyMethod, Value: "package.service/method"},
 							},
-							newDistributionData([]float64{0, 1024, 2048, 4096, 16384, 65536, 262144, 1048576, 4194304, 16777216, 67108864, 268435456, 1073741824, 4294967296}, []int64{0, 1, 1, 1, 2, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0}, 8, 1, 65536, 13696.125, 481423542.982143*7),
+							newDistributionData([]int64{0, 1, 1, 1, 2, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0}, 8, 1, 65536, 13696.125, 481423542.982143*7),
 						},
 					},
 				},
@@ -366,7 +366,7 @@ func newMeanData(count, mean float64) *view.MeanData {
 	return &mav
 }
 
-func newDistributionData(bounds []float64, countPerBucket []int64, count int64, min, max, mean, sumOfSquaredDev float64) *view.DistributionData {
+func newDistributionData(countPerBucket []int64, count int64, min, max, mean, sumOfSquaredDev float64) *view.DistributionData {
 	return &view.DistributionData{
 		Count:           count,
 		Min:             min,

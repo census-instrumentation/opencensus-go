@@ -45,8 +45,8 @@ var (
 )
 
 var (
-	KeyMethod, _ = tag.NewKey("method")
-	KeyStatus, _ = tag.NewKey("canonical_status")
+	KeyMethod, _ = tag.NewKey("method")           // gRPC service and method name
+	KeyStatus, _ = tag.NewKey("canonical_status") // Canonical status code
 )
 
 var (
