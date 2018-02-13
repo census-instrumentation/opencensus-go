@@ -40,12 +40,12 @@ var (
 	// A view's map value indicates whether that view contains data for received
 	// RPCs.
 	viewType = map[*view.View]bool{
-		grpcstats.RPCClientErrorCountView:        false,
-		grpcstats.RPCClientRequestBytesView:      false,
-		grpcstats.RPCClientRequestCountView:      false,
-		grpcstats.RPCClientResponseBytesView:     false,
-		grpcstats.RPCClientResponseCountView:     false,
-		grpcstats.RPCClientRoundTripLatencyView:  false,
+		grpcstats.ClientErrorCountView:           false,
+		grpcstats.ClientRequestBytesView:         false,
+		grpcstats.ClientRequestCountView:         false,
+		grpcstats.ClientResponseBytesView:        false,
+		grpcstats.ClientResponseCountView:        false,
+		grpcstats.ClientRoundTripLatencyView:     false,
 		grpcstats.RPCServerErrorCountView:        true,
 		grpcstats.RPCServerRequestBytesView:      true,
 		grpcstats.RPCServerRequestCountView:      true,
@@ -321,24 +321,24 @@ func (s snapExporter) ExportView(vd *view.Data) {
 
 		// Update field of s corresponding to the view.
 		switch vd.View {
-		case grpcstats.RPCClientErrorCountView:
+		case grpcstats.ClientErrorCountView:
 			s.ErrorsTotal = int(count)
 
-		case grpcstats.RPCClientRoundTripLatencyView:
+		case grpcstats.ClientRoundTripLatencyView:
 			s.AvgLatencyTotal = convertTime(sum / count)
 			s.MaxLatencyTotal = convertTime(dist.Max)
 
-		case grpcstats.RPCClientRequestBytesView:
+		case grpcstats.ClientRequestBytesView:
 			s.OutputRateTotal = computeRate(0, sum)
 
-		case grpcstats.RPCClientResponseBytesView:
+		case grpcstats.ClientResponseBytesView:
 			s.InputRateTotal = computeRate(0, sum)
 
-		case grpcstats.RPCClientRequestCountView:
+		case grpcstats.ClientRequestCountView:
 			s.CountTotal = int(count)
 			s.RPCRateTotal = computeRate(0, count)
 
-		case grpcstats.RPCClientResponseCountView:
+		case grpcstats.ClientResponseCountView:
 			// currently unused
 
 		case grpcstats.RPCServerErrorCountView:

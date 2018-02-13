@@ -16,8 +16,6 @@
 package grpcstats
 
 import (
-	"log"
-
 	"go.opencensus.io/stats"
 	"go.opencensus.io/stats/view"
 	"go.opencensus.io/tag"
@@ -26,110 +24,66 @@ import (
 // The following variables are measures and views made available for gRPC clients.
 // Server needs to use a ServerStatsHandler in order to enable collection.
 var (
-	// Available server measures
-	RPCServerErrorCount        *stats.Int64Measure
-	RPCServerServerElapsedTime *stats.Float64Measure
-	RPCServerRequestBytes      *stats.Int64Measure
-	RPCServerResponseBytes     *stats.Int64Measure
-	RPCServerStartedCount      *stats.Int64Measure
-	RPCServerFinishedCount     *stats.Int64Measure
-	RPCServerRequestCount      *stats.Int64Measure
-	RPCServerResponseCount     *stats.Int64Measure
-
-	// Predefined server views
-	RPCServerErrorCountView        *view.View
-	RPCServerServerElapsedTimeView *view.View
-	RPCServerRequestBytesView      *view.View
-	RPCServerResponseBytesView     *view.View
-	RPCServerRequestCountView      *view.View
-	RPCServerResponseCountView     *view.View
+	ServerErrorCount, _        = stats.Int64("grpc.io/server/error_count", "RPC Errors", stats.UnitNone)
+	ServerServerElapsedTime, _ = stats.Float64("grpc.io/server/server_elapsed_time", "Server elapsed time in msecs", stats.UnitMilliseconds)
+	ServerRequestBytes, _      = stats.Int64("grpc.io/server/request_bytes", "Request bytes", stats.UnitBytes)
+	ServerResponseBytes, _     = stats.Int64("grpc.io/server/response_bytes", "Response bytes", stats.UnitBytes)
+	ServerStartedCount, _      = stats.Int64("grpc.io/server/started_count", "Number of server RPCs (streams) started", stats.UnitNone)
+	ServerFinishedCount, _     = stats.Int64("grpc.io/server/finished_count", "Number of server RPCs (streams) finished", stats.UnitNone)
+	ServerRequestCount, _      = stats.Int64("grpc.io/server/request_count", "Number of server RPC request messages", stats.UnitNone)
+	ServerResponseCount, _     = stats.Int64("grpc.io/server/response_count", "Number of server RPC response messages", stats.UnitNone)
 )
 
 // TODO(acetechnologist): This is temporary and will need to be replaced by a
 // mechanism to load these defaults from a common repository/config shared by
 // all supported languages. Likely a serialized protobuf of these defaults.
 
-func defaultServerMeasures() {
-	var err error
-
-	if RPCServerErrorCount, err = stats.Int64("grpc.io/server/error_count", "RPC Errors", unitCount); err != nil {
-		log.Fatalf("Cannot create measure grpc.io/server/error_count: %v", err)
-	}
-	if RPCServerServerElapsedTime, err = stats.Float64("grpc.io/server/server_elapsed_time", "Server elapsed time in msecs", unitMillisecond); err != nil {
-		log.Fatalf("Cannot create measure grpc.io/server/server_elapsed_time: %v", err)
-	}
-	if RPCServerRequestBytes, err = stats.Int64("grpc.io/server/request_bytes", "Request bytes", unitByte); err != nil {
-		log.Fatalf("Cannot create measure grpc.io/server/request_bytes: %v", err)
-	}
-	if RPCServerResponseBytes, err = stats.Int64("grpc.io/server/response_bytes", "Response bytes", unitByte); err != nil {
-		log.Fatalf("Cannot create measure grpc.io/server/response_bytes: %v", err)
-	}
-	if RPCServerStartedCount, err = stats.Int64("grpc.io/server/started_count", "Number of server RPCs (streams) started", unitCount); err != nil {
-		log.Fatalf("Cannot create measure grpc.io/server/started_count: %v", err)
-	}
-	if RPCServerFinishedCount, err = stats.Int64("grpc.io/server/finished_count", "Number of server RPCs (streams) finished", unitCount); err != nil {
-		log.Fatalf("Cannot create measure grpc.io/server/finished_count: %v", err)
-	}
-	if RPCServerRequestCount, err = stats.Int64("grpc.io/server/request_count", "Number of server RPC request messages", unitCount); err != nil {
-		log.Fatalf("Cannot create measure grpc.io/server/request_count: %v", err)
-	}
-	if RPCServerResponseCount, err = stats.Int64("grpc.io/server/response_count", "Number of server RPC response messages", unitCount); err != nil {
-		log.Fatalf("Cannot create measure grpc.io/server/response_count: %v", err)
-	}
-}
-
-func defaultServerViews() {
+// Predefined server views
+var (
 	RPCServerErrorCountView, _ = view.New(
-		"grpc.io/server/error_count/cumulative",
+		"grpc.io/server/error_count",
 		"RPC Errors",
 		[]tag.Key{KeyMethod, KeyStatus},
-		RPCServerErrorCount,
-		aggCount)
+		ServerErrorCount,
+		view.CountAggregation{})
 	RPCServerServerElapsedTimeView, _ = view.New(
-		"grpc.io/server/server_elapsed_time/cumulative",
+		"grpc.io/server/server_elapsed_time",
 		"Server elapsed time in msecs",
 		[]tag.Key{KeyMethod},
-		RPCServerServerElapsedTime,
-		aggDistMillis)
+		ServerServerElapsedTime,
+		DefaultMillisecondsDistribution)
 	RPCServerRequestBytesView, _ = view.New(
-		"grpc.io/server/request_bytes/cumulative",
+		"grpc.io/server/request_bytes",
 		"Request bytes",
 		[]tag.Key{KeyMethod},
-		RPCServerRequestBytes,
-		aggDistBytes)
+		ServerRequestBytes,
+		DefaultBytesDistribution)
 	RPCServerResponseBytesView, _ = view.New(
-		"grpc.io/server/response_bytes/cumulative",
+		"grpc.io/server/response_bytes",
 		"Response bytes",
 		[]tag.Key{KeyMethod},
-		RPCServerResponseBytes,
-		aggDistBytes)
+		ServerResponseBytes,
+		DefaultBytesDistribution)
 	RPCServerRequestCountView, _ = view.New(
-		"grpc.io/server/request_count/cumulative",
+		"grpc.io/server/request_count",
 		"Count of request messages per server RPC",
 		[]tag.Key{KeyMethod},
-		RPCServerRequestCount,
-		aggDistCounts)
+		ServerRequestCount,
+		DefaultMessageCountDistribution)
 	RPCServerResponseCountView, _ = view.New(
-		"grpc.io/server/response_count/cumulative",
+		"grpc.io/server/response_count",
 		"Count of response messages per server RPC",
 		[]tag.Key{KeyMethod},
-		RPCServerResponseCount,
-		aggDistCounts)
+		ServerResponseCount,
+		DefaultMessageCountDistribution)
 
-	serverViews = append(serverViews,
+	DefaultServerViews = []*view.View{
 		RPCServerErrorCountView,
 		RPCServerServerElapsedTimeView,
 		RPCServerRequestBytesView,
 		RPCServerResponseBytesView,
 		RPCServerRequestCountView,
-		RPCServerResponseCountView)
-
-	// TODO(jbd): Add roundtrip_latency, uncompressed_request_bytes, uncompressed_response_bytes, request_count, response_count.
-}
-
-func initServer() {
-	defaultServerMeasures()
-	defaultServerViews()
-}
-
-var serverViews []*view.View
+		RPCServerResponseCountView,
+	}
+)
+// TODO(jbd): Add roundtrip_latency, uncompressed_request_bytes, uncompressed_response_bytes, request_count, response_count.

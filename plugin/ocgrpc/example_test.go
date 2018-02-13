@@ -24,7 +24,7 @@ import (
 
 func ExampleNewClientStatsHandler() {
 	// Subscribe to collect client request count.
-	if err := grpcstats.RPCClientRequestCountView.Subscribe(); err != nil {
+	if err := grpcstats.ClientRequestCountView.Subscribe(); err != nil {
 		log.Fatal(err)
 	}
 

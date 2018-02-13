@@ -67,7 +67,7 @@ func (h *ServerStatsHandler) TagRPC(ctx context.Context, info *stats.RPCTagInfo)
 	}
 	d := &rpcData{startTime: startTime}
 	ctx, _ = h.createTags(ctx, info.FullMethodName)
-	ocstats.Record(ctx, RPCServerStartedCount.M(1))
+	ocstats.Record(ctx, ServerStartedCount.M(1))
 	return context.WithValue(ctx, grpcServerRPCKey, d)
 }
 
@@ -97,7 +97,7 @@ func (h *ServerStatsHandler) handleRPCInPayload(ctx context.Context, s *stats.In
 		return
 	}
 
-	ocstats.Record(ctx, RPCServerRequestBytes.M(int64(s.Length)))
+	ocstats.Record(ctx, ServerRequestBytes.M(int64(s.Length)))
 	atomic.AddInt64(&d.reqCount, 1)
 }
 
@@ -110,7 +110,7 @@ func (h *ServerStatsHandler) handleRPCOutPayload(ctx context.Context, s *stats.O
 		return
 	}
 
-	ocstats.Record(ctx, RPCServerResponseBytes.M(int64(s.Length)))
+	ocstats.Record(ctx, ServerResponseBytes.M(int64(s.Length)))
 	atomic.AddInt64(&d.respCount, 1)
 }
 
@@ -128,10 +128,10 @@ func (h *ServerStatsHandler) handleRPCEnd(ctx context.Context, s *stats.End) {
 	respCount := atomic.LoadInt64(&d.respCount)
 
 	m := []ocstats.Measurement{
-		RPCServerRequestCount.M(reqCount),
-		RPCServerResponseCount.M(respCount),
-		RPCServerFinishedCount.M(1),
-		RPCServerServerElapsedTime.M(float64(elapsedTime) / float64(time.Millisecond)),
+		ServerRequestCount.M(reqCount),
+		ServerResponseCount.M(respCount),
+		ServerFinishedCount.M(1),
+		ServerServerElapsedTime.M(float64(elapsedTime) / float64(time.Millisecond)),
 	}
 
 	if s.Error != nil {
@@ -141,7 +141,7 @@ func (h *ServerStatsHandler) handleRPCEnd(ctx context.Context, s *stats.End) {
 				tag.Upsert(KeyStatus, s.Code().String()),
 			)
 		}
-		m = append(m, RPCServerErrorCount.M(1))
+		m = append(m, ServerErrorCount.M(1))
 	}
 
 	ocstats.Record(ctx, m...)

@@ -33,7 +33,7 @@ func TestNewClientStatsHandler(t *testing.T) {
 
 	te := &traceExporter{}
 	trace.RegisterExporter(te)
-	if err := grpcstats.RPCClientRequestCountView.Subscribe(); err != nil {
+	if err := grpcstats.ClientRequestCountView.Subscribe(); err != nil {
 		t.Fatal(err)
 	}
 
@@ -54,7 +54,7 @@ func TestNewClientStatsHandler(t *testing.T) {
 		EndTime: time.Now(),
 	})
 
-	stats, err := grpcstats.RPCClientRequestCountView.RetrieveData()
+	stats, err := grpcstats.ClientRequestCountView.RetrieveData()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -68,7 +68,7 @@ func TestNewClientStatsHandler(t *testing.T) {
 	}
 
 	// Cleanup.
-	if err := grpcstats.RPCClientRequestCountView.Unsubscribe(); err != nil {
+	if err := grpcstats.ClientRequestCountView.Unsubscribe(); err != nil {
 		t.Fatal(err)
 	}
 }

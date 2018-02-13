@@ -76,7 +76,7 @@ func (h *ClientStatsHandler) TagRPC(ctx context.Context, info *stats.RPCTagInfo)
 	)
 	// TODO(acetechnologist): should we be recording this later? What is the
 	// point of updating d.reqLen & d.reqCount if we update now?
-	ocstats.Record(ctx, RPCClientStartedCount.M(1))
+	ocstats.Record(ctx, ClientStartedCount.M(1))
 
 	return context.WithValue(ctx, grpcClientRPCKey, d)
 }
@@ -106,7 +106,7 @@ func (h *ClientStatsHandler) handleRPCOutPayload(ctx context.Context, s *stats.O
 		return
 	}
 
-	ocstats.Record(ctx, RPCClientRequestBytes.M(int64(s.Length)))
+	ocstats.Record(ctx, ClientRequestBytes.M(int64(s.Length)))
 	atomic.AddInt64(&d.reqCount, 1)
 }
 
@@ -119,7 +119,7 @@ func (h *ClientStatsHandler) handleRPCInPayload(ctx context.Context, s *stats.In
 		return
 	}
 
-	ocstats.Record(ctx, RPCClientResponseBytes.M(int64(s.Length)))
+	ocstats.Record(ctx, ClientResponseBytes.M(int64(s.Length)))
 	atomic.AddInt64(&d.respCount, 1)
 }
 
@@ -137,10 +137,10 @@ func (h *ClientStatsHandler) handleRPCEnd(ctx context.Context, s *stats.End) {
 	respCount := atomic.LoadInt64(&d.respCount)
 
 	m := []ocstats.Measurement{
-		RPCClientRequestCount.M(reqCount),
-		RPCClientResponseCount.M(respCount),
-		RPCClientFinishedCount.M(1),
-		RPCClientRoundTripLatency.M(float64(elapsedTime) / float64(time.Millisecond)),
+		ClientRequestCount.M(reqCount),
+		ClientResponseCount.M(respCount),
+		ClientFinishedCount.M(1),
+		ClientRoundTripLatency.M(float64(elapsedTime) / float64(time.Millisecond)),
 	}
 
 	if s.Error != nil {
@@ -150,7 +150,7 @@ func (h *ClientStatsHandler) handleRPCEnd(ctx context.Context, s *stats.End) {
 				tag.Upsert(KeyStatus, s.Code().String()),
 			)
 		}
-		m = append(m, RPCClientErrorCount.M(1))
+		m = append(m, ClientErrors.M(1))
 	}
 
 	ocstats.Record(ctx, m...)
