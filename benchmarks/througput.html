@@ -1,0 +1,41 @@
+
+<HTML>
+  <head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.1/Chart.bundle.min.js"></script>
+    <script>
+    </script>
+  </head>
+
+  <body>
+    <canvas id="benchesChart" width="300" height="300%"></canvas>
+    <script>
+      var ctx = document.getElementById('benchesChart').getContext('2d');
+      var chart = new Chart(ctx, {
+	type: 'line',
+	data: {
+	  labels: ["0.00 (1 QPS)","1.00 (10 QPS)","2.00 (100 QPS)","3.00 (1000 QPS)"],
+	  datasets: [{
+	    label: 'Traced',
+	    backgroundColor: '#00FF00',
+	    borderColor: '#00FF00',
+	    fill: false,
+	    data:  [176906.912,177011.236,176959.772,176975.848] ,
+	  }, {
+	    label: 'Untraced',
+	    backgroundColor: '#0000FF',
+	    borderColor: '#0000FF',
+	    fill: false,
+	    data:  [115448.296,115480.104,115525.516,115535.556] ,
+	  }]
+	},
+	options: {
+	  responsive: true,
+	  title:{
+	    display: true,
+	    text: 'QPS log10(n) -- Logarithmic',
+	  }
+	},
+      });
+    </script>
+  </body>
+</HTML>
