@@ -45,7 +45,7 @@ func (t *testTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 
 type testPropagator struct{}
 
-func (t testPropagator) FromRequest(req *http.Request) (sc trace.SpanContext, ok bool) {
+func (t testPropagator) SpanContextFromRequest(req *http.Request) (sc trace.SpanContext, ok bool) {
 	header := req.Header.Get("trace")
 	buf, err := hex.DecodeString(header)
 	if err != nil {
@@ -62,7 +62,7 @@ func (t testPropagator) FromRequest(req *http.Request) (sc trace.SpanContext, ok
 	return sc, true
 }
 
-func (t testPropagator) ToRequest(sc trace.SpanContext, req *http.Request) {
+func (t testPropagator) SpanContextToRequest(sc trace.SpanContext, req *http.Request) {
 	var buf bytes.Buffer
 	buf.Write(sc.TraceID[:])
 	buf.Write(sc.SpanID[:])
