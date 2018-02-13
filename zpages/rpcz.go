@@ -27,7 +27,7 @@ import (
 	"time"
 
 	"go.opencensus.io/internal"
-	"go.opencensus.io/plugin/ocgrpc/grpcstats"
+	"go.opencensus.io/plugin/ocgrpc"
 	"go.opencensus.io/stats/view"
 )
 
@@ -42,18 +42,18 @@ var (
 	// A view's map value indicates whether that view contains data for received
 	// RPCs.
 	viewType = map[*view.View]bool{
-		grpcstats.RPCClientErrorCountView:        false,
-		grpcstats.RPCClientRequestBytesView:      false,
-		grpcstats.RPCClientRequestCountView:      false,
-		grpcstats.RPCClientResponseBytesView:     false,
-		grpcstats.RPCClientResponseCountView:     false,
-		grpcstats.RPCClientRoundTripLatencyView:  false,
-		grpcstats.RPCServerErrorCountView:        true,
-		grpcstats.RPCServerRequestBytesView:      true,
-		grpcstats.RPCServerRequestCountView:      true,
-		grpcstats.RPCServerResponseBytesView:     true,
-		grpcstats.RPCServerResponseCountView:     true,
-		grpcstats.RPCServerServerElapsedTimeView: true,
+		ocgrpc.ClientErrorCountView:        false,
+		ocgrpc.ClientRequestBytesView:      false,
+		ocgrpc.ClientRequestCountView:      false,
+		ocgrpc.ClientResponseBytesView:     false,
+		ocgrpc.ClientResponseCountView:     false,
+		ocgrpc.ClientRoundTripLatencyView:  false,
+		ocgrpc.ServerErrorCountView:        true,
+		ocgrpc.ServerRequestBytesView:      true,
+		ocgrpc.ServerRequestCountView:      true,
+		ocgrpc.ServerResponseBytesView:     true,
+		ocgrpc.ServerResponseCountView:     true,
+		ocgrpc.ServerServerElapsedTimeView: true,
 	}
 )
 
@@ -281,7 +281,7 @@ func (s snapExporter) ExportView(vd *view.Data) {
 	for _, row := range vd.Rows {
 		var method string
 		for _, tag := range row.Tags {
-			if tag.Key == grpcstats.KeyMethod {
+			if tag.Key == ocgrpc.KeyMethod {
 				method = tag.Value
 				break
 			}
@@ -315,39 +315,39 @@ func (s snapExporter) ExportView(vd *view.Data) {
 
 		// Update field of s corresponding to the view.
 		switch vd.View {
-		case grpcstats.RPCClientErrorCountView:
+		case ocgrpc.ClientErrorCountView:
 			s.ErrorsTotal = int(count)
 
-		case grpcstats.RPCClientRoundTripLatencyView:
+		case ocgrpc.ClientRoundTripLatencyView:
 			s.AvgLatencyTotal = convertTime(sum / count)
 
-		case grpcstats.RPCClientRequestBytesView:
+		case ocgrpc.ClientRequestBytesView:
 			s.OutputRateTotal = computeRate(0, sum)
 
-		case grpcstats.RPCClientResponseBytesView:
+		case ocgrpc.ClientResponseBytesView:
 			s.InputRateTotal = computeRate(0, sum)
 
-		case grpcstats.RPCClientRequestCountView:
+		case ocgrpc.ClientRequestCountView:
 			s.CountTotal = int(count)
 			s.RPCRateTotal = computeRate(0, count)
 
-		case grpcstats.RPCClientResponseCountView:
+		case ocgrpc.ClientResponseCountView:
 			// currently unused
 
-		case grpcstats.RPCServerErrorCountView:
+		case ocgrpc.ServerErrorCountView:
 			s.ErrorsTotal = int(count)
 
-		case grpcstats.RPCServerServerElapsedTimeView:
+		case ocgrpc.ServerServerElapsedTimeView:
 			s.AvgLatencyTotal = convertTime(sum / count)
 
-		case grpcstats.RPCServerResponseBytesView:
+		case ocgrpc.ServerResponseBytesView:
 			s.OutputRateTotal = computeRate(0, sum)
 
-		case grpcstats.RPCServerRequestCountView:
+		case ocgrpc.ServerRequestCountView:
 			s.CountTotal = int(count)
 			s.RPCRateTotal = computeRate(0, count)
 
-		case grpcstats.RPCServerResponseCountView:
+		case ocgrpc.ServerResponseCountView:
 			// currently unused
 		}
 	}

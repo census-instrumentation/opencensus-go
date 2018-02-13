@@ -24,7 +24,6 @@ import (
 	"go.opencensus.io/examples/grpc/exporter"
 	pb "go.opencensus.io/examples/grpc/proto"
 	"go.opencensus.io/plugin/ocgrpc"
-	"go.opencensus.io/plugin/ocgrpc/grpcstats"
 	"go.opencensus.io/stats/view"
 	"go.opencensus.io/zpages"
 	"golang.org/x/net/context"
@@ -50,7 +49,7 @@ func main() {
 	view.RegisterExporter(&exporter.Exporter{})
 
 	// Subscribe to collect server request count.
-	if err := grpcstats.RPCServerRequestCountView.Subscribe(); err != nil {
+	if err := ocgrpc.ServerRequestCountView.Subscribe(); err != nil {
 		log.Fatal(err)
 	}
 

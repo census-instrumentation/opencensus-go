@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-package grpcstats
+package ocgrpc
 
 import (
 	"testing"
@@ -73,46 +73,46 @@ func TestClientDefaultCollections(t *testing.T) {
 			},
 			[]*wantData{
 				{
-					func() *view.View { return RPCClientRequestCountView },
+					func() *view.View { return ClientRequestCountView },
 					[]*view.Row{
 						{
 							[]tag.Tag{
 								{Key: KeyMethod, Value: "package.service/method"},
 							},
-							newDistributionData(rpcCountBucketBoundaries, []int64{0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 1, 1, 1, 1, 0),
+							newDistributionData([]int64{0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 1, 1, 1, 1, 0),
 						},
 					},
 				},
 				{
-					func() *view.View { return RPCClientResponseCountView },
+					func() *view.View { return ClientResponseCountView },
 					[]*view.Row{
 						{
 							[]tag.Tag{
 								{Key: KeyMethod, Value: "package.service/method"},
 							},
-							newDistributionData(rpcCountBucketBoundaries, []int64{0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 1, 1, 1, 1, 0),
+							newDistributionData([]int64{0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 1, 1, 1, 1, 0),
 						},
 					},
 				},
 				{
-					func() *view.View { return RPCClientRequestBytesView },
+					func() *view.View { return ClientRequestBytesView },
 					[]*view.Row{
 						{
 							[]tag.Tag{
 								{Key: KeyMethod, Value: "package.service/method"},
 							},
-							newDistributionData(rpcBytesBucketBoundaries, []int64{0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 1, 10, 10, 10, 0),
+							newDistributionData([]int64{0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 1, 10, 10, 10, 0),
 						},
 					},
 				},
 				{
-					func() *view.View { return RPCClientResponseBytesView },
+					func() *view.View { return ClientResponseBytesView },
 					[]*view.Row{
 						{
 							[]tag.Tag{
 								{Key: KeyMethod, Value: "package.service/method"},
 							},
-							newDistributionData(rpcBytesBucketBoundaries, []int64{0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 1, 10, 10, 10, 0),
+							newDistributionData([]int64{0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 1, 10, 10, 10, 0),
 						},
 					},
 				},
@@ -150,7 +150,7 @@ func TestClientDefaultCollections(t *testing.T) {
 			},
 			[]*wantData{
 				{
-					func() *view.View { return RPCClientErrorCountView },
+					func() *view.View { return ClientErrorCountView },
 					[]*view.Row{
 						{
 							[]tag.Tag{
@@ -162,24 +162,24 @@ func TestClientDefaultCollections(t *testing.T) {
 					},
 				},
 				{
-					func() *view.View { return RPCClientRequestCountView },
+					func() *view.View { return ClientRequestCountView },
 					[]*view.Row{
 						{
 							[]tag.Tag{
 								{Key: KeyMethod, Value: "package.service/method"},
 							},
-							newDistributionData(rpcCountBucketBoundaries, []int64{0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 2, 2, 3, 2.5, 0.5),
+							newDistributionData([]int64{0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 2, 2, 3, 2.5, 0.5),
 						},
 					},
 				},
 				{
-					func() *view.View { return RPCClientResponseCountView },
+					func() *view.View { return ClientResponseCountView },
 					[]*view.Row{
 						{
 							[]tag.Tag{
 								{Key: KeyMethod, Value: "package.service/method"},
 							},
-							newDistributionData(rpcCountBucketBoundaries, []int64{0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 2, 1, 2, 1.5, 0.5),
+							newDistributionData([]int64{0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 2, 1, 2, 1.5, 0.5),
 						},
 					},
 				},
@@ -230,7 +230,7 @@ func TestClientDefaultCollections(t *testing.T) {
 			},
 			[]*wantData{
 				{
-					func() *view.View { return RPCClientErrorCountView },
+					func() *view.View { return ClientErrorCountView },
 					[]*view.Row{
 						{
 							[]tag.Tag{
@@ -249,46 +249,46 @@ func TestClientDefaultCollections(t *testing.T) {
 					},
 				},
 				{
-					func() *view.View { return RPCClientRequestCountView },
+					func() *view.View { return ClientRequestCountView },
 					[]*view.Row{
 						{
 							[]tag.Tag{
 								{Key: KeyMethod, Value: "package.service/method"},
 							},
-							newDistributionData(rpcCountBucketBoundaries, []int64{0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 3, 2, 3, 2.666666666, 0.333333333*2),
+							newDistributionData([]int64{0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 3, 2, 3, 2.666666666, 0.333333333*2),
 						},
 					},
 				},
 				{
-					func() *view.View { return RPCClientResponseCountView },
+					func() *view.View { return ClientResponseCountView },
 					[]*view.Row{
 						{
 							[]tag.Tag{
 								{Key: KeyMethod, Value: "package.service/method"},
 							},
-							newDistributionData(rpcCountBucketBoundaries, []int64{0, 0, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 3, 1, 2, 1.333333333, 0.333333333*2),
+							newDistributionData([]int64{0, 0, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 3, 1, 2, 1.333333333, 0.333333333*2),
 						},
 					},
 				},
 				{
-					func() *view.View { return RPCClientRequestBytesView },
+					func() *view.View { return ClientRequestBytesView },
 					[]*view.Row{
 						{
 							[]tag.Tag{
 								{Key: KeyMethod, Value: "package.service/method"},
 							},
-							newDistributionData(rpcBytesBucketBoundaries, []int64{0, 1, 1, 1, 2, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0}, 8, 1, 65536, 13696.125, 481423542.982143*7),
+							newDistributionData([]int64{0, 1, 1, 1, 2, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0}, 8, 1, 65536, 13696.125, 481423542.982143*7),
 						},
 					},
 				},
 				{
-					func() *view.View { return RPCClientResponseBytesView },
+					func() *view.View { return ClientResponseBytesView },
 					[]*view.Row{
 						{
 							[]tag.Tag{
 								{Key: KeyMethod, Value: "package.service/method"},
 							},
-							newDistributionData(rpcBytesBucketBoundaries, []int64{0, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 4, 1, 16384, 4864.25, 59678208.25*3),
+							newDistributionData([]int64{0, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 4, 1, 16384, 4864.25, 59678208.25*3),
 						},
 					},
 				},
@@ -298,13 +298,13 @@ func TestClientDefaultCollections(t *testing.T) {
 
 	for _, tc := range tcs {
 		// Register views.
-		for _, v := range clientViews {
+		for _, v := range DefaultClientViews {
 			if err := v.Subscribe(); err != nil {
 				t.Error(err)
 			}
 		}
 
-		h := &ClientStatsHandler{}
+		h := &clientStatsHandler{}
 		for _, rpc := range tc.rpcs {
 			mods := []tag.Mutator{}
 			for _, t := range rpc.tags {
@@ -349,7 +349,7 @@ func TestClientDefaultCollections(t *testing.T) {
 		}
 
 		// Unregister views to cleanup.
-		for _, v := range clientViews {
+		for _, v := range DefaultClientViews {
 			if err := v.Unsubscribe(); err != nil {
 				t.Error(err)
 			}
