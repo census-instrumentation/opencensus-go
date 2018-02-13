@@ -203,7 +203,7 @@ func TestStartSpanWithRemoteParent(t *testing.T) {
 		t.Error(err)
 	}
 
-	ctx, _ = StartSpanWithRemoteParent(context.Background(), "StartSpanWithRemoteParent", sc, StartOptions{RecordEvents: true})
+	ctx, _ = StartSpanWithRemoteParent(context.Background(), "StartSpanWithRemoteParent", sc, StartOptions{})
 	if err := checkChild(sc, FromContext(ctx)); err != nil {
 		t.Error(err)
 	}
@@ -218,7 +218,7 @@ func TestStartSpanWithRemoteParent(t *testing.T) {
 		t.Error(err)
 	}
 
-	ctx, _ = StartSpanWithRemoteParent(context.Background(), "StartSpanWithRemoteParent", sc, StartOptions{RecordEvents: true})
+	ctx, _ = StartSpanWithRemoteParent(context.Background(), "StartSpanWithRemoteParent", sc, StartOptions{})
 	if err := checkChild(sc, FromContext(ctx)); err != nil {
 		t.Error(err)
 	}

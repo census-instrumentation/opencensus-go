@@ -102,13 +102,7 @@ func WithSpan(parent context.Context, s *Span) context.Context {
 
 // StartOptions contains options concerning how a span is started.
 type StartOptions struct {
-	// Deprecated: this option has no effect.
-	RecordEvents bool
-
 	Sampler Sampler // if non-nil, the Sampler to consult for this span.
-
-	// Deprecated: this option has no effect.
-	RegisterNameForLocalSpanStore bool
 }
 
 // TODO(jbd): Remove start options.
@@ -129,7 +123,7 @@ func StartSpan(ctx context.Context, name string) (context.Context, *Span) {
 //
 // If there is no span in the context, creates a new trace and span.
 //
-// Deprecated: use StartSpan(...), or WithSpan(ctx, NewSpan(...)).
+// Deprecated: Use StartSpan(...), or WithSpan(ctx, NewSpan(...)).
 func StartSpanWithOptions(ctx context.Context, name string, o StartOptions) (context.Context, *Span) {
 	parentSpan, _ := ctx.Value(contextKey{}).(*Span)
 	span := NewSpan(name, parentSpan, o)
@@ -141,7 +135,7 @@ func StartSpanWithOptions(ctx context.Context, name string, o StartOptions) (con
 // If there is an existing span in ctx, it is ignored -- the returned Span is a
 // child of the span specified by parent.
 //
-// Deprecated: use WithSpan(ctx, NewSpanWithRemoteParent(...)).
+// Deprecated: Use WithSpan(ctx, NewSpanWithRemoteParent(...)).
 func StartSpanWithRemoteParent(ctx context.Context, name string, parent SpanContext, o StartOptions) (context.Context, *Span) {
 	span := NewSpanWithRemoteParent(name, parent, o)
 	return WithSpan(ctx, span), span
