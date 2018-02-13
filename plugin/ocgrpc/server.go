@@ -47,6 +47,11 @@ func (s *ServerHandler) HandleConn(ctx context.Context, cs stats.ConnStats) {
 	// no-op
 }
 
+func (s *ServerHandler) TagConn(ctx context.Context, cti *stats.ConnTagInfo) context.Context {
+	// no-op
+	return ctx
+}
+
 func (s *ServerHandler) HandleRPC(ctx context.Context, rs stats.RPCStats) {
 	if !s.NoTrace {
 		serverTrace.HandleRPC(ctx, rs)
@@ -54,11 +59,6 @@ func (s *ServerHandler) HandleRPC(ctx context.Context, rs stats.RPCStats) {
 	if !s.NoStats {
 		serverStats.HandleRPC(ctx, rs)
 	}
-}
-
-func (s *ServerHandler) TagConn(ctx context.Context, cti *stats.ConnTagInfo) context.Context {
-	// no-op
-	return ctx
 }
 
 func (s *ServerHandler) TagRPC(ctx context.Context, rti *stats.RPCTagInfo) context.Context {
