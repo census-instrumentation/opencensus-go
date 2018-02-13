@@ -175,12 +175,13 @@ func TestEndToEnd(t *testing.T) {
 	trace.RegisterExporter(&spans)
 	defer trace.UnregisterExporter(&spans)
 
-	ctx, _ := trace.StartSpanWithOptions(context.Background(),
+	span := trace.NewSpan(
 		"top-level",
+		nil,
 		trace.StartOptions{
-			RecordEvents: true,
-			Sampler:      trace.AlwaysSample(),
+			Sampler: trace.AlwaysSample(),
 		})
+	ctx := trace.WithSpan(context.Background(), span)
 
 	serverDone := make(chan struct{})
 	serverReturn := make(chan time.Time)
