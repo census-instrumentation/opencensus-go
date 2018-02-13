@@ -126,7 +126,7 @@ func (h *clientStatsHandler) handleRPCEnd(ctx context.Context, s *stats.End) {
 				tag.Upsert(KeyStatus, s.Code().String()),
 			)
 		}
-		m = append(m, ClientErrors.M(1))
+		m = append(m, ClientErrorCount.M(1))
 	}
 
 	ocstats.Record(ctx, m...)

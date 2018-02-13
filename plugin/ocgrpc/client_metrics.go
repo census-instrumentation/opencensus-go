@@ -23,7 +23,7 @@ import (
 
 // The following variables are measures are recorded by ClientHandler:
 var (
-	ClientErrors, _           = stats.Int64("grpc.io/client/error_count", "RPC Errors", stats.UnitNone)
+	ClientErrorCount, _       = stats.Int64("grpc.io/client/error_count", "RPC Errors", stats.UnitNone)
 	ClientRequestBytes, _     = stats.Int64("grpc.io/client/request_bytes", "Request bytes", stats.UnitBytes)
 	ClientResponseBytes, _    = stats.Int64("grpc.io/client/response_bytes", "Response bytes", stats.UnitBytes)
 	ClientStartedCount, _     = stats.Int64("grpc.io/client/started_count", "Number of client RPCs (streams) started", stats.UnitNone)
@@ -42,7 +42,7 @@ var (
 		"grpc.io/client/error_count",
 		"RPC Errors",
 		[]tag.Key{KeyStatus, KeyMethod},
-		ClientErrors,
+		ClientErrorCount,
 		view.MeanAggregation{})
 	ClientRoundTripLatencyView, _ = view.New(
 		"grpc.io/client/roundtrip_latency",
