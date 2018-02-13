@@ -14,7 +14,7 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 
-	"go.opencensus.io/internal/benchmarks/defs"
+	"go.opencensus.io/internal/benchmarks/proto"
 	"go.opencensus.io/plugin/ocgrpc"
 
 	"github.com/odeke-em/cli-spinner"
@@ -36,14 +36,14 @@ func Generate(dir string) {
 		log.Fatalf("Listening on addr %q err: %v", addr, err)
 	}
 	srv := grpc.NewServer(grpc.StatsHandler(ocgrpc.NewServerStatsHandler()))
-	defs.RegisterPingServer(srv, new(server))
+	proto.RegisterPingServer(srv, new(server))
 	go srv.Serve(ln)
 	defer srv.Stop()
 
 	metrics := runTestsAndCollectMetrics()
 	fileCreator := map[string]bool{
-		"allocs":     true,
-		"bytesPerOp": false,
+		"allocsPerOp": true,
+		"bytesPerOp":  false,
 	}
 
 	for key, graphingAllocs := range fileCreator {
@@ -63,8 +63,8 @@ func Generate(dir string) {
 
 type server int
 
-func (s *server) Ping(ctx context.Context, p *defs.Payload) (*defs.Payload, error) {
-	return &defs.Payload{"Pong"}, nil
+func (s *server) Ping(ctx context.Context, p *proto.Payload) (*proto.Payload, error) {
+	return &proto.Payload{"Pong"}, nil
 }
 
 type graphData struct {
@@ -151,7 +151,7 @@ const chartHTML = `
 	  responsive: true,
 	  title:{
 	    display: true,
-	    text: 'QPS log10(n) -- Logarithmic',
+	    text: '{{if .GraphingAllocs}}Allocs/Op vs QPS log10(n){{else}}Bytes/Op vs QPS log10(n){{end}}',
 	  }
 	},
       });

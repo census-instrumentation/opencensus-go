@@ -22,7 +22,7 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 
-	"go.opencensus.io/internal/benchmarks/defs"
+	"go.opencensus.io/internal/benchmarks/proto"
 	"go.opencensus.io/plugin/ocgrpc"
 )
 
@@ -77,11 +77,11 @@ func benchmarkUntraced(b *testing.B, qps int) {
 }
 
 func runWithConn(b *testing.B, conn *grpc.ClientConn, qps int) {
-	client := defs.NewPingClient(conn)
+	client := proto.NewPingClient(conn)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		qpsIt(10, func() {
-			pong, err := client.Ping(context.Background(), &defs.Payload{"Ping"})
+		qpsIt(qps, func() {
+			pong, err := client.Ping(context.Background(), &proto.Payload{"Ping"})
 			if err != nil {
 				b.Fatalf("Pong #%d err: %v", i, err)
 			}

@@ -1,7 +1,7 @@
 ## Benchmarks
 
-Benchmarks instrumenting an OpenCensus enabled gRPC backend vs one that
-isn't. Once tests are run it generates some charts of:
+Benchmarks measure the cost of OpenCensus  on a gRPC client and server.
+Once tests are run it generates some charts of:
 
 * allocs/op vs QPS
 * throughput/op vs QPS
@@ -9,7 +9,7 @@ isn't. Once tests are run it generates some charts of:
 
 ### Running it
 ```shell
-make all
+$ make all
 ```
 
 and this will generate 2 HTML files that can then be inspected.
