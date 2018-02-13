@@ -21,8 +21,7 @@ import (
 	"go.opencensus.io/tag"
 )
 
-// The following variables are measures and views made available for gRPC clients.
-// Client connection needs to use a clientStatsHandler in order to enable collection.
+// The following variables are measures are recorded by ClientHandler:
 var (
 	ClientErrors, _           = stats.Int64("grpc.io/client/error_count", "RPC Errors", stats.UnitNone)
 	ClientRequestBytes, _     = stats.Int64("grpc.io/client/request_bytes", "Request bytes", stats.UnitBytes)
@@ -34,7 +33,10 @@ var (
 	ClientRoundTripLatency, _ = stats.Float64("grpc.io/client/roundtrip_latency", "RPC roundtrip latency in msecs", stats.UnitMilliseconds)
 )
 
-// Predefined client views
+// Predefined views may be subscribed to collect data for the above measures.
+// As always, you may also define your own custom views over measures collected by this
+// package. These are declared as a convenience only; none are subscribed by
+// default.
 var (
 	ClientErrorCountView, _ = view.New(
 		"grpc.io/client/error_count",

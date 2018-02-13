@@ -21,8 +21,7 @@ import (
 	"go.opencensus.io/tag"
 )
 
-// The following variables are measures and views made available for gRPC clients.
-// Server needs to use a serverStatsHandler in order to enable collection.
+// The following variables are measures are recorded by ServerHandler:
 var (
 	ServerErrorCount, _        = stats.Int64("grpc.io/server/error_count", "RPC Errors", stats.UnitNone)
 	ServerServerElapsedTime, _ = stats.Float64("grpc.io/server/server_elapsed_time", "Server elapsed time in msecs", stats.UnitMilliseconds)
@@ -38,7 +37,10 @@ var (
 // mechanism to load these defaults from a common repository/config shared by
 // all supported languages. Likely a serialized protobuf of these defaults.
 
-// Predefined server views
+// Predefined views may be subscribed to collect data for the above measures.
+// As always, you may also define your own custom views over measures collected by this
+// package. These are declared as a convenience only; none are subscribed by
+// default.
 var (
 	ServerErrorCountView, _ = view.New(
 		"grpc.io/server/error_count",
