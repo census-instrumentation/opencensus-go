@@ -31,6 +31,8 @@ import (
 	"go.opencensus.io/stats/view"
 )
 
+const bytesPerKb = 1024
+
 var (
 	programStartTime = time.Now()
 	mu               sync.Mutex // protects snaps
@@ -109,7 +111,7 @@ func WriteTextRpczPage(w io.Writer) {
 		fmt.Fprint(tw, "Method\tCount\t\t\tAvgLat\t\t\tMaxLat\t\t\tRate\t\t\tIn (MiB/s)\t\t\tOut (MiB/s)\t\t\tErrors\t\t\n")
 		fmt.Fprint(tw, "\tMin\tHr\tTot\tMin\tHr\tTot\tMin\tHr\tTot\tMin\tHr\tTot\tMin\tHr\tTot\tMin\tHr\tTot\tMin\tHr\tTot\n")
 		for _, s := range sg.Snapshots {
-			fmt.Fprintf(tw, "%s\t%d\t%d\t%d\t%v\t%v\t%v\t%v\t%v\t%v\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%d\t%d\t%d\n",
+			fmt.Fprintf(tw, "%s\t%d\t%d\t%d\t%v\t%v\t%v\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%d\t%d\t%d\n",
 				s.Method,
 				s.CountMinute,
 				s.CountHour,
@@ -117,18 +119,15 @@ func WriteTextRpczPage(w io.Writer) {
 				s.AvgLatencyMinute,
 				s.AvgLatencyHour,
 				s.AvgLatencyTotal,
-				s.MaxLatencyMinute,
-				s.MaxLatencyHour,
-				s.MaxLatencyTotal,
 				s.RPCRateMinute,
 				s.RPCRateHour,
 				s.RPCRateTotal,
-				s.InputRateMinute/1e6,
-				s.InputRateHour/1e6,
-				s.InputRateTotal/1e6,
-				s.OutputRateMinute/1e6,
-				s.OutputRateHour/1e6,
-				s.OutputRateTotal/1e6,
+				s.InputRateMinute/bytesPerKb,
+				s.InputRateHour/bytesPerKb,
+				s.InputRateTotal/bytesPerKb,
+				s.OutputRateMinute/bytesPerKb,
+				s.OutputRateHour/bytesPerKb,
+				s.OutputRateTotal/bytesPerKb,
 				s.ErrorsMinute,
 				s.ErrorsHour,
 				s.ErrorsTotal)
@@ -231,9 +230,6 @@ type statSnapshot struct {
 	AvgLatencyMinute time.Duration
 	AvgLatencyHour   time.Duration
 	AvgLatencyTotal  time.Duration
-	MaxLatencyMinute time.Duration
-	MaxLatencyHour   time.Duration
-	MaxLatencyTotal  time.Duration
 	RPCRateMinute    float64
 	RPCRateHour      float64
 	RPCRateTotal     float64
@@ -299,7 +295,6 @@ func (s snapExporter) ExportView(vd *view.Data) {
 		}
 
 		var (
-			dist  = &view.DistributionData{}
 			sum   float64
 			count float64
 		)
@@ -308,7 +303,6 @@ func (s snapExporter) ExportView(vd *view.Data) {
 			sum = float64(*v)
 			count = float64(*v)
 		case *view.DistributionData:
-			dist = v
 			sum = v.Sum()
 			count = float64(v.Count)
 		case *view.MeanData:
@@ -326,7 +320,6 @@ func (s snapExporter) ExportView(vd *view.Data) {
 
 		case ocgrpc.ClientRoundTripLatencyView:
 			s.AvgLatencyTotal = convertTime(sum / count)
-			s.MaxLatencyTotal = convertTime(dist.Max)
 
 		case ocgrpc.ClientRequestBytesView:
 			s.OutputRateTotal = computeRate(0, sum)
@@ -346,7 +339,6 @@ func (s snapExporter) ExportView(vd *view.Data) {
 
 		case ocgrpc.ServerServerElapsedTimeView:
 			s.AvgLatencyTotal = convertTime(sum / count)
-			s.MaxLatencyTotal = convertTime(dist.Max)
 
 		case ocgrpc.ServerResponseBytesView:
 			s.OutputRateTotal = computeRate(0, sum)

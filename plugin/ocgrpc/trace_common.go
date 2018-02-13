@@ -41,7 +41,7 @@ const traceContextKey = "grpc-trace-bin"
 // SpanContext added to the outgoing gRPC metadata.
 func (c *clientTraceHandler) TagRPC(ctx context.Context, rti *stats.RPCTagInfo) context.Context {
 	name := "Sent" + strings.Replace(rti.FullMethodName, "/", ".", -1)
-	ctx, _ = trace.StartSpanWithOptions(ctx, name, trace.StartOptions{RecordEvents: true, RegisterNameForLocalSpanStore: true})
+	ctx, _ = trace.StartSpan(ctx, name)
 	traceContextBinary := propagation.Binary(trace.FromContext(ctx).SpanContext())
 	if len(traceContextBinary) == 0 {
 		return ctx
@@ -58,14 +58,13 @@ func (c *clientTraceHandler) TagRPC(ctx context.Context, rti *stats.RPCTagInfo) 
 func (s *serverTraceHandler) TagRPC(ctx context.Context, rti *stats.RPCTagInfo) context.Context {
 	md, _ := metadata.FromIncomingContext(ctx)
 	name := "Recv" + strings.Replace(rti.FullMethodName, "/", ".", -1)
-	opt := trace.StartOptions{RecordEvents: true, RegisterNameForLocalSpanStore: true}
 	if s := md[traceContextKey]; len(s) > 0 {
 		if parent, ok := propagation.FromBinary([]byte(s[0])); ok {
-			ctx, _ = trace.StartSpanWithRemoteParent(ctx, name, parent, opt)
+			ctx, _ = trace.StartSpanWithRemoteParent(ctx, name, parent, trace.StartOptions{})
 			return ctx
 		}
 	}
-	ctx, _ = trace.StartSpanWithOptions(ctx, name, opt)
+	ctx, _ = trace.StartSpan(ctx, name)
 	return ctx
 }
 

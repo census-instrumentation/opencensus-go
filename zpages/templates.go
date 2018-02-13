@@ -102,7 +102,7 @@ When                       Elapsed (sec)
 {{range .Rows}}{{printf "%26s" (index .Fields 0)}} {{printf "%12s" (index .Fields 1)}} {{index .Fields 2}}{{.|traceid}}
 {{end}}</pre>
 <br>
-<p><b style="color:blue;">TraceId</b> means sampled request. 
+<p><b style="color:blue;">TraceId</b> means sampled request.
 <b style="color:black;">TraceId</b> means not sampled request.</p>
 `
 	statsTemplateString = `
@@ -114,16 +114,14 @@ When                       Elapsed (sec)
 <th></th><td></td>
 <th class="l1" colspan=3>Count</th><td></td>
 <th class="l1" colspan=3>Avg latency (ms)</th><td></td>
-<th class="l1" colspan=3>Max latency (ms)</th><td></td>
 <th class="l1" colspan=3>Rate (rpc/s)</th><td></td>
-<th class="l1" colspan=3>Input (MiB/s)</th><td></td>
-<th class="l1" colspan=3>Output (MiB/s)</th><td></td>
+<th class="l1" colspan=3>Input (kb/s)</th><td></td>
+<th class="l1" colspan=3>Output (kb/s)</th><td></td>
 <th class="l1" colspan=3>Errors</th>
 </tr>
 
 <tr bgcolor="#eee5de">
 <th align=left>Method</th><td>&nbsp;&nbsp;&nbsp;&nbsp;</td>
-<th align=right>Min.</th><th align=right>Hr.</th><th align=right>Tot.</th><td>&nbsp;&nbsp;&nbsp;&nbsp;</td>
 <th align=right>Min.</th><th align=right>Hr.</th><th align=right>Tot.</th><td>&nbsp;&nbsp;&nbsp;&nbsp;</td>
 <th align=right>Min.</th><th align=right>Hr.</th><th align=right>Tot.</th><td>&nbsp;&nbsp;&nbsp;&nbsp;</td>
 <th align=right>Min.</th><th align=right>Hr.</th><th align=right>Tot.</th><td>&nbsp;&nbsp;&nbsp;&nbsp;</td>
@@ -144,9 +142,6 @@ When                       Elapsed (sec)
 <td align="right">{{.AvgLatencyMinute|ms}}</td>
 <td align="right">{{.AvgLatencyHour|ms}}</td>
 <td align="right">{{.AvgLatencyTotal|ms}}</td><td></td>
-<td align="right">{{.MaxLatencyMinute|ms}}</td>
-<td align="right">{{.MaxLatencyHour|ms}}</td>
-<td align="right">{{.MaxLatencyTotal|ms}}</td><td></td>
 <td align="right">{{.RPCRateMinute|rate}}</td>
 <td align="right">{{.RPCRateHour|rate}}</td>
 <td align="right">{{.RPCRateTotal|rate}}</td><td></td>

@@ -27,6 +27,13 @@
 //
 // zpages are currrently work-in-process and cannot display minutely and
 // hourly stats correctly.
+//
+// Performance
+//
+// Installing the zpages has a performance overhead because additional traces
+// and stats will be collected in-process. In most cases, we expect this
+// overhead will not be significant but it depends on many factors, including
+// how many spans your process creates and how richly annotated they are.
 package zpages // import "go.opencensus.io/zpages"
 
 import (
