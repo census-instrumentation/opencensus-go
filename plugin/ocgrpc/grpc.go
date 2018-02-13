@@ -19,7 +19,6 @@ package ocgrpc // import "go.opencensus.io/plugin/ocgrpc"
 import (
 	"golang.org/x/net/context"
 
-	"go.opencensus.io/plugin/ocgrpc/grpcstats"
 	"go.opencensus.io/plugin/ocgrpc/grpctrace"
 
 	"google.golang.org/grpc/stats"
@@ -30,7 +29,7 @@ import (
 // on, see grpcstats and grpctrace packages.
 func NewClientStatsHandler() stats.Handler {
 	return handler{
-		grpcstats.NewClientStatsHandler(),
+		&clientStatsHandler{},
 		grpctrace.NewClientStatsHandler(),
 	}
 }
@@ -40,7 +39,7 @@ func NewClientStatsHandler() stats.Handler {
 // on, see grpcstats and grpctrace packages.
 func NewServerStatsHandler() stats.Handler {
 	return handler{
-		grpcstats.NewServerStatsHandler(),
+		&serverStatsHandler{},
 		grpctrace.NewServerStatsHandler(),
 	}
 }

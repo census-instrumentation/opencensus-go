@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-package grpcstats
+package ocgrpc
 
 import (
 	"go.opencensus.io/stats"
@@ -22,7 +22,7 @@ import (
 )
 
 // The following variables are measures and views made available for gRPC clients.
-// Client connection needs to use a ClientStatsHandler in order to enable collection.
+// Client connection needs to use a clientStatsHandler in order to enable collection.
 var (
 	ClientErrors, _           = stats.Int64("grpc.io/client/error_count", "RPC Errors", stats.UnitNone)
 	ClientRequestBytes, _     = stats.Int64("grpc.io/client/request_bytes", "Request bytes", stats.UnitBytes)

@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-package grpcstats
+package ocgrpc
 
 import (
 	"go.opencensus.io/stats"
@@ -22,7 +22,7 @@ import (
 )
 
 // The following variables are measures and views made available for gRPC clients.
-// Server needs to use a ServerStatsHandler in order to enable collection.
+// Server needs to use a serverStatsHandler in order to enable collection.
 var (
 	ServerErrorCount, _        = stats.Int64("grpc.io/server/error_count", "RPC Errors", stats.UnitNone)
 	ServerServerElapsedTime, _ = stats.Float64("grpc.io/server/server_elapsed_time", "Server elapsed time in msecs", stats.UnitMilliseconds)

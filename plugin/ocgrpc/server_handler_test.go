@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-package grpcstats
+package ocgrpc
 
 import (
 	"testing"
@@ -302,7 +302,7 @@ func TestServerDefaultCollections(t *testing.T) {
 			}
 		}
 
-		h := &ServerStatsHandler{}
+		h := &serverStatsHandler{}
 		for _, rpc := range tc.rpcs {
 			mods := []tag.Mutator{}
 			for _, t := range rpc.tags {

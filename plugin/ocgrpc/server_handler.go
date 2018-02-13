@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-package grpcstats
+package ocgrpc
 
 import (
 	"fmt"
@@ -29,35 +29,35 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// ServerStatsHandler is a stats.Handler implementation
+// serverStatsHandler is a stats.Handler implementation
 // that collects stats for a gRPC server. Predefined
 // measures and views can be used to access the collected data.
-type ServerStatsHandler struct{}
+type serverStatsHandler struct{}
 
-var _ stats.Handler = &ServerStatsHandler{}
+var _ stats.Handler = &serverStatsHandler{}
 
 // NewServerStatsHandler returns a stats.Handler implementation
 // that collects stats for a gRPC server. Predefined
 // measures and views can be used to access the collected data.
-func NewServerStatsHandler() *ServerStatsHandler {
-	return &ServerStatsHandler{}
+func newServerStatsHandler() *serverStatsHandler {
+	return &serverStatsHandler{}
 }
 
 // TagConn adds connection related data to the given context and returns the
 // new context.
-func (h *ServerStatsHandler) TagConn(ctx context.Context, info *stats.ConnTagInfo) context.Context {
+func (h *serverStatsHandler) TagConn(ctx context.Context, info *stats.ConnTagInfo) context.Context {
 	// Do nothing. This is here to satisfy the interface "google.golang.org/grpc/stats.Handler"
 	return ctx
 }
 
 // HandleConn processes the connection events.
-func (h *ServerStatsHandler) HandleConn(ctx context.Context, s stats.ConnStats) {
+func (h *serverStatsHandler) HandleConn(ctx context.Context, s stats.ConnStats) {
 	// Do nothing. This is here to satisfy the interface "google.golang.org/grpc/stats.Handler"
 }
 
 // TagRPC gets the metadata from gRPC context, extracts the encoded tags from
 // it and creates a new tag.Map and puts them into the returned context.
-func (h *ServerStatsHandler) TagRPC(ctx context.Context, info *stats.RPCTagInfo) context.Context {
+func (h *serverStatsHandler) TagRPC(ctx context.Context, info *stats.RPCTagInfo) context.Context {
 	startTime := time.Now()
 	if info == nil {
 		if grpclog.V(2) {
@@ -72,7 +72,7 @@ func (h *ServerStatsHandler) TagRPC(ctx context.Context, info *stats.RPCTagInfo)
 }
 
 // HandleRPC processes the RPC events.
-func (h *ServerStatsHandler) HandleRPC(ctx context.Context, s stats.RPCStats) {
+func (h *serverStatsHandler) HandleRPC(ctx context.Context, s stats.RPCStats) {
 	switch st := s.(type) {
 	case *stats.Begin, *stats.InHeader, *stats.InTrailer, *stats.OutHeader, *stats.OutTrailer:
 		// Do nothing for server
@@ -88,7 +88,7 @@ func (h *ServerStatsHandler) HandleRPC(ctx context.Context, s stats.RPCStats) {
 	}
 }
 
-func (h *ServerStatsHandler) handleRPCInPayload(ctx context.Context, s *stats.InPayload) {
+func (h *serverStatsHandler) handleRPCInPayload(ctx context.Context, s *stats.InPayload) {
 	d, ok := ctx.Value(grpcServerRPCKey).(*rpcData)
 	if !ok {
 		if grpclog.V(2) {
@@ -101,7 +101,7 @@ func (h *ServerStatsHandler) handleRPCInPayload(ctx context.Context, s *stats.In
 	atomic.AddInt64(&d.reqCount, 1)
 }
 
-func (h *ServerStatsHandler) handleRPCOutPayload(ctx context.Context, s *stats.OutPayload) {
+func (h *serverStatsHandler) handleRPCOutPayload(ctx context.Context, s *stats.OutPayload) {
 	d, ok := ctx.Value(grpcServerRPCKey).(*rpcData)
 	if !ok {
 		if grpclog.V(2) {
@@ -114,7 +114,7 @@ func (h *ServerStatsHandler) handleRPCOutPayload(ctx context.Context, s *stats.O
 	atomic.AddInt64(&d.respCount, 1)
 }
 
-func (h *ServerStatsHandler) handleRPCEnd(ctx context.Context, s *stats.End) {
+func (h *serverStatsHandler) handleRPCEnd(ctx context.Context, s *stats.End) {
 	d, ok := ctx.Value(grpcServerRPCKey).(*rpcData)
 	if !ok {
 		if grpclog.V(2) {
@@ -149,7 +149,7 @@ func (h *ServerStatsHandler) handleRPCEnd(ctx context.Context, s *stats.End) {
 
 // createTags creates a new tag map containing the tags extracted from the
 // gRPC metadata.
-func (h *ServerStatsHandler) createTags(ctx context.Context, fullinfo string) (context.Context, error) {
+func (h *serverStatsHandler) createTags(ctx context.Context, fullinfo string) (context.Context, error) {
 	mods := []tag.Mutator{
 		tag.Upsert(KeyMethod, methodName(fullinfo)),
 	}

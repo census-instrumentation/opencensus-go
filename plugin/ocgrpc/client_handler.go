@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-package grpcstats
+package ocgrpc
 
 import (
 	"sync/atomic"
@@ -27,18 +27,18 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// ClientStatsHandler is a stats.Handler implementation
+// clientStatsHandler is a stats.Handler implementation
 // that collects stats for a gRPC client. Predefined
 // measures and views can be used to access the collected data.
-type ClientStatsHandler struct{}
+type clientStatsHandler struct{}
 
-var _ stats.Handler = &ClientStatsHandler{}
+var _ stats.Handler = &clientStatsHandler{}
 
 // NewClientStatsHandler returns a stats.Handler implementation
 // that collects stats for a gRPC client. Predefined
 // measures and views can be used to access the collected data.
-func NewClientStatsHandler() *ClientStatsHandler {
-	return &ClientStatsHandler{}
+func newClientStatsHandler() *clientStatsHandler {
+	return &clientStatsHandler{}
 }
 
 // TODO(jbd): Remove NewClientStatsHandler and NewServerStatsHandler
@@ -46,19 +46,19 @@ func NewClientStatsHandler() *ClientStatsHandler {
 
 // TagConn adds connection related data to the given context and returns the
 // new context.
-func (h *ClientStatsHandler) TagConn(ctx context.Context, info *stats.ConnTagInfo) context.Context {
+func (h *clientStatsHandler) TagConn(ctx context.Context, info *stats.ConnTagInfo) context.Context {
 	// Do nothing. This is here to satisfy the interface "google.golang.org/grpc/stats.Handler"
 	return ctx
 }
 
 // HandleConn processes the connection events.
-func (h *ClientStatsHandler) HandleConn(ctx context.Context, s stats.ConnStats) {
+func (h *clientStatsHandler) HandleConn(ctx context.Context, s stats.ConnStats) {
 	// Do nothing. This is here to satisfy the interface "google.golang.org/grpc/stats.Handler"
 }
 
 // TagRPC gets the tag.Map populated by the application code, serializes
 // its tags into the GRPC metadata in order to be sent to the server.
-func (h *ClientStatsHandler) TagRPC(ctx context.Context, info *stats.RPCTagInfo) context.Context {
+func (h *clientStatsHandler) TagRPC(ctx context.Context, info *stats.RPCTagInfo) context.Context {
 	startTime := time.Now()
 	if info == nil {
 		if grpclog.V(2) {
@@ -82,7 +82,7 @@ func (h *ClientStatsHandler) TagRPC(ctx context.Context, info *stats.RPCTagInfo)
 }
 
 // HandleRPC processes the RPC events.
-func (h *ClientStatsHandler) HandleRPC(ctx context.Context, s stats.RPCStats) {
+func (h *clientStatsHandler) HandleRPC(ctx context.Context, s stats.RPCStats) {
 	switch st := s.(type) {
 	case *stats.Begin, *stats.OutHeader, *stats.InHeader, *stats.InTrailer, *stats.OutTrailer:
 		// do nothing for client
@@ -97,7 +97,7 @@ func (h *ClientStatsHandler) HandleRPC(ctx context.Context, s stats.RPCStats) {
 	}
 }
 
-func (h *ClientStatsHandler) handleRPCOutPayload(ctx context.Context, s *stats.OutPayload) {
+func (h *clientStatsHandler) handleRPCOutPayload(ctx context.Context, s *stats.OutPayload) {
 	d, ok := ctx.Value(grpcClientRPCKey).(*rpcData)
 	if !ok {
 		if grpclog.V(2) {
@@ -110,7 +110,7 @@ func (h *ClientStatsHandler) handleRPCOutPayload(ctx context.Context, s *stats.O
 	atomic.AddInt64(&d.reqCount, 1)
 }
 
-func (h *ClientStatsHandler) handleRPCInPayload(ctx context.Context, s *stats.InPayload) {
+func (h *clientStatsHandler) handleRPCInPayload(ctx context.Context, s *stats.InPayload) {
 	d, ok := ctx.Value(grpcClientRPCKey).(*rpcData)
 	if !ok {
 		if grpclog.V(2) {
@@ -123,7 +123,7 @@ func (h *ClientStatsHandler) handleRPCInPayload(ctx context.Context, s *stats.In
 	atomic.AddInt64(&d.respCount, 1)
 }
 
-func (h *ClientStatsHandler) handleRPCEnd(ctx context.Context, s *stats.End) {
+func (h *clientStatsHandler) handleRPCEnd(ctx context.Context, s *stats.End) {
 	d, ok := ctx.Value(grpcClientRPCKey).(*rpcData)
 	if !ok {
 		if grpclog.V(2) {

@@ -13,8 +13,7 @@
 // limitations under the License.
 //
 
-// Package grpcstats provides OpenCensus stats support for gRPC clients and servers.
-package grpcstats // import "go.opencensus.io/plugin/ocgrpc/grpcstats"
+package ocgrpc
 
 import (
 	"strings"

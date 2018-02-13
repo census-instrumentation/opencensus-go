@@ -18,13 +18,12 @@ import (
 	"log"
 
 	"go.opencensus.io/plugin/ocgrpc"
-	"go.opencensus.io/plugin/ocgrpc/grpcstats"
 	"google.golang.org/grpc"
 )
 
 func ExampleNewClientStatsHandler() {
 	// Subscribe to collect client request count.
-	if err := grpcstats.ClientRequestCountView.Subscribe(); err != nil {
+	if err := ocgrpc.ClientRequestCountView.Subscribe(); err != nil {
 		log.Fatal(err)
 	}
 
@@ -39,7 +38,7 @@ func ExampleNewClientStatsHandler() {
 
 func ExampleNewServerStatsHandler() {
 	// Subscribe to collect server request count.
-	if err := grpcstats.RPCServerRequestCountView.Subscribe(); err != nil {
+	if err := ocgrpc.RPCServerRequestCountView.Subscribe(); err != nil {
 		log.Fatal(err)
 	}
 
