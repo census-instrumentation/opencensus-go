@@ -14,7 +14,7 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 
-	"go.opencensus.io/benchmarks/defs"
+	"go.opencensus.io/internal/benchmarks/defs"
 	"go.opencensus.io/plugin/ocgrpc"
 
 	"github.com/odeke-em/cli-spinner"
@@ -42,8 +42,8 @@ func Generate(dir string) {
 
 	metrics := runTestsAndCollectMetrics()
 	fileCreator := map[string]bool{
-		"allocs":    true,
-		"througput": false,
+		"allocs":     true,
+		"bytesPerOp": false,
 	}
 
 	for key, graphingAllocs := range fileCreator {

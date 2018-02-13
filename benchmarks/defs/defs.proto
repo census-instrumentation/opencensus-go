@@ -1,9 +1,0 @@
-syntax = "proto3";
-
-message Payload {
-  string Body = 1;
-}
-
-service Ping{
-  rpc Ping(Payload) returns (Payload) {};
-}
