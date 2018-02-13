@@ -34,27 +34,6 @@ import (
 // measures and views can be used to access the collected data.
 type serverStatsHandler struct{}
 
-var _ stats.Handler = &serverStatsHandler{}
-
-// NewServerStatsHandler returns a stats.Handler implementation
-// that collects stats for a gRPC server. Predefined
-// measures and views can be used to access the collected data.
-func newServerStatsHandler() *serverStatsHandler {
-	return &serverStatsHandler{}
-}
-
-// TagConn adds connection related data to the given context and returns the
-// new context.
-func (h *serverStatsHandler) TagConn(ctx context.Context, info *stats.ConnTagInfo) context.Context {
-	// Do nothing. This is here to satisfy the interface "google.golang.org/grpc/stats.Handler"
-	return ctx
-}
-
-// HandleConn processes the connection events.
-func (h *serverStatsHandler) HandleConn(ctx context.Context, s stats.ConnStats) {
-	// Do nothing. This is here to satisfy the interface "google.golang.org/grpc/stats.Handler"
-}
-
 // TagRPC gets the metadata from gRPC context, extracts the encoded tags from
 // it and creates a new tag.Map and puts them into the returned context.
 func (h *serverStatsHandler) TagRPC(ctx context.Context, info *stats.RPCTagInfo) context.Context {

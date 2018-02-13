@@ -31,11 +31,7 @@ import (
 // automatic span creation for outgoing gRPC requests.
 type clientTraceHandler struct{}
 
-var _ stats.Handler = &clientTraceHandler{}
-
 type serverTraceHandler struct{}
-
-var _ stats.Handler = &serverTraceHandler{}
 
 const traceContextKey = "grpc-trace-bin"
 
@@ -110,22 +106,4 @@ func handleRPC(ctx context.Context, rs stats.RPCStats) {
 		}
 		span.End()
 	}
-}
-
-// TagConn is a no-op for this StatsHandler.
-func (c *clientTraceHandler) TagConn(ctx context.Context, cti *stats.ConnTagInfo) context.Context {
-	return ctx
-}
-
-// TagConn is a no-op for this StatsHandler.
-func (s *serverTraceHandler) TagConn(ctx context.Context, cti *stats.ConnTagInfo) context.Context {
-	return ctx
-}
-
-// HandleConn is a no-op for this StatsHandler.
-func (c *clientTraceHandler) HandleConn(ctx context.Context, cs stats.ConnStats) {
-}
-
-// HandleConn is a no-op for this StatsHandler.
-func (s *serverTraceHandler) HandleConn(ctx context.Context, cs stats.ConnStats) {
 }
