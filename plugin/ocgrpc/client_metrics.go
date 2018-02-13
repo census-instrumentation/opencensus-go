@@ -44,37 +44,45 @@ var (
 		[]tag.Key{KeyStatus, KeyMethod},
 		ClientErrorCount,
 		view.MeanAggregation{})
+
 	ClientRoundTripLatencyView, _ = view.New(
 		"grpc.io/client/roundtrip_latency",
 		"Latency in msecs",
 		[]tag.Key{KeyMethod},
 		ClientRoundTripLatency,
 		DefaultMillisecondsDistribution)
+
 	ClientRequestBytesView, _ = view.New(
 		"grpc.io/client/request_bytes",
 		"Request bytes",
 		[]tag.Key{KeyMethod},
 		ClientRequestBytes,
 		DefaultBytesDistribution)
+
 	ClientResponseBytesView, _ = view.New(
 		"grpc.io/client/response_bytes",
 		"Response bytes",
 		[]tag.Key{KeyMethod},
 		ClientResponseBytes,
 		DefaultBytesDistribution)
+
 	ClientRequestCountView, _ = view.New(
 		"grpc.io/client/request_count",
 		"Count of request messages per client RPC",
 		[]tag.Key{KeyMethod},
 		ClientRequestCount,
 		DefaultMessageCountDistribution)
+
 	ClientResponseCountView, _ = view.New(
 		"grpc.io/client/response_count",
 		"Count of response messages per client RPC",
 		[]tag.Key{KeyMethod},
 		ClientResponseCount,
 		DefaultMessageCountDistribution)
+)
 
+// All the default client views provided by this package:
+var (
 	DefaultClientViews = []*view.View{
 		ClientErrorCountView,
 		ClientRoundTripLatencyView,
