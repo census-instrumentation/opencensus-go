@@ -79,7 +79,7 @@ func TestNewServerStatsHandler(t *testing.T) {
 
 	te := &traceExporter{}
 	trace.RegisterExporter(te)
-	if err := RPCServerRequestCountView.Subscribe(); err != nil {
+	if err := ServerRequestCountView.Subscribe(); err != nil {
 		t.Fatal(err)
 	}
 
@@ -97,7 +97,7 @@ func TestNewServerStatsHandler(t *testing.T) {
 		EndTime: time.Now(),
 	})
 
-	stats, err := RPCServerRequestCountView.RetrieveData()
+	stats, err := ServerRequestCountView.RetrieveData()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -111,7 +111,7 @@ func TestNewServerStatsHandler(t *testing.T) {
 	}
 
 	// Cleanup.
-	if err := RPCServerRequestCountView.Unsubscribe(); err != nil {
+	if err := ServerRequestCountView.Unsubscribe(); err != nil {
 		t.Fatal(err)
 	}
 

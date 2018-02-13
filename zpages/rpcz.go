@@ -40,18 +40,18 @@ var (
 	// A view's map value indicates whether that view contains data for received
 	// RPCs.
 	viewType = map[*view.View]bool{
-		ocgrpc.ClientErrorCountView:           false,
-		ocgrpc.ClientRequestBytesView:         false,
-		ocgrpc.ClientRequestCountView:         false,
-		ocgrpc.ClientResponseBytesView:        false,
-		ocgrpc.ClientResponseCountView:        false,
-		ocgrpc.ClientRoundTripLatencyView:     false,
-		ocgrpc.RPCServerErrorCountView:        true,
-		ocgrpc.RPCServerRequestBytesView:      true,
-		ocgrpc.RPCServerRequestCountView:      true,
-		ocgrpc.RPCServerResponseBytesView:     true,
-		ocgrpc.RPCServerResponseCountView:     true,
-		ocgrpc.RPCServerServerElapsedTimeView: true,
+		ocgrpc.ClientErrorCountView:        false,
+		ocgrpc.ClientRequestBytesView:      false,
+		ocgrpc.ClientRequestCountView:      false,
+		ocgrpc.ClientResponseBytesView:     false,
+		ocgrpc.ClientResponseCountView:     false,
+		ocgrpc.ClientRoundTripLatencyView:  false,
+		ocgrpc.ServerErrorCountView:        true,
+		ocgrpc.ServerRequestBytesView:      true,
+		ocgrpc.ServerRequestCountView:      true,
+		ocgrpc.ServerResponseBytesView:     true,
+		ocgrpc.ServerResponseCountView:     true,
+		ocgrpc.ServerServerElapsedTimeView: true,
 	}
 )
 
@@ -341,21 +341,21 @@ func (s snapExporter) ExportView(vd *view.Data) {
 		case ocgrpc.ClientResponseCountView:
 			// currently unused
 
-		case ocgrpc.RPCServerErrorCountView:
+		case ocgrpc.ServerErrorCountView:
 			s.ErrorsTotal = int(count)
 
-		case ocgrpc.RPCServerServerElapsedTimeView:
+		case ocgrpc.ServerServerElapsedTimeView:
 			s.AvgLatencyTotal = convertTime(sum / count)
 			s.MaxLatencyTotal = convertTime(dist.Max)
 
-		case ocgrpc.RPCServerResponseBytesView:
+		case ocgrpc.ServerResponseBytesView:
 			s.OutputRateTotal = computeRate(0, sum)
 
-		case ocgrpc.RPCServerRequestCountView:
+		case ocgrpc.ServerRequestCountView:
 			s.CountTotal = int(count)
 			s.RPCRateTotal = computeRate(0, count)
 
-		case ocgrpc.RPCServerResponseCountView:
+		case ocgrpc.ServerResponseCountView:
 			// currently unused
 		}
 	}

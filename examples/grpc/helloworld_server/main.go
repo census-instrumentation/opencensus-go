@@ -49,7 +49,7 @@ func main() {
 	view.RegisterExporter(&exporter.Exporter{})
 
 	// Subscribe to collect server request count.
-	if err := ocgrpc.RPCServerRequestCountView.Subscribe(); err != nil {
+	if err := ocgrpc.ServerRequestCountView.Subscribe(); err != nil {
 		log.Fatal(err)
 	}
 

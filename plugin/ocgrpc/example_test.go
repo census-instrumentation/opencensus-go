@@ -38,7 +38,7 @@ func ExampleNewClientStatsHandler() {
 
 func ExampleNewServerStatsHandler() {
 	// Subscribe to collect server request count.
-	if err := ocgrpc.RPCServerRequestCountView.Subscribe(); err != nil {
+	if err := ocgrpc.ServerRequestCountView.Subscribe(); err != nil {
 		log.Fatal(err)
 	}
 

@@ -72,7 +72,7 @@ func TestServerDefaultCollections(t *testing.T) {
 			},
 			[]*wantData{
 				{
-					func() *view.View { return RPCServerRequestCountView },
+					func() *view.View { return ServerRequestCountView },
 					[]*view.Row{
 						{
 							[]tag.Tag{
@@ -83,7 +83,7 @@ func TestServerDefaultCollections(t *testing.T) {
 					},
 				},
 				{
-					func() *view.View { return RPCServerResponseCountView },
+					func() *view.View { return ServerResponseCountView },
 					[]*view.Row{
 						{
 							[]tag.Tag{
@@ -94,7 +94,7 @@ func TestServerDefaultCollections(t *testing.T) {
 					},
 				},
 				{
-					func() *view.View { return RPCServerRequestBytesView },
+					func() *view.View { return ServerRequestBytesView },
 					[]*view.Row{
 						{
 							[]tag.Tag{
@@ -105,7 +105,7 @@ func TestServerDefaultCollections(t *testing.T) {
 					},
 				},
 				{
-					func() *view.View { return RPCServerResponseBytesView },
+					func() *view.View { return ServerResponseBytesView },
 					[]*view.Row{
 						{
 							[]tag.Tag{
@@ -149,7 +149,7 @@ func TestServerDefaultCollections(t *testing.T) {
 			},
 			[]*wantData{
 				{
-					func() *view.View { return RPCServerErrorCountView },
+					func() *view.View { return ServerErrorCountView },
 					[]*view.Row{
 						{
 							[]tag.Tag{
@@ -161,7 +161,7 @@ func TestServerDefaultCollections(t *testing.T) {
 					},
 				},
 				{
-					func() *view.View { return RPCServerRequestCountView },
+					func() *view.View { return ServerRequestCountView },
 					[]*view.Row{
 						{
 							[]tag.Tag{
@@ -172,7 +172,7 @@ func TestServerDefaultCollections(t *testing.T) {
 					},
 				},
 				{
-					func() *view.View { return RPCServerResponseCountView },
+					func() *view.View { return ServerResponseCountView },
 					[]*view.Row{
 						{
 							[]tag.Tag{
@@ -229,7 +229,7 @@ func TestServerDefaultCollections(t *testing.T) {
 			},
 			[]*wantData{
 				{
-					func() *view.View { return RPCServerErrorCountView },
+					func() *view.View { return ServerErrorCountView },
 					[]*view.Row{
 						{
 							[]tag.Tag{
@@ -248,7 +248,7 @@ func TestServerDefaultCollections(t *testing.T) {
 					},
 				},
 				{
-					func() *view.View { return RPCServerRequestCountView },
+					func() *view.View { return ServerRequestCountView },
 					[]*view.Row{
 						{
 							[]tag.Tag{
@@ -259,7 +259,7 @@ func TestServerDefaultCollections(t *testing.T) {
 					},
 				},
 				{
-					func() *view.View { return RPCServerResponseCountView },
+					func() *view.View { return ServerResponseCountView },
 					[]*view.Row{
 						{
 							[]tag.Tag{
@@ -270,7 +270,7 @@ func TestServerDefaultCollections(t *testing.T) {
 					},
 				},
 				{
-					func() *view.View { return RPCServerRequestBytesView },
+					func() *view.View { return ServerRequestBytesView },
 					[]*view.Row{
 						{
 							[]tag.Tag{
@@ -281,7 +281,7 @@ func TestServerDefaultCollections(t *testing.T) {
 					},
 				},
 				{
-					func() *view.View { return RPCServerResponseBytesView },
+					func() *view.View { return ServerResponseBytesView },
 					[]*view.Row{
 						{
 							[]tag.Tag{

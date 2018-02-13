@@ -40,37 +40,37 @@ var (
 
 // Predefined server views
 var (
-	RPCServerErrorCountView, _ = view.New(
+	ServerErrorCountView, _ = view.New(
 		"grpc.io/server/error_count",
 		"RPC Errors",
 		[]tag.Key{KeyMethod, KeyStatus},
 		ServerErrorCount,
 		view.CountAggregation{})
-	RPCServerServerElapsedTimeView, _ = view.New(
+	ServerServerElapsedTimeView, _ = view.New(
 		"grpc.io/server/server_elapsed_time",
 		"Server elapsed time in msecs",
 		[]tag.Key{KeyMethod},
 		ServerServerElapsedTime,
 		DefaultMillisecondsDistribution)
-	RPCServerRequestBytesView, _ = view.New(
+	ServerRequestBytesView, _ = view.New(
 		"grpc.io/server/request_bytes",
 		"Request bytes",
 		[]tag.Key{KeyMethod},
 		ServerRequestBytes,
 		DefaultBytesDistribution)
-	RPCServerResponseBytesView, _ = view.New(
+	ServerResponseBytesView, _ = view.New(
 		"grpc.io/server/response_bytes",
 		"Response bytes",
 		[]tag.Key{KeyMethod},
 		ServerResponseBytes,
 		DefaultBytesDistribution)
-	RPCServerRequestCountView, _ = view.New(
+	ServerRequestCountView, _ = view.New(
 		"grpc.io/server/request_count",
 		"Count of request messages per server RPC",
 		[]tag.Key{KeyMethod},
 		ServerRequestCount,
 		DefaultMessageCountDistribution)
-	RPCServerResponseCountView, _ = view.New(
+	ServerResponseCountView, _ = view.New(
 		"grpc.io/server/response_count",
 		"Count of response messages per server RPC",
 		[]tag.Key{KeyMethod},
@@ -78,12 +78,12 @@ var (
 		DefaultMessageCountDistribution)
 
 	DefaultServerViews = []*view.View{
-		RPCServerErrorCountView,
-		RPCServerServerElapsedTimeView,
-		RPCServerRequestBytesView,
-		RPCServerResponseBytesView,
-		RPCServerRequestCountView,
-		RPCServerResponseCountView,
+		ServerErrorCountView,
+		ServerServerElapsedTimeView,
+		ServerRequestBytesView,
+		ServerResponseBytesView,
+		ServerRequestCountView,
+		ServerResponseCountView,
 	}
 )
 // TODO(jbd): Add roundtrip_latency, uncompressed_request_bytes, uncompressed_response_bytes, request_count, response_count.
