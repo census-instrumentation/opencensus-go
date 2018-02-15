@@ -19,6 +19,4 @@ import (
 	"go.opencensus.io/trace/propagation"
 )
 
-var (
-	defaultOutboundFormat propagation.HTTPFormat = &b3.HTTPFormat{}
-)
+var defaultOutboundFormat propagation.HTTPFormat = &b3.HTTPFormat{}

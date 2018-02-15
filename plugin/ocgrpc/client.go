@@ -38,7 +38,7 @@ type ClientHandler struct {
 	NoStats bool
 }
 
-var _ stats.Handler = &ClientHandler{}
+var _ stats.Handler = (*ClientHandler)(nil)
 
 // HandleConn exists to satisfy gRPC stats.Handler.
 func (c *ClientHandler) HandleConn(ctx context.Context, cs stats.ConnStats) {

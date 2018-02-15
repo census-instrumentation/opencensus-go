@@ -60,7 +60,7 @@ type ServerHandler struct {
 	Sampler trace.Sampler
 }
 
-var _ stats.Handler = &ServerHandler{}
+var _ stats.Handler = (*ServerHandler)(nil)
 
 // HandleConn exists to satisfy gRPC stats.Handler.
 func (s *ServerHandler) HandleConn(ctx context.Context, cs stats.ConnStats) {

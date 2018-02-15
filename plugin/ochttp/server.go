@@ -167,8 +167,7 @@ type Handler struct {
 	// Sampler will be consulted if either no inbound trace information was read
 	// from the request, or if the request was not sampled.
 	//
-	// If not set, the default sampler will be used (see
-	// trace.SetDefaultSampler).
+	// If not set, the default sampler will be used (see trace.SetDefaultSampler).
 	Sampler trace.Sampler
 
 	// NoStats may be set to true to disable recording OpenCensus tracing for
