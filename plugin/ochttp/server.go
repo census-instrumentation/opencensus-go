@@ -132,23 +132,49 @@ func (t *traceTransport) CancelRequest(req *http.Request) {
 	}
 }
 
-// Handler is a http.Handler that is aware of the incoming request's span.
+// Handler is a http.Handler that implement OpenCensus instrumentation around
+// each request handled.
+//
+// Handler will start a new trace or continue an existing trace read from request
+// headers (if enabled, see Propagation for which headers are used).
 //
 // The extracted span can be accessed from the incoming request's
-// context.
+// context:
 //
 //    span := trace.FromContext(r.Context())
 //
 // The server span will be automatically ended at the end of ServeHTTP.
-//
-// Incoming propagation mechanism is determined by the given HTTP propagators.
 type Handler struct {
-	// Propagation defines how traces are propagated. If unspecified,
-	// B3 propagation will be used.
+	// Propagation defines the header convention used to read tracing information
+	// from incoming requests.
+	//
+	// If not specified, no tracing information will be read from the incoming
+	// request. A trace (new root span) will be created around the server-side
+	// processing of each request if the Sampler samples this request.
+	//
+	// You should only set this to a non-default value if you trust the caller
+	// of this service. For example, this is safe if the current service will
+	// only be called by other services that you control.
 	Propagation propagation.HTTPFormat
 
-	// Handler is the handler used to handle the incoming request.
+	// Handler is the handler used to handle the incoming request. If not set,
+	// http.DefaultServeMux will be used.
 	Handler http.Handler
+
+	// Sampler to use to decide whether a new trace should be started with the
+	// server span as the root span.
+	//
+	// Sampler will be consulted if either no inbound trace information was read
+	// from the request, or if the request was not sampled.
+	//
+	// If not set, the default sampler will be used (see
+	// trace.SetDefaultSampler).
+	Sampler trace.Sampler
+
+	// NoStats may be set to true to disable recording OpenCensus tracing for
+	// this handler. If set to true, no tracing metadata will be read from the
+	// request and no new traces will be started.
+	NoTrace bool
 }
 
 // TODO(jbd): Add Handler.NoTrace and Handler.NoStats.
@@ -156,28 +182,33 @@ type Handler struct {
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	name := spanNameFromURL("Recv", r.URL)
 
-	p := h.Propagation
-	if p == nil {
-		p = defaultFormat
+	var readTraceHeaders func(*http.Request) (trace.SpanContext, bool)
+	if h.Propagation == nil {
+		readTraceHeaders = func(*http.Request) (trace.SpanContext, bool) {
+			return trace.SpanContext{}, false
+		}
+	} else {
+		readTraceHeaders = h.Propagation.SpanContextFromRequest
 	}
 
 	ctx := r.Context()
 	var span *trace.Span
-	if sc, ok := p.SpanContextFromRequest(r); ok {
-		ctx, span = trace.StartSpanWithRemoteParent(ctx, name, sc, trace.StartOptions{})
+	if sc, ok := readTraceHeaders(r); ok {
+		span = trace.NewSpanWithRemoteParent(name, sc, trace.StartOptions{Sampler: h.Sampler})
 	} else {
-		ctx, span = trace.StartSpan(ctx, name)
+		span = trace.NewSpan(name, nil, trace.StartOptions{Sampler: h.Sampler})
 	}
+	ctx = trace.WithSpan(ctx, span)
+	r = r.WithContext(ctx)
 	defer span.End()
 
 	span.SetAttributes(requestAttrs(r)...)
-
-	r = r.WithContext(ctx)
 
 	handler := h.Handler
 	if handler == nil {
 		handler = http.DefaultServeMux
 	}
+
 	handler.ServeHTTP(w, r)
 }
 

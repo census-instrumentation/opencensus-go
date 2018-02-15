@@ -25,21 +25,13 @@ import (
 	"google.golang.org/grpc/stats"
 )
 
-// clientTraceHandler is a an implementation of grpc.StatsHandler
-// that can be passed to grpc.Dial
-// using grpc.WithStatsHandler to enable trace context propagation and
-// automatic span creation for outgoing gRPC requests.
-type clientTraceHandler struct{}
-
-type serverTraceHandler struct{}
-
 const traceContextKey = "grpc-trace-bin"
 
 // TagRPC creates a new trace span for the client side of the RPC.
 //
 // It returns ctx with the new trace span added and a serialization of the
 // SpanContext added to the outgoing gRPC metadata.
-func (c *clientTraceHandler) TagRPC(ctx context.Context, rti *stats.RPCTagInfo) context.Context {
+func (c *ClientHandler) traceTagRPC(ctx context.Context, rti *stats.RPCTagInfo) context.Context {
 	name := "Sent" + strings.Replace(rti.FullMethodName, "/", ".", -1)
 	ctx, _ = trace.StartSpan(ctx, name)
 	traceContextBinary := propagation.Binary(trace.FromContext(ctx).SpanContext())
@@ -55,26 +47,32 @@ func (c *clientTraceHandler) TagRPC(ctx context.Context, rti *stats.RPCTagInfo) 
 // it finds one, uses that SpanContext as the parent context of the new span.
 //
 // It returns ctx, with the new trace span added.
-func (s *serverTraceHandler) TagRPC(ctx context.Context, rti *stats.RPCTagInfo) context.Context {
+func (s *ServerHandler) traceTagRPC(ctx context.Context, rti *stats.RPCTagInfo) context.Context {
 	md, _ := metadata.FromIncomingContext(ctx)
 	name := "Recv" + strings.Replace(rti.FullMethodName, "/", ".", -1)
-	if s := md[traceContextKey]; len(s) > 0 {
-		if parent, ok := propagation.FromBinary([]byte(s[0])); ok {
-			ctx, _ = trace.StartSpanWithRemoteParent(ctx, name, parent, trace.StartOptions{})
-			return ctx
+	options := trace.StartOptions{Sampler: s.Sampler}
+	traceContext := md[traceContextKey]
+	if !s.StartNewTraces && len(traceContext) > 0 {
+		// Metadata with keys ending in -bin are actually binary. They are base64
+		// encoded before being put on the wire, see:
+		// https://github.com/grpc/grpc-go/blob/08d6261/Documentation/grpc-metadata.md#storing-binary-data-in-metadata
+		traceContextBinary := []byte(traceContext[0])
+		if parent, ok := propagation.FromBinary(traceContextBinary); ok {
+			span := trace.NewSpanWithRemoteParent(name, parent, trace.StartOptions{})
+			return trace.WithSpan(ctx, span)
 		}
 	}
-	ctx, _ = trace.StartSpan(ctx, name)
-	return ctx
+	span := trace.NewSpan(name, nil, options)
+	return trace.WithSpan(ctx, span)
 }
 
 // HandleRPC processes the RPC stats, adding information to the current trace span.
-func (c *clientTraceHandler) HandleRPC(ctx context.Context, rs stats.RPCStats) {
+func (c *ClientHandler) traceHandleRPC(ctx context.Context, rs stats.RPCStats) {
 	handleRPC(ctx, rs)
 }
 
 // HandleRPC processes the RPC stats, adding information to the current trace span.
-func (s *serverTraceHandler) HandleRPC(ctx context.Context, rs stats.RPCStats) {
+func (s *ServerHandler) traceHandleRPC(ctx context.Context, rs stats.RPCStats) {
 	handleRPC(ctx, rs)
 }
 

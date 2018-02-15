@@ -31,6 +31,7 @@ import (
 	"testing"
 	"time"
 
+	"go.opencensus.io/plugin/ochttp/propagation/b3"
 	"go.opencensus.io/trace"
 )
 
@@ -117,9 +118,6 @@ func TestTransport_RoundTrip(t *testing.T) {
 }
 
 func TestHandler(t *testing.T) {
-	// TODO(#431): remove SetDefaultSampler
-	trace.SetDefaultSampler(trace.ProbabilitySampler(0.0))
-
 	traceID := [16]byte{16, 84, 69, 170, 120, 67, 188, 139, 242, 6, 177, 32, 0, 16, 0, 0}
 	tests := []struct {
 		header           string
@@ -153,8 +151,9 @@ func TestHandler(t *testing.T) {
 						t.Errorf("TraceOptions = %v; want %v", got, want)
 					}
 				}),
+				Sampler:     trace.ProbabilitySampler(0.0),
+				Propagation: propagator,
 			}
-			handler.Propagation = propagator
 			req, _ := http.NewRequest("GET", "http://foo.com", nil)
 			req.Header.Add("trace", tt.header)
 			handler.ServeHTTP(nil, req)
@@ -196,7 +195,7 @@ func TestEndToEnd(t *testing.T) {
 	}
 	req = req.WithContext(ctx)
 
-	rt := &traceTransport{format: defaultFormat, base: http.DefaultTransport}
+	rt := &traceTransport{format: &b3.HTTPFormat{}, base: http.DefaultTransport}
 	resp, err := rt.RoundTrip(req)
 	if err != nil {
 		t.Fatalf("unexpected error %s", err)
@@ -275,6 +274,7 @@ func serveHTTP(done chan struct{}, wait chan time.Time) string {
 			io.WriteString(w, "expected-response")
 			close(done)
 		}),
+		Propagation: &b3.HTTPFormat{},
 	}
 
 	server := httptest.NewServer(handler)

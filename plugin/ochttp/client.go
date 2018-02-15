@@ -51,7 +51,7 @@ func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	if !t.NoTrace {
 		format := t.Propagation
 		if format == nil {
-			format = defaultFormat
+			format = defaultOutboundFormat
 		}
 		rt = &traceTransport{
 			format: format,

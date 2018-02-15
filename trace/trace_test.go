@@ -109,22 +109,25 @@ func TestSampling(t *testing.T) {
 				SpanID:       sid,
 				TraceOptions: test.parentTraceOptions,
 			}
-			ctx, _ = StartSpanWithRemoteParent(context.Background(), "foo", sc, StartOptions{
+			span := NewSpanWithRemoteParent("foo", sc, StartOptions{
 				Sampler: test.sampler,
 			})
+			ctx = WithSpan(ctx, span)
 		} else if test.localParent {
 			sampler := NeverSample()
 			if test.parentTraceOptions == 1 {
 				sampler = AlwaysSample()
 			}
-			ctx2, _ := StartSpanWithOptions(context.Background(), "foo", StartOptions{Sampler: sampler})
-			ctx, _ = StartSpanWithOptions(ctx2, "foo", StartOptions{
+			parent := NewSpan("foo", nil, StartOptions{Sampler: sampler})
+			span := NewSpan("foo", parent, StartOptions{
 				Sampler: test.sampler,
 			})
+			ctx = WithSpan(ctx, span)
 		} else {
-			ctx, _ = StartSpanWithOptions(context.Background(), "foo", StartOptions{
+			span := NewSpan("foo", nil, StartOptions{
 				Sampler: test.sampler,
 			})
+			ctx = WithSpan(ctx, span)
 		}
 		sc := FromContext(ctx).SpanContext()
 		if (sc == SpanContext{}) {
@@ -159,8 +162,8 @@ func TestSampling(t *testing.T) {
 			if test.parentTraceOptions == 1 {
 				sampler = AlwaysSample()
 			}
-			ctx2, _ := StartSpanWithOptions(context.Background(), "foo", StartOptions{Sampler: sampler})
-			ctx, _ := StartSpan(ctx2, "foo")
+			span := NewSpan("foo", nil, StartOptions{Sampler: sampler})
+			ctx, _ := StartSpan(WithSpan(context.Background(), span), "foo")
 			sc := FromContext(ctx).SpanContext()
 			if (sc == SpanContext{}) {
 				t.Errorf("case %#v: starting new child of local span: no span in context", test)
@@ -180,7 +183,7 @@ func TestSampling(t *testing.T) {
 func TestProbabilitySampler(t *testing.T) {
 	exported := 0
 	for i := 0; i < 1000; i++ {
-		_, span := StartSpanWithOptions(context.Background(), "foo", StartOptions{
+		span := NewSpan("foo", nil, StartOptions{
 			Sampler: ProbabilitySampler(0.3),
 		})
 		if span.SpanContext().IsSampled() {
@@ -198,13 +201,8 @@ func TestStartSpanWithRemoteParent(t *testing.T) {
 		SpanID:       sid,
 		TraceOptions: 0x0,
 	}
-	ctx, _ := StartSpanWithRemoteParent(context.Background(), "StartSpanWithRemoteParent", sc, StartOptions{})
-	if err := checkChild(sc, FromContext(ctx)); err != nil {
-		t.Error(err)
-	}
-
-	ctx, _ = StartSpanWithRemoteParent(context.Background(), "StartSpanWithRemoteParent", sc, StartOptions{})
-	if err := checkChild(sc, FromContext(ctx)); err != nil {
+	span := NewSpanWithRemoteParent("NewSpanWithRemoteParent", sc, StartOptions{})
+	if err := checkChild(sc, span); err != nil {
 		t.Error(err)
 	}
 
@@ -213,19 +211,14 @@ func TestStartSpanWithRemoteParent(t *testing.T) {
 		SpanID:       sid,
 		TraceOptions: 0x1,
 	}
-	ctx, _ = StartSpanWithRemoteParent(context.Background(), "StartSpanWithRemoteParent", sc, StartOptions{})
-	if err := checkChild(sc, FromContext(ctx)); err != nil {
+	span = NewSpanWithRemoteParent("NewSpanWithRemoteParent", sc, StartOptions{})
+	if err := checkChild(sc, span); err != nil {
 		t.Error(err)
 	}
 
-	ctx, _ = StartSpanWithRemoteParent(context.Background(), "StartSpanWithRemoteParent", sc, StartOptions{})
-	if err := checkChild(sc, FromContext(ctx)); err != nil {
-		t.Error(err)
-	}
-
-	ctx2, _ := StartSpan(ctx, "StartSpan")
-	parent := FromContext(ctx).SpanContext()
-	if err := checkChild(parent, FromContext(ctx2)); err != nil {
+	ctx := WithSpan(context.Background(), span)
+	_, child := StartSpan(ctx, "StartSpan")
+	if err := checkChild(span.SpanContext(), child); err != nil {
 		t.Error(err)
 	}
 }
@@ -514,8 +507,7 @@ func Test_Issue328_EndSpanTwice(t *testing.T) {
 	spans := make(exporter)
 	RegisterExporter(&spans)
 	defer UnregisterExporter(&spans)
-	ctx := context.Background()
-	ctx, span := StartSpanWithOptions(ctx, "span-1", StartOptions{Sampler: AlwaysSample()})
+	span := NewSpan("span-1", nil, StartOptions{Sampler: AlwaysSample()})
 	span.End()
 	span.End()
 	UnregisterExporter(&spans)
@@ -528,12 +520,12 @@ func TestStartSpanAfterEnd(t *testing.T) {
 	spans := make(exporter)
 	RegisterExporter(&spans)
 	defer UnregisterExporter(&spans)
-	ctx, span0 := StartSpanWithOptions(context.Background(), "parent", StartOptions{Sampler: AlwaysSample()})
-	ctx1, span1 := StartSpanWithOptions(ctx, "span-1", StartOptions{Sampler: AlwaysSample()})
+	span0 := NewSpan("parent", nil, StartOptions{Sampler: AlwaysSample()})
+	span1 := NewSpan("span-1", span0, StartOptions{Sampler: AlwaysSample()})
 	span1.End()
 	// Start a new span with the context containing span-1
 	// even though span-1 is ended, we still add this as a new child of span-1
-	_, span2 := StartSpanWithOptions(ctx1, "span-2", StartOptions{Sampler: AlwaysSample()})
+	span2 := NewSpan("span-2", span1, StartOptions{Sampler: AlwaysSample()})
 	span2.End()
 	span0.End()
 	UnregisterExporter(&spans)

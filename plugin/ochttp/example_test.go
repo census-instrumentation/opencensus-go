@@ -19,12 +19,15 @@ import (
 	"net/http"
 
 	"go.opencensus.io/plugin/ochttp"
+	"go.opencensus.io/plugin/ochttp/propagation/b3"
 	"go.opencensus.io/plugin/ochttp/propagation/google"
 )
 
 func ExampleTransport() {
 	client := &http.Client{
-		Transport: &ochttp.Transport{},
+		Transport: &ochttp.Transport{
+			Propagation: &b3.HTTPFormat{},
+		},
 	}
 	_ = client // use client to perform requests
 }
@@ -33,9 +36,12 @@ var usersHandler http.Handler
 
 func ExampleHandler() {
 	// Enables OpenCensus for the default serve mux.
-	// By default, B3 propagation is used.
 	http.Handle("/users", usersHandler)
-	log.Fatal(http.ListenAndServe("localhost:8080", &ochttp.Handler{}))
+	log.Fatal(http.ListenAndServe("localhost:8080", &ochttp.Handler{
+		// Specify a propagation format; without this, a new root span will be
+		// started for each request:
+		Propagation: &b3.HTTPFormat{},
+	}))
 }
 
 func ExampleHandler_mux() {
