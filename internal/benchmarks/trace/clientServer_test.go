@@ -45,6 +45,7 @@ func benchmarkPlainClientPlainServer(b *testing.B, qps int) {
 	defer conn.Close()
 	runWithConn(b, conn, qps)
 }
+
 // End: 0. PlainClient-PlainServer
 
 // Start: 1. NoTraceNoStatsClient-NoTraceNoStatsServer

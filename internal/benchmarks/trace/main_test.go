@@ -46,10 +46,16 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
+type server int
+
+func (s *server) Ping(ctx context.Context, p *proto.Payload) (*proto.Payload, error) {
+	return &proto.Payload{Body: "Pong"}, nil
+}
+
 func registerAndStartServer(srv *grpc.Server) string {
 	ln, err := randPortListener()
 	if err != nil {
-		log.Fatalf("Listening on addr %q err: %v", addr, err)
+		log.Fatalf("randPortListener err: %v", err)
 	}
 	proto.RegisterPingServer(srv, new(server))
 	go srv.Serve(ln)
@@ -89,7 +95,7 @@ func runWithConn(b *testing.B, conn *grpc.ClientConn, qps int) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		qpsIt(qps, func() {
-			pong, err := client.Ping(context.Background(), &proto.Payload{"Ping"})
+			pong, err := client.Ping(context.Background(), &proto.Payload{Body: "Ping"})
 			if err != nil {
 				b.Fatalf("Pong #%d err: %v", i, err)
 			}
