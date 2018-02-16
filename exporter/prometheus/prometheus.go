@@ -104,7 +104,7 @@ func (c *collector) registerViews(views ...*view.View) {
 				nil,
 			)
 			c.registeredViewsMu.Lock()
-			c.registeredViews[sig] = desc
+			c.unregisteredViews[sig] = desc
 			c.registeredViewsMu.Unlock()
 			count++
 		}
@@ -113,7 +113,6 @@ func (c *collector) registerViews(views ...*view.View) {
 		return
 	}
 
-	c.reg.Unregister(c)
 	if err := c.reg.Register(c); err != nil {
 		c.opts.onError(fmt.Errorf("cannot register the collector: %v", err))
 	}
@@ -163,6 +162,10 @@ type collector struct {
 	registeredViewsMu sync.Mutex
 	// registeredViews maps a view to a prometheus desc.
 	registeredViews map[string]*prometheus.Desc
+
+	// unregisteredViews is the set of views that are
+	// queued to be registered with prometheus.
+	unregisteredViews map[string]*prometheus.Desc
 }
 
 func (c *collector) addViewData(vd *view.Data) {
@@ -174,11 +177,19 @@ func (c *collector) addViewData(vd *view.Data) {
 	c.mu.Unlock()
 }
 
+// NOTE that this will not work properly if calling
+// prometheus.Registerer.Unregister, but the semantics around prometheus client
+// do not seem to lend to us being able to register all our views repeatedly.
+// this does not return the super set of desc, just the subset that we have not
+// yet registered with prometheus (it yells about dupes, and explicitly
+// disallows unregistering all metrics and then registering them again).
 func (c *collector) Describe(ch chan<- *prometheus.Desc) {
 	c.registeredViewsMu.Lock()
-	registered := make(map[string]*prometheus.Desc)
-	for k, desc := range c.registeredViews {
-		registered[k] = desc
+	registered := make([]*prometheus.Desc, 0, len(c.unregisteredViews))
+	for k, desc := range c.unregisteredViews {
+		registered = append(registered, desc)
+		c.registeredViews[k] = desc
+		delete(c.unregisteredViews, k)
 	}
 	c.registeredViewsMu.Unlock()
 
@@ -257,10 +268,11 @@ func tagsToLabels(tags []tag.Tag) []string {
 
 func newCollector(opts Options, registrar *prometheus.Registry) *collector {
 	return &collector{
-		reg:             registrar,
-		opts:            opts,
-		registeredViews: make(map[string]*prometheus.Desc),
-		viewData:        make(map[string]*view.Data),
+		reg:               registrar,
+		opts:              opts,
+		registeredViews:   make(map[string]*prometheus.Desc),
+		unregisteredViews: make(map[string]*prometheus.Desc),
+		viewData:          make(map[string]*view.Data),
 	}
 }
 
