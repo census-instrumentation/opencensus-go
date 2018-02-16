@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"go.opencensus.io/stats"
-	_ "go.opencensus.io/stats/view"
+	_ "go.opencensus.io/stats/view" // enable collection
 )
 
 var m = makeMeasure()
