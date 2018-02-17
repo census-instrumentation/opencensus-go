@@ -92,9 +92,9 @@ func (c *collector) registerViews(views ...*view.View) {
 	count := 0
 	for _, view := range views {
 		sig := viewSignature(c.opts.Namespace, view)
-		c.registeredViewsMu.Lock()
+		c.viewsMu.Lock()
 		_, ok := c.registeredViews[sig]
-		c.registeredViewsMu.Unlock()
+		c.viewsMu.Unlock()
 
 		if !ok {
 			desc := prometheus.NewDesc(
@@ -103,9 +103,9 @@ func (c *collector) registerViews(views ...*view.View) {
 				tagKeysToLabels(view.TagKeys()),
 				nil,
 			)
-			c.registeredViewsMu.Lock()
-			c.unregisteredViews[sig] = desc
-			c.registeredViewsMu.Unlock()
+			c.viewsMu.Lock()
+			c.newViews[sig] = desc
+			c.viewsMu.Unlock()
 			count++
 		}
 	}
@@ -159,13 +159,14 @@ type collector struct {
 	// Collect is invoked and the cycle is repeated.
 	viewData map[string]*view.Data
 
-	registeredViewsMu sync.Mutex
+	// protects registeredViews and newViews
+	viewsMu sync.Mutex
 	// registeredViews maps a view to a prometheus desc.
 	registeredViews map[string]*prometheus.Desc
 
-	// unregisteredViews is the set of views that are
-	// queued to be registered with prometheus.
-	unregisteredViews map[string]*prometheus.Desc
+	// newViews is the set of views that are
+	// queued to be registered with Prometheus.
+	newViews map[string]*prometheus.Desc
 }
 
 func (c *collector) addViewData(vd *view.Data) {
@@ -177,21 +178,22 @@ func (c *collector) addViewData(vd *view.Data) {
 	c.mu.Unlock()
 }
 
-// NOTE that this will not work properly if calling
-// prometheus.Registerer.Unregister, but the semantics around prometheus client
-// do not seem to lend to us being able to register all our views repeatedly.
-// this does not return the super set of desc, just the subset that we have not
-// yet registered with prometheus (it yells about dupes, and explicitly
-// disallows unregistering all metrics and then registering them again).
 func (c *collector) Describe(ch chan<- *prometheus.Desc) {
-	c.registeredViewsMu.Lock()
-	registered := make([]*prometheus.Desc, 0, len(c.unregisteredViews))
-	for k, desc := range c.unregisteredViews {
+	// NOTE that this will not work properly if calling
+	// prometheus.Registerer.Unregister, but the semantics around prometheus client
+	// do not seem to lend to us being able to register all our views repeatedly.
+	// this does not return the super set of desc, just the subset that we have not
+	// yet registered with prometheus (it yells about dupes, and explicitly
+	// disallows unregistering all metrics and then registering them again).
+
+	c.viewsMu.Lock()
+	registered := make([]*prometheus.Desc, 0, len(c.newViews))
+	for k, desc := range c.newViews {
 		registered = append(registered, desc)
 		c.registeredViews[k] = desc
-		delete(c.unregisteredViews, k)
+		delete(c.newViews, k)
 	}
-	c.registeredViewsMu.Unlock()
+	c.viewsMu.Unlock()
 
 	for _, desc := range registered {
 		ch <- desc
@@ -208,9 +210,9 @@ func (c *collector) Collect(ch chan<- prometheus.Metric) {
 
 	for _, vd := range viewData {
 		sig := viewSignature(c.opts.Namespace, vd.View)
-		c.registeredViewsMu.Lock()
+		c.viewsMu.Lock()
 		desc := c.registeredViews[sig]
-		c.registeredViewsMu.Unlock()
+		c.viewsMu.Unlock()
 
 		for _, row := range vd.Rows {
 			metric, err := c.toMetric(desc, vd.View, row)
@@ -268,11 +270,11 @@ func tagsToLabels(tags []tag.Tag) []string {
 
 func newCollector(opts Options, registrar *prometheus.Registry) *collector {
 	return &collector{
-		reg:               registrar,
-		opts:              opts,
-		registeredViews:   make(map[string]*prometheus.Desc),
-		unregisteredViews: make(map[string]*prometheus.Desc),
-		viewData:          make(map[string]*view.Data),
+		reg:             registrar,
+		opts:            opts,
+		registeredViews: make(map[string]*prometheus.Desc),
+		newViews:        make(map[string]*prometheus.Desc),
+		viewData:        make(map[string]*view.Data),
 	}
 }
 
