@@ -122,5 +122,6 @@ func qpsIt(qps int, fn func()) {
 			fn()
 			wg.Done()
 		}()
+		<-tick.C
 	}
 }
