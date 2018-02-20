@@ -40,7 +40,7 @@ type View struct {
 	tagKeys []tag.Key
 
 	// Examples of measures are cpu:tickCount, diskio:time...
-	m stats.Measure
+	m *stats.Measure
 
 	subscribed uint32 // 1 if someone is subscribed and data need to be exported, use atomic to access
 
@@ -56,7 +56,7 @@ type View struct {
 // Views need to be subscribed toin order to retrieve collection data.
 //
 // Once the view is no longer required, the view can be unregistered.
-func New(name, description string, keys []tag.Key, measure stats.Measure, agg Aggregation) (*View, error) {
+func New(name, description string, keys []tag.Key, measure *stats.Measure, agg Aggregation) (*View, error) {
 	if err := checkViewName(name); err != nil {
 		return nil, err
 	}
@@ -115,7 +115,7 @@ func (v *View) Aggregation() Aggregation {
 }
 
 // Measure returns the measure the view is collecting measurements for.
-func (v *View) Measure() stats.Measure {
+func (v *View) Measure() *stats.Measure {
 	return v.m
 }
 
@@ -123,7 +123,7 @@ func (v *View) collectedRows(now time.Time) []*Row {
 	return v.collector.collectedRows(v.tagKeys, now)
 }
 
-func (v *View) addSample(m *tag.Map, val interface{}, now time.Time) {
+func (v *View) addSample(m *tag.Map, val float64, now time.Time) {
 	if !v.isSubscribed() {
 		return
 	}

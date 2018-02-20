@@ -24,7 +24,7 @@ import (
 // Mosts users won't directly access aggregration data.
 type AggregationData interface {
 	isAggregationData() bool
-	addSample(v interface{})
+	addSample(v float64)
 	addOther(other AggregationData)
 	multiplyByFraction(fraction float64) AggregationData
 	clear()
@@ -47,7 +47,7 @@ func newCountData(v int64) *CountData {
 
 func (a *CountData) isAggregationData() bool { return true }
 
-func (a *CountData) addSample(v interface{}) {
+func (a *CountData) addSample(_ float64) {
 	*a = *a + 1
 }
 
@@ -93,17 +93,7 @@ func newSumData(v float64) *SumData {
 
 func (a *SumData) isAggregationData() bool { return true }
 
-func (a *SumData) addSample(v interface{}) {
-	// Both float64 and int64 values will be cast to float64
-	var f float64
-	switch x := v.(type) {
-	case int64:
-		f = float64(x)
-	case float64:
-		f = x
-	default:
-		return
-	}
+func (a *SumData) addSample(f float64) {
 	*a += SumData(f)
 }
 
@@ -156,17 +146,7 @@ func (a *MeanData) Sum() float64 { return a.Mean * float64(a.Count) }
 
 func (a *MeanData) isAggregationData() bool { return true }
 
-func (a *MeanData) addSample(v interface{}) {
-	var f float64
-	switch x := v.(type) {
-	case int64:
-		f = float64(x)
-	case float64:
-		f = x
-	default:
-		return
-	}
-
+func (a *MeanData) addSample(f float64) {
 	a.Count++
 	if a.Count == 1 {
 		a.Mean = f
@@ -246,17 +226,7 @@ func (a *DistributionData) variance() float64 {
 
 func (a *DistributionData) isAggregationData() bool { return true }
 
-func (a *DistributionData) addSample(v interface{}) {
-	var f float64
-	switch x := v.(type) {
-	case int64:
-		f = float64(x)
-	case float64:
-		f = x
-	default:
-		return
-	}
-
+func (a *DistributionData) addSample(f float64) {
 	if f < a.Min {
 		a.Min = f
 	}
