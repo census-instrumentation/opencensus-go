@@ -15,6 +15,8 @@
 
 package stats
 
+import "log"
+
 // Int64Measure is a measure of type int64.
 type Int64Measure struct {
 	measure
@@ -43,4 +45,14 @@ func Int64(name, description, unit string) (*Int64Measure, error) {
 		return nil, err
 	}
 	return m, nil
+}
+
+// MustInt64 creates a new measure of type Int64Measure. It will log a
+// fatal error if a measure with the same name already exists.
+func MustInt64(name, description, unit string) *Int64Measure {
+	m, err := Int64(name, description, unit)
+	if err != nil {
+		log.Fatalf("Failed to create int64 measure with name=%q description=%q unit=%q: %v", name, description, unit, err)
+	}
+	return m
 }
