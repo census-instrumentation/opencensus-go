@@ -66,13 +66,9 @@ func parseTemplate(name string) *template.Template {
 	defer f.Close()
 	text, err := ioutil.ReadAll(f)
 	if err != nil {
-		panic(err)
+		log.Panicf("%s: %s", name, err.Error())
 	}
-	tmpl, err := template.New(name).Funcs(templateFunctions).Parse(string(text))
-	if err != nil {
-		panic(err)
-	}
-	return tmpl
+	return template.Must(template.New(name).Funcs(templateFunctions).Parse(string(text)))
 }
 
 func countFormatter(num int) string {
