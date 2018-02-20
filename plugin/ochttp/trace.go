@@ -158,23 +158,12 @@ type Handler struct {
 }
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	var endTrace, endStats func()
 	if !h.NoTrace {
-		name := spanNameFromURL("Recv", r.URL)
-		p := h.Propagation
-		if p == nil {
-			p = defaultFormat
-		}
-		ctx := r.Context()
-		var span *trace.Span
-		if sc, ok := p.SpanContextFromRequest(r); ok {
-			ctx, span = trace.StartSpanWithRemoteParent(ctx, name, sc, trace.StartOptions{})
-		} else {
-			ctx, span = trace.StartSpan(ctx, name)
-		}
-		defer span.End()
-
-		span.SetAttributes(requestAttrs(r)...)
-		r = r.WithContext(ctx)
+		w, r, endTrace = h.startTrace(w, r)
+	}
+	if !h.NoStats {
+		w, r, endStats = h.startStats(w, r)
 	}
 
 	handler := h.Handler
@@ -182,6 +171,30 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		handler = http.DefaultServeMux
 	}
 	handler.ServeHTTP(w, r)
+	if endTrace != nil {
+		endTrace()
+	}
+	if endStats != nil {
+		endStats()
+	}
+}
+
+func (h *Handler) startTrace(w http.ResponseWriter, r *http.Request) (http.ResponseWriter, *http.Request, func()) {
+	name := spanNameFromURL("Recv", r.URL)
+	p := h.Propagation
+	if p == nil {
+		p = defaultFormat
+	}
+	ctx := r.Context()
+	var span *trace.Span
+	if sc, ok := p.SpanContextFromRequest(r); ok {
+		ctx, span = trace.StartSpanWithRemoteParent(ctx, name, sc, trace.StartOptions{})
+	} else {
+		ctx, span = trace.StartSpan(ctx, name)
+	}
+
+	span.SetAttributes(requestAttrs(r)...)
+	return w, r.WithContext(ctx), func() { span.End() }
 }
 
 func spanNameFromURL(prefix string, u *url.URL) string {
