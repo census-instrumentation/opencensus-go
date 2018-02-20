@@ -22,15 +22,43 @@ import (
 )
 
 // The following variables are measures are recorded by ClientHandler:
+
 var (
-	ClientErrorCount, _       = stats.Int64("grpc.io/client/error_count", "RPC Errors", stats.UnitNone)
-	ClientRequestBytes, _     = stats.Int64("grpc.io/client/request_bytes", "Request bytes", stats.UnitBytes)
-	ClientResponseBytes, _    = stats.Int64("grpc.io/client/response_bytes", "Response bytes", stats.UnitBytes)
-	ClientStartedCount, _     = stats.Int64("grpc.io/client/started_count", "Number of client RPCs (streams) started", stats.UnitNone)
-	ClientFinishedCount, _    = stats.Int64("grpc.io/client/finished_count", "Number of client RPCs (streams) finished", stats.UnitNone)
-	ClientRequestCount, _     = stats.Int64("grpc.io/client/request_count", "Number of client RPC request messages", stats.UnitNone)
-	ClientResponseCount, _    = stats.Int64("grpc.io/client/response_count", "Number of client RPC response messages", stats.UnitNone)
-	ClientRoundTripLatency, _ = stats.Float64("grpc.io/client/roundtrip_latency", "RPC roundtrip latency in msecs", stats.UnitMilliseconds)
+	ClientErrorCount = stats.Measure{
+		"grpc.io/client/error_count",
+		"RPC Errors",
+		stats.UnitNone,
+	}
+	ClientRequestBytes = stats.Measure{
+		Name:        "grpc.io/client/request_bytes",
+		Description: "Request bytes",
+		Unit:        stats.UnitBytes,
+	}
+	ClientResponseBytes = stats.Measure{
+		"grpc.io/client/response_bytes",
+		"Response bytes",
+		stats.UnitBytes,
+	}
+	ClientStartedCount = stats.Measure{
+		Name:        "grpc.io/client/started_count",
+		Description: "Number of client RPCs (streams) started",
+		Unit:        stats.UnitNone,
+	}
+	ClientFinishedCount    = stats.Measure{"grpc.io/client/finished_count", "Number of client RPCs (streams) finished", stats.UnitNone}
+	ClientRequestCount     = stats.Measure{"grpc.io/client/request_count", "Number of client RPC request messages", stats.UnitNone}
+	ClientResponseCount    = stats.Measure{"grpc.io/client/response_count", "Number of client RPC response messages", stats.UnitNone}
+	ClientRoundTripLatency = stats.Measure{"grpc.io/client/roundtrip_latency", "RPC roundtrip latency in msecs", stats.UnitMilliseconds}
+)
+
+var (
+	recordClientError, _   = stats.Int64(&ClientErrorCount)
+	recordRequestBytes, _  = stats.Int64(&ClientRequestBytes)
+	recordResponseBytes, _ = stats.Int64(&ClientResponseBytes)
+	recordStarted, _       = stats.Int64(&ClientStartedCount)
+	recordFinished, _      = stats.Int64(&ClientFinishedCount)
+	recordRequestCount, _  = stats.Int64(&ClientRequestCount)
+	recordResponseCount, _ = stats.Int64(&ClientResponseCount)
+	recordLatency, _       = stats.Float64(&ClientRoundTripLatency)
 )
 
 // Predefined views may be subscribed to collect data for the above measures.
@@ -42,7 +70,7 @@ var (
 		"grpc.io/client/error_count",
 		"RPC Errors",
 		[]tag.Key{KeyStatus, KeyMethod},
-		ClientErrorCount,
+		ClientErrorCount.Name,
 		view.MeanAggregation{})
 
 	ClientRoundTripLatencyView, _ = view.New(

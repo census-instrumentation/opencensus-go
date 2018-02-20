@@ -33,41 +33,19 @@ import (
 // by the given name.
 // Each registered measure needs to be unique by name.
 // Measures also have a description and a unit.
-type Measure interface {
-	Name() string
-	Description() string
-	Unit() string
-}
-
-type measure struct {
-	name        string
-	description string
-	unit        string
-	views       int32
-}
-
-// Name returns the name of the measure.
-func (m *measure) Name() string {
-	return m.name
-}
-
-// Description returns the description of the measure.
-func (m *measure) Description() string {
-	return m.description
-}
-
-// Unit returns the unit of the measure.
-func (m *measure) Unit() string {
-	return m.unit
+type Measure struct {
+	Name        string
+	Description string
+	Unit        string
 }
 
 var (
 	mu           sync.RWMutex
-	measures     = make(map[string]Measure)
+	measures     = make(map[string]*Measure)
 	errDuplicate = errors.New("duplicate measure name")
 )
 
-func FindMeasure(name string) Measure {
+func FindMeasure(name string) *Measure {
 	mu.RLock()
 	defer mu.RUnlock()
 	if m, ok := measures[name]; ok {
@@ -76,8 +54,8 @@ func FindMeasure(name string) Measure {
 	return nil
 }
 
-func register(m Measure) (Measure, error) {
-	key := m.Name()
+func register(m *Measure) (*Measure, error) {
+	key := m.Name
 	mu.Lock()
 	defer mu.Unlock()
 	if stored, ok := measures[key]; ok {
@@ -92,7 +70,7 @@ func register(m Measure) (Measure, error) {
 // provides M to convert an int64 into a measurement.
 type Measurement struct {
 	Value   float64
-	Measure Measure
+	Measure *Measure
 }
 
 func checkName(name string) error {
