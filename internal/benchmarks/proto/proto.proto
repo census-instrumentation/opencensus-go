@@ -18,6 +18,6 @@ message Payload {
   string Body = 1;
 }
 
-service Ping{
+service Ping {
   rpc Ping(Payload) returns (Payload) {};
 }

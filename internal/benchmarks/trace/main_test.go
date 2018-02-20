@@ -15,9 +15,7 @@
 package trace
 
 import (
-	"fmt"
 	"log"
-	"math/rand"
 	"net"
 	"os"
 	"sync"
@@ -53,9 +51,9 @@ func (s *server) Ping(ctx context.Context, p *proto.Payload) (*proto.Payload, er
 }
 
 func registerAndStartServer(srv *grpc.Server) string {
-	ln, err := randPortListener()
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
-		log.Fatalf("randPortListener err: %v", err)
+		log.Fatalf("registerAndStartServer Listen err: %v", err)
 	}
 	proto.RegisterPingServer(srv, new(server))
 	go srv.Serve(ln)
@@ -65,17 +63,6 @@ func registerAndStartServer(srv *grpc.Server) string {
 var (
 	plainServerAddr, noTraceNoStatsAddr, noTraceYesStatsAddr, yesTraceNoStatsAddr, yesTraceYesStatsAddr string
 )
-
-func randPortListener() (ln net.Listener, err error) {
-	for i := 0; i < 1e3; i++ {
-		p := 4000 + int(rand.Float64()*(65536-4000))
-		ln, err = net.Listen("tcp", fmt.Sprintf(":%d", p))
-		if err == nil {
-			return ln, nil
-		}
-	}
-	return
-}
 
 var (
 	noTraceNoStatsClient   = grpc.WithStatsHandler(&ocgrpc.ClientHandler{NoTrace: true, NoStats: true})
