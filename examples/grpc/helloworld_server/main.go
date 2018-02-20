@@ -42,8 +42,7 @@ func (s *server) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloRe
 }
 
 func main() {
-	zpages.AddDefaultHTTPHandlers()
-	go func() { log.Fatal(http.ListenAndServe(":8081", nil)) }()
+	go func() { log.Fatal(http.ListenAndServe(":8081", zpages.Handler)) }()
 	// Register stats and trace exporters to export
 	// the collected data.
 	view.RegisterExporter(&exporter.Exporter{})
