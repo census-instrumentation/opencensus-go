@@ -137,24 +137,18 @@ func BenchmarkTransportAllInstrumentation(b *testing.B) {
 	benchmarkClientServer(b, &ochttp.Transport{})
 }
 
-// Copied from net/http/serve_test.go
 func benchmarkClientServer(b *testing.B, transport http.RoundTripper) {
 	b.ReportAllocs()
-	b.StopTimer()
 	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(rw, "Hello world.\n")
 	}))
 	defer ts.Close()
 	var client http.Client
 	client.Transport = transport
-	b.StartTimer()
+	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		get, err := http.NewRequest("GET", ts.URL, nil)
-		if err != nil {
-			b.Fatalf("NewRequest: %v", err)
-		}
-		res, err := client.Do(get)
+		res, err := client.Get(ts.URL)
 		if err != nil {
 			b.Fatalf("Get: %v", err)
 		}
@@ -168,6 +162,69 @@ func benchmarkClientServer(b *testing.B, transport http.RoundTripper) {
 			b.Fatal("Got body:", body)
 		}
 	}
+}
 
-	b.StopTimer()
+func BenchmarkTransportParallel64NoInstrumentation(b *testing.B) {
+	benchmarkClientServerParallel(b, 64, &ochttp.Transport{NoTrace: true, NoStats: true})
+}
+
+func BenchmarkTransportParallel64TraceOnly(b *testing.B) {
+	benchmarkClientServerParallel(b, 64, &ochttp.Transport{NoStats: true})
+}
+
+func BenchmarkTransportParallel64StatsOnly(b *testing.B) {
+	benchmarkClientServerParallel(b, 64, &ochttp.Transport{NoTrace: true})
+}
+
+func BenchmarkTransportParallel64AllInstrumentation(b *testing.B) {
+	benchmarkClientServerParallel(b, 64, &ochttp.Transport{})
+}
+
+func benchmarkClientServerParallel(b *testing.B, parallelism int, transport *ochttp.Transport) {
+	b.ReportAllocs()
+	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(rw, "Hello world.\n")
+	}))
+	defer ts.Close()
+
+	var c http.Client
+	transport.Base = &http.Transport{
+		MaxIdleConns:        parallelism,
+		MaxIdleConnsPerHost: parallelism,
+	}
+	c.Transport = transport
+
+	b.ResetTimer()
+
+	// TODO(ramonza): replace with b.RunParallel (it didn't work when I tried)
+
+	var wg sync.WaitGroup
+	wg.Add(parallelism)
+	for i := 0; i < parallelism; i++ {
+		iterations := b.N / parallelism
+		if i == 0 {
+			iterations += b.N % parallelism
+		}
+		go func() {
+			defer wg.Done()
+			for j := 0; j < iterations; j++ {
+				res, err := c.Get(ts.URL)
+				if err != nil {
+					b.Logf("Get: %v", err)
+					return
+				}
+				all, err := ioutil.ReadAll(res.Body)
+				res.Body.Close()
+				if err != nil {
+					b.Logf("ReadAll: %v", err)
+					return
+				}
+				body := string(all)
+				if body != "Hello world.\n" {
+					panic("Got body: " + body)
+				}
+			}
+		}()
+	}
+	wg.Wait()
 }
