@@ -307,7 +307,7 @@ func (s snapExporter) ExportView(vd *view.Data) {
 			count = float64(v.Count)
 		case *view.MeanData:
 			sum = v.Sum()
-			count = v.Count
+			count = float64(v.Count)
 		case *view.SumData:
 			sum = float64(*v)
 			count = float64(*v)

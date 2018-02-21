@@ -361,7 +361,7 @@ func newCountData(v int) *view.CountData {
 	return &cav
 }
 
-func newMeanData(count, mean float64) *view.MeanData {
+func newMeanData(count int64, mean float64) *view.MeanData {
 	mav := view.MeanData{Count: count, Mean: mean}
 	return &mav
 }
