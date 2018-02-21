@@ -47,11 +47,9 @@ var (
 
 func FindMeasure(name string) Measure {
 	mu.RLock()
-	defer mu.RUnlock()
-	if m, ok := measures[name]; ok {
-		return m
-	}
-	return nil
+	m := measures[name]
+	mu.RUnlock()
+	return m
 }
 
 func register(m Measure) (Measure, error) {
@@ -78,7 +76,7 @@ func checkName(name string) error {
 		return fmt.Errorf("measure name cannot be larger than %v", internal.MaxNameLength)
 	}
 	if !internal.IsPrintable(name) {
-		return fmt.Errorf("measure name needs to be an ASCII string")
+		return errors.New("measure name needs to be an ASCII string")
 	}
 	return nil
 }
