@@ -52,9 +52,8 @@ func AddDefaultHTTPHandlers() {
 	})
 }
 
-var (
-	Handler http.Handler
-)
+// Handler is an http.Handler that serves the zpages.
+var Handler http.Handler
 
 func init() {
 	zpagesMux := http.NewServeMux()

@@ -50,7 +50,6 @@ var (
 )
 
 func loadStatik() http.FileSystem {
-	var err error
 	result, err := fs.New()
 	if err != nil {
 		panic(err)
@@ -61,12 +60,12 @@ func loadStatik() http.FileSystem {
 func parseTemplate(name string) *template.Template {
 	f, err := statikFS.Open("/templates/" + name + ".html")
 	if err != nil {
-		log.Panicf("%s: %s", name, err.Error())
+		log.Panicf("%v: %v", name, err)
 	}
 	defer f.Close()
 	text, err := ioutil.ReadAll(f)
 	if err != nil {
-		log.Panicf("%s: %s", name, err.Error())
+		log.Panicf("%v: %v", name, err)
 	}
 	return template.Must(template.New(name).Funcs(templateFunctions).Parse(string(text)))
 }
