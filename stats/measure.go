@@ -43,15 +43,15 @@ var (
 	mu           sync.RWMutex
 	measures     = make(map[string]Measure)
 	errDuplicate = errors.New("duplicate measure name")
+
+	errMeasureNameTooLong = fmt.Errorf("measure name cannot be longer than %v", internal.MaxNameLength)
 )
 
 func FindMeasure(name string) Measure {
 	mu.RLock()
-	defer mu.RUnlock()
-	if m, ok := measures[name]; ok {
-		return m
-	}
-	return nil
+	m := measures[name]
+	mu.RUnlock()
+	return m
 }
 
 func register(m Measure) (Measure, error) {
@@ -75,10 +75,10 @@ type Measurement struct {
 
 func checkName(name string) error {
 	if len(name) > internal.MaxNameLength {
-		return fmt.Errorf("measure name cannot be larger than %v", internal.MaxNameLength)
+		return errMeasureNameTooLong
 	}
 	if !internal.IsPrintable(name) {
-		return fmt.Errorf("measure name needs to be an ASCII string")
+		return errors.New("measure name needs to be an ASCII string")
 	}
 	return nil
 }

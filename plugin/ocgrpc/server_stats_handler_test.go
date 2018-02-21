@@ -75,10 +75,10 @@ func TestServerDefaultCollections(t *testing.T) {
 					func() *view.View { return ServerRequestCountView },
 					[]*view.Row{
 						{
-							[]tag.Tag{
+							Tags: []tag.Tag{
 								{Key: KeyMethod, Value: "package.service/method"},
 							},
-							newDistributionData([]int64{0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 1, 1, 1, 1, 0),
+							Data: newDistributionData([]int64{0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 1, 1, 1, 1, 0),
 						},
 					},
 				},
@@ -86,10 +86,10 @@ func TestServerDefaultCollections(t *testing.T) {
 					func() *view.View { return ServerResponseCountView },
 					[]*view.Row{
 						{
-							[]tag.Tag{
+							Tags: []tag.Tag{
 								{Key: KeyMethod, Value: "package.service/method"},
 							},
-							newDistributionData([]int64{0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 1, 1, 1, 1, 0),
+							Data: newDistributionData([]int64{0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 1, 1, 1, 1, 0),
 						},
 					},
 				},
@@ -97,10 +97,10 @@ func TestServerDefaultCollections(t *testing.T) {
 					func() *view.View { return ServerRequestBytesView },
 					[]*view.Row{
 						{
-							[]tag.Tag{
+							Tags: []tag.Tag{
 								{Key: KeyMethod, Value: "package.service/method"},
 							},
-							newDistributionData([]int64{0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 1, 10, 10, 10, 0),
+							Data: newDistributionData([]int64{0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 1, 10, 10, 10, 0),
 						},
 					},
 				},
@@ -108,10 +108,10 @@ func TestServerDefaultCollections(t *testing.T) {
 					func() *view.View { return ServerResponseBytesView },
 					[]*view.Row{
 						{
-							[]tag.Tag{
+							Tags: []tag.Tag{
 								{Key: KeyMethod, Value: "package.service/method"},
 							},
-							newDistributionData([]int64{0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 1, 10, 10, 10, 0),
+							Data: newDistributionData([]int64{0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 1, 10, 10, 10, 0),
 						},
 					},
 				},
@@ -152,11 +152,11 @@ func TestServerDefaultCollections(t *testing.T) {
 					func() *view.View { return ServerErrorCountView },
 					[]*view.Row{
 						{
-							[]tag.Tag{
+							Tags: []tag.Tag{
 								{Key: KeyStatus, Value: "Canceled"},
 								{Key: KeyMethod, Value: "package.service/method"},
 							},
-							newCountData(1),
+							Data: newCountData(1),
 						},
 					},
 				},
@@ -164,10 +164,10 @@ func TestServerDefaultCollections(t *testing.T) {
 					func() *view.View { return ServerRequestCountView },
 					[]*view.Row{
 						{
-							[]tag.Tag{
+							Tags: []tag.Tag{
 								{Key: KeyMethod, Value: "package.service/method"},
 							},
-							newDistributionData([]int64{0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 2, 1, 2, 1.5, 0.5),
+							Data: newDistributionData([]int64{0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 2, 1, 2, 1.5, 0.5),
 						},
 					},
 				},
@@ -175,10 +175,10 @@ func TestServerDefaultCollections(t *testing.T) {
 					func() *view.View { return ServerResponseCountView },
 					[]*view.Row{
 						{
-							[]tag.Tag{
+							Tags: []tag.Tag{
 								{Key: KeyMethod, Value: "package.service/method"},
 							},
-							newDistributionData([]int64{0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 2, 2, 3, 2.5, 0.5),
+							Data: newDistributionData([]int64{0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 2, 2, 3, 2.5, 0.5),
 						},
 					},
 				},
@@ -232,18 +232,18 @@ func TestServerDefaultCollections(t *testing.T) {
 					func() *view.View { return ServerErrorCountView },
 					[]*view.Row{
 						{
-							[]tag.Tag{
+							Tags: []tag.Tag{
 								{Key: KeyStatus, Value: "Canceled"},
 								{Key: KeyMethod, Value: "package.service/method"},
 							},
-							newCountData(1),
+							Data: newCountData(1),
 						},
 						{
-							[]tag.Tag{
+							Tags: []tag.Tag{
 								{Key: KeyStatus, Value: "Aborted"},
 								{Key: KeyMethod, Value: "package.service/method"},
 							},
-							newCountData(1),
+							Data: newCountData(1),
 						},
 					},
 				},
@@ -251,10 +251,10 @@ func TestServerDefaultCollections(t *testing.T) {
 					func() *view.View { return ServerRequestCountView },
 					[]*view.Row{
 						{
-							[]tag.Tag{
+							Tags: []tag.Tag{
 								{Key: KeyMethod, Value: "package.service/method"},
 							},
-							newDistributionData([]int64{0, 0, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 3, 1, 2, 1.333333333, 0.333333333*2),
+							Data: newDistributionData([]int64{0, 0, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 3, 1, 2, 1.333333333, 0.333333333*2),
 						},
 					},
 				},
@@ -262,10 +262,10 @@ func TestServerDefaultCollections(t *testing.T) {
 					func() *view.View { return ServerResponseCountView },
 					[]*view.Row{
 						{
-							[]tag.Tag{
+							Tags: []tag.Tag{
 								{Key: KeyMethod, Value: "package.service/method"},
 							},
-							newDistributionData([]int64{0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 3, 2, 3, 2.666666666, 0.333333333*2),
+							Data: newDistributionData([]int64{0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 3, 2, 3, 2.666666666, 0.333333333*2),
 						},
 					},
 				},
@@ -273,10 +273,10 @@ func TestServerDefaultCollections(t *testing.T) {
 					func() *view.View { return ServerRequestBytesView },
 					[]*view.Row{
 						{
-							[]tag.Tag{
+							Tags: []tag.Tag{
 								{Key: KeyMethod, Value: "package.service/method"},
 							},
-							newDistributionData([]int64{0, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 4, 1, 16384, 4864.25, 59678208.25*3),
+							Data: newDistributionData([]int64{0, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 4, 1, 16384, 4864.25, 59678208.25*3),
 						},
 					},
 				},
@@ -284,10 +284,10 @@ func TestServerDefaultCollections(t *testing.T) {
 					func() *view.View { return ServerResponseBytesView },
 					[]*view.Row{
 						{
-							[]tag.Tag{
+							Tags: []tag.Tag{
 								{Key: KeyMethod, Value: "package.service/method"},
 							},
-							newDistributionData([]int64{0, 1, 1, 1, 2, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0}, 8, 1, 65536, 13696.125, 481423542.982143*7),
+							Data: newDistributionData([]int64{0, 1, 1, 1, 2, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0}, 8, 1, 65536, 13696.125, 481423542.982143*7),
 						},
 					},
 				},
