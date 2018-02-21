@@ -39,10 +39,8 @@ func Int64(name, description, unit string) (*Int64Measure, error) {
 			unit:        unit,
 		},
 	}
-	_, err := register(m)
-	if err != nil {
+	if _, err := register(m); err != nil {
 		return nil, err
-	} else {
-		return m, err
 	}
+	return m, nil
 }
