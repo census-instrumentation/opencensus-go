@@ -16,6 +16,7 @@ package ochttp_test
 
 import (
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -118,4 +119,55 @@ func TestClient(t *testing.T) {
 			t.Fatalf("%s = %d; want %d", viewName, got, reqCount)
 		}
 	}
+}
+
+func BenchmarkTransportNoInstrumentation(b *testing.B) {
+	benchmarkClientServer(b, &ochttp.Transport{NoStats: true, NoTrace: true})
+}
+
+func BenchmarkTransportTraceOnly(b *testing.B) {
+	benchmarkClientServer(b, &ochttp.Transport{NoStats: true})
+}
+
+func BenchmarkTransportStatsOnly(b *testing.B) {
+	benchmarkClientServer(b, &ochttp.Transport{NoTrace: true})
+}
+
+func BenchmarkTransportAllInstrumentation(b *testing.B) {
+	benchmarkClientServer(b, &ochttp.Transport{})
+}
+
+// Copied from net/http/serve_test.go
+func benchmarkClientServer(b *testing.B, transport http.RoundTripper) {
+	b.ReportAllocs()
+	b.StopTimer()
+	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(rw, "Hello world.\n")
+	}))
+	defer ts.Close()
+	var client http.Client
+	client.Transport = transport
+	b.StartTimer()
+
+	for i := 0; i < b.N; i++ {
+		get, err := http.NewRequest("GET", ts.URL, nil)
+		if err != nil {
+			b.Fatalf("NewRequest: %v", err)
+		}
+		res, err := client.Do(get)
+		if err != nil {
+			b.Fatalf("Get: %v", err)
+		}
+		all, err := ioutil.ReadAll(res.Body)
+		res.Body.Close()
+		if err != nil {
+			b.Fatal("ReadAll:", err)
+		}
+		body := string(all)
+		if body != "Hello world.\n" {
+			b.Fatal("Got body:", body)
+		}
+	}
+
+	b.StopTimer()
 }
