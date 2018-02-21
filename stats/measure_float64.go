@@ -54,10 +54,8 @@ func Float64(name, description, unit string) (*Float64Measure, error) {
 		description: description,
 		unit:        unit,
 	}
-	_, err := register(m)
-	if err != nil {
+	if _, err := register(m); err != nil {
 		return nil, err
-	} else {
-		return m, err
 	}
+	return m, nil
 }
