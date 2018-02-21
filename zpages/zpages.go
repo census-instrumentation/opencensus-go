@@ -59,6 +59,6 @@ func init() {
 	zpagesMux := http.NewServeMux()
 	zpagesMux.HandleFunc("/rpcz", RpczHandler)
 	zpagesMux.HandleFunc("/tracez", TracezHandler)
-	zpagesMux.Handle("/public/", http.FileServer(statikFS))
+	zpagesMux.Handle("/public/", http.FileServer(fs))
 	Handler = zpagesMux
 }

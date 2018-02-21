@@ -20,25 +20,15 @@ import (
 	"html/template"
 	"io/ioutil"
 	"log"
-	"net/http"
 	"strconv"
 	"time"
 
-	"github.com/rakyll/statik/fs"
 	"go.opencensus.io/trace"
-	_ "go.opencensus.io/zpages/statik"
+	"go.opencensus.io/zpages/internal"
 )
 
-//go:generate statik -src=resources/
-
 var (
-	statikFS             = loadStatik()
-	headerTemplate       = parseTemplate("header")
-	summaryTableTemplate = parseTemplate("summary")
-	statsTemplate        = parseTemplate("rpcz")
-	tracesTableTemplate  = parseTemplate("traces")
-	footerTemplate       = parseTemplate("footer")
-
+	fs                = internal.FS(false)
 	templateFunctions = template.FuncMap{
 		"count":    countFormatter,
 		"ms":       msFormatter,
@@ -47,18 +37,15 @@ var (
 		"even":     even,
 		"traceid":  traceIDFormatter,
 	}
+	headerTemplate       = parseTemplate("header")
+	summaryTableTemplate = parseTemplate("summary")
+	statsTemplate        = parseTemplate("rpcz")
+	tracesTableTemplate  = parseTemplate("traces")
+	footerTemplate       = parseTemplate("footer")
 )
 
-func loadStatik() http.FileSystem {
-	result, err := fs.New()
-	if err != nil {
-		panic(err)
-	}
-	return result
-}
-
 func parseTemplate(name string) *template.Template {
-	f, err := statikFS.Open("/templates/" + name + ".html")
+	f, err := fs.Open("/templates/" + name + ".html")
 	if err != nil {
 		log.Panicf("%v: %v", name, err)
 	}
