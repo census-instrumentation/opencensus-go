@@ -50,7 +50,7 @@ var defaultWorker *worker
 
 var defaultReportingDuration = 10 * time.Second
 
-// FindMeasure returns a registered view associated with this name.
+// Find returns a registered view associated with this name.
 // If no registered view is found, nil is returned.
 func Find(name string) (v *View) {
 	req := &getViewByNameReq{
