@@ -45,8 +45,10 @@ func (h *clientStatsHandler) TagRPC(ctx context.Context, info *stats.RPCTagInfo)
 
 	d := &rpcData{startTime: startTime}
 	ts := tag.FromContext(ctx)
-	encoded := tag.Encode(ts)
-	ctx = stats.SetTags(ctx, encoded)
+	if ts != nil {
+		encoded := tag.Encode(ts)
+		ctx = stats.SetTags(ctx, encoded)
+	}
 	ctx, _ = tag.New(ctx,
 		tag.Upsert(KeyMethod, methodName(info.FullMethodName)),
 	)
