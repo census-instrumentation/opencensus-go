@@ -39,6 +39,28 @@ type Measure interface {
 	Unit() string
 }
 
+type measure struct {
+	name        string
+	description string
+	unit        string
+	views       int32
+}
+
+// Name returns the name of the measure.
+func (m *measure) Name() string {
+	return m.name
+}
+
+// Description returns the description of the measure.
+func (m *measure) Description() string {
+	return m.description
+}
+
+// Unit returns the unit of the measure.
+func (m *measure) Unit() string {
+	return m.unit
+}
+
 var (
 	mu           sync.RWMutex
 	measures     = make(map[string]Measure)
@@ -69,7 +91,7 @@ func register(m Measure) (Measure, error) {
 // provides methods to create measurements of their kind. For example, Int64Measure
 // provides M to convert an int64 into a measurement.
 type Measurement struct {
-	Value   interface{} // int64 or float64
+	Value   float64
 	Measure Measure
 }
 
