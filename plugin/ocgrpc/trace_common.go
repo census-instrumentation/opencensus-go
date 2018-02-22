@@ -88,16 +88,8 @@ func handleRPC(ctx context.Context, rs stats.RPCStats) {
 			trace.BoolAttribute{Key: "FailFast", Value: rs.FailFast})
 	case *stats.InPayload:
 		span.AddMessageReceiveEvent(0 /* TODO: messageID */, int64(rs.Length), int64(rs.WireLength))
-	case *stats.InHeader:
-		span.AddMessageReceiveEvent(0, int64(rs.WireLength), int64(rs.WireLength))
-	case *stats.InTrailer:
-		span.AddMessageReceiveEvent(0, int64(rs.WireLength), int64(rs.WireLength))
 	case *stats.OutPayload:
 		span.AddMessageSendEvent(0, int64(rs.Length), int64(rs.WireLength))
-	case *stats.OutHeader:
-		span.AddMessageSendEvent(0, 0, 0)
-	case *stats.OutTrailer:
-		span.AddMessageSendEvent(0, int64(rs.WireLength), int64(rs.WireLength))
 	case *stats.End:
 		if rs.Error != nil {
 			code, desc := grpc.Code(rs.Error), grpc.ErrorDesc(rs.Error)
