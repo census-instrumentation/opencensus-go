@@ -92,9 +92,9 @@ func (c *collector) registerViews(views ...*view.View) {
 	count := 0
 	for _, view := range views {
 		sig := viewSignature(c.opts.Namespace, view)
-		c.viewsMu.Lock()
+		c.registeredViewsMu.Lock()
 		_, ok := c.registeredViews[sig]
-		c.viewsMu.Unlock()
+		c.registeredViewsMu.Unlock()
 
 		if !ok {
 			desc := prometheus.NewDesc(
@@ -103,9 +103,9 @@ func (c *collector) registerViews(views ...*view.View) {
 				tagKeysToLabels(view.TagKeys()),
 				nil,
 			)
-			c.viewsMu.Lock()
-			c.newViews[sig] = desc
-			c.viewsMu.Unlock()
+			c.registeredViewsMu.Lock()
+			c.registeredViews[sig] = desc
+			c.registeredViewsMu.Unlock()
 			count++
 		}
 	}
@@ -113,9 +113,22 @@ func (c *collector) registerViews(views ...*view.View) {
 		return
 	}
 
-	if err := c.reg.Register(c); err != nil {
-		c.opts.onError(fmt.Errorf("cannot register the collector: %v", err))
-	}
+	c.ensureRegisteredOnce()
+}
+
+// ensureRegisteredOnce invokes reg.Register on the collector itself
+// exactly once to ensure that we don't get errors such as
+//    cannot register the collector: descriptor Desc{fqName: *}
+//    already exists with the same fully-qualified name and const label values
+// which is documented by Prometheus at
+//  https://github.com/prometheus/client_golang/blob/fcc130e101e76c5d303513d0e28f4b6d732845c7/prometheus/registry.go#L89-L101
+func (c *collector) ensureRegisteredOnce() {
+	c.registerOnce.Do(func() {
+		if err := c.reg.Register(c); err != nil {
+			c.opts.onError(fmt.Errorf("cannot register the collector: %v", err))
+		}
+	})
+
 }
 
 func (o *Options) onError(err error) {
@@ -150,6 +163,8 @@ type collector struct {
 	opts Options
 	mu   sync.Mutex // mu guards all the fields.
 
+	registerOnce sync.Once
+
 	// reg helps collector register views dynamically.
 	reg *prometheus.Registry
 
@@ -159,14 +174,9 @@ type collector struct {
 	// Collect is invoked and the cycle is repeated.
 	viewData map[string]*view.Data
 
-	// protects registeredViews and newViews
-	viewsMu sync.Mutex
+	registeredViewsMu sync.Mutex
 	// registeredViews maps a view to a prometheus desc.
 	registeredViews map[string]*prometheus.Desc
-
-	// newViews is the set of views that are
-	// queued to be registered with Prometheus.
-	newViews map[string]*prometheus.Desc
 }
 
 func (c *collector) addViewData(vd *view.Data) {
@@ -179,21 +189,12 @@ func (c *collector) addViewData(vd *view.Data) {
 }
 
 func (c *collector) Describe(ch chan<- *prometheus.Desc) {
-	// NOTE that this will not work properly if calling
-	// prometheus.Registerer.Unregister, but the semantics around prometheus client
-	// do not seem to lend to us being able to register all our views repeatedly.
-	// this does not return the super set of desc, just the subset that we have not
-	// yet registered with prometheus (it yells about dupes, and explicitly
-	// disallows unregistering all metrics and then registering them again).
-
-	c.viewsMu.Lock()
-	registered := make([]*prometheus.Desc, 0, len(c.newViews))
-	for k, desc := range c.newViews {
-		registered = append(registered, desc)
-		c.registeredViews[k] = desc
-		delete(c.newViews, k)
+	c.registeredViewsMu.Lock()
+	registered := make(map[string]*prometheus.Desc)
+	for k, desc := range c.registeredViews {
+		registered[k] = desc
 	}
-	c.viewsMu.Unlock()
+	c.registeredViewsMu.Unlock()
 
 	for _, desc := range registered {
 		ch <- desc
@@ -210,9 +211,9 @@ func (c *collector) Collect(ch chan<- prometheus.Metric) {
 
 	for _, vd := range viewData {
 		sig := viewSignature(c.opts.Namespace, vd.View)
-		c.viewsMu.Lock()
+		c.registeredViewsMu.Lock()
 		desc := c.registeredViews[sig]
-		c.viewsMu.Unlock()
+		c.registeredViewsMu.Unlock()
 
 		for _, row := range vd.Rows {
 			metric, err := c.toMetric(desc, vd.View, row)
@@ -270,10 +271,10 @@ func tagsToLabels(tags []tag.Tag) []string {
 
 func newCollector(opts Options, registrar *prometheus.Registry) *collector {
 	return &collector{
+		registerOnce:    sync.Once{},
 		reg:             registrar,
 		opts:            opts,
 		registeredViews: make(map[string]*prometheus.Desc),
-		newViews:        make(map[string]*prometheus.Desc),
 		viewData:        make(map[string]*view.Data),
 	}
 }
