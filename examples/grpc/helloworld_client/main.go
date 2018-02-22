@@ -35,8 +35,7 @@ const (
 )
 
 func main() {
-	zpages.AddDefaultHTTPHandlers()
-	go func() { log.Fatal(http.ListenAndServe(":8080", nil)) }()
+	go func() { log.Fatal(http.ListenAndServe(":8080", zpages.Handler)) }()
 
 	// Register stats and trace exporters to export
 	// the collected data.
