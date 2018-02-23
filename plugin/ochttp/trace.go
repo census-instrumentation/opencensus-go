@@ -40,7 +40,7 @@ const (
 )
 
 type traceTransport struct {
-	base   http.RoundTripper
+	*Transport
 	format propagation.HTTPFormat
 }
 
@@ -51,15 +51,16 @@ func (t *traceTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	name := spanNameFromURL("Sent", req.URL)
 	// TODO(jbd): Discuss whether we want to prefix
 	// outgoing requests with Sent.
-	ctx, span := trace.StartSpan(req.Context(), name)
-	req = req.WithContext(ctx)
+	parent := trace.FromContext(req.Context())
+	span := trace.NewSpan(name, parent, trace.StartOptions{Sampler: t.Sampler})
+	req = req.WithContext(trace.WithSpan(req.Context(), span))
 
 	if t.format != nil {
 		t.format.SpanContextToRequest(span.SpanContext(), req)
 	}
 
 	span.SetAttributes(requestAttrs(req)...)
-	resp, err := t.base.RoundTrip(req)
+	resp, err := t.base().RoundTrip(req)
 	if err != nil {
 		span.SetStatus(trace.Status{Code: 2, Message: err.Error()})
 		span.End()
@@ -127,7 +128,7 @@ func (t *traceTransport) CancelRequest(req *http.Request) {
 	type canceler interface {
 		CancelRequest(*http.Request)
 	}
-	if cr, ok := t.base.(canceler); ok {
+	if cr, ok := t.base().(canceler); ok {
 		cr.CancelRequest(req)
 	}
 }
