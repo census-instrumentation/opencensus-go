@@ -25,6 +25,7 @@ import (
 
 	"go.opencensus.io/stats"
 	"go.opencensus.io/stats/view"
+	"go.opencensus.io/tag"
 
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -196,8 +197,8 @@ type vCreator struct {
 	err error
 }
 
-func (vc *vCreator) subscribe(v *view.View, err error) {
-	vc.v, vc.err = v, err
+func (vc *vCreator) createAndSubscribe(name, description string, keys []tag.Key, measure stats.Measure, agg view.Aggregation) {
+	vc.v, vc.err = view.New(name, description, keys, measure, agg)
 	if err := vc.v.Subscribe(); err != nil {
 		vc.err = err
 	}
@@ -221,8 +222,7 @@ func TestMetricsEndpointOutput(t *testing.T) {
 
 	vc := &vCreator{}
 	for _, m := range measures {
-		v, err := view.New(m.Name(), m.Description(), nil, m, view.CountAggregation{})
-		vc.subscribe(v, err)
+		vc.createAndSubscribe(m.Name(), m.Description(), nil, m, view.CountAggregation{})
 	}
 	if vc.err != nil {
 		t.Fatalf("failed to create views: %v", err)
