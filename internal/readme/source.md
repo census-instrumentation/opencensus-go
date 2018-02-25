@@ -32,6 +32,7 @@ Currently, OpenCensus supports:
 * [OpenZipkin][exporter-zipkin] for traces
 * Stackdriver [Monitoring][exporter-stackdriver] and [Trace][exporter-stackdriver]
 * [Jaeger][exporter-jaeger] for traces
+* [AWS X-Ray][exporter-xray] for traces
 
 ## Tags
 
@@ -170,3 +171,4 @@ A screenshot of the CPU profile from the program above:
 [exporter-stackdriver]: https://godoc.org/go.opencensus.io/exporter/stackdriver
 [exporter-zipkin]: https://godoc.org/go.opencensus.io/exporter/zipkin
 [exporter-jaeger]: https://godoc.org/go.opencensus.io/exporter/jaeger
+[exporter-xray]: https://godoc.org/go.opencensus.io/exporter/xray

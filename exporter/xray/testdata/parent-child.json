@@ -1,0 +1,19 @@
+{
+  "input": {
+    "name": "parent",
+    "children": [
+      {
+        "name": "child"
+      }
+    ]
+  },
+  "expected": [
+    {
+      "Name": "child",
+      "Type": "subsegment"
+    },
+    {
+      "Name": "parent"
+    }
+  ]
+}

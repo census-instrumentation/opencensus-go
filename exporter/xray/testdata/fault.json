@@ -1,0 +1,22 @@
+{
+  "input": {
+    "name": "span",
+    "status": {
+      "code": 500,
+      "message": "boom!"
+    }
+  },
+  "expected": [
+    {
+      "Name": "span",
+      "Fault": true,
+      "Cause": {
+        "Exceptions": [
+          {
+            "Message": "boom!"
+          }
+        ]
+      }
+    }
+  ]
+}
