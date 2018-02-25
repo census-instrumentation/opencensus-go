@@ -240,8 +240,14 @@ func TestMetricsEndpointOutput(t *testing.T) {
 		t.Fatalf("failed to serve %v: %v", addr, http.ListenAndServe(addr, nil))
 	}()
 
+	var i int
 	var output string
 	for output == "" {
+		if i == 10 {
+			t.Fatal("no output at /metrics (10s wait)")
+		}
+		i++
+
 		resp, err := http.Get("http://localhost:9999/metrics")
 		if err != nil {
 			t.Fatalf("failed to get /metrics: %v", err)
