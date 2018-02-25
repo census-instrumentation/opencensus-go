@@ -233,25 +233,28 @@ func TestMetricsEndpointOutput(t *testing.T) {
 		stats.Record(context.Background(), m.M(1))
 	}
 
-	addr := ":9999"
+	addr := "localhost:9999"
 	http.Handle("/metrics", exporter)
 
 	go func() {
 		t.Fatalf("failed to serve %v: %v", addr, http.ListenAndServe(addr, nil))
 	}()
-	time.Sleep(5 * time.Second) // TODO: Get rid of this hack
 
-	resp, err := http.Get("http://localhost:9999/metrics")
-	if err != nil {
-		t.Fatalf("failed to get /metrics: %v", err)
-	}
-	defer resp.Body.Close()
+	var output string
+	for output == "" {
+		resp, err := http.Get("http://localhost:9999/metrics")
+		if err != nil {
+			t.Fatalf("failed to get /metrics: %v", err)
+		}
+		defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		t.Fatalf("failed to read body: %v", err)
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			t.Fatalf("failed to read body: %v", err)
+		}
+		output = string(body)
+		time.Sleep(time.Second)
 	}
-	output := string(body)
 
 	if strings.Contains(output, "collected before with the same name and label values") {
 		t.Fatal("metric name and labels being duplicated but must be unique")
