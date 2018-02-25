@@ -15,6 +15,10 @@
 package prometheus
 
 import (
+	"context"
+	"io/ioutil"
+	"net/http"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -173,4 +177,87 @@ func TestCollectNonRacy(t *testing.T) {
 			}
 		}
 	}()
+}
+
+type mCreator struct {
+	m   *stats.Int64Measure
+	err error
+}
+
+type mSlice []*stats.Int64Measure
+
+func (mc *mCreator) appendInt64(measures *mSlice, name, desc, unit string) {
+	mc.m, mc.err = stats.Int64(name, desc, unit)
+	*measures = append(*measures, mc.m)
+}
+
+type vCreator struct {
+	v   *view.View
+	err error
+}
+
+func (vc *vCreator) subscribe(v *view.View, err error) {
+	vc.v, vc.err = v, err
+	if err := vc.v.Subscribe(); err != nil {
+		vc.err = err
+	}
+}
+
+func TestMetricsEndpointOutput(t *testing.T) {
+	exporter, err := newExporter(Options{})
+	if err != nil {
+		t.Fatalf("failed to create prometheus exporter: %v", err)
+	}
+	view.RegisterExporter(exporter)
+
+	measures := make(mSlice, 0)
+	mc := &mCreator{}
+	mc.appendInt64(&measures, "tests/foo", "foo", "")
+	mc.appendInt64(&measures, "tests/bar", "bar", "")
+	mc.appendInt64(&measures, "tests/baz", "baz", "")
+	if mc.err != nil {
+		t.Errorf("failed to create measures: %v", err)
+	}
+
+	vc := &vCreator{}
+	for _, m := range measures {
+		v, err := view.New(m.Name(), m.Description(), nil, m, view.CountAggregation{})
+		vc.subscribe(v, err)
+	}
+	if vc.err != nil {
+		t.Fatalf("failed to create views: %v", err)
+	}
+	view.SetReportingPeriod(time.Second)
+
+	for _, m := range measures {
+		stats.Record(context.Background(), m.M(1))
+	}
+
+	addr := ":9999"
+	http.Handle("/metrics", exporter)
+
+	go func() {
+		t.Fatalf("failed to serve %v: %v", addr, http.ListenAndServe(addr, nil))
+	}()
+	time.Sleep(5 * time.Second) // TODO: Get rid of this hack
+
+	resp, err := http.Get("http://localhost:9999/metrics")
+	if err != nil {
+		t.Fatalf("failed to get /metrics: %v", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatalf("failed to read body: %v", err)
+	}
+	output := string(body)
+
+	if strings.Contains(output, "collected before with the same name and label values") {
+		t.Fatal("metric name and labels being duplicated but must be unique")
+	}
+
+	if strings.Contains(output, "error(s) occurred") {
+		t.Fatal("error reported by prometheus registry")
+	}
 }
