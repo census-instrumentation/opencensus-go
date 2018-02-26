@@ -70,54 +70,41 @@ use New and pass the returned context.
 
 ## Stats
 
-### Creating, retrieving and deleting a measure
+### Measures
 
-Create and load measures with units:
+Measures are used for recording data points with associated units.
+Creating a Measure:
 
 [embedmd]:# (stats.go measure)
 
-Retrieve measure by name:
+### Recording Measurements
 
-[embedmd]:# (stats.go findMeasure)
+Measurements are data points associated with Measures.
+Recording implicitly tags the set of Measurements with the tags from the
+provided context:
 
-### Creating an aggregation
+[embedmd]:# (stats.go record)
 
-Currently 4 types of aggregations are supported. The CountAggregation is used to count
-the number of times a sample was recorded. The DistributionAggregation is used to
-provide a histogram of the values of the samples. The SumAggregation is used to
-sum up all sample values. The MeanAggregation is used to calculate the mean of
-sample values.
+### Views
+
+Views are how Measures are aggregated. You can think of them as queries over the
+set of recorded data points (Measurements).
+
+Views have two parts: the tags to group by and the aggregation function used.
+
+Currently four types of aggregations are supported:
+* CountAggregation is used to count the number of times a sample was recorded.
+* DistributionAggregation is used to provide a histogram of the values of the samples.
+* SumAggregation is used to sum up all sample values.
+* MeanAggregation is used to calculate the mean of sample values.
 
 [embedmd]:# (stats.go aggs)
 
-### Creating, registering and unregistering a view
-
-Create and register a view:
+Here we create a view with the DistributionAggregation over our Measure.
+Setting tags to nil (as in this example) means that Measurements with all tags
+will be aggregated together (no grouping by tag):
 
 [embedmd]:# (stats.go view)
-
-Find view by name:
-
-[embedmd]:# (stats.go findView)
-
-Unregister view:
-
-[embedmd]:# (stats.go unregisterView)
-
-Configure the default interval between reports of collected data.
-This is a system wide interval and impacts all views. The default
-interval duration is 10 seconds. Trying to set an interval with
-a duration less than a certain minimum (maybe 1s) should have no effect.
-
-[embedmd]:# (stats.go reportingPeriod)
-
-### Recording measurements
-
-Recording usage can only be performed against already registered measure
-and their registered views. Measurements are implicitly tagged with the
-tags in the context:
-
-[embedmd]:# (stats.go record)
 
 ### Retrieving collected data for a view
 
@@ -132,6 +119,14 @@ Subscribed views' data will be exported via the registered exporters.
 An example logger exporter is below:
 
 [embedmd]:# (stats.go exporter)
+
+Configure the default interval between reports of collected data.
+This is a system wide interval and impacts all views. The default
+interval duration is 10 seconds. Trying to set an interval with
+a duration less than a certain minimum (maybe 1s) should have no effect.
+
+[embedmd]:# (stats.go reportingPeriod)
+
 
 ## Traces
 

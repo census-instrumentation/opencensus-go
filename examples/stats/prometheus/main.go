@@ -39,51 +39,30 @@ func main() {
 
 	// Create measures. The program will record measures for the size of
 	// processed videos and the number of videos marked as spam.
-	videoCount, err := stats.Int64("my.org/measures/video_count", "number of processed videos", "")
-	if err != nil {
-		log.Fatalf("Video count measure not created: %v", err)
-	}
+	videoCount, _ := stats.Int64("my.org/measures/video_count", "number of processed videos", "")
+	videoSize, _ := stats.Int64("my.org/measures/video_size_cum", "size of processed video", "MBy")
 
-	// 1. Create view to see the number of processed videos cumulatively.
-	viewCount, err := view.New(
+	// Create view to see the number of processed videos cumulatively.
+	viewCount := view.New(
 		"video_count",
 		"number of videos processed over time",
 		nil,
 		videoCount,
 		view.CountAggregation{},
 	)
-	if err != nil {
-		log.Fatalf("Cannot create view: %v", err)
-	}
 
-	// Subscribe will allow view data to be exported.
-	// Once no longer needed, you can unsubscribe from the view.
-	if err := viewCount.Subscribe(); err != nil {
-		log.Fatalf("Cannot subscribe to the view: %v", err)
-	}
-
-	// Create measures. The program will record measures for the size of
-	// processed videos and the number of videos marked as spam.
-	videoSize, err := stats.Int64("my.org/measures/video_size_cum", "size of processed video", "MBy")
-	if err != nil {
-		log.Fatalf("Video size measure not created: %v", err)
-	}
-
-	// 2. Create view to see the amount of video processed
-	viewSize, err := view.New(
-		"video_cum",
+	// Create view to see the amount of video processed
+	viewSize := view.New(
+		"video_size",
 		"processed video size over time",
 		nil,
 		videoSize,
 		view.DistributionAggregation([]float64{0, 1 << 16, 1 << 32}),
 	)
-	if err != nil {
-		log.Fatalf("Cannot create view: %v", err)
-	}
 
 	// Subscribe will allow view data to be exported.
 	// Once no longer needed, you can unsubscribe from the view.
-	if err := viewSize.Subscribe(); err != nil {
+	if err := view.Subscribe(viewCount, viewSize); err != nil {
 		log.Fatalf("Cannot subscribe to the view: %v", err)
 	}
 
@@ -93,8 +72,7 @@ func main() {
 	// Record some data points...
 	go func() {
 		for {
-			stats.Record(ctx, videoCount.M(1))
-			stats.Record(ctx, videoSize.M(rand.Int63()))
+			stats.Record(ctx, videoCount.M(1), videoSize.M(rand.Int63()))
 			<-time.After(time.Millisecond * time.Duration(1+rand.Intn(400)))
 		}
 	}()

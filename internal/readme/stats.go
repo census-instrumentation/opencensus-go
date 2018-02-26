@@ -57,35 +57,16 @@ func statsExamples() {
 	_, _, _, _ = distAgg, countAgg, sumAgg, meanAgg
 
 	// START view
-	v, err := view.New(
+	v := view.New(
 		"my.org/video_size_distribution",
 		"distribution of processed video size over time",
 		nil,
 		videoSize,
 		distAgg,
 	)
-	if err != nil {
-		log.Fatalf("cannot create view: %v", err)
-	}
-	if err := view.Register(v); err != nil {
-		log.Fatal(err)
-	}
 	// END view
 
-	// START findView
-	v = view.Find("my.org/video_size_distribution")
-	if v == nil {
-		log.Fatalln("view not found")
-	}
-	// END findView
-
 	_ = v
-
-	// START unregisterView
-	if err = view.Unregister(v); err != nil {
-		log.Fatal(err)
-	}
-	// END unregisterView
 
 	// START reportingPeriod
 	view.SetReportingPeriod(5 * time.Second)
@@ -96,7 +77,7 @@ func statsExamples() {
 	// END record
 
 	// START subscribe
-	if err := v.Subscribe(); err != nil {
+	if err := view.Subscribe(v); err != nil {
 		log.Fatal(err)
 	}
 	// END subscribe

@@ -83,15 +83,8 @@ func TestExporter_makeReq(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	v, err := view.New("testview", "desc", []tag.Key{key}, m, view.CountAggregation{})
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	distView, err := view.New("distview", "desc", nil, m, view.DistributionAggregation([]float64{2, 4, 7}))
-	if err != nil {
-		t.Fatal(err)
-	}
+	v := view.New("testview", "desc", []tag.Key{key}, m, view.CountAggregation{})
+	distView := view.New("distview", "desc", nil, m, view.DistributionAggregation([]float64{2, 4, 7}))
 
 	start := time.Now()
 	end := start.Add(time.Minute)
@@ -384,14 +377,7 @@ func TestExporter_makeReq_batching(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	v, err := view.New("view", "desc", []tag.Key{key}, m, view.CountAggregation{})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := view.Register(v); err != nil {
-		t.Fatal(err)
-	}
-	defer view.Unregister(v)
+	v := view.New("view", "desc", []tag.Key{key}, m, view.CountAggregation{})
 
 	tests := []struct {
 		name      string
@@ -573,10 +559,7 @@ func TestExporter_createMeasure(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	v, err := view.New("testview", "desc", []tag.Key{key}, m, view.CountAggregation{})
-	if err != nil {
-		t.Fatal(err)
-	}
+	v := view.New("testview", "desc", []tag.Key{key}, m, view.CountAggregation{})
 
 	data := view.CountData(0)
 	vd := newTestViewData(v, time.Now(), time.Now(), &data, &data)
@@ -632,11 +615,8 @@ func TestExporter_makeReq_withCustomMonitoredResource(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	v, err := view.New("testview", "desc", []tag.Key{key}, m, view.CountAggregation{})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := v.Subscribe(); err != nil {
+	v := view.New("testview", "desc", []tag.Key{key}, m, view.CountAggregation{})
+	if err := view.Subscribe(v); err != nil {
 		t.Fatal(err)
 	}
 	defer v.Unsubscribe()

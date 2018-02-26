@@ -28,10 +28,7 @@ func Test_View_MeasureFloat64_AggregationDistribution_WindowCumulative(t *testin
 	k2, _ := tag.NewKey("k2")
 	k3, _ := tag.NewKey("k3")
 	agg1 := DistributionAggregation([]float64{2})
-	view, err := New("VF1", "desc VF1", []tag.Key{k1, k2}, nil, agg1)
-	if err != nil {
-		t.Fatal(err)
-	}
+	view := New("VF1", "desc VF1", []tag.Key{k1, k2}, nil, agg1)
 
 	type tagString struct {
 		k tag.Key
@@ -191,10 +188,7 @@ func Test_View_MeasureFloat64_AggregationSum(t *testing.T) {
 	k1, _ := tag.NewKey("k1")
 	k2, _ := tag.NewKey("k2")
 	k3, _ := tag.NewKey("k3")
-	view, err := New("VF1", "desc VF1", []tag.Key{k1, k2}, nil, SumAggregation{})
-	if err != nil {
-		t.Fatal(err)
-	}
+	view := New("VF1", "desc VF1", []tag.Key{k1, k2}, nil, SumAggregation{})
 
 	type tagString struct {
 		k tag.Key
@@ -306,10 +300,7 @@ func Test_View_MeasureFloat64_AggregationMean_WindowCumulative(t *testing.T) {
 	k1, _ := tag.NewKey("k1")
 	k2, _ := tag.NewKey("k2")
 	k3, _ := tag.NewKey("k3")
-	view, err := New("VF1", "desc VF1", []tag.Key{k1, k2}, nil, MeanAggregation{})
-	if err != nil {
-		t.Fatal(err)
-	}
+	view := New("VF1", "desc VF1", []tag.Key{k1, k2}, nil, MeanAggregation{})
 
 	type tagString struct {
 		k tag.Key
@@ -425,10 +416,7 @@ func TestViewSortedKeys(t *testing.T) {
 	k3, _ := tag.NewKey("c")
 	ks := []tag.Key{k1, k3, k2}
 
-	v, err := New("sort_keys", "desc sort_keys", ks, nil, MeanAggregation{})
-	if err != nil {
-		t.Fatalf("NewView() = %v", err)
-	}
+	v := New("sort_keys", "desc sort_keys", ks, nil, MeanAggregation{})
 
 	want := []string{"a", "b", "c"}
 	vks := v.TagKeys()

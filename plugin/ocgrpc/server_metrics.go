@@ -42,42 +42,42 @@ var (
 // package. These are declared as a convenience only; none are subscribed by
 // default.
 var (
-	ServerErrorCountView, _ = view.New(
+	ServerErrorCountView = view.New(
 		"grpc.io/server/error_count",
 		"RPC Errors",
 		[]tag.Key{KeyMethod, KeyStatus},
 		ServerErrorCount,
 		view.CountAggregation{})
 
-	ServerServerElapsedTimeView, _ = view.New(
+	ServerServerElapsedTimeView = view.New(
 		"grpc.io/server/server_elapsed_time",
 		"Server elapsed time in msecs",
 		[]tag.Key{KeyMethod},
 		ServerServerElapsedTime,
 		DefaultMillisecondsDistribution)
 
-	ServerRequestBytesView, _ = view.New(
+	ServerRequestBytesView = view.New(
 		"grpc.io/server/request_bytes",
 		"Request bytes",
 		[]tag.Key{KeyMethod},
 		ServerRequestBytes,
 		DefaultBytesDistribution)
 
-	ServerResponseBytesView, _ = view.New(
+	ServerResponseBytesView = view.New(
 		"grpc.io/server/response_bytes",
 		"Response bytes",
 		[]tag.Key{KeyMethod},
 		ServerResponseBytes,
 		DefaultBytesDistribution)
 
-	ServerRequestCountView, _ = view.New(
+	ServerRequestCountView = view.New(
 		"grpc.io/server/request_count",
 		"Count of request messages per server RPC",
 		[]tag.Key{KeyMethod},
 		ServerRequestCount,
 		DefaultMessageCountDistribution)
 
-	ServerResponseCountView, _ = view.New(
+	ServerResponseCountView = view.New(
 		"grpc.io/server/response_count",
 		"Count of response messages per server RPC",
 		[]tag.Key{KeyMethod},

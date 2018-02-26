@@ -57,23 +57,20 @@ func main() {
 	}
 
 	// Create view to see the processed video size cumulatively.
-	v, err := view.New(
+	v := view.New(
 		"my.org/views/video_size_cum",
 		"processed video size over time",
 		nil,
 		videoSize,
 		view.DistributionAggregation([]float64{0, 1 << 16, 1 << 32}),
 	)
-	if err != nil {
-		log.Fatalf("Cannot create view: %v", err)
-	}
 
 	// Set reporting period to report data at every second.
 	view.SetReportingPeriod(1 * time.Second)
 
 	// Subscribe will allow view data to be exported.
 	// Once no longer need, you can unsubscribe from the view.
-	if err := v.Subscribe(); err != nil {
+	if err := view.Subscribe(v); err != nil {
 		log.Fatalf("Cannot subscribe to the view: %v", err)
 	}
 

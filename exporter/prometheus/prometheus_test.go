@@ -27,8 +27,7 @@ import (
 
 func newView(agg view.Aggregation) *view.View {
 	m, _ := stats.Int64("tests/foo1", "bytes", "byte")
-	view, _ := view.New("foo", "bar", nil, m, agg)
-	return view
+	return view.New("foo", "bar", nil, m, agg)
 }
 
 func TestOnlyCumulativeWindowSupported(t *testing.T) {

@@ -27,17 +27,15 @@ func Example_view() {
 		log.Fatal(err)
 	}
 
-	v, err := view.New(
+	v := view.New(
 		"my.org/views/openconns",
 		"open connections distribution over one second time window",
 		nil,
 		m,
 		view.DistributionAggregation([]float64{0, 1000, 2000}),
 	)
-	if err != nil {
-		log.Fatal(err)
-	}
-	if err := v.Subscribe(); err != nil {
+
+	if err := view.Subscribe(v); err != nil {
 		log.Fatal(err)
 	}
 

@@ -51,18 +51,18 @@ var (
 // Package ochttp provides some convenience views.
 // You need to subscribe to the views for data to actually be collected.
 var (
-	ClientRequestCountView, _  = view.New("opencensus.io/http/client/request_count", "Count of HTTP requests started", nil, ClientRequestCount, view.CountAggregation{})
-	ClientRequestBytesView, _  = view.New("opencensus.io/http/client/request_bytes", "Size distribution of HTTP request body", nil, ClientRequestBytes, DefaultSizeDistribution)
-	ClientResponseBytesView, _ = view.New("opencensus.io/http/client/response_bytes", "Size distribution of HTTP response body", nil, ClientResponseBytes, DefaultSizeDistribution)
-	ClientLatencyView, _       = view.New("opencensus.io/http/client/latency", "Latency distribution of HTTP requests", nil, ClientLatency, DefaultLatencyDistribution)
+	ClientRequestCountView  = view.New("opencensus.io/http/client/request_count", "Count of HTTP requests started", nil, ClientRequestCount, view.CountAggregation{})
+	ClientRequestBytesView  = view.New("opencensus.io/http/client/request_bytes", "Size distribution of HTTP request body", nil, ClientRequestBytes, DefaultSizeDistribution)
+	ClientResponseBytesView = view.New("opencensus.io/http/client/response_bytes", "Size distribution of HTTP response body", nil, ClientResponseBytes, DefaultSizeDistribution)
+	ClientLatencyView       = view.New("opencensus.io/http/client/latency", "Latency distribution of HTTP requests", nil, ClientLatency, DefaultLatencyDistribution)
 
-	ClientRequestCountByMethod, _ = view.New(
+	ClientRequestCountByMethod = view.New(
 		"opencensus.io/http/client/request_count_by_method",
 		"Client request count by HTTP method",
 		[]tag.Key{Method},
 		ClientRequestCount,
 		view.CountAggregation{})
-	ClientResponseCountByStatusCode, _ = view.New(
+	ClientResponseCountByStatusCode = view.New(
 		"opencensus.io/http/client/response_count_by_status_code",
 		"Client response count by status code",
 		[]tag.Key{StatusCode},

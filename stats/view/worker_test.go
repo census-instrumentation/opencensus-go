@@ -58,24 +58,10 @@ func Test_Worker_MeasureCreation(t *testing.T) {
 	}
 }
 
-func Test_Worker_ViewRegistration(t *testing.T) {
+func Test_Worker_ViewSubscription(t *testing.T) {
 	someError := errors.New("some error")
 
 	sc1 := make(chan *Data)
-
-	type registerWant struct {
-		vID string
-		err error
-	}
-	type unregisterWant struct {
-		vID string
-		err error
-	}
-	type byNameWant struct {
-		name string
-		vID  string
-		ok   bool
-	}
 
 	type subscription struct {
 		c   chan *Data
@@ -84,96 +70,31 @@ func Test_Worker_ViewRegistration(t *testing.T) {
 	}
 	type testCase struct {
 		label         string
-		regs          []registerWant
 		subscriptions []subscription
-		unregs        []unregisterWant
-		bynames       []byNameWant
 	}
 	tcs := []testCase{
 		{
 			"register and subscribe to v1ID",
-			[]registerWant{
-				{
-					"v1ID",
-					nil,
-				},
-			},
 			[]subscription{
 				{
 					sc1,
 					"v1ID",
 					nil,
-				},
-			},
-			[]unregisterWant{
-				{
-					"v1ID",
-					someError,
-				},
-			},
-			[]byNameWant{
-				{
-					"VF1",
-					"v1ID",
-					true,
-				},
-				{
-					"VF2",
-					"vNilID",
-					false,
 				},
 			},
 		},
 		{
 			"register v1ID+v2ID, susbsribe to v1ID",
-			[]registerWant{
-				{
-					"v1ID",
-					nil,
-				},
-				{
-					"v2ID",
-					nil,
-				},
-			},
 			[]subscription{
 				{
 					sc1,
 					"v1ID",
 					nil,
-				},
-			},
-			[]unregisterWant{
-				{
-					"v1ID",
-					someError,
-				},
-				{
-					"v2ID",
-					someError,
-				},
-			},
-			[]byNameWant{
-				{
-					"VF1",
-					"v1ID",
-					true,
-				},
-				{
-					"VF2",
-					"v2ID",
-					true,
 				},
 			},
 		},
 		{
 			"register to v1ID; subscribe to v1ID and view with same ID",
-			[]registerWant{
-				{
-					"v1ID",
-					nil,
-				},
-			},
 			[]subscription{
 				{
 					sc1,
@@ -186,36 +107,19 @@ func Test_Worker_ViewRegistration(t *testing.T) {
 					someError,
 				},
 			},
-			[]unregisterWant{
-				{
-					"v1ID",
-					someError,
-				},
-				{
-					"v1SameNameID",
-					nil,
-				},
-			},
-			[]byNameWant{
-				{
-					"VF1",
-					"v1ID",
-					true,
-				},
-			},
 		},
 	}
 
-	mf1, _ := stats.Float64("MF1/Test_Worker_ViewRegistration", "desc MF1", "unit")
-	mf2, _ := stats.Float64("MF2/Test_Worker_ViewRegistration", "desc MF2", "unit")
+	mf1, _ := stats.Float64("MF1/Test_Worker_ViewSubscription", "desc MF1", "unit")
+	mf2, _ := stats.Float64("MF2/Test_Worker_ViewSubscription", "desc MF2", "unit")
 
 	for _, tc := range tcs {
 		t.Run(tc.label, func(t *testing.T) {
 			restart()
 
-			v1, _ := New("VF1", "desc VF1", nil, mf1, nil)
-			v11, _ := New("VF1", "desc duplicate name VF1", nil, mf1, nil)
-			v2, _ := New("VF2", "desc VF2", nil, mf2, nil)
+			v1 := New("VF1", "desc VF1", nil, mf1, nil)
+			v11 := New("VF1", "desc duplicate name VF1", nil, mf1, nil)
+			v2 := New("VF2", "desc VF2", nil, mf2, nil)
 
 			views := map[string]*View{
 				"v1ID":         v1,
@@ -224,40 +128,11 @@ func Test_Worker_ViewRegistration(t *testing.T) {
 				"vNilID":       nil,
 			}
 
-			for _, reg := range tc.regs {
-				v := views[reg.vID]
-				err := Register(v)
-				if (err != nil) != (reg.err != nil) {
-					t.Errorf("%v: Register() = %v, want %v", tc.label, err, reg.err)
-				}
-				v.subscribe()
-			}
-
 			for _, s := range tc.subscriptions {
 				v := views[s.vID]
-				err := v.Subscribe()
+				err := Subscribe(v)
 				if (err != nil) != (s.err != nil) {
 					t.Errorf("%v: Subscribe() = %v, want %v", tc.label, err, s.err)
-				}
-			}
-
-			for _, unreg := range tc.unregs {
-				v := views[unreg.vID]
-				err := Unregister(v)
-				if (err != nil) != (unreg.err != nil) {
-					t.Errorf("%v: Unregister() = %v; want %v", tc.label, err, unreg.err)
-				}
-			}
-
-			for _, byname := range tc.bynames {
-				v := Find(byname.name)
-				if v == nil && byname.ok {
-					t.Errorf("%v: ViewByName(%q) = nil, want non-nil view", tc.label, byname.name)
-				}
-
-				wantV := views[byname.vID]
-				if v != wantV {
-					t.Errorf("%v: ViewByName(%q) = %v; want %v", tc.label, byname.name, v, wantV)
 				}
 			}
 		})
@@ -283,14 +158,8 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	v1, err := New("VF1", "desc VF1", []tag.Key{k1, k2}, m, CountAggregation{})
-	if err != nil {
-		t.Fatal(err)
-	}
-	v2, err := New("VF2", "desc VF2", []tag.Key{k1, k2}, m, CountAggregation{})
-	if err != nil {
-		t.Fatal(err)
-	}
+	v1 := New("VF1", "desc VF1", []tag.Key{k1, k2}, m, CountAggregation{})
+	v2 := New("VF2", "desc VF2", []tag.Key{k1, k2}, m, CountAggregation{})
 
 	type want struct {
 		v    *View
@@ -421,8 +290,8 @@ func TestReportUsage(t *testing.T) {
 		t.Fatalf("stats.Int64() = %v", err)
 	}
 
-	cum1, _ := New("cum1", "", nil, m, CountAggregation{})
-	cum2, _ := New("cum1", "", nil, m, CountAggregation{})
+	cum1 := New("cum1", "", nil, m, CountAggregation{})
+	cum2 := New("cum1", "", nil, m, CountAggregation{})
 
 	tests := []struct {
 		name         string
@@ -502,10 +371,7 @@ func TestWorkerStarttime(t *testing.T) {
 	if err != nil {
 		t.Fatalf("stats.Int64() = %v", err)
 	}
-	v, err := New("testview", "", nil, m, CountAggregation{})
-	if err != nil {
-		t.Fatalf("New() = %v", err)
-	}
+	v := New("testview", "", nil, m, CountAggregation{})
 
 	SetReportingPeriod(25 * time.Millisecond)
 	if err := v.Subscribe(); err != nil {

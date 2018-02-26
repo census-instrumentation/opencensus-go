@@ -18,6 +18,7 @@ package view
 import (
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"go.opencensus.io/stats"
@@ -50,8 +51,7 @@ var defaultWorker *worker
 
 var defaultReportingDuration = 10 * time.Second
 
-// Find returns a registered view associated with this name.
-// If no registered view is found, nil is returned.
+// Deprecated: No replacement.
 func Find(name string) (v *View) {
 	req := &getViewByNameReq{
 		name: name,
@@ -62,32 +62,14 @@ func Find(name string) (v *View) {
 	return resp.v
 }
 
-// Register registers view. It returns an error if the view is already registered.
-//
-// Subscription automatically registers a view.
-// Most users will not register directly but register via subscription.
-// Registration can be used by libraries to claim a view name.
-//
-// Unregister the view once the view is not required anymore.
-func Register(v *View) error {
-	req := &registerViewReq{
-		v:   v,
-		err: make(chan error),
-	}
-	defaultWorker.c <- req
-	return <-req.err
+// Deprecated: Registering is a no-op. Use the Subscribe function.
+func Register(_ *View) error {
+	return nil
 }
 
-// Unregister removes the previously registered view. It returns an error
-// if the view wasn't registered. All data collected and not reported for the
-// corresponding view will be lost. The view is automatically be unsubscribed.
-func Unregister(v *View) error {
-	req := &unregisterViewReq{
-		v:   v,
-		err: make(chan error),
-	}
-	defaultWorker.c <- req
-	return <-req.err
+// Deprecated: Unregistering is a no-op, see: Unsubscribe.
+func Unregister(_ *View) error {
+	return nil
 }
 
 // Subscribe subscribes a view. Once a view is subscribed, it reports data
@@ -95,6 +77,7 @@ func Unregister(v *View) error {
 // During subscription, if the view wasn't registered, it will be automatically
 // registered. Once the view is no longer needed to export data,
 // user should unsubscribe from the view.
+// Deprecated: Use the Subscribe function.
 func (v *View) Subscribe() error {
 	req := &subscribeToViewReq{
 		v:   v,
@@ -102,6 +85,24 @@ func (v *View) Subscribe() error {
 	}
 	defaultWorker.c <- req
 	return <-req.err
+}
+
+// Subscribe begins collecting data for a view. Once a view is subscribed, it reports data
+// via the exporters.
+// Once the view is no longer needed to export data,
+// you may call Unsubscribe to stop collecting data for the view.
+func Subscribe(views ...*View) error {
+	var errstr []string
+	for _, v := range views {
+		err := v.Subscribe()
+		if err != nil {
+			errstr = append(errstr, fmt.Sprintf("%s: %v", v.name, err))
+		}
+	}
+	if len(errstr) > 0 {
+		return errors.New(strings.Join(errstr, "\n"))
+	}
+	return nil
 }
 
 // Unsubscribe unsubscribes a previously subscribed view.
