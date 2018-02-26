@@ -29,14 +29,11 @@ import (
 // Attributes recorded on the span for the requests.
 // Only trace exporters will need them.
 const (
-	URLAttribute          = "http.url"
-	HostAttribute         = "http.host"
-	MethodAttribute       = "http.method"
-	PathAttribute         = "http.path"
-	UserAgentAttribute    = "http.user_agent"
-	StatusCodeAttribute   = "http.status"
-	RequestSizeAttribute  = "http.request_size"
-	ResponseSizeAttribute = "http.response_size"
+	HostAttribute       = "http.host"
+	MethodAttribute     = "http.method"
+	PathAttribute       = "http.path"
+	UserAgentAttribute  = "http.user_agent"
+	StatusCodeAttribute = "http.status"
 )
 
 type traceTransport struct {
@@ -44,6 +41,8 @@ type traceTransport struct {
 	sampler trace.Sampler
 	format  propagation.HTTPFormat
 }
+
+// TODO(jbd): Add message events for request and response size.
 
 // RoundTrip creates a trace.Span and inserts it into the outgoing request's headers.
 // The created span can follow a parent span, if a parent is presented in
@@ -68,7 +67,6 @@ func (t *traceTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 		return resp, err
 	}
 
-	// TODO(jbd): Set status based on the status code.
 	span.SetAttributes(responseAttrs(resp)...)
 
 	// span.End() will be invoked after
@@ -194,18 +192,15 @@ func spanNameFromURL(prefix string, u *url.URL) string {
 
 func requestAttrs(r *http.Request) []trace.Attribute {
 	return []trace.Attribute{
-		trace.StringAttribute{Key: URLAttribute, Value: r.URL.String()},
+		trace.StringAttribute{Key: PathAttribute, Value: r.URL.Path},
 		trace.StringAttribute{Key: HostAttribute, Value: r.URL.Host},
 		trace.StringAttribute{Key: MethodAttribute, Value: r.Method},
-		trace.StringAttribute{Key: PathAttribute, Value: r.URL.Path},
 		trace.StringAttribute{Key: UserAgentAttribute, Value: r.UserAgent()},
-		trace.Int64Attribute{Key: RequestSizeAttribute, Value: r.ContentLength},
 	}
 }
 
 func responseAttrs(resp *http.Response) []trace.Attribute {
 	return []trace.Attribute{
-		trace.Int64Attribute{Key: ResponseSizeAttribute, Value: resp.ContentLength},
 		trace.Int64Attribute{Key: StatusCodeAttribute, Value: int64(resp.StatusCode)},
 	}
 }
