@@ -72,11 +72,6 @@ func Unregister(_ *View) error {
 	return nil
 }
 
-// Subscribe subscribes a view. Once a view is subscribed, it reports data
-// via the exporters.
-// During subscription, if the view wasn't registered, it will be automatically
-// registered. Once the view is no longer needed to export data,
-// user should unsubscribe from the view.
 // Deprecated: Use the Subscribe function.
 func (v *View) Subscribe() error {
 	req := &subscribeToViewReq{
@@ -87,10 +82,8 @@ func (v *View) Subscribe() error {
 	return <-req.err
 }
 
-// Subscribe begins collecting data for a view. Once a view is subscribed, it reports data
-// via the exporters.
-// Once the view is no longer needed to export data,
-// you may call Unsubscribe to stop collecting data for the view.
+// Subscribe begins collecting data for the given views.
+// Once a view is subscribed, it reports data to the registered exporters.
 func Subscribe(views ...*View) error {
 	var errstr []string
 	for _, v := range views {
