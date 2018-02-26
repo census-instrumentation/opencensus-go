@@ -60,8 +60,8 @@ func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 			format = defaultFormat
 		}
 		rt = &traceTransport{
-			format: format,
-			Transport:  t,
+			format:    format,
+			Transport: t,
 		}
 	}
 	if !t.NoStats {
