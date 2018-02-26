@@ -40,8 +40,9 @@ const (
 )
 
 type traceTransport struct {
-	base   http.RoundTripper
-	format propagation.HTTPFormat
+	base    http.RoundTripper
+	sampler trace.Sampler
+	format  propagation.HTTPFormat
 }
 
 // RoundTrip creates a trace.Span and inserts it into the outgoing request's headers.
@@ -51,8 +52,9 @@ func (t *traceTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	name := spanNameFromURL("Sent", req.URL)
 	// TODO(jbd): Discuss whether we want to prefix
 	// outgoing requests with Sent.
-	ctx, span := trace.StartSpan(req.Context(), name)
-	req = req.WithContext(ctx)
+	parent := trace.FromContext(req.Context())
+	span := trace.NewSpan(name, parent, trace.StartOptions{Sampler: t.sampler})
+	req = req.WithContext(trace.WithSpan(req.Context(), span))
 
 	if t.format != nil {
 		t.format.SpanContextToRequest(span.SpanContext(), req)

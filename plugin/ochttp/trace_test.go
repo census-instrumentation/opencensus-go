@@ -89,8 +89,12 @@ func TestTransport_RoundTrip(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			transport := &testTransport{ch: make(chan *http.Request, 1)}
-			rt := &traceTransport{format: &testPropagator{}}
-			rt.base = transport
+
+			rt := &Transport{
+				NoStats:     true,
+				Propagation: &testPropagator{},
+				Base:        transport,
+			}
 
 			req, _ := http.NewRequest("GET", "http://foo.com", nil)
 			if tt.parent != nil {
@@ -196,7 +200,11 @@ func TestEndToEnd(t *testing.T) {
 	}
 	req = req.WithContext(ctx)
 
-	rt := &traceTransport{format: defaultFormat, base: http.DefaultTransport}
+	rt := &Transport{
+		NoStats:     true,
+		Propagation: defaultFormat,
+		Base:        http.DefaultTransport,
+	}
 	resp, err := rt.RoundTrip(req)
 	if err != nil {
 		t.Fatalf("unexpected error %s", err)
