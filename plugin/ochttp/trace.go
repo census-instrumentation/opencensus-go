@@ -40,8 +40,9 @@ const (
 )
 
 type traceTransport struct {
-	*Transport
-	format propagation.HTTPFormat
+	base    http.RoundTripper
+	sampler trace.Sampler
+	format  propagation.HTTPFormat
 }
 
 // RoundTrip creates a trace.Span and inserts it into the outgoing request's headers.
@@ -52,7 +53,7 @@ func (t *traceTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	// TODO(jbd): Discuss whether we want to prefix
 	// outgoing requests with Sent.
 	parent := trace.FromContext(req.Context())
-	span := trace.NewSpan(name, parent, trace.StartOptions{Sampler: t.Sampler})
+	span := trace.NewSpan(name, parent, trace.StartOptions{Sampler: t.sampler})
 	req = req.WithContext(trace.WithSpan(req.Context(), span))
 
 	if t.format != nil {
@@ -60,7 +61,7 @@ func (t *traceTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	}
 
 	span.SetAttributes(requestAttrs(req)...)
-	resp, err := t.base().RoundTrip(req)
+	resp, err := t.base.RoundTrip(req)
 	if err != nil {
 		span.SetStatus(trace.Status{Code: 2, Message: err.Error()})
 		span.End()
@@ -128,7 +129,7 @@ func (t *traceTransport) CancelRequest(req *http.Request) {
 	type canceler interface {
 		CancelRequest(*http.Request)
 	}
-	if cr, ok := t.base().(canceler); ok {
+	if cr, ok := t.base.(canceler); ok {
 		cr.CancelRequest(req)
 	}
 }
