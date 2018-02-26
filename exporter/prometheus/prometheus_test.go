@@ -227,7 +227,7 @@ func TestMetricsEndpointOutput(t *testing.T) {
 	if vc.err != nil {
 		t.Fatalf("failed to create views: %v", err)
 	}
-	view.SetReportingPeriod(time.Second)
+	view.SetReportingPeriod(time.Millisecond)
 
 	for _, m := range measures {
 		stats.Record(context.Background(), m.M(1))
@@ -243,7 +243,7 @@ func TestMetricsEndpointOutput(t *testing.T) {
 	var i int
 	var output string
 	for output == "" {
-		if i == 10 {
+		if i == 10000 {
 			t.Fatal("no output at /metrics (10s wait)")
 		}
 		i++
@@ -259,7 +259,7 @@ func TestMetricsEndpointOutput(t *testing.T) {
 			t.Fatalf("failed to read body: %v", err)
 		}
 		output = string(body)
-		time.Sleep(time.Second)
+		time.Sleep(time.Millisecond)
 	}
 
 	if strings.Contains(output, "collected before with the same name and label values") {
