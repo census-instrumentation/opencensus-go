@@ -344,16 +344,13 @@ func TestRequestAttributes(t *testing.T) {
 			makeReq: func() *http.Request {
 				req, _ := http.NewRequest("GET", "http://example.com/hello", nil)
 				req.Header.Add("User-Agent", "ua")
-				req.ContentLength = 128
 				return req
 			},
 			wantAttrs: []trace.Attribute{
-				trace.StringAttribute{Key: URLAttribute, Value: "http://example.com/hello"},
+				trace.StringAttribute{Key: PathAttribute, Value: "/hello"},
 				trace.StringAttribute{Key: HostAttribute, Value: "example.com"},
 				trace.StringAttribute{Key: MethodAttribute, Value: "GET"},
-				trace.StringAttribute{Key: PathAttribute, Value: "/hello"},
 				trace.StringAttribute{Key: UserAgentAttribute, Value: "ua"},
-				trace.Int64Attribute{Key: RequestSizeAttribute, Value: 128},
 			},
 		},
 	}
@@ -377,17 +374,15 @@ func TestResponseAttributes(t *testing.T) {
 	}{
 		{
 			name: "non-zero HTTP 200 response",
-			resp: &http.Response{StatusCode: 200, ContentLength: 128},
+			resp: &http.Response{StatusCode: 200},
 			wantAttrs: []trace.Attribute{
-				trace.Int64Attribute{Key: ResponseSizeAttribute, Value: 128},
 				trace.Int64Attribute{Key: StatusCodeAttribute, Value: 200},
 			},
 		},
 		{
 			name: "zero HTTP 500 response",
-			resp: &http.Response{StatusCode: 500, ContentLength: 0},
+			resp: &http.Response{StatusCode: 500},
 			wantAttrs: []trace.Attribute{
-				trace.Int64Attribute{Key: ResponseSizeAttribute, Value: 0},
 				trace.Int64Attribute{Key: StatusCodeAttribute, Value: 500},
 			},
 		},
