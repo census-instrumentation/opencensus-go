@@ -51,7 +51,8 @@ var defaultWorker *worker
 
 var defaultReportingDuration = 10 * time.Second
 
-// Deprecated: No replacement.
+// Find returns a subscribed view associated with this name.
+// If no subscribed view is found, nil is returned.
 func Find(name string) (v *View) {
 	req := &getViewByNameReq{
 		name: name,
