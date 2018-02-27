@@ -77,8 +77,10 @@ func (v *View) Name() string {
 	return v.name
 }
 
-// Renamed returns a copy of the View with a new name.
-func (v *View) Renamed(name string) *View {
+// WithName returns a copy of the View with a new name. This is useful for
+// renaming views to cope with limitations placed on metric names by various
+// backends.
+func (v *View) WithName(name string) *View {
 	return New(name, v.description, v.tagKeys, v.m, v.Aggregation())
 }
 

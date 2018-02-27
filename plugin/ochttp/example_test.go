@@ -29,9 +29,9 @@ func ExampleTransport() {
 	// Subscribe to views
 
 	err := view.Subscribe(
-		ochttp.ClientRequestCountByMethod.Renamed("httpclient_requests_by_method"),
-		ochttp.ClientResponseCountByStatusCode.Renamed("httpclient_responses_by_status_code"),
-		ochttp.ClientLatencyView.Renamed("httpclient_latency_distribution"),
+		ochttp.ClientRequestCountByMethod.WithName("httpclient_requests_by_method"),
+		ochttp.ClientResponseCountByStatusCode.WithName("httpclient_responses_by_status_code"),
+		ochttp.ClientLatencyView.WithName("httpclient_latency_distribution"),
 		view.New(
 			"httpclient_latency_by_hostpath",
 			"Client latency by URL path",
