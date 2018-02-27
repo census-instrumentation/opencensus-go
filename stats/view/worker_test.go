@@ -117,9 +117,15 @@ func Test_Worker_ViewSubscription(t *testing.T) {
 		t.Run(tc.label, func(t *testing.T) {
 			restart()
 
-			v1 := New("VF1", "desc VF1", nil, mf1, nil)
-			v11 := New("VF1", "desc duplicate name VF1", nil, mf1, nil)
-			v2 := New("VF2", "desc VF2", nil, mf2, nil)
+			v1 := &View{
+				Name:        "VF1",
+				Description: "desc VF1",
+				MeasureName: mf1.Name(),
+				Aggregation: &CountAggregation{},
+			}
+
+			v11, _ := New("VF1", "desc duplicate name VF1", nil, mf1, &SumAggregation{})
+			v2, _ := New("VF2", "desc VF2", nil, mf2, &CountAggregation{})
 
 			views := map[string]*View{
 				"v1ID":         v1,
@@ -158,8 +164,8 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	v1 := New("VF1", "desc VF1", []tag.Key{k1, k2}, m, CountAggregation{})
-	v2 := New("VF2", "desc VF2", []tag.Key{k1, k2}, m, CountAggregation{})
+	v1, _ := New("VF1", "desc VF1", []tag.Key{k1, k2}, m, CountAggregation{})
+	v2, _ := New("VF2", "desc VF2", []tag.Key{k1, k2}, m, CountAggregation{})
 
 	type want struct {
 		v    *View
@@ -234,13 +240,13 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 	for _, tc := range tcs {
 		for _, v := range tc.registrations {
 			if err := Register(v); err != nil {
-				t.Fatalf("%v: Register(%v) = %v; want no errors", tc.label, v.Name(), err)
+				t.Fatalf("%v: Register(%v) = %v; want no errors", tc.label, v.Name, err)
 			}
 		}
 
 		for _, v := range tc.subscriptions {
 			if err := v.Subscribe(); err != nil {
-				t.Fatalf("%v: Subscribe(%v) = %v; want no errors", tc.label, v.Name(), err)
+				t.Fatalf("%v: Subscribe(%v) = %v; want no errors", tc.label, v.Name, err)
 			}
 		}
 
@@ -251,7 +257,7 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 		for _, w := range tc.wants {
 			gotRows, err := w.v.RetrieveData()
 			if (err != nil) != (w.err != nil) {
-				t.Fatalf("%v: RetrieveData(%v) = %v; want no errors", tc.label, w.v.Name(), err)
+				t.Fatalf("%v: RetrieveData(%v) = %v; want no errors", tc.label, w.v.Name, err)
 			}
 			for _, got := range gotRows {
 				if !containsRow(w.rows, got) {
@@ -270,13 +276,13 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 		// cleaning up
 		for _, v := range tc.subscriptions {
 			if err := v.Unsubscribe(); err != nil {
-				t.Fatalf("%v: Unsubscribing from view %v errored with %v; want no error", tc.label, v.Name(), err)
+				t.Fatalf("%v: Unsubscribing from view %v errored with %v; want no error", tc.label, v.Name, err)
 			}
 		}
 
 		for _, v := range tc.registrations {
 			if err := Unregister(v); err != nil {
-				t.Fatalf("%v: Unregistering view %v errrored with %v; want no error", tc.label, v.Name(), err)
+				t.Fatalf("%v: Unregistering view %v errrored with %v; want no error", tc.label, v.Name, err)
 			}
 		}
 	}
@@ -290,8 +296,8 @@ func TestReportUsage(t *testing.T) {
 		t.Fatalf("stats.Int64() = %v", err)
 	}
 
-	cum1 := New("cum1", "", nil, m, CountAggregation{})
-	cum2 := New("cum1", "", nil, m, CountAggregation{})
+	cum1, _ := New("cum1", "", nil, m, CountAggregation{})
+	cum2, _ := New("cum1", "", nil, m, CountAggregation{})
 
 	tests := []struct {
 		name         string
@@ -371,11 +377,11 @@ func TestWorkerStarttime(t *testing.T) {
 	if err != nil {
 		t.Fatalf("stats.Int64() = %v", err)
 	}
-	v := New("testview", "", nil, m, CountAggregation{})
+	v, _ := New("testview", "", nil, m, CountAggregation{})
 
 	SetReportingPeriod(25 * time.Millisecond)
 	if err := v.Subscribe(); err != nil {
-		t.Fatalf("cannot subscribe to %v: %v", v.Name(), err)
+		t.Fatalf("cannot subscribe to %v: %v", v.Name, err)
 	}
 
 	e := &vdExporter{}

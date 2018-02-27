@@ -18,6 +18,7 @@ package view
 import (
 	"errors"
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
@@ -33,14 +34,14 @@ func init() {
 }
 
 type measureRef struct {
-	measure stats.Measure
-	views   map[*View]struct{}
+	measure string
+	views   map[*viewInternal]struct{}
 }
 
 type worker struct {
 	measures   map[string]*measureRef
-	views      map[string]*View
-	startTimes map[*View]time.Time
+	views      map[string]*viewInternal
+	startTimes map[*viewInternal]time.Time
 
 	timer      *time.Ticker
 	c          chan command
@@ -90,7 +91,7 @@ func Subscribe(views ...*View) error {
 	for _, v := range views {
 		err := v.Subscribe()
 		if err != nil {
-			errstr = append(errstr, fmt.Sprintf("%s: %v", v.name, err))
+			errstr = append(errstr, fmt.Sprintf("%s: %v", v.Name, err))
 		}
 	}
 	if len(errstr) > 0 {
@@ -103,7 +104,7 @@ func Subscribe(views ...*View) error {
 // Data will not be exported from this view once unsubscription happens.
 func (v *View) Unsubscribe() error {
 	req := &unsubscribeFromViewReq{
-		v:   v,
+		v:   v.Name,
 		err: make(chan error),
 	}
 	defaultWorker.c <- req
@@ -111,13 +112,18 @@ func (v *View) Unsubscribe() error {
 }
 
 // RetrieveData returns the current collected data for the view.
+// Deprecated: Use RetrieveData(name)
 func (v *View) RetrieveData() ([]*Row, error) {
 	if v == nil {
 		return nil, errors.New("cannot retrieve data from nil view")
 	}
+	return RetrieveData(v.Name)
+}
+
+func RetrieveData(viewName string) ([]*Row, error) {
 	req := &retrieveDataReq{
 		now: time.Now(),
-		v:   v,
+		v:   viewName,
 		c:   make(chan *retrieveDataResp),
 	}
 	defaultWorker.c <- req
@@ -151,8 +157,8 @@ func SetReportingPeriod(d time.Duration) {
 func newWorker() *worker {
 	return &worker{
 		measures:   make(map[string]*measureRef),
-		views:      make(map[string]*View),
-		startTimes: make(map[*View]time.Time),
+		views:      make(map[string]*viewInternal),
+		startTimes: make(map[*viewInternal]time.Time),
 		timer:      time.NewTicker(defaultReportingDuration),
 		c:          make(chan command, 1024),
 		quit:       make(chan bool),
@@ -183,41 +189,52 @@ func (w *worker) stop() {
 	<-w.done
 }
 
-func (w *worker) getMeasureRef(m stats.Measure) *measureRef {
-	if mr, ok := w.measures[m.Name()]; ok {
+func (w *worker) getMeasureRef(name string) *measureRef {
+	if mr, ok := w.measures[name]; ok {
 		return mr
 	}
 	mr := &measureRef{
-		measure: m,
-		views:   make(map[*View]struct{}),
+		measure: name,
+		views:   make(map[*viewInternal]struct{}),
 	}
-	w.measures[m.Name()] = mr
+	w.measures[name] = mr
 	return mr
 }
 
-func (w *worker) tryRegisterView(v *View) error {
-	if err := checkViewName(v.name); err != nil {
-		return err
+func (w *worker) tryRegisterView(v *View) (*viewInternal, error) {
+	if err := checkViewName(v.Name); err != nil {
+		return nil, err
 	}
-	if x, ok := w.views[v.Name()]; ok {
-		if x != v {
-			return fmt.Errorf("cannot register view %q; another view with the same name is already registered", v.Name())
+	sort.Slice(v.GroupByTags, func(i, j int) bool {
+		return v.GroupByTags[i].Name() < v.GroupByTags[j].Name()
+	})
+	if x, ok := w.views[v.Name]; ok {
+		if !x.definition.Equal(v) {
+			return nil, fmt.Errorf("cannot subscribe view %q; a different view with the same name is already subscribed", v.Name)
 		}
 
 		// the view is already registered so there is nothing to do and the
 		// command is considered successful.
-		return nil
+		return x, nil
 	}
 
-	if v.Measure() == nil {
-		return fmt.Errorf("cannot register view %q: measure not defined", v.Name())
+	if v.MeasureName == "" {
+		return nil, fmt.Errorf("cannot subscribe view %q: measure not set", v.Name)
 	}
+	m := stats.FindMeasure(v.MeasureName)
+	if m == nil {
+		return nil, fmt.Errorf("cannot subscribe view %q: measure %q not found", v.Name, v.MeasureName)
+	}
+	var agg = v.Aggregation
+	if agg == nil {
+		return nil, fmt.Errorf("cannot subscribe view %q: aggregation not set", v.Name)
+	}
+	vi := newViewInternal(v, m)
+	w.views[v.Name] = vi
+	ref := w.getMeasureRef(v.MeasureName)
+	ref.views[vi] = struct{}{}
 
-	w.views[v.Name()] = v
-	ref := w.getMeasureRef(v.Measure())
-	ref.views[v] = struct{}{}
-
-	return nil
+	return vi, nil
 }
 
 func (w *worker) reportUsage(start time.Time) {
@@ -236,10 +253,11 @@ func (w *worker) reportUsage(start time.Time) {
 		// to mutate the exported data.
 		rows = deepCopyRowData(rows)
 		viewData := &Data{
-			View:  v,
-			Start: start,
-			End:   time.Now(),
-			Rows:  rows,
+			Measure: v.measure,
+			View:    &v.definition,
+			Start:   start,
+			End:     time.Now(),
+			Rows:    rows,
 		}
 		exportersMu.Lock()
 		for e := range exporters {

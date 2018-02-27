@@ -42,47 +42,53 @@ var (
 // package. These are declared as a convenience only; none are subscribed by
 // default.
 var (
-	ServerErrorCountView = view.New(
-		"grpc.io/server/error_count",
-		"RPC Errors",
-		[]tag.Key{KeyMethod, KeyStatus},
-		ServerErrorCount,
-		view.CountAggregation{})
+	ServerErrorCountView = &view.View{
+		Name:        "grpc.io/server/error_count",
+		Description: "RPC Errors",
+		GroupByTags: []tag.Key{KeyMethod, KeyStatus},
+		MeasureName: ServerErrorCount.Name(),
+		Aggregation: view.CountAggregation{},
+	}
 
-	ServerServerElapsedTimeView = view.New(
-		"grpc.io/server/server_elapsed_time",
-		"Server elapsed time in msecs",
-		[]tag.Key{KeyMethod},
-		ServerServerElapsedTime,
-		DefaultMillisecondsDistribution)
+	ServerServerElapsedTimeView = &view.View{
+		Name:        "grpc.io/server/server_elapsed_time",
+		Description: "Server elapsed time in msecs",
+		GroupByTags: []tag.Key{KeyMethod},
+		MeasureName: ServerServerElapsedTime.Name(),
+		Aggregation: DefaultMillisecondsDistribution,
+	}
 
-	ServerRequestBytesView = view.New(
-		"grpc.io/server/request_bytes",
-		"Request bytes",
-		[]tag.Key{KeyMethod},
-		ServerRequestBytes,
-		DefaultBytesDistribution)
+	ServerRequestBytesView = &view.View{
+		Name:        "grpc.io/server/request_bytes",
+		Description: "Request bytes",
+		GroupByTags: []tag.Key{KeyMethod},
+		MeasureName: ServerRequestBytes.Name(),
+		Aggregation: DefaultBytesDistribution,
+	}
 
-	ServerResponseBytesView = view.New(
-		"grpc.io/server/response_bytes",
-		"Response bytes",
-		[]tag.Key{KeyMethod},
-		ServerResponseBytes,
-		DefaultBytesDistribution)
+	ServerResponseBytesView = &view.View{
+		Name:        "grpc.io/server/response_bytes",
+		Description: "Response bytes",
+		GroupByTags: []tag.Key{KeyMethod},
+		MeasureName: ServerResponseBytes.Name(),
+		Aggregation: DefaultBytesDistribution,
+	}
 
-	ServerRequestCountView = view.New(
-		"grpc.io/server/request_count",
-		"Count of request messages per server RPC",
-		[]tag.Key{KeyMethod},
-		ServerRequestCount,
-		DefaultMessageCountDistribution)
+	ServerRequestCountView = &view.View{
+		Name:        "grpc.io/server/request_count",
+		Description: "Count of request messages per server RPC",
+		GroupByTags: []tag.Key{KeyMethod},
+		MeasureName: ServerRequestCount.Name(),
+		Aggregation: DefaultMessageCountDistribution,
+	}
 
-	ServerResponseCountView = view.New(
-		"grpc.io/server/response_count",
-		"Count of response messages per server RPC",
-		[]tag.Key{KeyMethod},
-		ServerResponseCount,
-		DefaultMessageCountDistribution)
+	ServerResponseCountView = &view.View{
+		Name:        "grpc.io/server/response_count",
+		Description: "Count of response messages per server RPC",
+		GroupByTags: []tag.Key{KeyMethod},
+		MeasureName: ServerResponseCount.Name(),
+		Aggregation: DefaultMessageCountDistribution,
+	}
 )
 
 // All default server views provided by this package:

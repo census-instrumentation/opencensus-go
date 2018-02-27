@@ -83,8 +83,8 @@ func TestExporter_makeReq(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	v := view.New("testview", "desc", []tag.Key{key}, m, view.CountAggregation{})
-	distView := view.New("distview", "desc", nil, m, view.DistributionAggregation([]float64{2, 4, 7}))
+	v, _ := view.New("testview", "desc", []tag.Key{key}, m, view.CountAggregation{})
+	distView, _ := view.New("distview", "desc", nil, m, view.DistributionAggregation([]float64{2, 4, 7}))
 
 	start := time.Now()
 	end := start.Add(time.Minute)
@@ -377,7 +377,7 @@ func TestExporter_makeReq_batching(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	v := view.New("view", "desc", []tag.Key{key}, m, view.CountAggregation{})
+	v, _ := view.New("view", "desc", []tag.Key{key}, m, view.CountAggregation{})
 
 	tests := []struct {
 		name      string
@@ -559,7 +559,7 @@ func TestExporter_createMeasure(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	v := view.New("testview", "desc", []tag.Key{key}, m, view.CountAggregation{})
+	v, _ := view.New("testview", "desc", []tag.Key{key}, m, view.CountAggregation{})
 
 	data := view.CountData(0)
 	vd := newTestViewData(v, time.Now(), time.Now(), &data, &data)
@@ -582,7 +582,7 @@ func TestExporter_createMeasure(t *testing.T) {
 			Type:        "hello",
 			MetricKind:  metricpb.MetricDescriptor_CUMULATIVE,
 			ValueType:   metricpb.MetricDescriptor_INT64,
-			Labels:      newLabelDescriptors(vd.View.TagKeys()),
+			Labels:      newLabelDescriptors(vd.View.GroupByTags),
 		}, nil
 	}
 
@@ -615,7 +615,7 @@ func TestExporter_makeReq_withCustomMonitoredResource(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	v := view.New("testview", "desc", []tag.Key{key}, m, view.CountAggregation{})
+	v, _ := view.New("testview", "desc", []tag.Key{key}, m, view.CountAggregation{})
 	if err := view.Subscribe(v); err != nil {
 		t.Fatal(err)
 	}
@@ -728,7 +728,8 @@ func newTestViewData(v *view.View, start, end time.Time, data1, data2 view.Aggre
 	tag1 := tag.Tag{Key: key, Value: "test-value-1"}
 	tag2 := tag.Tag{Key: key, Value: "test-value-2"}
 	return &view.Data{
-		View: v,
+		Measure: stats.FindMeasure(v.MeasureName),
+		View:    v,
 		Rows: []*view.Row{
 			{
 				Tags: []tag.Tag{tag1},

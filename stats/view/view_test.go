@@ -20,15 +20,18 @@ import (
 	"testing"
 	"time"
 
+	"go.opencensus.io/stats"
 	"go.opencensus.io/tag"
 )
 
-func Test_View_MeasureFloat64_AggregationDistribution_WindowCumulative(t *testing.T) {
+func Test_View_MeasureFloat64_AggregationDistribution(t *testing.T) {
 	k1, _ := tag.NewKey("k1")
 	k2, _ := tag.NewKey("k2")
 	k3, _ := tag.NewKey("k3")
 	agg1 := DistributionAggregation([]float64{2})
-	view := New("VF1", "desc VF1", []tag.Key{k1, k2}, nil, agg1)
+	m, _ := stats.Int64("Test_View_MeasureFloat64_AggregationDistribution/m1", "", stats.UnitNone)
+	view1, _ := New("VF1", "desc VF1", []tag.Key{k1, k2}, m, agg1)
+	view := newViewInternal(view1, m)
 
 	type tagString struct {
 		k tag.Key
@@ -188,7 +191,9 @@ func Test_View_MeasureFloat64_AggregationSum(t *testing.T) {
 	k1, _ := tag.NewKey("k1")
 	k2, _ := tag.NewKey("k2")
 	k3, _ := tag.NewKey("k3")
-	view := New("VF1", "desc VF1", []tag.Key{k1, k2}, nil, SumAggregation{})
+	m, _ := stats.Int64("Test_View_MeasureFloat64_AggregationSum/m1", "", stats.UnitNone)
+	view1, _ := New("VF1", "desc VF1", []tag.Key{k1, k2}, m, SumAggregation{})
+	view := newViewInternal(view1, m)
 
 	type tagString struct {
 		k tag.Key
@@ -300,7 +305,9 @@ func Test_View_MeasureFloat64_AggregationMean_WindowCumulative(t *testing.T) {
 	k1, _ := tag.NewKey("k1")
 	k2, _ := tag.NewKey("k2")
 	k3, _ := tag.NewKey("k3")
-	view := New("VF1", "desc VF1", []tag.Key{k1, k2}, nil, MeanAggregation{})
+	m, _ := stats.Int64("Test_View_MeasureFloat64_AggregationMean_WindowCumulative/m1", "", stats.UnitNone)
+	viewDesc, _ := New("VF1", "desc VF1", []tag.Key{k1, k2}, m, MeanAggregation{})
+	view := newViewInternal(viewDesc, m)
 
 	type tagString struct {
 		k tag.Key
@@ -416,10 +423,19 @@ func TestViewSortedKeys(t *testing.T) {
 	k3, _ := tag.NewKey("c")
 	ks := []tag.Key{k1, k3, k2}
 
-	v := New("sort_keys", "desc sort_keys", ks, nil, MeanAggregation{})
+	m, _ := stats.Int64("TestViewSortedKeys/m1", "", stats.UnitNone)
+	Subscribe(&View{
+		Name:        "sort_keys",
+		Description: "desc sort_keys",
+		GroupByTags: ks,
+		MeasureName: m.Name(),
+		Aggregation: &MeanAggregation{},
+	})
+	// Subscribe normalizes the view by sorting the tag keys, retrieve the normalized view
+	v := Find("sort_keys")
 
 	want := []string{"a", "b", "c"}
-	vks := v.TagKeys()
+	vks := v.GroupByTags
 	if len(vks) != len(want) {
 		t.Errorf("Keys = %+v; want %+v", vks, want)
 	}

@@ -15,6 +15,8 @@
 package prometheus
 
 import (
+	"fmt"
+	"log"
 	"sync"
 	"testing"
 	"time"
@@ -25,9 +27,13 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-func newView(agg view.Aggregation) *view.View {
-	m, _ := stats.Int64("tests/foo1", "bytes", "byte")
-	return view.New("foo", "bar", nil, m, agg)
+func newView(measureName string, agg view.Aggregation) *view.View {
+	m, err := stats.Int64(measureName, "bytes", stats.UnitBytes)
+	if err != nil {
+		log.Fatal(err)
+	}
+	v, _ := view.New("foo", "bar", nil, m, agg)
+	return v
 }
 
 func TestOnlyCumulativeWindowSupported(t *testing.T) {
@@ -43,13 +49,13 @@ func TestOnlyCumulativeWindowSupported(t *testing.T) {
 	}{
 		0: {
 			vds: &view.Data{
-				View: newView(view.CountAggregation{}),
+				View: newView("TestOnlyCumulativeWindowSupported/m1", view.CountAggregation{}),
 			},
 			want: 0, // no rows present
 		},
 		1: {
 			vds: &view.Data{
-				View: newView(view.CountAggregation{}),
+				View: newView("TestOnlyCumulativeWindowSupported/m2", view.CountAggregation{}),
 				Rows: []*view.Row{
 					{Data: &count1},
 				},
@@ -58,7 +64,7 @@ func TestOnlyCumulativeWindowSupported(t *testing.T) {
 		},
 		2: {
 			vds: &view.Data{
-				View: newView(view.MeanAggregation{}),
+				View: newView("TestOnlyCumulativeWindowSupported/m3", view.MeanAggregation{}),
 				Rows: []*view.Row{
 					{Data: &mean1},
 				},
@@ -130,8 +136,8 @@ func TestCollectNonRacy(t *testing.T) {
 			count1 := view.CountData(1)
 			mean1 := &view.MeanData{Mean: 4.5, Count: 5}
 			vds := []*view.Data{
-				{View: newView(view.MeanAggregation{}), Rows: []*view.Row{{Data: mean1}}},
-				{View: newView(view.CountAggregation{}), Rows: []*view.Row{{Data: &count1}}},
+				{View: newView(fmt.Sprintf("TestCollectNonRacy/m1-%d", i), view.MeanAggregation{}), Rows: []*view.Row{{Data: mean1}}},
+				{View: newView(fmt.Sprintf("TestCollectNonRacy/m2-%d", i), view.CountAggregation{}), Rows: []*view.Row{{Data: &count1}}},
 			}
 			for _, v := range vds {
 				exp.ExportView(v)

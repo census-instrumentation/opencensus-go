@@ -26,18 +26,20 @@ import (
 
 func ExampleTransport() {
 
-	// Subscribe to views
-
 	err := view.Subscribe(
+
+		// Subscribe to a few default views, with renaming
 		ochttp.ClientRequestCountByMethod.WithName("httpclient_requests_by_method"),
 		ochttp.ClientResponseCountByStatusCode.WithName("httpclient_responses_by_status_code"),
 		ochttp.ClientLatencyView.WithName("httpclient_latency_distribution"),
-		view.New(
-			"httpclient_latency_by_hostpath",
-			"Client latency by URL path",
-			[]tag.Key{ochttp.Host, ochttp.Path},
-			ochttp.ClientLatency,
-			ochttp.DefaultLatencyDistribution),
+
+		// Subscribe to a custom view
+		&view.View{
+			Name:        "httpclient_latency_by_hostpath",
+			GroupByTags: []tag.Key{ochttp.Host, ochttp.Path},
+			MeasureName: ochttp.ClientLatency.Name(),
+			Aggregation: ochttp.DefaultLatencyDistribution,
+		},
 	)
 	if err != nil {
 		log.Fatal(err)

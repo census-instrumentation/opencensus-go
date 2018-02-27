@@ -43,26 +43,24 @@ func main() {
 	videoSize, _ := stats.Int64("my.org/measures/video_size_cum", "size of processed video", "MBy")
 
 	// Create view to see the number of processed videos cumulatively.
-	viewCount := view.New(
-		"video_count",
-		"number of videos processed over time",
-		nil,
-		videoCount,
-		view.CountAggregation{},
-	)
-
 	// Create view to see the amount of video processed
-	viewSize := view.New(
-		"video_size",
-		"processed video size over time",
-		nil,
-		videoSize,
-		view.DistributionAggregation([]float64{0, 1 << 16, 1 << 32}),
-	)
-
 	// Subscribe will allow view data to be exported.
 	// Once no longer needed, you can unsubscribe from the view.
-	if err := view.Subscribe(viewCount, viewSize); err != nil {
+	err = view.Subscribe(
+		&view.View{
+			Name:        "video_count",
+			Description: "number of videos processed over time",
+			MeasureName: videoCount.Name(),
+			Aggregation: &view.CountAggregation{},
+		},
+		&view.View{
+			Name:        "video_size",
+			Description: "processed video size over time",
+			MeasureName: videoSize.Name(),
+			Aggregation: view.DistributionAggregation([]float64{0, 1 << 16, 1 << 32}),
+		},
+	)
+	if err != nil {
 		log.Fatalf("Cannot subscribe to the view: %v", err)
 	}
 

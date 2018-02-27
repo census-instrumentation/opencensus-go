@@ -38,43 +38,7 @@ type getViewByNameResp struct {
 }
 
 func (cmd *getViewByNameReq) handleCommand(w *worker) {
-	cmd.c <- &getViewByNameResp{w.views[cmd.name]}
-}
-
-// registerViewReq is the command to register a view with the library.
-type registerViewReq struct {
-	v   *View
-	err chan error
-}
-
-func (cmd *registerViewReq) handleCommand(w *worker) {
-	cmd.err <- w.tryRegisterView(cmd.v)
-}
-
-// unregisterViewReq is the command to unregister a view from the library.
-type unregisterViewReq struct {
-	v   *View
-	err chan error
-}
-
-func (cmd *unregisterViewReq) handleCommand(w *worker) {
-	v, ok := w.views[cmd.v.Name()]
-	if !ok {
-		cmd.err <- nil
-		return
-	}
-	if v != cmd.v {
-		cmd.err <- nil
-		return
-	}
-	if v.isSubscribed() {
-		cmd.err <- fmt.Errorf("cannot unregister view %q; all subscriptions must be unsubscribed first", cmd.v.Name())
-		return
-	}
-	delete(w.views, cmd.v.Name())
-	ref := w.getMeasureRef(v.Measure())
-	delete(ref.views, v)
-	cmd.err <- nil
+	cmd.c <- &getViewByNameResp{&w.views[cmd.name].definition}
 }
 
 // subscribeToViewReq is the command to subscribe to a view.
@@ -84,15 +48,12 @@ type subscribeToViewReq struct {
 }
 
 func (cmd *subscribeToViewReq) handleCommand(w *worker) {
-	if cmd.v.isSubscribed() {
-		cmd.err <- nil
-		return
-	}
-	if err := w.tryRegisterView(cmd.v); err != nil {
+	vi, err := w.tryRegisterView(cmd.v)
+	if err != nil {
 		cmd.err <- fmt.Errorf("cannot subscribe to view: %v", err)
 		return
 	}
-	cmd.v.subscribe()
+	vi.subscribe()
 	cmd.err <- nil
 }
 
@@ -100,16 +61,22 @@ func (cmd *subscribeToViewReq) handleCommand(w *worker) {
 // impact on the data collection for client that are pulling data from the
 // library.
 type unsubscribeFromViewReq struct {
-	v   *View
+	v   string
 	err chan error
 }
 
 func (cmd *unsubscribeFromViewReq) handleCommand(w *worker) {
-	cmd.v.unsubscribe()
-	if !cmd.v.isSubscribed() {
+	vi, ok := w.views[cmd.v]
+	if !ok {
+		cmd.err <- nil
+		return
+	}
+
+	vi.unsubscribe()
+	if !vi.isSubscribed() {
 		// this was the last subscription and view is not collecting anymore.
 		// The collected data can be cleared.
-		cmd.v.clearRows()
+		vi.clearRows()
 	}
 	// we always return nil because this operation never fails. However we
 	// still need to return something on the channel to signal to the waiting
@@ -120,7 +87,7 @@ func (cmd *unsubscribeFromViewReq) handleCommand(w *worker) {
 // retrieveDataReq is the command to retrieve data for a view.
 type retrieveDataReq struct {
 	now time.Time
-	v   *View
+	v   string
 	c   chan *retrieveDataResp
 }
 
@@ -130,23 +97,24 @@ type retrieveDataResp struct {
 }
 
 func (cmd *retrieveDataReq) handleCommand(w *worker) {
-	if _, ok := w.views[cmd.v.Name()]; !ok {
+	vi, ok := w.views[cmd.v]
+	if !ok {
 		cmd.c <- &retrieveDataResp{
 			nil,
-			fmt.Errorf("cannot retrieve data; view %q is not registered", cmd.v.Name()),
+			fmt.Errorf("cannot retrieve data; view %q is not registered", cmd.v),
 		}
 		return
 	}
 
-	if !cmd.v.isSubscribed() {
+	if !vi.isSubscribed() {
 		cmd.c <- &retrieveDataResp{
 			nil,
-			fmt.Errorf("cannot retrieve data; view %q has no subscriptions or collection is not forcibly started", cmd.v.Name()),
+			fmt.Errorf("cannot retrieve data; view %q has no subscriptions or collection is not forcibly started", cmd.v),
 		}
 		return
 	}
 	cmd.c <- &retrieveDataResp{
-		cmd.v.collectedRows(cmd.now),
+		vi.collectedRows(cmd.now),
 		nil,
 	}
 }
@@ -161,7 +129,7 @@ type recordReq struct {
 
 func (cmd *recordReq) handleCommand(w *worker) {
 	for _, m := range cmd.ms {
-		ref := w.getMeasureRef(m.Measure)
+		ref := w.getMeasureRef(m.Measure.Name())
 		for v := range ref.views {
 			v.addSample(cmd.tm, m.Value, cmd.now)
 		}

@@ -19,7 +19,6 @@ import (
 	"bytes"
 	"fmt"
 	"reflect"
-	"sort"
 	"sync/atomic"
 	"time"
 
@@ -28,116 +27,109 @@ import (
 	"go.opencensus.io/tag"
 )
 
-// View allows users to filter and aggregate the recorded events.
-// Each view has to be registered to enable data retrieval. Use New to
-// initiate new views. Unregister views once you don't want to collect any more
-// events.
+// View allows users to aggregate the recorded stats.Measurements.
+// Views need to be passed to the Subscribe function to be before data will be
+// collected and sent to Exporters.
 type View struct {
-	name        string // name of View. Must be unique.
-	description string
+	Name        string // Name of View. Must be unique.
+	Description string // Description is a human-readable description for this view.
 
-	// tagKeys to perform the aggregation on.
-	tagKeys []tag.Key
+	// GroupByTags are the tag keys describing the grouping of this view.
+	// A single Row will be produced for each combination of associated tag values.
+	GroupByTags []tag.Key
 
-	// Examples of measures are cpu:tickCount, diskio:time...
-	m stats.Measure
+	// MeasureName is the name of the stats.Measure to aggregate in this view.
+	MeasureName string
 
-	subscribed uint32 // 1 if someone is subscribed and data need to be exported, use atomic to access
-
-	collector *collector
+	// Aggregation is the aggregation function tp apply to the set of Measurements.
+	Aggregation Aggregation
 }
 
-// New creates a new view with the given name and description.
-// View names need to be unique globally in the entire system.
-//
-// Data collection will only filter measurements recorded by the given keys.
-// Collected data will be processed by the given aggregation algorithm.
-//
-// Views need to be subscribed toin order to retrieve collection data.
-//
-// Once the view is no longer required, the view can be unregistered.
-func New(name, description string, keys []tag.Key, measure stats.Measure, agg Aggregation) *View {
-	var ks []tag.Key
-	if len(keys) > 0 {
-		ks = make([]tag.Key, len(keys))
-		copy(ks, keys)
-		sort.Slice(ks, func(i, j int) bool { return ks[i].Name() < ks[j].Name() })
+// Deprecated: Use &View{}.
+func New(name, description string, keys []tag.Key, measure stats.Measure, agg Aggregation) (*View, error) {
+	if measure == nil {
+		panic("measure may not be nil")
 	}
 	return &View{
-		name:        name,
-		description: description,
-		tagKeys:     ks,
-		m:           measure,
-		collector:   &collector{make(map[string]AggregationData), agg},
-	}
-}
-
-// Name returns the name of the view.
-func (v *View) Name() string {
-	return v.name
+		Name:        name,
+		Description: description,
+		GroupByTags: keys,
+		MeasureName: measure.Name(),
+		Aggregation: agg,
+	}, nil
 }
 
 // WithName returns a copy of the View with a new name. This is useful for
 // renaming views to cope with limitations placed on metric names by various
 // backends.
 func (v *View) WithName(name string) *View {
-	return New(name, v.description, v.tagKeys, v.m, v.Aggregation())
+	vNew := *v
+	vNew.Name = name
+	return &vNew
 }
 
-// Description returns the name of the view.
-func (v *View) Description() string {
-	return v.description
+// Equal compares two views and returns true if they represent the same aggregation.
+func (v *View) Equal(other *View) bool {
+	if v == other {
+		return true
+	}
+	if v == nil {
+		return false
+	}
+	return reflect.DeepEqual(v.Aggregation, other.Aggregation) &&
+		v.Name == other.Name &&
+		v.MeasureName == other.MeasureName
 }
 
-func (v *View) subscribe() {
+type viewInternal struct {
+	definition View
+	subscribed uint32 // 1 if someone is subscribed and data need to be exported, use atomic to access
+	collector  *collector
+	measure    stats.Measure
+}
+
+func newViewInternal(v *View, m stats.Measure) *viewInternal {
+	return &viewInternal{
+		definition: *v,
+		collector:  &collector{make(map[string]AggregationData), v.Aggregation},
+		measure:    m,
+	}
+}
+
+func (v *viewInternal) subscribe() {
 	atomic.StoreUint32(&v.subscribed, 1)
 }
 
-func (v *View) unsubscribe() {
+func (v *viewInternal) unsubscribe() {
 	atomic.StoreUint32(&v.subscribed, 0)
 }
 
 // isSubscribed returns true if the view is exporting
 // data by subscription.
-func (v *View) isSubscribed() bool {
+func (v *viewInternal) isSubscribed() bool {
 	return atomic.LoadUint32(&v.subscribed) == 1
 }
 
-func (v *View) clearRows() {
+func (v *viewInternal) clearRows() {
 	v.collector.clearRows()
 }
 
-// TagKeys returns the list of tag keys associated with this view.
-func (v *View) TagKeys() []tag.Key {
-	return v.tagKeys
+func (v *viewInternal) collectedRows(now time.Time) []*Row {
+	return v.collector.collectedRows(v.definition.GroupByTags, now)
 }
 
-// Aggregation returns the data aggregation method used to aggregate
-// the measurements collected by this view.
-func (v *View) Aggregation() Aggregation {
-	return v.collector.a
-}
-
-// Measure returns the measure the view is collecting measurements for.
-func (v *View) Measure() stats.Measure {
-	return v.m
-}
-
-func (v *View) collectedRows(now time.Time) []*Row {
-	return v.collector.collectedRows(v.tagKeys, now)
-}
-
-func (v *View) addSample(m *tag.Map, val float64, now time.Time) {
+func (v *viewInternal) addSample(m *tag.Map, val float64, now time.Time) {
 	if !v.isSubscribed() {
 		return
 	}
-	sig := string(encodeWithKeys(m, v.tagKeys))
+	sig := string(encodeWithKeys(m, v.definition.GroupByTags))
 	v.collector.addSample(sig, val, now)
 }
 
 // A Data is a set of rows about usage of the single measure associated
 // with the given view. Each row is specific to a unique set of tags.
 type Data struct {
+	Measure    stats.Measure
 	View       *View
 	Start, End time.Time
 	Rows       []*Row

@@ -42,13 +42,12 @@ func main() {
 
 	// Create view to see the processed video size
 	// distribution over 10 seconds.
-	v := view.New(
-		"my.org/views/video_size",
-		"processed video size over time",
-		nil,
-		videoSize,
-		view.DistributionAggregation([]float64{0, 1 << 16, 1 << 32}),
-	)
+	v := &view.View{
+		Name:        "my.org/views/video_size",
+		Description: "processed video size over time",
+		MeasureName: videoSize.Name(),
+		Aggregation: view.DistributionAggregation([]float64{0, 1 << 16, 1 << 32}),
+	}
 
 	// Set reporting period to report data at every second.
 	view.SetReportingPeriod(1 * time.Second)

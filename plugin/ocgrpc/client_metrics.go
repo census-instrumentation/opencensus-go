@@ -38,47 +38,53 @@ var (
 // package. These are declared as a convenience only; none are subscribed by
 // default.
 var (
-	ClientErrorCountView = view.New(
-		"grpc.io/client/error_count",
-		"RPC Errors",
-		[]tag.Key{KeyStatus, KeyMethod},
-		ClientErrorCount,
-		view.MeanAggregation{})
+	ClientErrorCountView = &view.View{
+		Name:        "grpc.io/client/error_count",
+		Description: "RPC Errors",
+		GroupByTags: []tag.Key{KeyStatus, KeyMethod},
+		MeasureName: ClientErrorCount.Name(),
+		Aggregation: view.MeanAggregation{},
+	}
 
-	ClientRoundTripLatencyView = view.New(
-		"grpc.io/client/roundtrip_latency",
-		"Latency in msecs",
-		[]tag.Key{KeyMethod},
-		ClientRoundTripLatency,
-		DefaultMillisecondsDistribution)
+	ClientRoundTripLatencyView = &view.View{
+		Name:        "grpc.io/client/roundtrip_latency",
+		Description: "Latency in msecs",
+		GroupByTags: []tag.Key{KeyMethod},
+		MeasureName: ClientRoundTripLatency.Name(),
+		Aggregation: DefaultMillisecondsDistribution,
+	}
 
-	ClientRequestBytesView = view.New(
-		"grpc.io/client/request_bytes",
-		"Request bytes",
-		[]tag.Key{KeyMethod},
-		ClientRequestBytes,
-		DefaultBytesDistribution)
+	ClientRequestBytesView = &view.View{
+		Name:        "grpc.io/client/request_bytes",
+		Description: "Request bytes",
+		GroupByTags: []tag.Key{KeyMethod},
+		MeasureName: ClientRequestBytes.Name(),
+		Aggregation: DefaultBytesDistribution,
+	}
 
-	ClientResponseBytesView = view.New(
-		"grpc.io/client/response_bytes",
-		"Response bytes",
-		[]tag.Key{KeyMethod},
-		ClientResponseBytes,
-		DefaultBytesDistribution)
+	ClientResponseBytesView = &view.View{
+		Name:        "grpc.io/client/response_bytes",
+		Description: "Response bytes",
+		GroupByTags: []tag.Key{KeyMethod},
+		MeasureName: ClientResponseBytes.Name(),
+		Aggregation: DefaultBytesDistribution,
+	}
 
-	ClientRequestCountView = view.New(
-		"grpc.io/client/request_count",
-		"Count of request messages per client RPC",
-		[]tag.Key{KeyMethod},
-		ClientRequestCount,
-		DefaultMessageCountDistribution)
+	ClientRequestCountView = &view.View{
+		Name:        "grpc.io/client/request_count",
+		Description: "Count of request messages per client RPC",
+		GroupByTags: []tag.Key{KeyMethod},
+		MeasureName: ClientRequestCount.Name(),
+		Aggregation: DefaultMessageCountDistribution,
+	}
 
-	ClientResponseCountView = view.New(
-		"grpc.io/client/response_count",
-		"Count of response messages per client RPC",
-		[]tag.Key{KeyMethod},
-		ClientResponseCount,
-		DefaultMessageCountDistribution)
+	ClientResponseCountView = &view.View{
+		Name:        "grpc.io/client/response_count",
+		Description: "Count of response messages per client RPC",
+		GroupByTags: []tag.Key{KeyMethod},
+		MeasureName: ClientResponseCount.Name(),
+		Aggregation: DefaultMessageCountDistribution,
+	}
 )
 
 // All the default client views provided by this package:

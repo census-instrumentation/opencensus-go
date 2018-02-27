@@ -158,13 +158,12 @@ will be aggregated together (no grouping by tag):
 
 [embedmd]:# (stats.go view)
 ```go
-v := view.New(
-	"my.org/video_size_distribution",
-	"distribution of processed video size over time",
-	nil,
-	videoSize,
-	distAgg,
-)
+v := &view.View{
+	Name:        "my.org/video_size_distribution",
+	Description: "distribution of processed video size over time",
+	MeasureName: videoSize.Name(),
+	Aggregation: view.DistributionAggregation([]float64{0, 1 << 32, 2 << 32, 3 << 32}),
+}
 ```
 
 ### Retrieving collected data for a view

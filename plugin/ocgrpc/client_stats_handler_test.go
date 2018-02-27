@@ -298,10 +298,9 @@ func TestClientDefaultCollections(t *testing.T) {
 
 	for _, tc := range tcs {
 		// Register views.
-		for _, v := range DefaultClientViews {
-			if err := v.Subscribe(); err != nil {
-				t.Error(err)
-			}
+		err := view.Subscribe(DefaultClientViews...)
+		if err != nil {
+			t.Error(err)
 		}
 
 		h := &clientStatsHandler{}
@@ -329,20 +328,20 @@ func TestClientDefaultCollections(t *testing.T) {
 		for _, wantData := range tc.wants {
 			gotRows, err := wantData.v().RetrieveData()
 			if err != nil {
-				t.Errorf("%q: RetrieveData(%q) = %v", tc.label, wantData.v().Name(), err)
+				t.Errorf("%q: RetrieveData(%q) = %v", tc.label, wantData.v().Name, err)
 				continue
 			}
 
 			for _, gotRow := range gotRows {
 				if !containsRow(wantData.rows, gotRow) {
-					t.Errorf("%q: unwanted row for view %q = %v", tc.label, wantData.v().Name(), gotRow)
+					t.Errorf("%q: unwanted row for view %q = %v", tc.label, wantData.v().Name, gotRow)
 					break
 				}
 			}
 
 			for _, wantRow := range wantData.rows {
 				if !containsRow(gotRows, wantRow) {
-					t.Errorf("%q: row missing for view %q; want %v", tc.label, wantData.v().Name(), wantRow)
+					t.Errorf("%q: row missing for view %q; want %v", tc.label, wantData.v().Name, wantRow)
 					break
 				}
 			}

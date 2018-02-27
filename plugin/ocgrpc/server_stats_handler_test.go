@@ -328,20 +328,20 @@ func TestServerDefaultCollections(t *testing.T) {
 		for _, wantData := range tc.wants {
 			gotRows, err := wantData.v().RetrieveData()
 			if err != nil {
-				t.Errorf("%q: RetrieveData (%q) = %v", tc.label, wantData.v().Name(), err)
+				t.Errorf("%q: RetrieveData (%q) = %v", tc.label, wantData.v().Name, err)
 				continue
 			}
 
 			for _, gotRow := range gotRows {
 				if !containsRow(wantData.rows, gotRow) {
-					t.Errorf("%q: unwanted row for view %q: %v", tc.label, wantData.v().Name(), gotRow)
+					t.Errorf("%q: unwanted row for view %q: %v", tc.label, wantData.v().Name, gotRow)
 					break
 				}
 			}
 
 			for _, wantRow := range wantData.rows {
 				if !containsRow(gotRows, wantRow) {
-					t.Errorf("%q: missing row for view %q: %v", tc.label, wantData.v().Name(), wantRow)
+					t.Errorf("%q: missing row for view %q: %v", tc.label, wantData.v().Name, wantRow)
 					break
 				}
 			}
