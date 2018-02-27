@@ -131,11 +131,10 @@ func RetrieveData(viewName string) ([]*Row, error) {
 	return resp.rows, resp.err
 }
 
-func record(tags *tag.Map, now time.Time, ms interface{}) {
+func record(tags *tag.Map, ms interface{}) {
 	req := &recordReq{
-		now: now,
-		tm:  tags,
-		ms:  ms.([]stats.Measurement),
+		tm: tags,
+		ms: ms.([]stats.Measurement),
 	}
 	defaultWorker.c <- req
 }
@@ -237,17 +236,15 @@ func (w *worker) tryRegisterView(v *View) (*viewInternal, error) {
 	return vi, nil
 }
 
-func (w *worker) reportUsage(start time.Time) {
+func (w *worker) reportUsage(now time.Time) {
 	for _, v := range w.views {
 		if !v.isSubscribed() {
 			continue
 		}
-		rows := v.collectedRows(start)
-		s, ok := w.startTimes[v]
+		rows := v.collectedRows()
+		_, ok := w.startTimes[v]
 		if !ok {
-			w.startTimes[v] = start
-		} else {
-			start = s
+			w.startTimes[v] = now
 		}
 		// Make sure collector is never going
 		// to mutate the exported data.
@@ -255,7 +252,7 @@ func (w *worker) reportUsage(start time.Time) {
 		viewData := &Data{
 			Measure: v.measure,
 			View:    &v.definition,
-			Start:   start,
+			Start:   w.startTimes[v],
 			End:     time.Now(),
 			Rows:    rows,
 		}

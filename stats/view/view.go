@@ -114,16 +114,16 @@ func (v *viewInternal) clearRows() {
 	v.collector.clearRows()
 }
 
-func (v *viewInternal) collectedRows(now time.Time) []*Row {
-	return v.collector.collectedRows(v.definition.GroupByTags, now)
+func (v *viewInternal) collectedRows() []*Row {
+	return v.collector.collectedRows(v.definition.GroupByTags)
 }
 
-func (v *viewInternal) addSample(m *tag.Map, val float64, now time.Time) {
+func (v *viewInternal) addSample(m *tag.Map, val float64) {
 	if !v.isSubscribed() {
 		return
 	}
 	sig := string(encodeWithKeys(m, v.definition.GroupByTags))
-	v.collector.addSample(sig, val, now)
+	v.collector.addSample(sig, val)
 }
 
 // A Data is a set of rows about usage of the single measure associated

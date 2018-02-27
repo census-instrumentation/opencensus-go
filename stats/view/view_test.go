@@ -18,7 +18,6 @@ package view
 import (
 	"context"
 	"testing"
-	"time"
 
 	"go.opencensus.io/stats"
 	"go.opencensus.io/tag"
@@ -167,10 +166,10 @@ func Test_View_MeasureFloat64_AggregationDistribution(t *testing.T) {
 			if err != nil {
 				t.Errorf("%v: NewMap = %v", tc.label, err)
 			}
-			view.addSample(tag.FromContext(ctx), r.f, time.Now())
+			view.addSample(tag.FromContext(ctx), r.f)
 		}
 
-		gotRows := view.collectedRows(time.Now())
+		gotRows := view.collectedRows()
 		for i, got := range gotRows {
 			if !containsRow(tc.wantRows, got) {
 				t.Errorf("%v-%d: got row %v; want none", tc.label, i, got)
@@ -281,10 +280,10 @@ func Test_View_MeasureFloat64_AggregationSum(t *testing.T) {
 			if err != nil {
 				t.Errorf("%v: New = %v", tt.label, err)
 			}
-			view.addSample(tag.FromContext(ctx), r.f, time.Now())
+			view.addSample(tag.FromContext(ctx), r.f)
 		}
 
-		gotRows := view.collectedRows(time.Now())
+		gotRows := view.collectedRows()
 		for i, got := range gotRows {
 			if !containsRow(tt.wantRows, got) {
 				t.Errorf("%v-%d: got row %v; want none", tt.label, i, got)
@@ -397,10 +396,10 @@ func Test_View_MeasureFloat64_AggregationMean_WindowCumulative(t *testing.T) {
 			if err != nil {
 				t.Errorf("%v: New = %v", tt.label, err)
 			}
-			view.addSample(tag.FromContext(ctx), r.f, time.Now())
+			view.addSample(tag.FromContext(ctx), r.f)
 		}
 
-		gotRows := view.collectedRows(time.Now())
+		gotRows := view.collectedRows()
 		for i, got := range gotRows {
 			if !containsRow(tt.wantRows, got) {
 				t.Errorf("%v-%d: got row %v; want none", tt.label, i, got)

@@ -114,7 +114,7 @@ func (cmd *retrieveDataReq) handleCommand(w *worker) {
 		return
 	}
 	cmd.c <- &retrieveDataResp{
-		vi.collectedRows(cmd.now),
+		vi.collectedRows(),
 		nil,
 	}
 }
@@ -122,16 +122,15 @@ func (cmd *retrieveDataReq) handleCommand(w *worker) {
 // recordReq is the command to record data related to multiple measures
 // at once.
 type recordReq struct {
-	now time.Time
-	tm  *tag.Map
-	ms  []stats.Measurement
+	tm *tag.Map
+	ms []stats.Measurement
 }
 
 func (cmd *recordReq) handleCommand(w *worker) {
 	for _, m := range cmd.ms {
 		ref := w.getMeasureRef(m.Measure.Name())
 		for v := range ref.views {
-			v.addSample(cmd.tm, m.Value, cmd.now)
+			v.addSample(cmd.tm, m.Value)
 		}
 	}
 }

@@ -30,7 +30,7 @@ import (
 const server = "http://localhost:50030"
 
 func main() {
-	go func() { log.Fatal(http.ListenAndServe(":8080", zpages.Handler)) }()
+	go func() { log.Fatal(http.ListenAndServe(":9979", zpages.Handler)) }()
 
 	// Register stats and trace exporters to export the collected data.
 	exporter := &exporter.Exporter{}
@@ -43,9 +43,7 @@ func main() {
 	// Report stats at every second.
 	view.SetReportingPeriod(1 * time.Second)
 
-	client := &http.Client{
-		Transport: &ochttp.Transport{},
-	}
+	client := &http.Client{Transport: &ochttp.Transport{}}
 
 	resp, err := client.Get(server)
 	if err != nil {
