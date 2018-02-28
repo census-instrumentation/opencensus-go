@@ -347,10 +347,10 @@ func TestRequestAttributes(t *testing.T) {
 				return req
 			},
 			wantAttrs: []trace.Attribute{
-				trace.StringAttribute{Key: PathAttribute, Value: "/hello"},
-				trace.StringAttribute{Key: HostAttribute, Value: "example.com"},
-				trace.StringAttribute{Key: MethodAttribute, Value: "GET"},
-				trace.StringAttribute{Key: UserAgentAttribute, Value: "ua"},
+				trace.StringAttribute{Key: "http.path", Value: "/hello"},
+				trace.StringAttribute{Key: "http.host", Value: "example.com"},
+				trace.StringAttribute{Key: "http.method", Value: "GET"},
+				trace.StringAttribute{Key: "http.user_agent", Value: "ua"},
 			},
 		},
 	}
@@ -376,14 +376,14 @@ func TestResponseAttributes(t *testing.T) {
 			name: "non-zero HTTP 200 response",
 			resp: &http.Response{StatusCode: 200},
 			wantAttrs: []trace.Attribute{
-				trace.Int64Attribute{Key: StatusCodeAttribute, Value: 200},
+				trace.Int64Attribute{Key: "http.status_code", Value: 200},
 			},
 		},
 		{
 			name: "zero HTTP 500 response",
 			resp: &http.Response{StatusCode: 500},
 			wantAttrs: []trace.Attribute{
-				trace.Int64Attribute{Key: StatusCodeAttribute, Value: 500},
+				trace.Int64Attribute{Key: "http.status_code", Value: 500},
 			},
 		},
 	}
