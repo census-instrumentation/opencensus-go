@@ -18,6 +18,7 @@ package view
 import (
 	"errors"
 	"fmt"
+	"sync"
 	"time"
 
 	"go.opencensus.io/stats"
@@ -44,6 +45,9 @@ type worker struct {
 	timer      *time.Ticker
 	c          chan command
 	quit, done chan bool
+
+	recordsMu sync.Mutex
+	records   []*recordReq
 }
 
 var defaultWorker *worker
@@ -131,11 +135,14 @@ func (v *View) RetrieveData() ([]*Row, error) {
 }
 
 func record(tags *tag.Map, ms interface{}) {
-	req := &recordReq{
+	w := defaultWorker
+
+	w.recordsMu.Lock()
+	w.records = append(w.records, &recordReq{
 		tm: tags,
 		ms: ms.([]stats.Measurement),
-	}
-	defaultWorker.c <- req
+	})
+	w.recordsMu.Unlock()
 }
 
 // SetReportingPeriod sets the interval between reporting aggregated views in
@@ -154,6 +161,7 @@ func SetReportingPeriod(d time.Duration) {
 
 func newWorker() *worker {
 	return &worker{
+		records:    make([]*recordReq, 0, 2048),
 		measures:   make(map[string]*measureRef),
 		views:      make(map[string]*View),
 		startTimes: make(map[*View]time.Time),
@@ -171,6 +179,13 @@ func (w *worker) start() {
 			if cmd != nil {
 				cmd.handleCommand(w)
 			}
+		case <-time.Tick(10 * time.Millisecond):
+			w.recordsMu.Lock()
+			for _, cmd := range w.records {
+				cmd.handleCommand(w)
+			}
+			w.records = make([]*recordReq, 0, cap(w.records))
+			w.recordsMu.Unlock()
 		case <-w.timer.C:
 			w.reportUsage(time.Now())
 		case <-w.quit:
