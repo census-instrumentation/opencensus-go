@@ -33,7 +33,7 @@ const (
 	MethodAttribute     = "http.method"
 	PathAttribute       = "http.path"
 	UserAgentAttribute  = "http.user_agent"
-	StatusCodeAttribute = "http.status"
+	StatusCodeAttribute = "http.status_code"
 )
 
 type traceTransport struct {
