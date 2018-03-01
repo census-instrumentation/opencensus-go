@@ -14,6 +14,16 @@
 
 package internal
 
+import "time"
+
 // UserAgent is the user agent to be added to the outgoing
 // requests from the exporters.
 const UserAgent = "opencensus-go-v0.1.0"
+
+func MonoticTimeSince(start time.Time) time.Time {
+	// The monotonic clock is used in subtractions hence
+	// the duration since start added back to start gives
+	// end as a monotonic time.
+	// See https://golang.org/pkg/time/#hdr-Monotonic_Clocks
+	return start.Add(time.Now().Sub(start))
+}

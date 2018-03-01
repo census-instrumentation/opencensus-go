@@ -228,7 +228,7 @@ func (s *Span) End() {
 	s.exportOnce.Do(func() {
 		// TODO: optimize to avoid this call if sd won't be used.
 		sd := s.makeSpanData()
-		sd.EndTime = sd.StartTime.Add(time.Since(sd.StartTime))
+		sd.EndTime = internal.MonotonicTimeSince(sd.StartTime)
 		if s.spanStore != nil {
 			s.spanStore.finished(s, sd)
 		}
