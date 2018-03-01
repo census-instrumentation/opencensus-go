@@ -136,7 +136,7 @@ stats.Record(ctx, videoSize.M(102478))
 Views are how Measures are aggregated. You can think of them as queries over the
 set of recorded data points (Measurements).
 
-Views have two parts: the tags to group by and the aggregation function used.
+Views have two parts: the tags to group by and the aggregation type used.
 
 Currently four types of aggregations are supported:
 * CountAggregation is used to count the number of times a sample was recorded.
@@ -153,15 +153,15 @@ meanAgg := view.MeanAggregation{}
 ```
 
 Here we create a view with the DistributionAggregation over our Measure.
-Setting tags to nil (as in this example) means that Measurements with all tags
-will be aggregated together (no grouping by tag):
+All Measurements will be aggregated together irrespective of their tags,
+i.e. no grouping by tag:
 
 [embedmd]:# (stats.go view)
 ```go
 v := &view.View{
 	Name:        "my.org/video_size_distribution",
 	Description: "distribution of processed video size over time",
-	MeasureName: videoSize.Name(),
+	Measure:     videoSize,
 	Aggregation: view.DistributionAggregation([]float64{0, 1 << 32, 2 << 32, 3 << 32}),
 }
 ```
@@ -201,8 +201,7 @@ func (e *exporter) ExportView(vd *view.Data) {
 
 Configure the default interval between reports of collected data.
 This is a system wide interval and impacts all views. The default
-interval duration is 10 seconds. Trying to set an interval with
-a duration less than a certain minimum (maybe 1s) should have no effect.
+interval duration is 10 seconds.
 
 [embedmd]:# (stats.go reportingPeriod)
 ```go
