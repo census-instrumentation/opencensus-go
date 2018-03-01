@@ -39,7 +39,7 @@ func main() {
 
 	// Register stats and trace exporters to export
 	// the collected data.
-	view.RegisterExporter(&exporter.Exporter{})
+	view.RegisterExporter(&exporter.PrintExporter{})
 
 	// Subscribe to collect client request count.
 	if err := ocgrpc.ClientErrorCountView.Subscribe(); err != nil {
