@@ -57,11 +57,14 @@ func statsExamples() {
 	_, _, _, _ = distAgg, countAgg, sumAgg, meanAgg
 
 	// START view
-	v := &view.View{
+	err = view.Subscribe(&view.View{
 		Name:        "my.org/video_size_distribution",
 		Description: "distribution of processed video size over time",
 		Measure:     videoSize,
 		Aggregation: view.DistributionAggregation([]float64{0, 1 << 32, 2 << 32, 3 << 32}),
+	})
+	if err != nil {
+		log.Fatal(err)
 	}
 	// END view
 
@@ -72,12 +75,6 @@ func statsExamples() {
 	// START record
 	stats.Record(ctx, videoSize.M(102478))
 	// END record
-
-	// START subscribe
-	if err := view.Subscribe(v); err != nil {
-		log.Fatal(err)
-	}
-	// END subscribe
 
 	// START registerExporter
 	// Register an exporter to be able to retrieve

@@ -154,30 +154,23 @@ meanAgg := view.MeanAggregation{}
 
 Here we create a view with the DistributionAggregation over our Measure.
 All Measurements will be aggregated together irrespective of their tags,
-i.e. no grouping by tag:
+i.e. no grouping by tag.
 
 [embedmd]:# (stats.go view)
 ```go
-v := &view.View{
+err = view.Subscribe(&view.View{
 	Name:        "my.org/video_size_distribution",
 	Description: "distribution of processed video size over time",
 	Measure:     videoSize,
 	Aggregation: view.DistributionAggregation([]float64{0, 1 << 32, 2 << 32, 3 << 32}),
-}
-```
-
-### Retrieving collected data for a view
-
-Users need to subscribe to a view in order to retrieve collected data.
-
-[embedmd]:# (stats.go subscribe)
-```go
-if err := view.Subscribe(v); err != nil {
+})
+if err != nil {
 	log.Fatal(err)
 }
 ```
 
-Subscribed views' data will be exported via the registered exporters.
+Subscribe begins collecting data for the view. Subscribed views' data will be
+exported via the registered exporters.
 
 [embedmd]:# (stats.go registerExporter)
 ```go
