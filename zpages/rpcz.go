@@ -59,8 +59,8 @@ var (
 
 func init() {
 	views := make([]*view.View, 0, len(viewType))
-	for k := range viewType {
-		views = append(views, k)
+	for v := range viewType {
+		views = append(views, v)
 	}
 	err := view.Subscribe(views...)
 	if err != nil {
