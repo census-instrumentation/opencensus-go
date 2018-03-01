@@ -39,8 +39,14 @@ func main() {
 
 	// Create measures. The program will record measures for the size of
 	// processed videos and the number of videos marked as spam.
-	videoCount, _ := stats.Int64("my.org/measures/video_count", "number of processed videos", "")
-	videoSize, _ := stats.Int64("my.org/measures/video_size_cum", "size of processed video", "MBy")
+	videoCount, err := stats.Int64("my.org/measures/video_count", "number of processed videos", "")
+	if err != nil {
+		log.Fatalf("Video count measure not created: %v", err)
+	}
+	videoSize, err := stats.Int64("my.org/measures/video_size", "size of processed video", "MBy")
+	if err != nil {
+		log.Fatalf("Video size measure not created: %v", err)
+	}
 
 	// Create view to see the number of processed videos cumulatively.
 	// Create view to see the amount of video processed

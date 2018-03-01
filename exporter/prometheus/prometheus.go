@@ -100,7 +100,7 @@ func (c *collector) registerViews(views ...*view.View) {
 			desc := prometheus.NewDesc(
 				viewName(c.opts.Namespace, view),
 				view.Description,
-				tagKeysToLabels(view.GroupByTags),
+				tagKeysToLabels(view.TagKeys),
 				nil,
 			)
 			c.registeredViewsMu.Lock()
@@ -293,7 +293,7 @@ func viewName(namespace string, v *view.View) string {
 func viewSignature(namespace string, v *view.View) string {
 	var buf bytes.Buffer
 	buf.WriteString(viewName(namespace, v))
-	for _, k := range v.GroupByTags {
+	for _, k := range v.TagKeys {
 		buf.WriteString("-" + k.Name())
 	}
 	return buf.String()

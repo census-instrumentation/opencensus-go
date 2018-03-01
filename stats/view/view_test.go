@@ -426,7 +426,7 @@ func TestViewSortedKeys(t *testing.T) {
 	Subscribe(&View{
 		Name:        "sort_keys",
 		Description: "desc sort_keys",
-		GroupByTags: ks,
+		TagKeys:     ks,
 		Measure:     m,
 		Aggregation: &MeanAggregation{},
 	})
@@ -434,7 +434,7 @@ func TestViewSortedKeys(t *testing.T) {
 	v := Find("sort_keys")
 
 	want := []string{"a", "b", "c"}
-	vks := v.GroupByTags
+	vks := v.TagKeys
 	if len(vks) != len(want) {
 		t.Errorf("Keys = %+v; want %+v", vks, want)
 	}

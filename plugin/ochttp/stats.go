@@ -82,7 +82,7 @@ var (
 	ClientRequestCountByMethod = &view.View{
 		Name:        "opencensus.io/http/client/request_count_by_method",
 		Description: "Client request count by HTTP method",
-		GroupByTags: []tag.Key{Method},
+		TagKeys:     []tag.Key{Method},
 		Measure:     ClientRequestCount,
 		Aggregation: view.CountAggregation{},
 	}
@@ -90,7 +90,7 @@ var (
 	ClientResponseCountByStatusCode = &view.View{
 		Name:        "opencensus.io/http/client/response_count_by_status_code",
 		Description: "Client response count by status code",
-		GroupByTags: []tag.Key{StatusCode},
+		TagKeys:     []tag.Key{StatusCode},
 		Measure:     ClientLatency,
 		Aggregation: view.CountAggregation{},
 	}

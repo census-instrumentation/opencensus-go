@@ -34,9 +34,9 @@ type View struct {
 	Name        string // Name of View. Must be unique.
 	Description string // Description is a human-readable description for this view.
 
-	// GroupByTags are the tag keys describing the grouping of this view.
+	// TagKeys are the tag keys describing the grouping of this view.
 	// A single Row will be produced for each combination of associated tag values.
-	GroupByTags []tag.Key
+	TagKeys []tag.Key
 
 	// Measure is a stats.Measure to aggregate in this view.
 	Measure stats.Measure
@@ -53,7 +53,7 @@ func New(name, description string, keys []tag.Key, measure stats.Measure, agg Ag
 	return &View{
 		Name:        name,
 		Description: description,
-		GroupByTags: keys,
+		TagKeys:     keys,
 		Measure:     measure,
 		Aggregation: agg,
 	}, nil
@@ -68,8 +68,8 @@ func (v *View) WithName(name string) *View {
 	return &vNew
 }
 
-// Equal compares two views and returns true if they represent the same aggregation.
-func (v *View) Equal(other *View) bool {
+// same compares two views and returns true if they represent the same aggregation.
+func (v *View) same(other *View) bool {
 	if v == other {
 		return true
 	}
@@ -77,7 +77,6 @@ func (v *View) Equal(other *View) bool {
 		return false
 	}
 	return reflect.DeepEqual(v.Aggregation, other.Aggregation) &&
-		v.Name == other.Name &&
 		v.Measure.Name() == other.Measure.Name()
 }
 
@@ -115,14 +114,14 @@ func (v *viewInternal) clearRows() {
 }
 
 func (v *viewInternal) collectedRows() []*Row {
-	return v.collector.collectedRows(v.definition.GroupByTags)
+	return v.collector.collectedRows(v.definition.TagKeys)
 }
 
 func (v *viewInternal) addSample(m *tag.Map, val float64) {
 	if !v.isSubscribed() {
 		return
 	}
-	sig := string(encodeWithKeys(m, v.definition.GroupByTags))
+	sig := string(encodeWithKeys(m, v.definition.TagKeys))
 	v.collector.addSample(sig, val)
 }
 
@@ -154,7 +153,7 @@ func (r *Row) String() string {
 	return buffer.String()
 }
 
-// Equal returns true if both Rows are equal. Tags are expected to be ordered
+// same returns true if both Rows are equal. Tags are expected to be ordered
 // by the key name. Even both rows have the same tags but the tags appear in
 // different orders it will return false.
 func (r *Row) Equal(other *Row) bool {

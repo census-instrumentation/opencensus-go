@@ -196,11 +196,11 @@ func (w *worker) tryRegisterView(v *View) (*viewInternal, error) {
 	if err := checkViewName(v.Name); err != nil {
 		return nil, err
 	}
-	sort.Slice(v.GroupByTags, func(i, j int) bool {
-		return v.GroupByTags[i].Name() < v.GroupByTags[j].Name()
+	sort.Slice(v.TagKeys, func(i, j int) bool {
+		return v.TagKeys[i].Name() < v.TagKeys[j].Name()
 	})
 	if x, ok := w.views[v.Name]; ok {
-		if !x.definition.Equal(v) {
+		if !x.definition.same(v) {
 			return nil, fmt.Errorf("cannot subscribe view %q; a different view with the same name is already subscribed", v.Name)
 		}
 

@@ -45,7 +45,7 @@ var (
 	ServerErrorCountView = &view.View{
 		Name:        "grpc.io/server/error_count",
 		Description: "RPC Errors",
-		GroupByTags: []tag.Key{KeyMethod, KeyStatus},
+		TagKeys:     []tag.Key{KeyMethod, KeyStatus},
 		Measure:     ServerErrorCount,
 		Aggregation: view.CountAggregation{},
 	}
@@ -53,7 +53,7 @@ var (
 	ServerServerElapsedTimeView = &view.View{
 		Name:        "grpc.io/server/server_elapsed_time",
 		Description: "Server elapsed time in msecs",
-		GroupByTags: []tag.Key{KeyMethod},
+		TagKeys:     []tag.Key{KeyMethod},
 		Measure:     ServerServerElapsedTime,
 		Aggregation: DefaultMillisecondsDistribution,
 	}
@@ -61,7 +61,7 @@ var (
 	ServerRequestBytesView = &view.View{
 		Name:        "grpc.io/server/request_bytes",
 		Description: "Request bytes",
-		GroupByTags: []tag.Key{KeyMethod},
+		TagKeys:     []tag.Key{KeyMethod},
 		Measure:     ServerRequestBytes,
 		Aggregation: DefaultBytesDistribution,
 	}
@@ -69,7 +69,7 @@ var (
 	ServerResponseBytesView = &view.View{
 		Name:        "grpc.io/server/response_bytes",
 		Description: "Response bytes",
-		GroupByTags: []tag.Key{KeyMethod},
+		TagKeys:     []tag.Key{KeyMethod},
 		Measure:     ServerResponseBytes,
 		Aggregation: DefaultBytesDistribution,
 	}
@@ -77,7 +77,7 @@ var (
 	ServerRequestCountView = &view.View{
 		Name:        "grpc.io/server/request_count",
 		Description: "Count of request messages per server RPC",
-		GroupByTags: []tag.Key{KeyMethod},
+		TagKeys:     []tag.Key{KeyMethod},
 		Measure:     ServerRequestCount,
 		Aggregation: DefaultMessageCountDistribution,
 	}
@@ -85,7 +85,7 @@ var (
 	ServerResponseCountView = &view.View{
 		Name:        "grpc.io/server/response_count",
 		Description: "Count of response messages per server RPC",
-		GroupByTags: []tag.Key{KeyMethod},
+		TagKeys:     []tag.Key{KeyMethod},
 		Measure:     ServerResponseCount,
 		Aggregation: DefaultMessageCountDistribution,
 	}

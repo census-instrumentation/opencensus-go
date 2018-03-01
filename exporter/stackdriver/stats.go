@@ -230,7 +230,7 @@ func (e *statsExporter) createMeasure(ctx context.Context, vd *view.Data) error 
 
 	m := vd.Measure
 	agg := vd.View.Aggregation
-	tagKeys := vd.View.GroupByTags
+	tagKeys := vd.View.TagKeys
 	viewName := vd.View.Name
 
 	if md, ok := e.createdViews[viewName]; ok {
@@ -279,7 +279,7 @@ func (e *statsExporter) createMeasure(ctx context.Context, vd *view.Data) error 
 			Type:        namespacedViewName(viewName, false),
 			MetricKind:  metricKind,
 			ValueType:   valueType,
-			Labels:      newLabelDescriptors(vd.View.GroupByTags),
+			Labels:      newLabelDescriptors(vd.View.TagKeys),
 		},
 	})
 	if err != nil {

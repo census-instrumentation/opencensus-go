@@ -380,7 +380,7 @@ func TestExporter_makeReq_batching(t *testing.T) {
 	v := &view.View{
 		Name:        "view",
 		Description: "desc",
-		GroupByTags: []tag.Key{key},
+		TagKeys:     []tag.Key{key},
 		Measure:     m,
 		Aggregation: view.CountAggregation{},
 	}
@@ -588,7 +588,7 @@ func TestExporter_createMeasure(t *testing.T) {
 			Type:        "hello",
 			MetricKind:  metricpb.MetricDescriptor_CUMULATIVE,
 			ValueType:   metricpb.MetricDescriptor_INT64,
-			Labels:      newLabelDescriptors(vd.View.GroupByTags),
+			Labels:      newLabelDescriptors(vd.View.TagKeys),
 		}, nil
 	}
 
