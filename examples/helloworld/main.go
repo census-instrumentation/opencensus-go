@@ -20,10 +20,23 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"math/rand"
 	"time"
 
+	"go.opencensus.io/examples/exporter"
 	"go.opencensus.io/stats"
 	"go.opencensus.io/stats/view"
+	"go.opencensus.io/tag"
+	"go.opencensus.io/trace"
+)
+
+var (
+	// frontendKey allows us to breakdown the recorded data
+	// by the frontend used when uploading the video.
+	frontendKey tag.Key
+
+	// videoSize will measure the size of processed videos.
+	videoSize *stats.Int64Measure
 )
 
 func main() {
@@ -31,21 +44,26 @@ func main() {
 
 	// Register an exporter to be able to retrieve
 	// the data from the subscribed views.
-	view.RegisterExporter(&exporter{})
+	e := &exporter.PrintExporter{}
+	view.RegisterExporter(e)
+	trace.RegisterExporter(e)
 
-	// Create measures. The program will record measures for the size of
-	// processed videos and the nubmer of videos marked as spam.
-	videoSize, err := stats.Int64("my.org/measure/video_size", "size of processed videos", "MBy")
+	var err error
+	frontendKey, err = tag.NewKey("my.org/keys/frontend")
+	if err != nil {
+		log.Fatal(err)
+	}
+	videoSize, err = stats.Int64("my.org/measure/video_size", "size of processed videos", "MBy")
 	if err != nil {
 		log.Fatalf("Video size measure not created: %v", err)
 	}
 
 	// Create view to see the processed video size
-	// distribution over 10 seconds.
+	// distribution broken down by frontend.
 	v, err := view.New(
 		"my.org/views/video_size",
 		"processed video size over time",
-		nil,
+		[]tag.Key{frontendKey},
 		videoSize,
 		view.DistributionAggregation([]float64{0, 1 << 16, 1 << 32}),
 	)
@@ -53,17 +71,14 @@ func main() {
 		log.Fatalf("Cannot create view: %v", err)
 	}
 
-	// Set reporting period to report data at every second.
-	view.SetReportingPeriod(1 * time.Second)
-
 	// Subscribe will allow view data to be exported.
 	// Once no longer need, you can unsubscribe from the view.
 	if err := v.Subscribe(); err != nil {
 		log.Fatalf("Cannot subscribe to the view: %v", err)
 	}
 
-	// Record data points.
-	stats.Record(ctx, videoSize.M(25648), videoSize.M(48000), videoSize.M(128000))
+	// Process the video.
+	process(ctx)
 
 	// Wait for a duration longer than reporting duration to ensure the stats
 	// library reports the collected data.
@@ -71,8 +86,22 @@ func main() {
 	time.Sleep(2 * time.Second)
 }
 
-type exporter struct{}
+// process processes the video and instruments the processing
+// by creating a span and collecting metrics about the operation.
+func process(ctx context.Context) {
+	ctx, err := tag.New(ctx,
+		tag.Insert(frontendKey, "mobile-ios9.3.5"),
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+	ctx, span := trace.StartSpan(ctx, "my.org/ProcessVideo")
+	defer span.End()
+	// Process video.
+	// Record the processed video size.
 
-func (e *exporter) ExportView(vd *view.Data) {
-	log.Println(vd)
+	// Sleep for [1,10] milliseconds to fake work.
+	time.Sleep(time.Duration(rand.Intn(10)+1) * time.Millisecond)
+
+	stats.Record(ctx, videoSize.M(25648))
 }
