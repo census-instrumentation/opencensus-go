@@ -17,11 +17,15 @@ package zipkin // import "go.opencensus.io/exporter/zipkin"
 
 import (
 	"encoding/binary"
+	"fmt"
+	"net/url"
 	"strconv"
 	"strings"
 
+	openzipkin "github.com/openzipkin/zipkin-go"
 	"github.com/openzipkin/zipkin-go/model"
 	"github.com/openzipkin/zipkin-go/reporter"
+	ziphttp "github.com/openzipkin/zipkin-go/reporter/http"
 	"go.opencensus.io/trace"
 )
 
@@ -48,6 +52,36 @@ func NewExporter(reporter reporter.Reporter, localEndpoint *model.Endpoint) *Exp
 		reporter:      reporter,
 		localEndpoint: localEndpoint,
 	}
+}
+
+type Options struct {
+	// EndpointHostPort is the host:port combination for the Zipkin service
+	// e.g. 192.168.0.2:8080
+	EndpointHostPort string
+
+	// ReporterURI is the HTTP endpoint to which spans will be sent
+	// e.g. http://localhost:9411/api/v2/spans
+	ReporterURI string
+
+	// ReporterOptions are optional Options
+	// that modify the zipkin http Reporter.
+	ReporterOptions []ziphttp.ReporterOption
+}
+
+func NewExporterWithOptions(o *Options) (*Exporter, error) {
+	if o == nil {
+		// TODO: Perhaps fill in the defaults that OpenZipkin uses
+		o = new(Options)
+	}
+	if _, err := url.Parse(o.ReporterURI); err != nil {
+		return nil, fmt.Errorf("Failed to parse ReporterURI err: %v", err)
+	}
+	reporter := ziphttp.NewReporter(o.ReporterURI, o.ReporterOptions...)
+	localEndpoint, err := openzipkin.NewEndpoint("server", o.EndpointHostPort)
+	if err != nil {
+		return nil, err
+	}
+	return NewExporter(reporter, localEndpoint), nil
 }
 
 // ExportSpan exports a span to a Zipkin server.

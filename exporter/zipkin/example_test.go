@@ -17,24 +17,17 @@ package zipkin_test
 import (
 	"log"
 
-	openzipkin "github.com/openzipkin/zipkin-go"
-	"github.com/openzipkin/zipkin-go/reporter/http"
 	"go.opencensus.io/exporter/zipkin"
 	"go.opencensus.io/trace"
 )
 
 func Example() {
-	// import (
-	//     openzipkin "github.com/openzipkin/zipkin-go"
-	//     "github.com/openzipkin/zipkin-go/reporter/http"
-	//     "go.opencensus.io/exporter/trace/zipkin"
-	// )
-
-	localEndpoint, err := openzipkin.NewEndpoint("server", "192.168.1.5:5454")
+	exporter, err := zipkin.NewExporterWithOptions(&zipkin.Options{
+		EndpointHostPort: "192.168.1.5:5454",
+		ReporterURI:      "localhost:9411/api/v2/spans",
+	})
 	if err != nil {
-		log.Print(err)
+		log.Fatalf("zipkin.NewExporter: %v", err)
 	}
-	reporter := http.NewReporter("http://localhost:9411/api/v2/spans")
-	exporter := zipkin.NewExporter(reporter, localEndpoint)
 	trace.RegisterExporter(exporter)
 }
