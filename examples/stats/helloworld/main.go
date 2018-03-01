@@ -45,7 +45,7 @@ func main() {
 	v := &view.View{
 		Name:        "my.org/views/video_size",
 		Description: "processed video size over time",
-		MeasureName: videoSize.Name(),
+		Measure:     videoSize,
 		Aggregation: view.DistributionAggregation([]float64{0, 1 << 16, 1 << 32}),
 	}
 

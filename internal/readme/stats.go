@@ -60,7 +60,7 @@ func statsExamples() {
 	v := &view.View{
 		Name:        "my.org/video_size_distribution",
 		Description: "distribution of processed video size over time",
-		MeasureName: videoSize.Name(),
+		Measure:     videoSize,
 		Aggregation: view.DistributionAggregation([]float64{0, 1 << 32, 2 << 32, 3 << 32}),
 	}
 	// END view

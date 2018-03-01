@@ -16,7 +16,9 @@
 package view
 
 import (
+	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"go.opencensus.io/stats"
@@ -43,45 +45,50 @@ func (cmd *getViewByNameReq) handleCommand(w *worker) {
 
 // subscribeToViewReq is the command to subscribe to a view.
 type subscribeToViewReq struct {
-	v   *View
-	err chan error
+	views []*View
+	err   chan error
 }
 
 func (cmd *subscribeToViewReq) handleCommand(w *worker) {
-	vi, err := w.tryRegisterView(cmd.v)
-	if err != nil {
-		cmd.err <- fmt.Errorf("cannot subscribe to view: %v", err)
-		return
+	var errstr []string
+	for _, view := range cmd.views {
+		vi, err := w.tryRegisterView(view)
+		if err != nil {
+			errstr = append(errstr, fmt.Sprintf("%s: %v", view.Name, err))
+			continue
+		}
+		vi.subscribe()
 	}
-	vi.subscribe()
-	cmd.err <- nil
+	if len(errstr) > 0 {
+		cmd.err <- errors.New(strings.Join(errstr, "\n"))
+	} else {
+		cmd.err <- nil
+	}
 }
 
 // unsubscribeFromViewReq is the command to unsubscribe to a view. Has no
 // impact on the data collection for client that are pulling data from the
 // library.
 type unsubscribeFromViewReq struct {
-	v   string
-	err chan error
+	views []string
+	done  chan struct{}
 }
 
 func (cmd *unsubscribeFromViewReq) handleCommand(w *worker) {
-	vi, ok := w.views[cmd.v]
-	if !ok {
-		cmd.err <- nil
-		return
-	}
+	for _, name := range cmd.views {
+		vi, ok := w.views[name]
+		if !ok {
+			continue
+		}
 
-	vi.unsubscribe()
-	if !vi.isSubscribed() {
-		// this was the last subscription and view is not collecting anymore.
-		// The collected data can be cleared.
-		vi.clearRows()
+		vi.unsubscribe()
+		if !vi.isSubscribed() {
+			// this was the last subscription and view is not collecting anymore.
+			// The collected data can be cleared.
+			vi.clearRows()
+		}
 	}
-	// we always return nil because this operation never fails. However we
-	// still need to return something on the channel to signal to the waiting
-	// go routine that the operation completed.
-	cmd.err <- nil
+	cmd.done <- struct{}{}
 }
 
 // retrieveDataReq is the command to retrieve data for a view.

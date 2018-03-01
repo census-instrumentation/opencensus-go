@@ -326,7 +326,7 @@ func TestServerDefaultCollections(t *testing.T) {
 		}
 
 		for _, wantData := range tc.wants {
-			gotRows, err := wantData.v().RetrieveData()
+			gotRows, err := view.RetrieveData(wantData.v().Name)
 			if err != nil {
 				t.Errorf("%q: RetrieveData (%q) = %v", tc.label, wantData.v().Name, err)
 				continue
@@ -348,11 +348,7 @@ func TestServerDefaultCollections(t *testing.T) {
 		}
 
 		// Unregister views to cleanup.
-		for _, v := range DefaultServerViews {
-			if err := v.Unsubscribe(); err != nil {
-				t.Error(err)
-			}
-		}
+		view.Unsubscribe(DefaultServerViews...)
 	}
 }
 

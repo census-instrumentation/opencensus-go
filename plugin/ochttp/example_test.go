@@ -37,7 +37,7 @@ func ExampleTransport() {
 		&view.View{
 			Name:        "httpclient_latency_by_hostpath",
 			GroupByTags: []tag.Key{ochttp.Host, ochttp.Path},
-			MeasureName: ochttp.ClientLatency.Name(),
+			Measure:     ochttp.ClientLatency,
 			Aggregation: ochttp.DefaultLatencyDistribution,
 		},
 	)

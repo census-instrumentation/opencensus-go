@@ -42,7 +42,7 @@ var (
 		Name:        "grpc.io/client/error_count",
 		Description: "RPC Errors",
 		GroupByTags: []tag.Key{KeyStatus, KeyMethod},
-		MeasureName: ClientErrorCount.Name(),
+		Measure:     ClientErrorCount,
 		Aggregation: view.MeanAggregation{},
 	}
 
@@ -50,7 +50,7 @@ var (
 		Name:        "grpc.io/client/roundtrip_latency",
 		Description: "Latency in msecs",
 		GroupByTags: []tag.Key{KeyMethod},
-		MeasureName: ClientRoundTripLatency.Name(),
+		Measure:     ClientRoundTripLatency,
 		Aggregation: DefaultMillisecondsDistribution,
 	}
 
@@ -58,7 +58,7 @@ var (
 		Name:        "grpc.io/client/request_bytes",
 		Description: "Request bytes",
 		GroupByTags: []tag.Key{KeyMethod},
-		MeasureName: ClientRequestBytes.Name(),
+		Measure:     ClientRequestBytes,
 		Aggregation: DefaultBytesDistribution,
 	}
 
@@ -66,7 +66,7 @@ var (
 		Name:        "grpc.io/client/response_bytes",
 		Description: "Response bytes",
 		GroupByTags: []tag.Key{KeyMethod},
-		MeasureName: ClientResponseBytes.Name(),
+		Measure:     ClientResponseBytes,
 		Aggregation: DefaultBytesDistribution,
 	}
 
@@ -74,7 +74,7 @@ var (
 		Name:        "grpc.io/client/request_count",
 		Description: "Count of request messages per client RPC",
 		GroupByTags: []tag.Key{KeyMethod},
-		MeasureName: ClientRequestCount.Name(),
+		Measure:     ClientRequestCount,
 		Aggregation: DefaultMessageCountDistribution,
 	}
 
@@ -82,7 +82,7 @@ var (
 		Name:        "grpc.io/client/response_count",
 		Description: "Count of response messages per client RPC",
 		GroupByTags: []tag.Key{KeyMethod},
-		MeasureName: ClientResponseCount.Name(),
+		Measure:     ClientResponseCount,
 		Aggregation: DefaultMessageCountDistribution,
 	}
 )

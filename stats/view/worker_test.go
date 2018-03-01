@@ -120,7 +120,7 @@ func Test_Worker_ViewSubscription(t *testing.T) {
 			v1 := &View{
 				Name:        "VF1",
 				Description: "desc VF1",
-				MeasureName: mf1.Name(),
+				Measure:     mf1,
 				Aggregation: &CountAggregation{},
 			}
 
@@ -255,7 +255,7 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 		}
 
 		for _, w := range tc.wants {
-			gotRows, err := w.v.RetrieveData()
+			gotRows, err := RetrieveData(w.v.Name)
 			if (err != nil) != (w.err != nil) {
 				t.Fatalf("%v: RetrieveData(%v) = %v; want no errors", tc.label, w.v.Name, err)
 			}

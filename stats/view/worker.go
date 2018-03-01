@@ -16,10 +16,8 @@
 package view
 
 import (
-	"errors"
 	"fmt"
 	"sort"
-	"strings"
 	"time"
 
 	"go.opencensus.io/stats"
@@ -76,48 +74,42 @@ func Unregister(_ *View) error {
 
 // Deprecated: Use the Subscribe function.
 func (v *View) Subscribe() error {
-	req := &subscribeToViewReq{
-		v:   v,
-		err: make(chan error),
-	}
-	defaultWorker.c <- req
-	return <-req.err
+	return Subscribe(v)
 }
 
 // Subscribe begins collecting data for the given views.
 // Once a view is subscribed, it reports data to the registered exporters.
 func Subscribe(views ...*View) error {
-	var errstr []string
-	for _, v := range views {
-		err := v.Subscribe()
-		if err != nil {
-			errstr = append(errstr, fmt.Sprintf("%s: %v", v.Name, err))
-		}
-	}
-	if len(errstr) > 0 {
-		return errors.New(strings.Join(errstr, "\n"))
-	}
-	return nil
-}
-
-// Unsubscribe unsubscribes a previously subscribed view.
-// Data will not be exported from this view once unsubscription happens.
-func (v *View) Unsubscribe() error {
-	req := &unsubscribeFromViewReq{
-		v:   v.Name,
-		err: make(chan error),
+	req := &subscribeToViewReq{
+		views: views,
+		err:   make(chan error),
 	}
 	defaultWorker.c <- req
 	return <-req.err
 }
 
-// RetrieveData returns the current collected data for the view.
-// Deprecated: Use RetrieveData(name)
-func (v *View) RetrieveData() ([]*Row, error) {
-	if v == nil {
-		return nil, errors.New("cannot retrieve data from nil view")
+// Unsubscribe the given views. Data will not longer be exported for these views
+// after Unsubscribe returns.
+func Unsubscribe(views ...*View) {
+	names := make([]string, len(views))
+	for i := range views {
+		names[i] = views[i].Name
 	}
-	return RetrieveData(v.Name)
+	req := &unsubscribeFromViewReq{
+		views: names,
+		done:  make(chan struct{}),
+	}
+	defaultWorker.c <- req
+	<-req.done
+}
+
+// Deprecated: Use the Unsubscribe function instead.
+func (v *View) Unsubscribe() error {
+	if v == nil {
+		return nil
+	}
+	Unsubscribe(v)
+	return nil
 }
 
 func RetrieveData(viewName string) ([]*Row, error) {
@@ -217,20 +209,16 @@ func (w *worker) tryRegisterView(v *View) (*viewInternal, error) {
 		return x, nil
 	}
 
-	if v.MeasureName == "" {
+	if v.Measure == nil {
 		return nil, fmt.Errorf("cannot subscribe view %q: measure not set", v.Name)
-	}
-	m := stats.FindMeasure(v.MeasureName)
-	if m == nil {
-		return nil, fmt.Errorf("cannot subscribe view %q: measure %q not found", v.Name, v.MeasureName)
 	}
 	var agg = v.Aggregation
 	if agg == nil {
 		return nil, fmt.Errorf("cannot subscribe view %q: aggregation not set", v.Name)
 	}
-	vi := newViewInternal(v, m)
+	vi := newViewInternal(v, v.Measure)
 	w.views[v.Name] = vi
-	ref := w.getMeasureRef(v.MeasureName)
+	ref := w.getMeasureRef(v.Measure.Name())
 	ref.views[vi] = struct{}{}
 
 	return vi, nil

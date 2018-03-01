@@ -54,28 +54,28 @@ var (
 	ClientRequestCountView = &view.View{
 		Name:        "opencensus.io/http/client/request_count",
 		Description: "Count of HTTP requests started",
-		MeasureName: ClientRequestCount.Name(),
+		Measure:     ClientRequestCount,
 		Aggregation: view.CountAggregation{},
 	}
 
 	ClientRequestBytesView = &view.View{
 		Name:        "opencensus.io/http/client/request_bytes",
 		Description: "Size distribution of HTTP request body",
-		MeasureName: ClientRequestBytes.Name(),
+		Measure:     ClientRequestBytes,
 		Aggregation: DefaultSizeDistribution,
 	}
 
 	ClientResponseBytesView = &view.View{
 		Name:        "opencensus.io/http/client/response_bytes",
 		Description: "Size distribution of HTTP response body",
-		MeasureName: ClientResponseBytes.Name(),
+		Measure:     ClientResponseBytes,
 		Aggregation: DefaultSizeDistribution,
 	}
 
 	ClientLatencyView = &view.View{
 		Name:        "opencensus.io/http/client/latency",
 		Description: "Latency distribution of HTTP requests",
-		MeasureName: ClientLatency.Name(),
+		Measure:     ClientLatency,
 		Aggregation: DefaultLatencyDistribution,
 	}
 
@@ -83,7 +83,7 @@ var (
 		Name:        "opencensus.io/http/client/request_count_by_method",
 		Description: "Client request count by HTTP method",
 		GroupByTags: []tag.Key{Method},
-		MeasureName: ClientRequestCount.Name(),
+		Measure:     ClientRequestCount,
 		Aggregation: view.CountAggregation{},
 	}
 
@@ -91,7 +91,7 @@ var (
 		Name:        "opencensus.io/http/client/response_count_by_status_code",
 		Description: "Client response count by status code",
 		GroupByTags: []tag.Key{StatusCode},
-		MeasureName: ClientLatency.Name(),
+		Measure:     ClientLatency,
 		Aggregation: view.CountAggregation{},
 	}
 

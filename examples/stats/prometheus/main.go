@@ -50,13 +50,13 @@ func main() {
 		&view.View{
 			Name:        "video_count",
 			Description: "number of videos processed over time",
-			MeasureName: videoCount.Name(),
+			Measure:     videoCount,
 			Aggregation: &view.CountAggregation{},
 		},
 		&view.View{
 			Name:        "video_size",
 			Description: "processed video size over time",
-			MeasureName: videoSize.Name(),
+			Measure:     videoSize,
 			Aggregation: view.DistributionAggregation([]float64{0, 1 << 16, 1 << 32}),
 		},
 	)

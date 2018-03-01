@@ -27,7 +27,7 @@ func Example() {
 	err := view.Subscribe(&view.View{
 		Name:        "my.org/views/openconns",
 		Description: "open connections",
-		MeasureName: m.Name(),
+		Measure:     m,
 		Aggregation: view.DistributionAggregation([]float64{0, 1000, 2000}),
 	})
 	if err != nil {

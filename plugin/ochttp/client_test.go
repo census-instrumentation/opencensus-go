@@ -97,7 +97,7 @@ func TestClient(t *testing.T) {
 			t.Errorf("view not found %q", viewName)
 			continue
 		}
-		rows, err := v.RetrieveData()
+		rows, err := view.RetrieveData(v.Name)
 		if err != nil {
 			t.Error(err)
 			continue

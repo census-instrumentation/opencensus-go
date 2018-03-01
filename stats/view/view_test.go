@@ -427,7 +427,7 @@ func TestViewSortedKeys(t *testing.T) {
 		Name:        "sort_keys",
 		Description: "desc sort_keys",
 		GroupByTags: ks,
-		MeasureName: m.Name(),
+		Measure:     m,
 		Aggregation: &MeanAggregation{},
 	})
 	// Subscribe normalizes the view by sorting the tag keys, retrieve the normalized view

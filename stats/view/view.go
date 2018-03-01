@@ -38,8 +38,8 @@ type View struct {
 	// A single Row will be produced for each combination of associated tag values.
 	GroupByTags []tag.Key
 
-	// MeasureName is the name of the stats.Measure to aggregate in this view.
-	MeasureName string
+	// Measure is a stats.Measure to aggregate in this view.
+	Measure stats.Measure
 
 	// Aggregation is the aggregation function tp apply to the set of Measurements.
 	Aggregation Aggregation
@@ -54,7 +54,7 @@ func New(name, description string, keys []tag.Key, measure stats.Measure, agg Ag
 		Name:        name,
 		Description: description,
 		GroupByTags: keys,
-		MeasureName: measure.Name(),
+		Measure:     measure,
 		Aggregation: agg,
 	}, nil
 }
@@ -78,7 +78,7 @@ func (v *View) Equal(other *View) bool {
 	}
 	return reflect.DeepEqual(v.Aggregation, other.Aggregation) &&
 		v.Name == other.Name &&
-		v.MeasureName == other.MeasureName
+		v.Measure.Name() == other.Measure.Name()
 }
 
 type viewInternal struct {

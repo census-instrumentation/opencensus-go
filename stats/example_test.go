@@ -16,11 +16,16 @@ package stats_test
 
 import (
 	"context"
+	"log"
 
 	"go.opencensus.io/stats"
 )
 
 func ExampleRecord() {
-	openConns, _ := stats.Int64("my.org/measure/openconns", "open connections", stats.UnitNone)
-	stats.Record(context.TODO(), openConns.M(124)) // Record 124 open connections.
+	ctx := context.Background()
+	openConns, err := stats.Int64("my.org/measure/openconns", "open connections", stats.UnitNone)
+	if err != nil {
+		log.Fatal(err)
+	}
+	stats.Record(ctx, openConns.M(124)) // Record 124 open connections.
 }
