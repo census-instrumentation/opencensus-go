@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
+	"regexp"
 	"sync"
 	"time"
 
@@ -47,6 +48,18 @@ var (
 	zeroSpanID = trace.SpanID{}
 	r          = rand.New(rand.NewSource(time.Now().UnixNano())) // random, not secure
 	mutex      = &sync.Mutex{}
+)
+
+var (
+	// reInvalidSpanCharacters defines the invalid letters in a span name as per
+	// https://docs.aws.amazon.com/xray/latest/devguide/xray-api-segmentdocuments.html
+	reInvalidSpanCharacters = regexp.MustCompile(`[^ 0-9\p{L}N_.:/%&#=+,\-@]`)
+)
+
+const (
+	// defaultSpanName will be used if there are no valid xray characters in the
+	// span name
+	defaultSegmentName = "span"
 )
 
 const (
@@ -307,6 +320,22 @@ func makeCause(status trace.Status) (isError, isFault bool, cause *errCause) {
 	return
 }
 
+// fixSegmentName removes any invalid characters from the span name.  AWS X-Ray defines
+// the list of valid characters here:
+// https://docs.aws.amazon.com/xray/latest/devguide/xray-api-segmentdocuments.html
+func fixSegmentName(name string) string {
+	if !reInvalidSpanCharacters.MatchString(name) {
+		// the majority of the time, the name will be valid; skip the additional
+		// allocations required by ReplaceAllString
+		return name
+	}
+
+	if fixed := reInvalidSpanCharacters.ReplaceAllString(name, ""); fixed != "" {
+		return fixed
+	}
+	return defaultSegmentName
+}
+
 func rawSegment(span *trace.SpanData) segment {
 	var (
 		traceID                 = MakeAmazonTraceID(span.TraceID)
@@ -317,7 +346,7 @@ func rawSegment(span *trace.SpanData) segment {
 		filtered, http, host    = makeHttp(span.Attributes)
 		isError, isFault, cause = makeCause(span.Status)
 		annotations             = makeAnnotations(span.Annotations, filtered)
-		name                    = span.Name
+		name                    = fixSegmentName(span.Name)
 		namespace               string
 	)
 

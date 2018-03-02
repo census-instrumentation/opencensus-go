@@ -137,3 +137,66 @@ func TestParseAmazonSpanID(t *testing.T) {
 		t.Fatalf("extracted traceID does not match expected")
 	}
 }
+
+func TestFixSegmentName(t *testing.T) {
+	testCases := map[string]struct {
+		Name     string
+		Expected string
+	}{
+		"symbols": {
+			Name:     ` _.:/%&#=+,-@`,
+			Expected: ` _.:/%&#=+,-@`,
+		},
+		"symbols - invalid": {
+			Name:     `abc()[]`,
+			Expected: `abc`,
+		},
+		"numbers": {
+			Name:     `0123456789`,
+			Expected: `0123456789`,
+		},
+		"letters": {
+			Name:     `abcABCxyzXYZ`,
+			Expected: `abcABCxyzXYZ`,
+		},
+		"chinese": {
+			Name:     `你好`,
+			Expected: `你好`,
+		},
+		"swedish": {
+			Name:     `hallå`,
+			Expected: `hallå`,
+		},
+		"arabic": {
+			Name:     `مرحبا`,
+			Expected: `مرحبا`,
+		},
+		"unicode - copyright": {
+			Name:     `blah©`,
+			Expected: `blah`,
+		},
+		"all invalid": {
+			Name:     `[]`,
+			Expected: defaultSegmentName,
+		},
+	}
+
+	for label, tc := range testCases {
+		t.Run(label, func(t *testing.T) {
+			if actual := fixSegmentName(tc.Name); tc.Expected != actual {
+				t.Errorf("expected %v; got %v", tc.Expected, actual)
+			}
+		})
+	}
+}
+
+var (
+	Name string
+)
+
+func BenchmarkFixSpanName(t *testing.B) {
+	const validName = "ok"
+	for i := 0; i < t.N; i++ {
+		Name = fixSegmentName(validName)
+	}
+}
