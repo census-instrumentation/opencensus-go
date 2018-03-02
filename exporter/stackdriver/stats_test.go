@@ -83,8 +83,19 @@ func TestExporter_makeReq(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	v, _ := view.New("testview", "desc", []tag.Key{key}, m, view.CountAggregation{})
-	distView, _ := view.New("distview", "desc", nil, m, view.DistributionAggregation([]float64{2, 4, 7}))
+	v := &view.View{
+		Name:        "testview",
+		Description: "desc",
+		TagKeys:     []tag.Key{key},
+		Measure:     m,
+		Aggregation: view.CountAggregation{},
+	}
+	distView := &view.View{
+		Name:        "distview",
+		Description: "desc",
+		Measure:     m,
+		Aggregation: view.DistributionAggregation([]float64{2, 4, 7}),
+	}
 
 	start := time.Now()
 	end := start.Add(time.Minute)
@@ -276,8 +287,8 @@ func TestExporter_makeReq(t *testing.T) {
 								},
 								Value: &monitoringpb.TypedValue{Value: &monitoringpb.TypedValue_DistributionValue{
 									DistributionValue: &distributionpb.Distribution{
-										Count: 7,
-										Mean:  3.3,
+										Count:                 7,
+										Mean:                  3.3,
 										SumOfSquaredDeviation: 0,
 										BucketOptions: &distributionpb.Distribution_BucketOptions{
 											Options: &distributionpb.Distribution_BucketOptions_ExplicitBuckets{
@@ -317,8 +328,8 @@ func TestExporter_makeReq(t *testing.T) {
 								},
 								Value: &monitoringpb.TypedValue{Value: &monitoringpb.TypedValue_DistributionValue{
 									DistributionValue: &distributionpb.Distribution{
-										Count: 5,
-										Mean:  -7.7,
+										Count:                 5,
+										Mean:                  -7.7,
 										SumOfSquaredDeviation: 0,
 										BucketOptions: &distributionpb.Distribution_BucketOptions{
 											Options: &distributionpb.Distribution_BucketOptions_ExplicitBuckets{
@@ -565,7 +576,13 @@ func TestExporter_createMeasure(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	v, _ := view.New("testview", "desc", []tag.Key{key}, m, view.CountAggregation{})
+	v := &view.View{
+		Name:        "testview",
+		Description: "desc",
+		TagKeys:     []tag.Key{key},
+		Measure:     m,
+		Aggregation: view.CountAggregation{},
+	}
 
 	data := view.CountData(0)
 	vd := newTestViewData(v, time.Now(), time.Now(), &data, &data)
@@ -621,7 +638,13 @@ func TestExporter_makeReq_withCustomMonitoredResource(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	v, _ := view.New("testview", "desc", []tag.Key{key}, m, view.CountAggregation{})
+	v := &view.View{
+		Name:        "testview",
+		Description: "desc",
+		TagKeys:     []tag.Key{key},
+		Measure:     m,
+		Aggregation: view.CountAggregation{},
+	}
 	if err := view.Subscribe(v); err != nil {
 		t.Fatal(err)
 	}
@@ -734,7 +757,6 @@ func newTestViewData(v *view.View, start, end time.Time, data1, data2 view.Aggre
 	tag1 := tag.Tag{Key: key, Value: "test-value-1"}
 	tag2 := tag.Tag{Key: key, Value: "test-value-2"}
 	return &view.Data{
-		Measure: v.Measure,
 		View:    v,
 		Rows: []*view.Row{
 			{

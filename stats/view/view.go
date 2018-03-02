@@ -19,6 +19,7 @@ import (
 	"bytes"
 	"fmt"
 	"reflect"
+	"sort"
 	"sync/atomic"
 	"time"
 
@@ -31,7 +32,7 @@ import (
 // Views need to be passed to the Subscribe function to be before data will be
 // collected and sent to Exporters.
 type View struct {
-	Name        string // Name of View. Must be unique.
+	Name        string // Name of View. Must be unique. If unset, will default to the name of the Measure.
 	Description string // Description is a human-readable description for this view.
 
 	// TagKeys are the tag keys describing the grouping of this view.
@@ -80,19 +81,49 @@ func (v *View) same(other *View) bool {
 		v.Measure.Name() == other.Measure.Name()
 }
 
-type viewInternal struct {
-	definition View
-	subscribed uint32 // 1 if someone is subscribed and data need to be exported, use atomic to access
-	collector  *collector
-	measure    stats.Measure
+// canonicalized returns a validated View canonicalized by setting explicit
+// defaults for Name and Description and sorting the TagKeys
+func (v *View) canonicalized() (*View, error) {
+	if v.Measure == nil {
+		return nil, fmt.Errorf("cannot subscribe view %q: measure not set", v.Name)
+	}
+	if v.Aggregation == nil {
+		return nil, fmt.Errorf("cannot subscribe view %q: aggregation not set", v.Name)
+	}
+	vc := *v
+	if vc.Name == "" {
+		vc.Name = vc.Measure.Name()
+	}
+	if vc.Description == "" {
+		vc.Description = vc.Measure.Description()
+	}
+	if err := checkViewName(vc.Name); err != nil {
+		return nil, err
+	}
+	vc.TagKeys = make([]tag.Key, len(v.TagKeys))
+	copy(vc.TagKeys, v.TagKeys)
+	sort.Slice(vc.TagKeys, func(i, j int) bool {
+		return vc.TagKeys[i].Name() < vc.TagKeys[j].Name()
+	})
+	return &vc, nil
 }
 
-func newViewInternal(v *View, m stats.Measure) *viewInternal {
-	return &viewInternal{
-		definition: *v,
-		collector:  &collector{make(map[string]AggregationData), v.Aggregation},
-		measure:    m,
+// viewInternal is the internal representation of a View.
+type viewInternal struct {
+	view       *View  // view is the canonicalized View definition associated with this view.
+	subscribed uint32 // 1 if someone is subscribed and data need to be exported, use atomic to access
+	collector  *collector
+}
+
+func newViewInternal(v *View) (*viewInternal, error) {
+	vc, err := v.canonicalized()
+	if err != nil {
+		return nil, err
 	}
+	return &viewInternal{
+		view:      vc,
+		collector: &collector{make(map[string]AggregationData), v.Aggregation},
+	}, nil
 }
 
 func (v *viewInternal) subscribe() {
@@ -114,21 +145,20 @@ func (v *viewInternal) clearRows() {
 }
 
 func (v *viewInternal) collectedRows() []*Row {
-	return v.collector.collectedRows(v.definition.TagKeys)
+	return v.collector.collectedRows(v.view.TagKeys)
 }
 
 func (v *viewInternal) addSample(m *tag.Map, val float64) {
 	if !v.isSubscribed() {
 		return
 	}
-	sig := string(encodeWithKeys(m, v.definition.TagKeys))
+	sig := string(encodeWithKeys(m, v.view.TagKeys))
 	v.collector.addSample(sig, val)
 }
 
 // A Data is a set of rows about usage of the single measure associated
 // with the given view. Each row is specific to a unique set of tags.
 type Data struct {
-	Measure    stats.Measure
 	View       *View
 	Start, End time.Time
 	Rows       []*Row

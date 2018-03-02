@@ -117,21 +117,24 @@ func Test_Worker_ViewSubscription(t *testing.T) {
 		t.Run(tc.label, func(t *testing.T) {
 			restart()
 
-			v1 := &View{
-				Name:        "VF1",
-				Description: "desc VF1",
-				Measure:     mf1,
-				Aggregation: &CountAggregation{},
-			}
-
-			v11, _ := New("VF1", "desc duplicate name VF1", nil, mf1, &SumAggregation{})
-			v2, _ := New("VF2", "desc VF2", nil, mf2, &CountAggregation{})
-
 			views := map[string]*View{
-				"v1ID":         v1,
-				"v1SameNameID": v11,
-				"v2ID":         v2,
-				"vNilID":       nil,
+				"v1ID": {
+					Name:        "VF1",
+					Measure:     mf1,
+					Aggregation: &CountAggregation{},
+				},
+				"v1SameNameID": {
+					Name:        "VF1",
+					Description: "desc duplicate name VF1",
+					Measure:     mf1,
+					Aggregation: &SumAggregation{},
+				},
+				"v2ID": {
+					Name:        "VF2",
+					Measure:     mf2,
+					Aggregation: &CountAggregation{},
+				},
+				"vNilID": nil,
 			}
 
 			for _, s := range tc.subscriptions {
@@ -164,8 +167,8 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	v1, _ := New("VF1", "desc VF1", []tag.Key{k1, k2}, m, CountAggregation{})
-	v2, _ := New("VF2", "desc VF2", []tag.Key{k1, k2}, m, CountAggregation{})
+	v1 := &View{"VF1", "desc VF1", []tag.Key{k1, k2}, m, CountAggregation{}}
+	v2 := &View{"VF2", "desc VF2", []tag.Key{k1, k2}, m, CountAggregation{}}
 
 	type want struct {
 		v    *View
@@ -296,9 +299,6 @@ func TestReportUsage(t *testing.T) {
 		t.Fatalf("stats.Int64() = %v", err)
 	}
 
-	cum1, _ := New("cum1", "", nil, m, CountAggregation{})
-	cum2, _ := New("cum1", "", nil, m, CountAggregation{})
-
 	tests := []struct {
 		name         string
 		view         *View
@@ -306,12 +306,12 @@ func TestReportUsage(t *testing.T) {
 	}{
 		{
 			name:         "cum",
-			view:         cum1,
+			view:         &View{Name: "cum1", Measure: m, Aggregation: CountAggregation{}},
 			wantMaxCount: 8,
 		},
 		{
 			name:         "cum2",
-			view:         cum2,
+			view:         &View{Name: "cum1", Measure: m, Aggregation: CountAggregation{}},
 			wantMaxCount: 8,
 		},
 	}
@@ -319,8 +319,9 @@ func TestReportUsage(t *testing.T) {
 	for _, tt := range tests {
 		restart()
 		SetReportingPeriod(25 * time.Millisecond)
-
-		if err := tt.view.Subscribe(); err != nil {
+		
+		err = Subscribe(tt.view)
+		if err != nil {
 			t.Fatalf("%v: cannot subscribe: %v", tt.name, err)
 		}
 

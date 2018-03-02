@@ -29,8 +29,15 @@ func Test_View_MeasureFloat64_AggregationDistribution(t *testing.T) {
 	k3, _ := tag.NewKey("k3")
 	agg1 := DistributionAggregation([]float64{2})
 	m, _ := stats.Int64("Test_View_MeasureFloat64_AggregationDistribution/m1", "", stats.UnitNone)
-	view1, _ := New("VF1", "desc VF1", []tag.Key{k1, k2}, m, agg1)
-	view := newViewInternal(view1, m)
+	view1 := &View{
+		TagKeys:     []tag.Key{k1, k2},
+		Measure:     m,
+		Aggregation: agg1,
+	}
+	view, err := newViewInternal(view1)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	type tagString struct {
 		k tag.Key
@@ -191,8 +198,10 @@ func Test_View_MeasureFloat64_AggregationSum(t *testing.T) {
 	k2, _ := tag.NewKey("k2")
 	k3, _ := tag.NewKey("k3")
 	m, _ := stats.Int64("Test_View_MeasureFloat64_AggregationSum/m1", "", stats.UnitNone)
-	view1, _ := New("VF1", "desc VF1", []tag.Key{k1, k2}, m, SumAggregation{})
-	view := newViewInternal(view1, m)
+	view, err := newViewInternal(&View{TagKeys: []tag.Key{k1, k2}, Measure: m, Aggregation: SumAggregation{}})
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	type tagString struct {
 		k tag.Key
@@ -300,13 +309,39 @@ func Test_View_MeasureFloat64_AggregationSum(t *testing.T) {
 	}
 }
 
-func Test_View_MeasureFloat64_AggregationMean_WindowCumulative(t *testing.T) {
+func TestCanonicalize(t *testing.T) {
+	k1, _ := tag.NewKey("k1")
+	k2, _ := tag.NewKey("k2")
+	m, _ := stats.Int64("TestCanonicalize/m1", "desc desc", stats.UnitNone)
+	v := &View{TagKeys: []tag.Key{k2, k1}, Measure: m, Aggregation: MeanAggregation{}}
+	vc, err := v.canonicalized()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, want := vc.Name, "TestCanonicalize/m1"; got != want {
+		t.Errorf("vc.Name = %q; want %q", got, want)
+	}
+	if got, want := vc.Description, "desc desc"; got != want {
+		t.Errorf("vc.Description = %q; want %q", got, want)
+	}
+	if got, want := len(vc.TagKeys), 2; got != want {
+		t.Errorf("len(vc.TagKeys) = %d; want %d", got, want)
+	}
+	if got, want := vc.TagKeys[0].Name(), "k1"; got != want {
+		t.Errorf("vc.TagKeys[0].Name() = %q; want %q", got, want)
+	}
+}
+
+func Test_View_MeasureFloat64_AggregationMean(t *testing.T) {
 	k1, _ := tag.NewKey("k1")
 	k2, _ := tag.NewKey("k2")
 	k3, _ := tag.NewKey("k3")
-	m, _ := stats.Int64("Test_View_MeasureFloat64_AggregationMean_WindowCumulative/m1", "", stats.UnitNone)
-	viewDesc, _ := New("VF1", "desc VF1", []tag.Key{k1, k2}, m, MeanAggregation{})
-	view := newViewInternal(viewDesc, m)
+	m, _ := stats.Int64("Test_View_MeasureFloat64_AggregationMean/m1", "", stats.UnitNone)
+	viewDesc := &View{TagKeys: []tag.Key{k1, k2}, Measure: m, Aggregation: MeanAggregation{}}
+	view, err := newViewInternal(viewDesc)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	type tagString struct {
 		k tag.Key

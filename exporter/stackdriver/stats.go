@@ -228,7 +228,7 @@ func (e *statsExporter) createMeasure(ctx context.Context, vd *view.Data) error 
 	e.createdViewsMu.Lock()
 	defer e.createdViewsMu.Unlock()
 
-	m := vd.Measure
+	m := vd.View.Measure
 	agg := vd.View.Aggregation
 	tagKeys := vd.View.TagKeys
 	viewName := vd.View.Name

@@ -17,7 +17,6 @@ package view
 
 import (
 	"fmt"
-	"sort"
 	"time"
 
 	"go.opencensus.io/stats"
@@ -193,14 +192,12 @@ func (w *worker) getMeasureRef(name string) *measureRef {
 }
 
 func (w *worker) tryRegisterView(v *View) (*viewInternal, error) {
-	if err := checkViewName(v.Name); err != nil {
+	vi, err := newViewInternal(v)
+	if err != nil {
 		return nil, err
 	}
-	sort.Slice(v.TagKeys, func(i, j int) bool {
-		return v.TagKeys[i].Name() < v.TagKeys[j].Name()
-	})
-	if x, ok := w.views[v.Name]; ok {
-		if !x.definition.same(v) {
+	if x, ok := w.views[vi.view.Name]; ok {
+		if !x.view.same(vi.view) {
 			return nil, fmt.Errorf("cannot subscribe view %q; a different view with the same name is already subscribed", v.Name)
 		}
 
@@ -208,19 +205,9 @@ func (w *worker) tryRegisterView(v *View) (*viewInternal, error) {
 		// command is considered successful.
 		return x, nil
 	}
-
-	if v.Measure == nil {
-		return nil, fmt.Errorf("cannot subscribe view %q: measure not set", v.Name)
-	}
-	var agg = v.Aggregation
-	if agg == nil {
-		return nil, fmt.Errorf("cannot subscribe view %q: aggregation not set", v.Name)
-	}
-	vi := newViewInternal(v, v.Measure)
-	w.views[v.Name] = vi
-	ref := w.getMeasureRef(v.Measure.Name())
+	w.views[vi.view.Name] = vi
+	ref := w.getMeasureRef(vi.view.Measure.Name())
 	ref.views[vi] = struct{}{}
-
 	return vi, nil
 }
 
@@ -238,8 +225,7 @@ func (w *worker) reportUsage(now time.Time) {
 		// to mutate the exported data.
 		rows = deepCopyRowData(rows)
 		viewData := &Data{
-			Measure: v.measure,
-			View:    &v.definition,
+			View:    v.view,
 			Start:   w.startTimes[v],
 			End:     time.Now(),
 			Rows:    rows,

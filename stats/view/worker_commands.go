@@ -40,7 +40,7 @@ type getViewByNameResp struct {
 }
 
 func (cmd *getViewByNameReq) handleCommand(w *worker) {
-	cmd.c <- &getViewByNameResp{&w.views[cmd.name].definition}
+	cmd.c <- &getViewByNameResp{w.views[cmd.name].view}
 }
 
 // subscribeToViewReq is the command to subscribe to a view.

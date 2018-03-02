@@ -64,7 +64,7 @@ func statsExamples() {
 		Aggregation: view.DistributionAggregation([]float64{0, 1 << 32, 2 << 32, 3 << 32}),
 	})
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("Failed to subscribe to view: %v", err)
 	}
 	// END view
 

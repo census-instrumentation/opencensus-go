@@ -32,8 +32,12 @@ func newView(measureName string, agg view.Aggregation) *view.View {
 	if err != nil {
 		log.Fatal(err)
 	}
-	v, _ := view.New("foo", "bar", nil, m, agg)
-	return v
+	return &view.View{
+		Name:        "foo",
+		Description: "bar",
+		Measure:     m,
+		Aggregation: agg,
+	}
 }
 
 func TestOnlyCumulativeWindowSupported(t *testing.T) {
