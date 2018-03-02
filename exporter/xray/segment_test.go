@@ -179,6 +179,10 @@ func TestFixSegmentName(t *testing.T) {
 			Name:     `[]`,
 			Expected: defaultSegmentName,
 		},
+		"too long": {
+			Name:     makeStringN(maxSegmentNameLength + 1),
+			Expected: makeStringN(maxSegmentNameLength),
+		},
 	}
 
 	for label, tc := range testCases {
@@ -188,6 +192,15 @@ func TestFixSegmentName(t *testing.T) {
 			}
 		})
 	}
+}
+
+// makeStringN returns a string of the specified length
+func makeStringN(length int) string {
+	var content []byte
+	for i := 0; i < length; i++ {
+		content = append(content, " "...)
+	}
+	return string(content)
 }
 
 var (

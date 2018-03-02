@@ -60,6 +60,9 @@ const (
 	// defaultSpanName will be used if there are no valid xray characters in the
 	// span name
 	defaultSegmentName = "span"
+
+	// maxSegmentNameLength the maximum length of a segment name
+	maxSegmentNameLength = 200
 )
 
 const (
@@ -324,16 +327,18 @@ func makeCause(status trace.Status) (isError, isFault bool, cause *errCause) {
 // the list of valid characters here:
 // https://docs.aws.amazon.com/xray/latest/devguide/xray-api-segmentdocuments.html
 func fixSegmentName(name string) string {
-	if !reInvalidSpanCharacters.MatchString(name) {
-		// the majority of the time, the name will be valid; skip the additional
-		// allocations required by ReplaceAllString
-		return name
+	if reInvalidSpanCharacters.MatchString(name) {
+		// only allocate for ReplaceAllString if we need to
+		name = reInvalidSpanCharacters.ReplaceAllString(name, "")
 	}
 
-	if fixed := reInvalidSpanCharacters.ReplaceAllString(name, ""); fixed != "" {
-		return fixed
+	if length := len(name); length > maxSegmentNameLength {
+		name = name[0:maxSegmentNameLength]
+	} else if length == 0 {
+		name = defaultSegmentName
 	}
-	return defaultSegmentName
+
+	return name
 }
 
 func rawSegment(span *trace.SpanData) segment {
