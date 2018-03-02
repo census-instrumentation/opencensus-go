@@ -99,8 +99,8 @@ func (c *collector) registerViews(views ...*view.View) {
 		if !ok {
 			desc := prometheus.NewDesc(
 				viewName(c.opts.Namespace, view),
-				view.Description(),
-				tagKeysToLabels(view.TagKeys()),
+				view.Description,
+				tagKeysToLabels(view.TagKeys),
 				nil,
 			)
 			c.registeredViewsMu.Lock()
@@ -228,7 +228,7 @@ func (c *collector) Collect(ch chan<- prometheus.Metric) {
 }
 
 func (c *collector) toMetric(desc *prometheus.Desc, v *view.View, row *view.Row) (prometheus.Metric, error) {
-	switch agg := v.Aggregation().(type) {
+	switch agg := v.Aggregation.(type) {
 	case view.CountAggregation:
 		data := row.Data.(*view.CountData)
 		return prometheus.NewConstMetric(desc, prometheus.CounterValue, float64(*data), tagValues(row.Tags)...)
@@ -250,7 +250,7 @@ func (c *collector) toMetric(desc *prometheus.Desc, v *view.View, row *view.Row)
 		return prometheus.NewConstMetric(desc, prometheus.UntypedValue, float64(*data), tagValues(row.Tags)...)
 
 	default:
-		return nil, fmt.Errorf("aggregation %T is not yet supported", v.Aggregation())
+		return nil, fmt.Errorf("aggregation %T is not yet supported", v.Aggregation)
 	}
 }
 
@@ -287,13 +287,13 @@ func tagValues(t []tag.Tag) []string {
 }
 
 func viewName(namespace string, v *view.View) string {
-	return namespace + "_" + internal.Sanitize(v.Name())
+	return namespace + "_" + internal.Sanitize(v.Name)
 }
 
 func viewSignature(namespace string, v *view.View) string {
 	var buf bytes.Buffer
 	buf.WriteString(viewName(namespace, v))
-	for _, k := range v.TagKeys() {
+	for _, k := range v.TagKeys {
 		buf.WriteString("-" + k.Name())
 	}
 	return buf.String()

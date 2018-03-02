@@ -51,23 +51,49 @@ var (
 // Package ochttp provides some convenience views.
 // You need to subscribe to the views for data to actually be collected.
 var (
-	ClientRequestCountView, _  = view.New("opencensus.io/http/client/request_count", "Count of HTTP requests started", nil, ClientRequestCount, view.CountAggregation{})
-	ClientRequestBytesView, _  = view.New("opencensus.io/http/client/request_bytes", "Size distribution of HTTP request body", nil, ClientRequestBytes, DefaultSizeDistribution)
-	ClientResponseBytesView, _ = view.New("opencensus.io/http/client/response_bytes", "Size distribution of HTTP response body", nil, ClientResponseBytes, DefaultSizeDistribution)
-	ClientLatencyView, _       = view.New("opencensus.io/http/client/latency", "Latency distribution of HTTP requests", nil, ClientLatency, DefaultLatencyDistribution)
+	ClientRequestCountView = &view.View{
+		Name:        "opencensus.io/http/client/request_count",
+		Description: "Count of HTTP requests started",
+		Measure:     ClientRequestCount,
+		Aggregation: view.CountAggregation{},
+	}
 
-	ClientRequestCountByMethod, _ = view.New(
-		"opencensus.io/http/client/request_count_by_method",
-		"Client request count by HTTP method",
-		[]tag.Key{Method},
-		ClientRequestCount,
-		view.CountAggregation{})
-	ClientResponseCountByStatusCode, _ = view.New(
-		"opencensus.io/http/client/response_count_by_status_code",
-		"Client response count by status code",
-		[]tag.Key{StatusCode},
-		ClientLatency,
-		view.CountAggregation{})
+	ClientRequestBytesView = &view.View{
+		Name:        "opencensus.io/http/client/request_bytes",
+		Description: "Size distribution of HTTP request body",
+		Measure:     ClientRequestBytes,
+		Aggregation: DefaultSizeDistribution,
+	}
+
+	ClientResponseBytesView = &view.View{
+		Name:        "opencensus.io/http/client/response_bytes",
+		Description: "Size distribution of HTTP response body",
+		Measure:     ClientResponseBytes,
+		Aggregation: DefaultSizeDistribution,
+	}
+
+	ClientLatencyView = &view.View{
+		Name:        "opencensus.io/http/client/latency",
+		Description: "Latency distribution of HTTP requests",
+		Measure:     ClientLatency,
+		Aggregation: DefaultLatencyDistribution,
+	}
+
+	ClientRequestCountByMethod = &view.View{
+		Name:        "opencensus.io/http/client/request_count_by_method",
+		Description: "Client request count by HTTP method",
+		TagKeys:     []tag.Key{Method},
+		Measure:     ClientRequestCount,
+		Aggregation: view.CountAggregation{},
+	}
+
+	ClientResponseCountByStatusCode = &view.View{
+		Name:        "opencensus.io/http/client/response_count_by_status_code",
+		Description: "Client response count by status code",
+		TagKeys:     []tag.Key{StatusCode},
+		Measure:     ClientLatency,
+		Aggregation: view.CountAggregation{},
+	}
 
 	DefaultViews = []*view.View{
 		ClientRequestCountView,

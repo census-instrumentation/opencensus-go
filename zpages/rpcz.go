@@ -58,10 +58,13 @@ var (
 )
 
 func init() {
-	for view := range viewType {
-		if err := view.Subscribe(); err != nil {
-			log.Printf("error subscribing to view %q: %v", view.Name(), err)
-		}
+	views := make([]*view.View, 0, len(viewType))
+	for v := range viewType {
+		views = append(views, v)
+	}
+	err := view.Subscribe(views...)
+	if err != nil {
+		log.Printf("error subscribing to views: %v", err)
 	}
 	view.RegisterExporter(snapExporter{})
 }
