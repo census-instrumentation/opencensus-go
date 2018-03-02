@@ -287,8 +287,8 @@ func TestExporter_makeReq(t *testing.T) {
 								},
 								Value: &monitoringpb.TypedValue{Value: &monitoringpb.TypedValue_DistributionValue{
 									DistributionValue: &distributionpb.Distribution{
-										Count:                 7,
-										Mean:                  3.3,
+										Count: 7,
+										Mean:  3.3,
 										SumOfSquaredDeviation: 0,
 										BucketOptions: &distributionpb.Distribution_BucketOptions{
 											Options: &distributionpb.Distribution_BucketOptions_ExplicitBuckets{
@@ -328,8 +328,8 @@ func TestExporter_makeReq(t *testing.T) {
 								},
 								Value: &monitoringpb.TypedValue{Value: &monitoringpb.TypedValue_DistributionValue{
 									DistributionValue: &distributionpb.Distribution{
-										Count:                 5,
-										Mean:                  -7.7,
+										Count: 5,
+										Mean:  -7.7,
 										SumOfSquaredDeviation: 0,
 										BucketOptions: &distributionpb.Distribution_BucketOptions{
 											Options: &distributionpb.Distribution_BucketOptions_ExplicitBuckets{
@@ -757,7 +757,7 @@ func newTestViewData(v *view.View, start, end time.Time, data1, data2 view.Aggre
 	tag1 := tag.Tag{Key: key, Value: "test-value-1"}
 	tag2 := tag.Tag{Key: key, Value: "test-value-2"}
 	return &view.Data{
-		View:    v,
+		View: v,
 		Rows: []*view.Row{
 			{
 				Tags: []tag.Tag{tag1},

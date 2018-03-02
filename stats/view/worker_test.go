@@ -319,7 +319,7 @@ func TestReportUsage(t *testing.T) {
 	for _, tt := range tests {
 		restart()
 		SetReportingPeriod(25 * time.Millisecond)
-		
+
 		err = Subscribe(tt.view)
 		if err != nil {
 			t.Fatalf("%v: cannot subscribe: %v", tt.name, err)

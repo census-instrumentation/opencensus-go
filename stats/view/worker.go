@@ -225,10 +225,10 @@ func (w *worker) reportUsage(now time.Time) {
 		// to mutate the exported data.
 		rows = deepCopyRowData(rows)
 		viewData := &Data{
-			View:    v.view,
-			Start:   w.startTimes[v],
-			End:     time.Now(),
-			Rows:    rows,
+			View:  v.view,
+			Start: w.startTimes[v],
+			End:   time.Now(),
+			Rows:  rows,
 		}
 		exportersMu.Lock()
 		for e := range exporters {
