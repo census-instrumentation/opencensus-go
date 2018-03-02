@@ -33,7 +33,7 @@ const (
 	MethodAttribute     = "http.method"
 	PathAttribute       = "http.path"
 	UserAgentAttribute  = "http.user_agent"
-	StatusCodeAttribute = "http.status"
+	StatusCodeAttribute = "http.status_code"
 )
 
 type traceTransport struct {
@@ -143,6 +143,12 @@ func (t *traceTransport) CancelRequest(req *http.Request) {
 //
 // Incoming propagation mechanism is determined by the given HTTP propagators.
 type Handler struct {
+	// NoStats may be set to disable recording of stats.
+	NoStats bool
+
+	// NoTrace may be set to disable recording of traces.
+	NoTrace bool
+
 	// Propagation defines how traces are propagated. If unspecified,
 	// B3 propagation will be used.
 	Propagation propagation.HTTPFormat
@@ -151,28 +157,25 @@ type Handler struct {
 	Handler http.Handler
 }
 
-// TODO(jbd): Add Handler.NoTrace and Handler.NoStats.
-
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	name := spanNameFromURL("Recv", r.URL)
+	if !h.NoTrace {
+		name := spanNameFromURL("Recv", r.URL)
+		p := h.Propagation
+		if p == nil {
+			p = defaultFormat
+		}
+		ctx := r.Context()
+		var span *trace.Span
+		if sc, ok := p.SpanContextFromRequest(r); ok {
+			ctx, span = trace.StartSpanWithRemoteParent(ctx, name, sc, trace.StartOptions{})
+		} else {
+			ctx, span = trace.StartSpan(ctx, name)
+		}
+		defer span.End()
 
-	p := h.Propagation
-	if p == nil {
-		p = defaultFormat
+		span.SetAttributes(requestAttrs(r)...)
+		r = r.WithContext(ctx)
 	}
-
-	ctx := r.Context()
-	var span *trace.Span
-	if sc, ok := p.SpanContextFromRequest(r); ok {
-		ctx, span = trace.StartSpanWithRemoteParent(ctx, name, sc, trace.StartOptions{})
-	} else {
-		ctx, span = trace.StartSpan(ctx, name)
-	}
-	defer span.End()
-
-	span.SetAttributes(requestAttrs(r)...)
-
-	r = r.WithContext(ctx)
 
 	handler := h.Handler
 	if handler == nil {
