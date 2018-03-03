@@ -35,51 +35,51 @@ func TestUpsert(t *testing.T) {
 	)
 
 	t.Run("nil", func(t *testing.T) {
-		var actual = upsert(nil, a)
-		if expected := []log.Field{a}; !reflect.DeepEqual(actual, expected) {
-			t.Errorf("expected %v; got %v", expected, actual)
+		var got = upsert(nil, a)
+		if want := []log.Field{a}; !reflect.DeepEqual(got, want) {
+			t.Errorf("want %v; got %v", want, got)
 		}
 	})
 
 	t.Run("append", func(t *testing.T) {
-		var actual = upsert([]log.Field{a}, b)
-		if expected := []log.Field{a, b}; !reflect.DeepEqual(actual, expected) {
-			t.Errorf("expected %v; got %v", expected, actual)
+		var got = upsert([]log.Field{a}, b)
+		if want := []log.Field{a, b}; !reflect.DeepEqual(got, want) {
+			t.Errorf("want %v; got %v", want, got)
 		}
 	})
 
 	t.Run("unchanged", func(t *testing.T) {
-		var actual = upsert([]log.Field{a}, a)
-		if expected := []log.Field{a}; !reflect.DeepEqual(actual, expected) {
-			t.Errorf("expected %v; got %v", expected, actual)
+		var got = upsert([]log.Field{a}, a)
+		if want := []log.Field{a}; !reflect.DeepEqual(got, want) {
+			t.Errorf("want %v; got %v", want, got)
 		}
 	})
 
 	t.Run("replace same type", func(t *testing.T) {
-		var actual = upsert([]log.Field{a}, a2)
-		if expected := []log.Field{a2}; !reflect.DeepEqual(actual, expected) {
-			t.Errorf("expected %v; got %v", expected, actual)
+		var got = upsert([]log.Field{a}, a2)
+		if want := []log.Field{a2}; !reflect.DeepEqual(got, want) {
+			t.Errorf("want %v; got %v", want, got)
 		}
 	})
 
 	t.Run("replace different type type", func(t *testing.T) {
-		var actual = upsert([]log.Field{a}, a3)
-		if expected := []log.Field{a3}; !reflect.DeepEqual(actual, expected) {
-			t.Errorf("expected %v; got %v", expected, actual)
+		var got = upsert([]log.Field{a}, a3)
+		if want := []log.Field{a3}; !reflect.DeepEqual(got, want) {
+			t.Errorf("want %v; got %v", want, got)
 		}
 	})
 
 	t.Run("replace from head", func(t *testing.T) {
-		var actual = upsert([]log.Field{a, b, c}, a2)
-		if expected := []log.Field{b, c, a2}; !reflect.DeepEqual(actual, expected) {
-			t.Errorf("expected %v; got %v", expected, actual)
+		var got = upsert([]log.Field{a, b, c}, a2)
+		if want := []log.Field{b, c, a2}; !reflect.DeepEqual(got, want) {
+			t.Errorf("want %v; got %v", want, got)
 		}
 	})
 
 	t.Run("upsert multiple", func(t *testing.T) {
-		var actual = upsert([]log.Field{a, b}, a2, c)
-		if expected := []log.Field{b, a2, c}; !reflect.DeepEqual(actual, expected) {
-			t.Errorf("expected %v; got %v", expected, actual)
+		var got = upsert([]log.Field{a, b}, a2, c)
+		if want := []log.Field{b, a2, c}; !reflect.DeepEqual(got, want) {
+			t.Errorf("want %v; got %v", want, got)
 		}
 	})
 }
@@ -118,11 +118,11 @@ func TestSpan(t *testing.T) {
 		span.LogFields(field)
 		span.Finish()
 
-		if expected := 1; len(logger.logs) != expected {
-			t.Fatalf("expected %v; got %v", expected, len(logger.logs))
+		if want := 1; len(logger.logs) != want {
+			t.Fatalf("want %v; got %v", want, len(logger.logs))
 		}
-		if expected := []log.Field{field}; !reflect.DeepEqual(expected, logger.logs[0]) {
-			t.Fatalf("expected %#v; got %#v", expected, logger.logs[0])
+		if want := []log.Field{field}; !reflect.DeepEqual(want, logger.logs[0]) {
+			t.Fatalf("want %#v; got %#v", want, logger.logs[0])
 		}
 	})
 
@@ -139,11 +139,11 @@ func TestSpan(t *testing.T) {
 		span.LogFields(field)
 		span.Finish()
 
-		if expected := 1; len(logger.logs) != expected {
-			t.Fatalf("expected %v; got %v", expected, len(logger.logs))
+		if want := 1; len(logger.logs) != want {
+			t.Fatalf("want %v; got %v", want, len(logger.logs))
 		}
-		if expected := []log.Field{tag, field}; !reflect.DeepEqual(expected, logger.logs[0]) {
-			t.Fatalf("expected %#v; got %#v", expected, logger.logs[0])
+		if want := []log.Field{tag, field}; !reflect.DeepEqual(want, logger.logs[0]) {
+			t.Fatalf("want %#v; got %#v", want, logger.logs[0])
 		}
 	})
 
@@ -160,11 +160,11 @@ func TestSpan(t *testing.T) {
 		span.LogFields(field)
 		span.Finish()
 
-		if expected := 1; len(logger.logs) != expected {
-			t.Fatalf("expected %v; got %v", expected, len(logger.logs))
+		if want := 1; len(logger.logs) != want {
+			t.Fatalf("want %v; got %v", want, len(logger.logs))
 		}
-		if expected := []log.Field{baggage, field}; !reflect.DeepEqual(expected, logger.logs[0]) {
-			t.Fatalf("expected %#v; got %#v", expected, logger.logs[0])
+		if want := []log.Field{baggage, field}; !reflect.DeepEqual(want, logger.logs[0]) {
+			t.Fatalf("want %#v; got %#v", want, logger.logs[0])
 		}
 	})
 
@@ -183,11 +183,11 @@ func TestSpan(t *testing.T) {
 		span.LogFields(field)
 		span.Finish()
 
-		if expected := 1; len(logger.logs) != expected {
-			t.Fatalf("expected %v; got %v", expected, len(logger.logs))
+		if want := 1; len(logger.logs) != want {
+			t.Fatalf("want %v; got %v", want, len(logger.logs))
 		}
-		if expected := []log.Field{tag, field}; !reflect.DeepEqual(expected, logger.logs[0]) {
-			t.Fatalf("expected %#v; got %#v", expected, logger.logs[0])
+		if want := []log.Field{tag, field}; !reflect.DeepEqual(want, logger.logs[0]) {
+			t.Fatalf("want %#v; got %#v", want, logger.logs[0])
 		}
 	})
 
@@ -204,11 +204,11 @@ func TestSpan(t *testing.T) {
 		span.LogFields(field)
 		span.Finish()
 
-		if expected := 1; len(logger.logs) != expected {
-			t.Fatalf("expected %v; got %v", expected, len(logger.logs))
+		if want := 1; len(logger.logs) != want {
+			t.Fatalf("want %v; got %v", want, len(logger.logs))
 		}
-		if expected := []log.Field{field}; !reflect.DeepEqual(expected, logger.logs[0]) {
-			t.Fatalf("expected %#v; got %#v", expected, logger.logs[0])
+		if want := []log.Field{field}; !reflect.DeepEqual(want, logger.logs[0]) {
+			t.Fatalf("want %#v; got %#v", want, logger.logs[0])
 		}
 	})
 
@@ -223,11 +223,11 @@ func TestSpan(t *testing.T) {
 		span.LogKV(field.Key(), field.Value())
 		span.Finish()
 
-		if expected := 1; len(logger.logs) != expected {
-			t.Fatalf("expected %v; got %v", expected, len(logger.logs))
+		if want := 1; len(logger.logs) != want {
+			t.Fatalf("want %v; got %v", want, len(logger.logs))
 		}
-		if expected := []log.Field{field}; !reflect.DeepEqual(expected, logger.logs[0]) {
-			t.Fatalf("expected %#v; got %#v", expected, logger.logs[0])
+		if want := []log.Field{field}; !reflect.DeepEqual(want, logger.logs[0]) {
+			t.Fatalf("want %#v; got %#v", want, logger.logs[0])
 		}
 	})
 
@@ -236,7 +236,7 @@ func TestSpan(t *testing.T) {
 
 		span, _ := opentracing.StartSpanFromContext(ctx, "span")
 		if span.Tracer() == nil {
-			t.Errorf("expected Tracer; got nil")
+			t.Errorf("want Tracer; got nil")
 		}
 	})
 
@@ -252,8 +252,8 @@ func TestSpan(t *testing.T) {
 
 		child, _ := opentracing.StartSpanFromContext(ctx, "child")
 
-		if expected := value; child.BaggageItem(key) != expected {
-			t.Errorf("expected %v; got %v", expected, child.BaggageItem(key))
+		if want := value; child.BaggageItem(key) != want {
+			t.Errorf("want %v; got %v", want, child.BaggageItem(key))
 		}
 	})
 
@@ -271,11 +271,11 @@ func TestSpan(t *testing.T) {
 		span.LogFields(message)
 		span.Finish()
 
-		if expected := 1; len(logger.logs) != expected {
-			t.Fatalf("expected %v; got %v", expected, len(logger.logs))
+		if want := 1; len(logger.logs) != want {
+			t.Fatalf("want %v; got %v", want, len(logger.logs))
 		}
-		if expected := []log.Field{tag, message}; !reflect.DeepEqual(expected, logger.logs[0]) {
-			t.Errorf("expected %v; got %v", expected, logger.logs[0])
+		if want := []log.Field{tag, message}; !reflect.DeepEqual(want, logger.logs[0]) {
+			t.Errorf("want %v; got %v", want, logger.logs[0])
 		}
 	})
 
@@ -303,10 +303,10 @@ func TestSpan(t *testing.T) {
 		})
 
 		if count != 1 {
-			t.Errorf("expected 1 baggage item; got %v", count)
+			t.Errorf("want 1 baggage item; got %v", count)
 		}
 		if !seen {
-			t.Errorf("expected our baggage item to be seen")
+			t.Errorf("want our baggage item to be seen")
 		}
 	})
 
@@ -319,9 +319,9 @@ func TestSpan(t *testing.T) {
 		span, ctx := opentracing.StartSpanFromContext(ctx, "span")
 		span.SetOperationName("blah")
 
-		if expected := 1; len(logger.logs) != expected {
+		if want := 1; len(logger.logs) != want {
 			// no need to read message about it not being supported
-			t.Fatalf("expected %v; got %v", expected, len(logger.logs))
+			t.Fatalf("want %v; got %v", want, len(logger.logs))
 		}
 	})
 	t.Run("ForeachBaggageItem", func(t *testing.T) {
@@ -341,11 +341,11 @@ func TestSpan(t *testing.T) {
 			},
 		})
 
-		if expected := 1; len(logger.logs) != expected {
-			t.Fatalf("expected %v; got %v", expected, len(logger.logs))
+		if want := 1; len(logger.logs) != want {
+			t.Fatalf("want %v; got %v", want, len(logger.logs))
 		}
-		if expected := []log.Field{field}; !reflect.DeepEqual(expected, logger.logs[0]) {
-			t.Errorf("expected %v; got %v", expected, logger.logs[0])
+		if want := []log.Field{field}; !reflect.DeepEqual(want, logger.logs[0]) {
+			t.Errorf("want %v; got %v", want, logger.logs[0])
 		}
 	})
 }

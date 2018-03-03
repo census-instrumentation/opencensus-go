@@ -60,8 +60,8 @@ func TestTracer(t *testing.T) {
 	child.Finish()
 	parent.Finish()
 
-	if expected := 2; len(exporter.spans) != expected {
-		t.Fatalf("expected %v spans; got %v", expected, len(exporter.spans))
+	if want := 2; len(exporter.spans) != want {
+		t.Fatalf("want %v spans; got %v", want, len(exporter.spans))
 	}
 
 	var (
@@ -69,11 +69,11 @@ func TestTracer(t *testing.T) {
 		p = exporter.spans[1]
 	)
 
-	if expected := "child"; c.Name != expected {
-		t.Fatalf("expected %v; got %v", expected, c.Name)
+	if want := "child"; c.Name != want {
+		t.Fatalf("want %v; got %v", want, c.Name)
 	}
-	if expected := "parent"; p.Name != expected {
-		t.Fatalf("expected %v; got %v", expected, p.Name)
+	if want := "parent"; p.Name != want {
+		t.Fatalf("want %v; got %v", want, p.Name)
 	}
 }
 
@@ -88,16 +88,16 @@ func TestUnmarshal(t *testing.T) {
 
 		err := tracer.Inject(span.Context(), opentracing.TextMap, carrier)
 		if err != nil {
-			t.Fatalf("expected nil; got %v", err)
+			t.Fatalf("want nil; got %v", err)
 		}
 
 		spanContext, err := tracer.Extract(opentracing.TextMap, carrier)
 		if err != nil {
-			t.Fatalf("expected nil; got %v", err)
+			t.Fatalf("want nil; got %v", err)
 		}
 
 		if reflect.DeepEqual(span, spanContext) {
-			t.Fatalf("expected %#v; got %#v", span, spanContext)
+			t.Fatalf("want %#v; got %#v", span, spanContext)
 		}
 	})
 
@@ -106,16 +106,16 @@ func TestUnmarshal(t *testing.T) {
 
 		err := tracer.Inject(span.Context(), opentracing.Binary, carrier)
 		if err != nil {
-			t.Fatalf("expected nil; got %v", err)
+			t.Fatalf("want nil; got %v", err)
 		}
 
 		spanContext, err := tracer.Extract(opentracing.Binary, carrier)
 		if err != nil {
-			t.Fatalf("expected nil; got %v", err)
+			t.Fatalf("want nil; got %v", err)
 		}
 
 		if reflect.DeepEqual(span, spanContext) {
-			t.Fatalf("expected %#v; got %#v", span, spanContext)
+			t.Fatalf("want %#v; got %#v", span, spanContext)
 		}
 	})
 
@@ -127,16 +127,16 @@ func TestUnmarshal(t *testing.T) {
 
 		err := tracer.Inject(span.Context(), opentracing.HTTPHeaders, carrier)
 		if err != nil {
-			t.Fatalf("expected nil; got %v", err)
+			t.Fatalf("want nil; got %v", err)
 		}
 
 		spanContext, err := tracer.Extract(opentracing.HTTPHeaders, carrier)
 		if err != nil {
-			t.Fatalf("expected nil; got %v", err)
+			t.Fatalf("want nil; got %v", err)
 		}
 
 		if reflect.DeepEqual(span, spanContext) {
-			t.Fatalf("expected %#v; got %#v", span, spanContext)
+			t.Fatalf("want %#v; got %#v", span, spanContext)
 		}
 	})
 
@@ -145,16 +145,16 @@ func TestUnmarshal(t *testing.T) {
 
 		err := tracer.Inject(span.Context(), opentracing.HTTPHeaders, carrier)
 		if err != nil {
-			t.Fatalf("expected nil; got %v", err)
+			t.Fatalf("want nil; got %v", err)
 		}
 
 		spanContext, err := tracer.Extract(opentracing.HTTPHeaders, carrier)
 		if err != nil {
-			t.Fatalf("expected nil; got %v", err)
+			t.Fatalf("want nil; got %v", err)
 		}
 
 		if reflect.DeepEqual(span, spanContext) {
-			t.Fatalf("expected %#v; got %#v", span, spanContext)
+			t.Fatalf("want %#v; got %#v", span, spanContext)
 		}
 	})
 
@@ -171,17 +171,17 @@ func TestUnmarshal(t *testing.T) {
 
 		err := tracer.Inject(span.Context(), opentracing.HTTPHeaders, carrier)
 		if err != nil {
-			t.Fatalf("expected nil; got %v", err)
+			t.Fatalf("want nil; got %v", err)
 		}
 
 		spanContext, err := tracer.Extract(opentracing.HTTPHeaders, carrier)
 		if err != nil {
-			t.Fatalf("expected nil; got %v", err)
+			t.Fatalf("want nil; got %v", err)
 		}
 
 		remoteSpan := spanContext.(*Span)
-		if expected := []log.Field{baggage}; !reflect.DeepEqual(expected, remoteSpan.baggage) {
-			t.Fatalf("expected %#v; got %v", expected, remoteSpan.baggage)
+		if want := []log.Field{baggage}; !reflect.DeepEqual(want, remoteSpan.baggage) {
+			t.Fatalf("want %#v; got %v", want, remoteSpan.baggage)
 		}
 	})
 }
