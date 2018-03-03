@@ -29,8 +29,10 @@ import (
 )
 
 func main() {
+	go func() { log.Fatal(http.ListenAndServe(":8081", zpages.Handler)) }()
+
 	// Register stats and trace exporters to export the collected data.
-	exporter := &exporter.Exporter{}
+	exporter := &exporter.PrintExporter{}
 	view.RegisterExporter(exporter)
 	trace.RegisterExporter(exporter)
 
@@ -40,10 +42,20 @@ func main() {
 	// Report stats at every second.
 	view.SetReportingPeriod(1 * time.Second)
 
+	client := &http.Client{Transport: &ochttp.Transport{}}
+
 	http.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
 		fmt.Fprintf(w, "hello world")
+
+		r, _ := http.NewRequest("GET", "https://example.com", nil)
+
+		// Propagate the trace header info in the outgoing requests.
+		r = req.WithContext(req.Context())
+		resp, err := client.Do(r)
+		if err != nil {
+			log.Println(err)
+		}
+		_ = resp // handle response
 	})
-	http.HandleFunc("/rpcz", zpages.RpczHandler)
-	http.HandleFunc("/tracez", zpages.TracezHandler)
 	log.Fatal(http.ListenAndServe(":50030", &ochttp.Handler{}))
 }

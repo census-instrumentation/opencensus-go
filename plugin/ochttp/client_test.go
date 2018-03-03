@@ -25,6 +25,7 @@ import (
 
 	"go.opencensus.io/plugin/ochttp"
 	"go.opencensus.io/stats/view"
+	"go.opencensus.io/trace"
 )
 
 const reqCount = 5
@@ -96,7 +97,7 @@ func TestClient(t *testing.T) {
 			t.Errorf("view not found %q", viewName)
 			continue
 		}
-		rows, err := v.RetrieveData()
+		rows, err := view.RetrieveData(v.Name)
 		if err != nil {
 			t.Error(err)
 			continue
@@ -137,12 +138,13 @@ func BenchmarkTransportAllInstrumentation(b *testing.B) {
 	benchmarkClientServer(b, &ochttp.Transport{})
 }
 
-func benchmarkClientServer(b *testing.B, transport http.RoundTripper) {
+func benchmarkClientServer(b *testing.B, transport *ochttp.Transport) {
 	b.ReportAllocs()
 	ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(rw, "Hello world.\n")
 	}))
 	defer ts.Close()
+	transport.Sampler = trace.AlwaysSample()
 	var client http.Client
 	client.Transport = transport
 	b.ResetTimer()
@@ -192,6 +194,7 @@ func benchmarkClientServerParallel(b *testing.B, parallelism int, transport *och
 		MaxIdleConns:        parallelism,
 		MaxIdleConnsPerHost: parallelism,
 	}
+	transport.Sampler = trace.AlwaysSample()
 	c.Transport = transport
 
 	b.ResetTimer()

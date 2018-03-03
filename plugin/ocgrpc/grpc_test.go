@@ -18,6 +18,7 @@ import (
 	"testing"
 	"time"
 
+	"go.opencensus.io/stats/view"
 	"golang.org/x/net/context"
 
 	"go.opencensus.io/trace"
@@ -53,7 +54,7 @@ func TestNewClientStatsHandler(t *testing.T) {
 		EndTime: time.Now(),
 	})
 
-	stats, err := ClientRequestCountView.RetrieveData()
+	stats, err := view.RetrieveData(ClientRequestCountView.Name)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -67,9 +68,7 @@ func TestNewClientStatsHandler(t *testing.T) {
 	}
 
 	// Cleanup.
-	if err := ClientRequestCountView.Unsubscribe(); err != nil {
-		t.Fatal(err)
-	}
+	view.Unsubscribe(ClientErrorCountView)
 }
 
 func TestNewServerStatsHandler(t *testing.T) {
@@ -97,7 +96,7 @@ func TestNewServerStatsHandler(t *testing.T) {
 		EndTime: time.Now(),
 	})
 
-	stats, err := ServerRequestCountView.RetrieveData()
+	stats, err := view.RetrieveData(ServerRequestCountView.Name)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -111,10 +110,7 @@ func TestNewServerStatsHandler(t *testing.T) {
 	}
 
 	// Cleanup.
-	if err := ServerRequestCountView.Unsubscribe(); err != nil {
-		t.Fatal(err)
-	}
-
+	view.Unsubscribe(ServerRequestCountView)
 }
 
 type traceExporter struct {

@@ -20,9 +20,28 @@ import (
 
 	"go.opencensus.io/plugin/ochttp"
 	"go.opencensus.io/plugin/ochttp/propagation/google"
+	"go.opencensus.io/stats/view"
+	"go.opencensus.io/tag"
 )
 
 func ExampleTransport() {
+	err := view.Subscribe(
+		// Subscribe to a few default views, with renaming
+		ochttp.ClientRequestCountByMethod,
+		ochttp.ClientResponseCountByStatusCode,
+		ochttp.ClientLatencyView,
+		// Subscribe to a custom view
+		&view.View{
+			Name:        "httpclient_latency_by_hostpath",
+			TagKeys:     []tag.Key{ochttp.Host, ochttp.Path},
+			Measure:     ochttp.ClientLatency,
+			Aggregation: ochttp.DefaultLatencyDistribution,
+		},
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	client := &http.Client{
 		Transport: &ochttp.Transport{},
 	}
