@@ -48,10 +48,8 @@ func TestTracer(t *testing.T) {
 	trace.RegisterExporter(&exporter)
 	trace.SetDefaultSampler(trace.AlwaysSample()) // Always trace for this demo.
 
-	var (
-		ctx    = context.Background()
-		tracer = New(nil)
-	)
+	ctx := context.Background()
+	tracer := New(nil)
 
 	opentracing.SetGlobalTracer(tracer)
 
@@ -64,10 +62,8 @@ func TestTracer(t *testing.T) {
 		t.Fatalf("want %v spans; got %v", want, len(exporter.spans))
 	}
 
-	var (
-		c = exporter.spans[0]
-		p = exporter.spans[1]
-	)
+	c := exporter.spans[0]
+	p := exporter.spans[1]
 
 	if want := "child"; c.Name != want {
 		t.Fatalf("want %v; got %v", want, c.Name)
@@ -78,10 +74,8 @@ func TestTracer(t *testing.T) {
 }
 
 func TestUnmarshal(t *testing.T) {
-	var (
-		tracer = New(nil)
-		span   = tracer.StartSpan("span")
-	)
+	tracer := New(nil)
+	span := tracer.StartSpan("span")
 
 	t.Run("TextMap", func(t *testing.T) {
 		var carrier = opentracing.TextMapCarrier{}

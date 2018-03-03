@@ -285,9 +285,7 @@ func marshal(span *Span) string {
 		binary      = propagation.Binary(spanContext)
 		identifier  = hex.EncodeToString(binary)
 	)
-	return version + separator +
-		identifier + separator +
-		values.Encode()
+	return strings.Join([]string{version, identifier, values.Encode()}, separator)
 }
 
 // unmarshal decodes to 1-{identifier}-{baggage}
