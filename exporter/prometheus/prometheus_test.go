@@ -18,6 +18,7 @@ import (
 	"context"
 	"io/ioutil"
 	"net/http"
+	"net/http/httptest"
 	"strings"
 	"sync"
 	"testing"
@@ -187,7 +188,7 @@ type mCreator struct {
 
 type mSlice []*stats.Int64Measure
 
-func (mc *mCreator) appendInt64(measures *mSlice, name, desc, unit string) {
+func (mc *mCreator) createAndAppend(measures *mSlice, name, desc, unit string) {
 	mc.m, mc.err = stats.Int64(name, desc, unit)
 	*measures = append(*measures, mc.m)
 }
@@ -211,11 +212,13 @@ func TestMetricsEndpointOutput(t *testing.T) {
 	}
 	view.RegisterExporter(exporter)
 
+	names := []string{"foo", "bar", "baz"}
+
 	measures := make(mSlice, 0)
 	mc := &mCreator{}
-	mc.appendInt64(&measures, "tests/foo", "foo", "")
-	mc.appendInt64(&measures, "tests/bar", "bar", "")
-	mc.appendInt64(&measures, "tests/baz", "baz", "")
+	for _, name := range names {
+		mc.createAndAppend(&measures, "tests/"+name, name, "")
+	}
 	if mc.err != nil {
 		t.Errorf("failed to create measures: %v", err)
 	}
@@ -233,12 +236,10 @@ func TestMetricsEndpointOutput(t *testing.T) {
 		stats.Record(context.Background(), m.M(1))
 	}
 
-	addr := "localhost:9999"
 	http.Handle("/metrics", exporter)
 
-	go func() {
-		t.Fatalf("failed to serve %v: %v", addr, http.ListenAndServe(addr, nil))
-	}()
+	srv := httptest.NewServer(exporter)
+	defer srv.Close()
 
 	var i int
 	var output string
@@ -248,16 +249,17 @@ func TestMetricsEndpointOutput(t *testing.T) {
 		}
 		i++
 
-		resp, err := http.Get("http://localhost:9999/metrics")
+		resp, err := http.Get(srv.URL)
 		if err != nil {
 			t.Fatalf("failed to get /metrics: %v", err)
 		}
-		defer resp.Body.Close()
 
 		body, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
 			t.Fatalf("failed to read body: %v", err)
 		}
+		resp.Body.Close()
+
 		output = string(body)
 		time.Sleep(time.Millisecond)
 	}
@@ -269,4 +271,11 @@ func TestMetricsEndpointOutput(t *testing.T) {
 	if strings.Contains(output, "error(s) occurred") {
 		t.Fatal("error reported by prometheus registry")
 	}
+
+	for _, name := range names {
+		if !strings.Contains(output, "opencensus_tests_"+name+" 1") {
+			t.Fatalf("measurement missing in output: %v", name)
+		}
+	}
+
 }
