@@ -259,6 +259,9 @@ func TestMetricsEndpointOutput(t *testing.T) {
 		resp.Body.Close()
 
 		output = string(body)
+		if output != "" {
+			break
+		}
 		time.Sleep(time.Millisecond)
 	}
 
