@@ -232,9 +232,7 @@ func TestSpan(t *testing.T) {
 	})
 
 	t.Run("Tracer", func(t *testing.T) {
-		var (
-			ctx = context.Background()
-		)
+		var ctx = context.Background()
 
 		span, _ := opentracing.StartSpanFromContext(ctx, "span")
 		if span.Tracer() == nil {

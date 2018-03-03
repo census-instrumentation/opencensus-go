@@ -30,9 +30,7 @@ type Logger interface {
 	LogFieldsTime(t time.Time, fields ...log.Field)
 }
 
-var (
-	Stdout Logger = writeLogger{w: os.Stdout}
-)
+var Stdout Logger = writeLogger{w: os.Stdout}
 
 type writeLogger struct {
 	w io.Writer

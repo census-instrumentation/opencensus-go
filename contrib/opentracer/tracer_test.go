@@ -84,9 +84,7 @@ func TestUnmarshal(t *testing.T) {
 	)
 
 	t.Run("TextMap", func(t *testing.T) {
-		var (
-			carrier = opentracing.TextMapCarrier{}
-		)
+		var carrier = opentracing.TextMapCarrier{}
 
 		err := tracer.Inject(span.Context(), opentracing.TextMap, carrier)
 		if err != nil {
@@ -104,9 +102,7 @@ func TestUnmarshal(t *testing.T) {
 	})
 
 	t.Run("Binary", func(t *testing.T) {
-		var (
-			carrier = bytes.NewBuffer(nil)
-		)
+		var carrier = bytes.NewBuffer(nil)
 
 		err := tracer.Inject(span.Context(), opentracing.Binary, carrier)
 		if err != nil {
@@ -145,9 +141,7 @@ func TestUnmarshal(t *testing.T) {
 	})
 
 	t.Run("HTTPHeaders - via http.Header", func(t *testing.T) {
-		var (
-			carrier = http.Header{}
-		)
+		var carrier = http.Header{}
 
 		err := tracer.Inject(span.Context(), opentracing.HTTPHeaders, carrier)
 		if err != nil {
