@@ -97,10 +97,9 @@ func (l *logCapturer) LogFieldsTime(t time.Time, fields ...log.Field) {
 }
 
 func setup() *logCapturer {
-	var (
-		logger logCapturer
-		tracer = New(&logger)
-	)
+	var logger logCapturer
+
+	tracer := New(&logger)
 	opentracing.SetGlobalTracer(tracer)
 
 	return &logger
