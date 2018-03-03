@@ -250,7 +250,7 @@ func TestMetricsEndpointOutput(t *testing.T) {
 
 	var i int
 	var output string
-	for output == "" {
+	for {
 		if i == 10000 {
 			t.Fatal("no output at /metrics (10s wait)")
 		}
