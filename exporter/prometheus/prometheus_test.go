@@ -236,8 +236,6 @@ func TestMetricsEndpointOutput(t *testing.T) {
 		stats.Record(context.Background(), m.M(1))
 	}
 
-	http.Handle("/metrics", exporter)
-
 	srv := httptest.NewServer(exporter)
 	defer srv.Close()
 
@@ -277,5 +275,4 @@ func TestMetricsEndpointOutput(t *testing.T) {
 			t.Fatalf("measurement missing in output: %v", name)
 		}
 	}
-
 }
