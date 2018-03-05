@@ -80,21 +80,6 @@ type Exporter struct {
 	statsExporter *statsExporter
 }
 
-// Register sets up both stats and tracing exporting.
-func Register(o Options) (done func(), err error) {
-	e, err := NewExporter(o)
-	if err != nil {
-		return nil, err
-	}
-	view.RegisterExporter(e)
-	trace.RegisterExporter(e)
-	return func() {
-		view.UnregisterExporter(e)
-		trace.UnregisterExporter(e)
-		e.Flush()
-	}, nil
-}
-
 // NewExporter creates a new Exporter that implements both stats.Exporter and
 // trace.Exporter.
 func NewExporter(o Options) (*Exporter, error) {

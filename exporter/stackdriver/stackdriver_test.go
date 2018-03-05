@@ -24,6 +24,7 @@ import (
 	"time"
 
 	"go.opencensus.io/plugin/ochttp"
+	"go.opencensus.io/stats/view"
 	"go.opencensus.io/trace"
 	"golang.org/x/net/context/ctxhttp"
 )
@@ -34,11 +35,16 @@ func TestExport(t *testing.T) {
 		t.Skip("STACKDRIVER_TEST_PROJECT_ID not set")
 	}
 
-	done, err := Register(Options{ProjectID: projectID})
+	exporter, err := NewExporter(Options{ProjectID: projectID})
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer done()
+	defer exporter.Flush()
+
+	trace.RegisterExporter(exporter)
+	defer trace.UnregisterExporter(exporter)
+	view.RegisterExporter(exporter)
+	defer view.UnregisterExporter(exporter)
 
 	trace.SetDefaultSampler(trace.AlwaysSample())
 
