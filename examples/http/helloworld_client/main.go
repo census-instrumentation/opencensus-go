@@ -24,16 +24,13 @@ import (
 
 	"go.opencensus.io/examples/exporter"
 	"go.opencensus.io/stats/view"
-	"go.opencensus.io/zpages"
 )
 
 const server = "http://localhost:50030"
 
 func main() {
-	go func() { log.Fatal(http.ListenAndServe(":8080", zpages.Handler)) }()
-
 	// Register stats and trace exporters to export the collected data.
-	exporter := &exporter.Exporter{}
+	exporter := &exporter.PrintExporter{}
 	view.RegisterExporter(exporter)
 	trace.RegisterExporter(exporter)
 
@@ -43,9 +40,7 @@ func main() {
 	// Report stats at every second.
 	view.SetReportingPeriod(1 * time.Second)
 
-	client := &http.Client{
-		Transport: &ochttp.Transport{},
-	}
+	client := &http.Client{Transport: &ochttp.Transport{}}
 
 	resp, err := client.Get(server)
 	if err != nil {

@@ -29,20 +29,20 @@ import (
 // Attributes recorded on the span for the requests.
 // Only trace exporters will need them.
 const (
-	URLAttribute          = "http.url"
-	HostAttribute         = "http.host"
-	MethodAttribute       = "http.method"
-	PathAttribute         = "http.path"
-	UserAgentAttribute    = "http.user_agent"
-	StatusCodeAttribute   = "http.status"
-	RequestSizeAttribute  = "http.request_size"
-	ResponseSizeAttribute = "http.response_size"
+	HostAttribute       = "http.host"
+	MethodAttribute     = "http.method"
+	PathAttribute       = "http.path"
+	UserAgentAttribute  = "http.user_agent"
+	StatusCodeAttribute = "http.status_code"
 )
 
 type traceTransport struct {
-	base   http.RoundTripper
-	format propagation.HTTPFormat
+	base    http.RoundTripper
+	sampler trace.Sampler
+	format  propagation.HTTPFormat
 }
+
+// TODO(jbd): Add message events for request and response size.
 
 // RoundTrip creates a trace.Span and inserts it into the outgoing request's headers.
 // The created span can follow a parent span, if a parent is presented in
@@ -51,8 +51,9 @@ func (t *traceTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	name := spanNameFromURL("Sent", req.URL)
 	// TODO(jbd): Discuss whether we want to prefix
 	// outgoing requests with Sent.
-	ctx, span := trace.StartSpan(req.Context(), name)
-	req = req.WithContext(ctx)
+	parent := trace.FromContext(req.Context())
+	span := trace.NewSpan(name, parent, trace.StartOptions{Sampler: t.sampler})
+	req = req.WithContext(trace.WithSpan(req.Context(), span))
 
 	if t.format != nil {
 		t.format.SpanContextToRequest(span.SpanContext(), req)
@@ -66,7 +67,6 @@ func (t *traceTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 		return resp, err
 	}
 
-	// TODO(jbd): Set status based on the status code.
 	span.SetAttributes(responseAttrs(resp)...)
 
 	// span.End() will be invoked after
@@ -143,6 +143,12 @@ func (t *traceTransport) CancelRequest(req *http.Request) {
 //
 // Incoming propagation mechanism is determined by the given HTTP propagators.
 type Handler struct {
+	// NoStats may be set to disable recording of stats.
+	NoStats bool
+
+	// NoTrace may be set to disable recording of traces.
+	NoTrace bool
+
 	// Propagation defines how traces are propagated. If unspecified,
 	// B3 propagation will be used.
 	Propagation propagation.HTTPFormat
@@ -151,28 +157,25 @@ type Handler struct {
 	Handler http.Handler
 }
 
-// TODO(jbd): Add Handler.NoTrace and Handler.NoStats.
-
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	name := spanNameFromURL("Recv", r.URL)
+	if !h.NoTrace {
+		name := spanNameFromURL("Recv", r.URL)
+		p := h.Propagation
+		if p == nil {
+			p = defaultFormat
+		}
+		ctx := r.Context()
+		var span *trace.Span
+		if sc, ok := p.SpanContextFromRequest(r); ok {
+			ctx, span = trace.StartSpanWithRemoteParent(ctx, name, sc, trace.StartOptions{})
+		} else {
+			ctx, span = trace.StartSpan(ctx, name)
+		}
+		defer span.End()
 
-	p := h.Propagation
-	if p == nil {
-		p = defaultFormat
+		span.SetAttributes(requestAttrs(r)...)
+		r = r.WithContext(ctx)
 	}
-
-	ctx := r.Context()
-	var span *trace.Span
-	if sc, ok := p.SpanContextFromRequest(r); ok {
-		ctx, span = trace.StartSpanWithRemoteParent(ctx, name, sc, trace.StartOptions{})
-	} else {
-		ctx, span = trace.StartSpan(ctx, name)
-	}
-	defer span.End()
-
-	span.SetAttributes(requestAttrs(r)...)
-
-	r = r.WithContext(ctx)
 
 	handler := h.Handler
 	if handler == nil {
@@ -192,18 +195,15 @@ func spanNameFromURL(prefix string, u *url.URL) string {
 
 func requestAttrs(r *http.Request) []trace.Attribute {
 	return []trace.Attribute{
-		trace.StringAttribute{Key: URLAttribute, Value: r.URL.String()},
+		trace.StringAttribute{Key: PathAttribute, Value: r.URL.Path},
 		trace.StringAttribute{Key: HostAttribute, Value: r.URL.Host},
 		trace.StringAttribute{Key: MethodAttribute, Value: r.Method},
-		trace.StringAttribute{Key: PathAttribute, Value: r.URL.Path},
 		trace.StringAttribute{Key: UserAgentAttribute, Value: r.UserAgent()},
-		trace.Int64Attribute{Key: RequestSizeAttribute, Value: r.ContentLength},
 	}
 }
 
 func responseAttrs(resp *http.Response) []trace.Attribute {
 	return []trace.Attribute{
-		trace.Int64Attribute{Key: ResponseSizeAttribute, Value: resp.ContentLength},
 		trace.Int64Attribute{Key: StatusCodeAttribute, Value: int64(resp.StatusCode)},
 	}
 }
