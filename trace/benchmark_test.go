@@ -61,3 +61,25 @@ func BenchmarkSpanWithAnnotations_6(b *testing.B) {
 		span.End()
 	}
 }
+
+func BenchmarkTraceID_DotString(b *testing.B) {
+	b.ReportAllocs()
+	t := TraceID{0x0D, 0x0E, 0x0A, 0x0D, 0x0B, 0x0E, 0x0E, 0x0F, 0x0F, 0x0E, 0x0E, 0x0B, 0x0D, 0x0A, 0x0E, 0x0D}
+	want := "0d0e0a0d0b0e0e0f0f0e0e0b0d0a0e0d"
+	for i := 0; i < b.N; i++ {
+		if got := t.String(); got != want {
+			b.Fatalf("got = %q want = %q", got, want)
+		}
+	}
+}
+
+func BenchmarkSpanID_DotString(b *testing.B) {
+	b.ReportAllocs()
+	s := SpanID{0x0D, 0x0E, 0x0A, 0x0D, 0x0B, 0x0E, 0x0E, 0x0F}
+	want := "0d0e0a0d0b0e0e0f"
+	for i := 0; i < b.N; i++ {
+		if got := s.String(); got != want {
+			b.Fatalf("got = %q want = %q", got, want)
+		}
+	}
+}

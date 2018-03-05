@@ -18,6 +18,7 @@ import (
 	"testing"
 	"time"
 
+	"go.opencensus.io/stats/view"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/metadata"
 
@@ -54,7 +55,7 @@ func TestNewClientStatsHandler(t *testing.T) {
 		EndTime: time.Now(),
 	})
 
-	stats, err := ClientRequestCountView.RetrieveData()
+	stats, err := view.RetrieveData(ClientRequestCountView.Name)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -68,9 +69,7 @@ func TestNewClientStatsHandler(t *testing.T) {
 	}
 
 	// Cleanup.
-	if err := ClientRequestCountView.Unsubscribe(); err != nil {
-		t.Fatal(err)
-	}
+	view.Unsubscribe(ClientErrorCountView)
 }
 
 func TestServerHandler(t *testing.T) {
@@ -113,7 +112,7 @@ func TestServerHandler(t *testing.T) {
 				EndTime: time.Now(),
 			})
 
-			rows, err := ServerRequestCountView.RetrieveData()
+			rows, err := view.RetrieveData(ServerRequestCountView.Name)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -127,9 +126,7 @@ func TestServerHandler(t *testing.T) {
 			}
 
 			// Cleanup.
-			if err := ServerRequestCountView.Unsubscribe(); err != nil {
-				t.Fatal(err)
-			}
+			view.Unsubscribe(ServerRequestCountView)
 		})
 	}
 }

@@ -21,7 +21,7 @@ import (
 	"net"
 	"net/http"
 
-	"go.opencensus.io/examples/grpc/exporter"
+	"go.opencensus.io/examples/exporter"
 	pb "go.opencensus.io/examples/grpc/proto"
 	"go.opencensus.io/plugin/ocgrpc"
 	"go.opencensus.io/stats/view"
@@ -45,7 +45,7 @@ func main() {
 	go func() { log.Fatal(http.ListenAndServe(":8081", zpages.Handler)) }()
 	// Register stats and trace exporters to export
 	// the collected data.
-	view.RegisterExporter(&exporter.Exporter{})
+	view.RegisterExporter(&exporter.PrintExporter{})
 
 	// Subscribe to collect server request count.
 	if err := ocgrpc.ServerRequestCountView.Subscribe(); err != nil {

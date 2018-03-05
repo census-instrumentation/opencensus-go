@@ -12,42 +12,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Command helloworld is an example program that creates spans.
-package main
+package exporter
 
 import (
-	"context"
 	"log"
-	"time"
 
+	"go.opencensus.io/stats/view"
 	"go.opencensus.io/trace"
 )
 
-func main() {
-	ctx := context.Background()
+// PrintExporter is a stats and trace exporter that logs
+// the exported data to the console.
+type PrintExporter struct{}
 
-	// Register an exporter to be able to retrieve
-	// the collected spans.
-	trace.RegisterExporter(&exporter{})
-
-	trace.SetDefaultSampler(trace.AlwaysSample())
-
-	ctx, span := trace.StartSpan(ctx, "/foo")
-	bar(ctx)
-	span.End()
-
-	time.Sleep(1 * time.Second) // Wait enough for the exporter to report.
+// ExportView logs the view data.
+func (e *PrintExporter) ExportView(vd *view.Data) {
+	log.Println(vd)
 }
 
-func bar(ctx context.Context) {
-	ctx, span := trace.StartSpan(ctx, "/bar")
-	defer span.End()
-
-	// Do bar...
-}
-
-type exporter struct{}
-
-func (e *exporter) ExportSpan(sd *trace.SpanData) {
-	log.Println(sd)
+// ExportSpan logs the trace span.
+func (e *PrintExporter) ExportSpan(vd *trace.SpanData) {
+	log.Println(vd)
 }
