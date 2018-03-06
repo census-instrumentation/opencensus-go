@@ -16,7 +16,7 @@ rapidly, vendoring is recommended.
 ## Installation
 
 ```
-$ go get -u go.opencensus.io/...
+$ go get -u go.opencensus.io
 ```
 
 ## Prerequisites
