@@ -135,9 +135,9 @@ type recordReq struct {
 
 func (cmd *recordReq) handleCommand(w *worker) {
 	for _, m := range cmd.ms {
-		ref := w.getMeasureRef(m.Measure.Name())
+		ref := w.getMeasureRef(m.Measure().Name())
 		for v := range ref.views {
-			v.addSample(cmd.tm, m.Value)
+			v.addSample(cmd.tm, m.Value())
 		}
 	}
 }
