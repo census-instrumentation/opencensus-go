@@ -36,6 +36,9 @@ func (vb *Values) WriteValue(v []byte) {
 	vb.growIfRequired(1 + length)
 
 	// writing length of v
+	if length > 255 {
+		panic("length > 255")
+	}
 	vb.Buffer[vb.WriteIndex] = byte(length)
 	vb.WriteIndex++
 

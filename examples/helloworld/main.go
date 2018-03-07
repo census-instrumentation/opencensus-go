@@ -64,7 +64,7 @@ func main() {
 	err = view.Subscribe(&view.View{
 		Name:        "my.org/views/video_size",
 		Description: "processed video size over time",
-		TagKeys:     []tag.Key{frontendKey},
+		Dimensions:  []tag.Key{frontendKey},
 		Measure:     videoSize,
 		Aggregation: view.DistributionAggregation([]float64{0, 1 << 16, 1 << 32}),
 	})

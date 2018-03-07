@@ -40,10 +40,10 @@ func (c *collector) addSample(s string, v float64) {
 	aggregator.addSample(v)
 }
 
-func (c *collector) collectedRows(keys []tag.Key) []*Row {
+func (c *collector) collectedRows(tags []TagSelector) []*Row {
 	var rows []*Row
 	for sig, aggregator := range c.signatures {
-		tags := decodeTags([]byte(sig), keys)
+		tags := decodeTags([]byte(sig), tags)
 		row := &Row{tags, aggregator}
 		rows = append(rows, row)
 	}
@@ -56,29 +56,32 @@ func (c *collector) clearRows() {
 
 // encodeWithKeys encodes the map by using values
 // only associated with the keys provided.
-func encodeWithKeys(m *tag.Map, keys []tag.Key) []byte {
+func encodeWithKeys(m *tag.Map, keys []TagSelector) []byte {
 	vb := &tagencoding.Values{
 		Buffer: make([]byte, len(keys)),
 	}
 	for _, k := range keys {
-		v, _ := m.Value(k)
-		vb.WriteValue([]byte(v))
+		v, ok := k.Extract(m)
+		if ok {
+			vb.WriteValue([]byte(v))
+		} else {
+			vb.WriteValue([]byte{})
+		}
 	}
 	return vb.Bytes()
 }
 
 // decodeTags decodes tags from the buffer and
 // orders them by the keys.
-func decodeTags(buf []byte, keys []tag.Key) []tag.Tag {
+func decodeTags(buf []byte, tags []TagSelector) (dims []DimensionValue) {
 	vb := &tagencoding.Values{Buffer: buf}
-	var tags []tag.Tag
-	for _, k := range keys {
+	for _, k := range tags {
 		v := vb.ReadValue()
 		if v != nil {
-			tags = append(tags, tag.Tag{Key: k, Value: string(v)})
+			dims = append(dims, DimensionValue{Name: k.Name(), Value: string(v)})
 		}
 	}
 	vb.ReadIndex = 0
-	sort.Slice(tags, func(i, j int) bool { return tags[i].Key.Name() < tags[j].Key.Name() })
-	return tags
+	sort.Slice(dims, func(i, j int) bool { return dims[i].Name < dims[j].Name })
+	return
 }

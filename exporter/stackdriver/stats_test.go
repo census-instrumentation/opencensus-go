@@ -86,7 +86,7 @@ func TestExporter_makeReq(t *testing.T) {
 	v := &view.View{
 		Name:        "testview",
 		Description: "desc",
-		TagKeys:     []tag.Key{key},
+		Dimensions:  []tag.Key{key},
 		Measure:     m,
 		Aggregation: view.CountAggregation{},
 	}
@@ -391,7 +391,7 @@ func TestExporter_makeReq_batching(t *testing.T) {
 	v := &view.View{
 		Name:        "view",
 		Description: "desc",
-		TagKeys:     []tag.Key{key},
+		Dimensions:  []tag.Key{key},
 		Measure:     m,
 		Aggregation: view.CountAggregation{},
 	}
@@ -579,7 +579,7 @@ func TestExporter_createMeasure(t *testing.T) {
 	v := &view.View{
 		Name:        "testview",
 		Description: "desc",
-		TagKeys:     []tag.Key{key},
+		Dimensions:  []tag.Key{key},
 		Measure:     m,
 		Aggregation: view.CountAggregation{},
 	}
@@ -605,7 +605,7 @@ func TestExporter_createMeasure(t *testing.T) {
 			Type:        "hello",
 			MetricKind:  metricpb.MetricDescriptor_CUMULATIVE,
 			ValueType:   metricpb.MetricDescriptor_INT64,
-			Labels:      newLabelDescriptors(vd.View.TagKeys),
+			Labels:      newLabelDescriptors(vd.View.Dimensions),
 		}, nil
 	}
 
@@ -641,7 +641,7 @@ func TestExporter_makeReq_withCustomMonitoredResource(t *testing.T) {
 	v := &view.View{
 		Name:        "testview",
 		Description: "desc",
-		TagKeys:     []tag.Key{key},
+		Dimensions:  []tag.Key{key},
 		Measure:     m,
 		Aggregation: view.CountAggregation{},
 	}

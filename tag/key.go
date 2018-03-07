@@ -33,3 +33,50 @@ func NewKey(name string) (Key, error) {
 func (k Key) Name() string {
 	return k.name
 }
+
+type Extracter interface {
+	Extract(*Map) (string, bool)
+}
+
+// Extract produces a dimension of the key name with a value associated with
+// this Key in the given Map.
+func (k Key) Extract(m *Map) (val string, ok bool) {
+	return m.Value(k)
+}
+
+// OutputKey exists to satisfy view.TagSelector. It just returns the same Key.
+func (k Key) OutputKey() Key {
+	return k
+}
+
+// AliasedKey represents a Key that should be exported under a different alias.
+type AliasedKey struct {
+	k     Extracter
+	alias Key
+}
+
+func Alias(e Extracter, name string) (AliasedKey, error) {
+	alias, err := NewKey(name)
+	if err != nil {
+		return AliasedKey{}, err
+	}
+	return AliasedKey{e, alias}, nil
+}
+
+// As produces a AliasedKey representing this key aliased.
+func (k Key) As(alias Key) AliasedKey {
+	return AliasedKey{k: k, alias: alias}
+}
+
+// Extract produces a dimension of the alias with a value associated with the
+// underlying key.
+func (r AliasedKey) Extract(m *Map) (val string, ok bool) {
+	return r.k.Extract(m)
+}
+
+// OutputKey returns the alias Key.
+func (r AliasedKey) OutputKey() Key {
+	return r.alias
+}
+
+// TODO(ramonza): add Key.WhitelistValues(...)
