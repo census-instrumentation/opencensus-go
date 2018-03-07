@@ -15,31 +15,18 @@
 
 package tag
 
-import "log"
-
 // Key represents a tag key.
 type Key struct {
 	name string
 }
 
 // NewKey creates or retrieves a string key identified by name.
-// Calling NewKey (or MustKey) with the same name returns the same key.
+// Calling NewKey consequently with the same name returns the same key.
 func NewKey(name string) (Key, error) {
 	if !checkKeyName(name) {
 		return Key{}, errInvalidKeyName
 	}
 	return Key{name: name}, nil
-}
-
-// MustKey creates or retrieves a string key identified by name.
-// Calling MustKey (or NewKey) with the same name returns the same key.
-// It will log a fatal error if the key name is invalid.
-func MustKey(name string) Key {
-	k, err := NewKey(name)
-	if err != nil {
-		log.Fatalf("Failed to create tag key with name=%q: %v", name, err)
-	}
-	return k
 }
 
 // Name returns the name of the key.

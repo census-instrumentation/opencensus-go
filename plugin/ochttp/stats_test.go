@@ -94,7 +94,8 @@ func TestHandlerStatsCollection(t *testing.T) {
 			count = int(data.Count)
 			sum = data.Sum()
 		default:
-			t.Errorf("don't know how to handle data type: %v", data)
+			t.Errorf("Unkown data type: %v", data)
+			continue
 		}
 
 		if got, want := count, totalCount; got != want {

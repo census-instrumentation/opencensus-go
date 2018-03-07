@@ -15,8 +15,6 @@
 
 package stats
 
-import "log"
-
 // Float64Measure is a measure of type float64.
 type Float64Measure struct {
 	measure
@@ -45,14 +43,4 @@ func Float64(name, description, unit string) (*Float64Measure, error) {
 		return nil, err
 	}
 	return m, nil
-}
-
-// MustFloat64 creates a new measure of type Float64Measure. It will log a
-// fatal error if a measure with the same name already exists.
-func MustFloat64(name, description, unit string) *Float64Measure {
-	m, err := Float64(name, description, unit)
-	if err != nil {
-		log.Fatalf("Failed to create float64 measure with name=%q description=%q unit=%q: %v", name, description, unit, err)
-	}
-	return m
 }

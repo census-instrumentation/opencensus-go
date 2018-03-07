@@ -114,7 +114,8 @@ func TestClient(t *testing.T) {
 		case *view.DistributionData:
 			count = data.Count
 		default:
-			t.Errorf("don't know how to handle data type: %v", data)
+			t.Errorf("Unkown data type: %v", data)
+			continue
 		}
 		if got := count; got != reqCount {
 			t.Fatalf("%s = %d; want %d", viewName, got, reqCount)
