@@ -16,7 +16,6 @@
 package datadog // import "go.opencensus.io/exporter/datadog"
 
 import (
-	"io"
 	"log"
 	"os"
 	"reflect"
@@ -60,10 +59,10 @@ func (fn optionFunc) apply(c *config) {
 	fn(c)
 }
 
-// WithOutput - optional writer for error messages
-func WithOutput(w io.Writer) Option {
+// WithLogger - optional logger for error messages
+func WithLogger(logger *log.Logger) Option {
 	return optionFunc(func(c *config) {
-		c.logger = log.New(w, "", log.LstdFlags)
+		c.logger = logger
 	})
 }
 
