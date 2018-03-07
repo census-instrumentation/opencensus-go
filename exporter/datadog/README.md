@@ -12,18 +12,19 @@ agent, `127.0.0.1:8125`.
 exporter, _ := datadog.NewExporter()
 view.RegisterExporter(exporter)
 
+// define the reporting measure
+m, _ := stats.Int64("my.org/measure/openconns", "open connections", "")
+
 // define the view
-myView, _ := view.New(
-    "my.org/views/openconn",
-    "open connections",
-    nil,
-    view.MeanAggregation{},
+myView, _ := &view.View(
+    Name:        "my.org/views/openconn",
+    Description: "open connections",
+    TagKeys:     nil,
+    Measure:     m,
+    Aggregation: view.MeanAggregation{},
 )
 
 // begin exporting metrics
-_ = myView.Subscribe()
-
-// stop exporting metrics
-myView.Unsubscribe()
+_ = view.Subscribe(myView)
 ```
 
