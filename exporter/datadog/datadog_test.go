@@ -217,7 +217,6 @@ func TestExporter(t *testing.T) {
 	for label, tc := range testCases {
 		t.Run(label, func(t *testing.T) {
 			var (
-				myView, _   = view.New(tc.Name, "blah", []tag.Key{tagKey}, m, tc.Aggregation)
 				mock        = &Mock{}
 				exporter, _ = NewExporter(WithClient(mock))
 				interval    = 100 * time.Millisecond
@@ -226,7 +225,14 @@ func TestExporter(t *testing.T) {
 			view.RegisterExporter(exporter)
 			view.SetReportingPeriod(interval)
 
-			if err := myView.Subscribe(); err != nil {
+			myView := &view.View{
+				Name:        tc.Name,
+				Description: "blah",
+				TagKeys:     []tag.Key{tagKey},
+				Measure:     m,
+				Aggregation: tc.Aggregation,
+			}
+			if err := view.Subscribe(myView); err != nil {
 				t.Fatalf("want nil; got %v", err)
 			}
 
@@ -237,25 +243,9 @@ func TestExporter(t *testing.T) {
 			time.Sleep(2 * interval)
 
 			// Then
-			myView.Unsubscribe()
-
 			tc.Validate(t, mock, tc.Name, tc.Want)
 		})
 	}
-}
-
-func makeView(key tag.Key, m stats.Measure, name string, aggregation view.Aggregation) *view.View {
-	v, err := view.New(
-		name,
-		"blah",
-		[]tag.Key{key},
-		m,
-		aggregation,
-	)
-	if err != nil {
-		log.Fatalln(err)
-	}
-	return v
 }
 
 func TestLiveExporter(t *testing.T) {
@@ -281,24 +271,40 @@ func TestLiveExporter(t *testing.T) {
 	}
 
 	var (
-		key, _       = tag.NewKey("key")
-		sum          = makeView(key, m, "opencensus.sample.sum", view.SumAggregation{})
-		count        = makeView(key, m, "opencensus.sample.count", view.CountAggregation{})
-		mean         = makeView(key, m, "opencensus.sample.mean", view.MeanAggregation{})
-		distribution = makeView(key, m, "opencensus.sample.distribution", view.DistributionAggregation{1, 2, 3, 4, 5})
+		key, _ = tag.NewKey("key")
+		sum    = &view.View{
+			Name:        "opencensus.sample.sum",
+			Description: "blah",
+			TagKeys:     []tag.Key{key},
+			Measure:     m,
+			Aggregation: view.SumAggregation{},
+		}
+		count = &view.View{
+			Name:        "opencensus.sample.count",
+			Description: "blah",
+			TagKeys:     []tag.Key{key},
+			Measure:     m,
+			Aggregation: view.CountAggregation{},
+		}
+		mean = &view.View{
+			Name:        "opencensus.sample.mean",
+			Description: "blah",
+			TagKeys:     []tag.Key{key},
+			Measure:     m,
+			Aggregation: view.MeanAggregation{},
+		}
+		distribution = &view.View{
+			Name:        "opencensus.sample.distribution",
+			Description: "blah",
+			TagKeys:     []tag.Key{key},
+			Measure:     m,
+			Aggregation: view.DistributionAggregation{1, 2, 3, 4, 5},
+		}
 	)
 
-	sum.Subscribe()
-	defer sum.Unsubscribe()
-
-	count.Subscribe()
-	defer count.Unsubscribe()
-
-	mean.Subscribe()
-	defer mean.Unsubscribe()
-
-	distribution.Subscribe()
-	defer distribution.Unsubscribe()
+	if err := view.Subscribe(sum, count, mean, distribution); err != nil {
+		t.Fatalf("want nil; got %v", err)
+	}
 
 	ctx, _ = tag.New(ctx, tag.Insert(key, "value"))
 	iterations := 60
