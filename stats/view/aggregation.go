@@ -15,17 +15,29 @@
 
 package view
 
-//go:generate stringer -type AggType
-
 // AggType represents the type of aggregation function used on a View.
 type AggType int
 
+// All available aggregation types.
 const (
 	AggTypeNone         AggType = iota // no aggregation; reserved for future use.
 	AggTypeCount                       // the count aggregation, see Count.
 	AggTypeSum                         // the sum aggregation, see Sum.
 	AggTypeDistribution                // the distribution aggregation, see Distribution.
+	AggTypeLastValue                   // the last value aggregation, see LastValue.
 )
+
+func (t AggType) String() string {
+	return aggTypeName[t]
+}
+
+var aggTypeName = map[AggType]string{
+	AggTypeNone:         "None",
+	AggTypeCount:        "Count",
+	AggTypeSum:          "Sum",
+	AggTypeDistribution: "Distribution",
+	AggTypeLastValue:    "LastValue",
+}
 
 // Aggregation represents a data aggregation method. Use one of the functions:
 // Count, Sum, or Distribution to construct an Aggregation.
@@ -92,6 +104,17 @@ func Distribution(bounds ...float64) *Aggregation {
 		Buckets: bounds,
 		newData: func() AggregationData {
 			return newDistributionData(bounds)
+		},
+	}
+}
+
+// LastValue only reports the last value recorded using this
+// aggregation. All other measurements will be dropped.
+func LastValue() *Aggregation {
+	return &Aggregation{
+		Type: AggTypeLastValue,
+		newData: func() AggregationData {
+			return &LastValueData{}
 		},
 	}
 }
