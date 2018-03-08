@@ -20,6 +20,7 @@ import (
 
 	"go.opencensus.io/stats/view"
 	"golang.org/x/net/context"
+	"google.golang.org/grpc/metadata"
 
 	"go.opencensus.io/trace"
 
@@ -29,7 +30,7 @@ import (
 func TestNewClientStatsHandler(t *testing.T) {
 	ctx := context.Background()
 
-	handler := NewClientStatsHandler()
+	handler := &ClientHandler{}
 
 	te := &traceExporter{}
 	trace.RegisterExporter(te)
@@ -71,46 +72,63 @@ func TestNewClientStatsHandler(t *testing.T) {
 	view.Unsubscribe(ClientErrorCountView)
 }
 
-func TestNewServerStatsHandler(t *testing.T) {
-	ctx := context.Background()
-
-	handler := NewServerStatsHandler()
-
-	te := &traceExporter{}
-	trace.RegisterExporter(te)
-	if err := ServerRequestCountView.Subscribe(); err != nil {
-		t.Fatal(err)
+func TestServerHandler(t *testing.T) {
+	tests := []struct {
+		name         string
+		newTrace     bool
+		expectTraces int
+	}{
+		{"trust_metadata", false, 1},
+		{"no_trust_metadata", true, 0},
 	}
 
-	span := trace.NewSpan("/foo", nil, trace.StartOptions{
-		Sampler: trace.AlwaysSample(),
-	})
-	ctx = trace.WithSpan(ctx, span)
-	ctx = handler.TagRPC(ctx, &stats.RPCTagInfo{
-		FullMethodName: "/service.foo/method",
-	})
-	handler.HandleRPC(ctx, &stats.Begin{
-		BeginTime: time.Now(),
-	})
-	handler.HandleRPC(ctx, &stats.End{
-		EndTime: time.Now(),
-	})
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
 
-	stats, err := view.RetrieveData(ServerRequestCountView.Name)
-	if err != nil {
-		t.Fatal(err)
-	}
-	traces := te.buffer
+			ctx := context.Background()
 
-	if got, want := len(stats), 1; got != want {
-		t.Errorf("Got %v stats; want %v", got, want)
-	}
-	if got, want := len(traces), 1; got != want {
-		t.Errorf("Got %v traces; want %v", got, want)
-	}
+			handler := &ServerHandler{
+				StartNewTraces: test.newTrace,
+				Sampler:        trace.ProbabilitySampler(0.0),
+			}
 
-	// Cleanup.
-	view.Unsubscribe(ServerRequestCountView)
+			te := &traceExporter{}
+			trace.RegisterExporter(te)
+			if err := ServerRequestCountView.Subscribe(); err != nil {
+				t.Fatal(err)
+			}
+
+			md := metadata.MD{
+				"grpc-trace-bin": []string{string([]byte{0, 0, 62, 116, 14, 118, 117, 157, 126, 7, 114, 152, 102, 125, 235, 34, 114, 238, 1, 187, 201, 24, 210, 231, 20, 175, 241, 2, 1})},
+			}
+			ctx = metadata.NewIncomingContext(ctx, md)
+			ctx = handler.TagRPC(ctx, &stats.RPCTagInfo{
+				FullMethodName: "/service.foo/method",
+			})
+			handler.HandleRPC(ctx, &stats.Begin{
+				BeginTime: time.Now(),
+			})
+			handler.HandleRPC(ctx, &stats.End{
+				EndTime: time.Now(),
+			})
+
+			rows, err := view.RetrieveData(ServerRequestCountView.Name)
+			if err != nil {
+				t.Fatal(err)
+			}
+			traces := te.buffer
+
+			if got, want := len(rows), 1; got != want {
+				t.Errorf("Got %v rows; want %v", got, want)
+			}
+			if got, want := len(traces), test.expectTraces; got != want {
+				t.Errorf("Got %v traces; want %v", got, want)
+			}
+
+			// Cleanup.
+			view.Unsubscribe(ServerRequestCountView)
+		})
+	}
 }
 
 type traceExporter struct {

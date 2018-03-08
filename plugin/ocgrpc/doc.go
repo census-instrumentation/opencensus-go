@@ -14,4 +14,8 @@
 
 // Package ocgrpc contains OpenCensus stats and trace
 // integrations for gRPC.
+//
+// This package exports two gRPC stats.Handler implementations: ServerHandler for
+// server instrumentation and ClientHandler for client instrumentation.
+//
 package ocgrpc // import "go.opencensus.io/plugin/ocgrpc"

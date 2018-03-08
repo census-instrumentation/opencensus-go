@@ -303,7 +303,7 @@ func TestClientDefaultCollections(t *testing.T) {
 			t.Error(err)
 		}
 
-		h := &clientStatsHandler{}
+		h := &ClientHandler{NoTrace: true}
 		for _, rpc := range tc.rpcs {
 			mods := []tag.Mutator{}
 			for _, t := range rpc.tags {
