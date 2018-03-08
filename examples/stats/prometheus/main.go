@@ -63,7 +63,7 @@ func main() {
 			Name:        "video_size",
 			Description: "processed video size over time",
 			Measure:     videoSize,
-			Aggregation: view.DistributionAggregation([]float64{0, 1 << 16, 1 << 32}),
+			Aggregation: view.DistributionAggregation{0, 1 << 16, 1 << 32},
 		},
 	)
 	if err != nil {

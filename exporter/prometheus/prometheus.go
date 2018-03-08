@@ -51,6 +51,7 @@ type Exporter struct {
 // Options contains options for configuring the exporter.
 type Options struct {
 	Namespace string
+	Registry  *prometheus.Registry
 	OnError   func(err error)
 }
 
@@ -74,13 +75,15 @@ func newExporter(o Options) (*Exporter, error) {
 	if o.Namespace == "" {
 		o.Namespace = defaultNamespace
 	}
-	reg := prometheus.NewRegistry()
-	collector := newCollector(o, reg)
+	if o.Registry == nil {
+		o.Registry = prometheus.NewRegistry()
+	}
+	collector := newCollector(o, o.Registry)
 	e := &Exporter{
 		opts:    o,
-		g:       reg,
+		g:       o.Registry,
 		c:       collector,
-		handler: promhttp.HandlerFor(reg, promhttp.HandlerOpts{}),
+		handler: promhttp.HandlerFor(o.Registry, promhttp.HandlerOpts{}),
 	}
 	return e, nil
 }

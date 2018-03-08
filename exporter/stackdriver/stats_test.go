@@ -94,7 +94,7 @@ func TestExporter_makeReq(t *testing.T) {
 		Name:        "distview",
 		Description: "desc",
 		Measure:     m,
-		Aggregation: view.DistributionAggregation([]float64{2, 4, 7}),
+		Aggregation: view.DistributionAggregation{2, 4, 7},
 	}
 
 	start := time.Now()
