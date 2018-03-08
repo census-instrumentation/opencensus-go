@@ -66,7 +66,7 @@ func main() {
 		Description: "processed video size over time",
 		TagKeys:     []tag.Key{frontendKey},
 		Measure:     videoSize,
-		Aggregation: view.DistributionAggregation([]float64{0, 1 << 16, 1 << 32}),
+		Aggregation: view.DistributionAggregation{0, 1 << 16, 1 << 32},
 	})
 	if err != nil {
 		log.Fatalf("Cannot subscribe to the view: %v", err)
