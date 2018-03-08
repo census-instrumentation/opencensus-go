@@ -159,13 +159,12 @@ i.e. no grouping by tag.
 
 [embedmd]:# (stats.go view)
 ```go
-err = view.Subscribe(&view.View{
+if err = view.Subscribe(&view.View{
 	Name:        "my.org/video_size_distribution",
 	Description: "distribution of processed video size over time",
 	Measure:     videoSize,
-	Aggregation: view.DistributionAggregation{0, 1 << 32, 2 << 32, 3 << 32},
-})
-if err != nil {
+	Aggregation: view.DistributionAggregation([]float64{0, 1 << 32, 2 << 32, 3 << 32}),
+}); err != nil {
 	log.Fatalf("Failed to subscribe to view: %v", err)
 }
 ```
