@@ -56,10 +56,10 @@ func (t statsTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	resp, err := t.base.RoundTrip(req)
 
 	if err != nil {
-		track.statusCode = "error"
+		track.statusCode = http.StatusInternalServerError
 		track.end()
 	} else {
-		track.statusCode = strconv.Itoa(resp.StatusCode)
+		track.statusCode = resp.StatusCode
 		if resp.Body == nil {
 			track.end()
 		} else {
@@ -67,7 +67,6 @@ func (t statsTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 			resp.Body = track
 		}
 	}
-
 	return resp, err
 }
 
@@ -82,14 +81,16 @@ func (t statsTransport) CancelRequest(req *http.Request) {
 }
 
 type tracker struct {
+	ctx        context.Context
 	respSize   int64
 	reqSize    int64
-	ctx        context.Context
 	start      time.Time
 	body       io.ReadCloser
-	statusCode string
+	statusCode int
 	endOnce    sync.Once
 }
+
+var _ io.ReadCloser = (*tracker)(nil)
 
 func (t *tracker) end() {
 	t.endOnce.Do(func() {
@@ -100,12 +101,10 @@ func (t *tracker) end() {
 		if t.reqSize >= 0 {
 			m = append(m, ClientRequestBytes.M(t.reqSize))
 		}
-		ctx, _ := tag.New(t.ctx, tag.Upsert(StatusCode, t.statusCode))
+		ctx, _ := tag.New(t.ctx, tag.Upsert(StatusCode, strconv.Itoa(t.statusCode)))
 		stats.Record(ctx, m...)
 	})
 }
-
-var _ io.ReadCloser = (*tracker)(nil)
 
 func (t *tracker) Read(b []byte) (int, error) {
 	n, err := t.body.Read(b)
@@ -125,74 +124,4 @@ func (t *tracker) Close() error {
 	// span status but didn't end the span.
 	t.end()
 	return t.body.Close()
-}
-
-func (h *Handler) startStats(w http.ResponseWriter, r *http.Request) (http.ResponseWriter, *http.Request, func()) {
-	ctx, _ := tag.New(r.Context(),
-		tag.Upsert(Host, r.URL.Host),
-		tag.Upsert(Path, r.URL.Path),
-		tag.Upsert(Method, r.Method))
-	track := &trackingResponseWriter{
-		start:  time.Now(),
-		ctx:    ctx,
-		writer: w,
-	}
-	if r.Body == nil {
-		// TODO: Handle cases where ContentLength is not set.
-		track.reqSize = -1
-	} else if r.ContentLength > 0 {
-		track.reqSize = r.ContentLength
-	}
-	stats.Record(ctx, ServerRequestCount.M(1))
-	return track, r.WithContext(ctx), func() { track.end() }
-}
-
-type trackingResponseWriter struct {
-	reqSize    int64
-	respSize   int64
-	ctx        context.Context
-	start      time.Time
-	statusCode string
-	endOnce    sync.Once
-	writer     http.ResponseWriter
-}
-
-var _ http.ResponseWriter = (*trackingResponseWriter)(nil)
-
-func (t *trackingResponseWriter) end() {
-	t.endOnce.Do(func() {
-		if t.statusCode == "" {
-			t.statusCode = "200"
-		}
-		m := []stats.Measurement{
-			ServerLatency.M(float64(time.Since(t.start)) / float64(time.Millisecond)),
-			ServerResponseBytes.M(t.respSize),
-		}
-		if t.reqSize >= 0 {
-			m = append(m, ServerRequestBytes.M(t.reqSize))
-		}
-		ctx, _ := tag.New(t.ctx, tag.Upsert(StatusCode, t.statusCode))
-		stats.Record(ctx, m...)
-	})
-}
-
-func (t *trackingResponseWriter) Header() http.Header {
-	return t.writer.Header()
-}
-
-func (t *trackingResponseWriter) Write(data []byte) (int, error) {
-	n, err := t.writer.Write(data)
-	t.respSize += int64(n)
-	return n, err
-}
-
-func (t *trackingResponseWriter) WriteHeader(statusCode int) {
-	t.writer.WriteHeader(statusCode)
-	t.statusCode = strconv.Itoa(statusCode)
-}
-
-func (t *trackingResponseWriter) Flush() {
-	if flusher, ok := t.writer.(http.Flusher); ok {
-		flusher.Flush()
-	}
 }
