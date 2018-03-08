@@ -27,7 +27,7 @@ func Test_View_MeasureFloat64_AggregationDistribution(t *testing.T) {
 	k1, _ := tag.NewKey("k1")
 	k2, _ := tag.NewKey("k2")
 	k3, _ := tag.NewKey("k3")
-	agg1 := DistributionAggregation([]float64{2})
+	agg1 := DistributionAggregation{2}
 	m, _ := stats.Int64("Test_View_MeasureFloat64_AggregationDistribution/m1", "", stats.UnitNone)
 	view1 := &View{
 		TagKeys:     []tag.Key{k1, k2},

@@ -16,7 +16,7 @@ rapidly, vendoring is recommended.
 ## Installation
 
 ```
-$ go get -u go.opencensus.io/...
+$ go get -u go.opencensus.io
 ```
 
 ## Prerequisites
@@ -147,7 +147,7 @@ Currently four types of aggregations are supported:
 
 [embedmd]:# (stats.go aggs)
 ```go
-distAgg := view.DistributionAggregation([]float64{0, 1 << 32, 2 << 32, 3 << 32})
+distAgg := view.DistributionAggregation{0, 1 << 32, 2 << 32, 3 << 32}
 countAgg := view.CountAggregation{}
 sumAgg := view.SumAggregation{}
 meanAgg := view.MeanAggregation{}
@@ -163,10 +163,10 @@ err = view.Subscribe(&view.View{
 	Name:        "my.org/video_size_distribution",
 	Description: "distribution of processed video size over time",
 	Measure:     videoSize,
-	Aggregation: view.DistributionAggregation([]float64{0, 1 << 32, 2 << 32, 3 << 32}),
+	Aggregation: view.DistributionAggregation{0, 1 << 32, 2 << 32, 3 << 32},
 })
 if err != nil {
-	log.Fatal(err)
+	log.Fatalf("Failed to subscribe to view: %v", err)
 }
 ```
 

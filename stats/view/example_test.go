@@ -28,7 +28,7 @@ func Example() {
 		Name:        "my.org/views/openconns",
 		Description: "open connections",
 		Measure:     m,
-		Aggregation: view.DistributionAggregation([]float64{0, 1000, 2000}),
+		Aggregation: view.DistributionAggregation{0, 1000, 2000},
 	})
 	if err != nil {
 		log.Fatal(err)
