@@ -392,7 +392,7 @@ func newLabelDescriptors(keys []tag.Key) []*labelpb.LabelDescriptor {
 	return labelDescriptors
 }
 
-func equalAggTagKeys(md *metricpb.MetricDescriptor, agg view.Aggregation, keys []tag.Key) error {
+func equalAggTagKeys(md *metricpb.MetricDescriptor, agg view.Aggregation, keys []view.Dimension) error {
 	aggType := reflect.TypeOf(agg)
 	if aggType.Kind() == reflect.Ptr { // if pointer, find out the concrete type
 		aggType = reflect.ValueOf(agg).Elem().Type()

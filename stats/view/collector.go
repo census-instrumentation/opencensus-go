@@ -16,8 +16,6 @@
 package view
 
 import (
-	"sort"
-
 	"go.opencensus.io/internal/tagencoding"
 	"go.opencensus.io/tag"
 )
@@ -40,7 +38,7 @@ func (c *collector) addSample(s string, v float64) {
 	aggregator.addSample(v)
 }
 
-func (c *collector) collectedRows(tags []TagSelector) []*Row {
+func (c *collector) collectedRows(tags []Dimension) []*Row {
 	var rows []*Row
 	for sig, aggregator := range c.signatures {
 		tags := decodeTags([]byte(sig), tags)
@@ -56,7 +54,7 @@ func (c *collector) clearRows() {
 
 // encodeWithKeys encodes the map by using values
 // only associated with the keys provided.
-func encodeWithKeys(m *tag.Map, keys []TagSelector) []byte {
+func encodeWithKeys(m *tag.Map, keys []Dimension) []byte {
 	vb := &tagencoding.Values{
 		Buffer: make([]byte, len(keys)),
 	}
@@ -73,15 +71,14 @@ func encodeWithKeys(m *tag.Map, keys []TagSelector) []byte {
 
 // decodeTags decodes tags from the buffer and
 // orders them by the keys.
-func decodeTags(buf []byte, tags []TagSelector) (dims []DimensionValue) {
+func decodeTags(buf []byte, tags []Dimension) (dims []tag.Tag) {
 	vb := &tagencoding.Values{Buffer: buf}
 	for _, k := range tags {
 		v := vb.ReadValue()
 		if v != nil {
-			dims = append(dims, DimensionValue{Name: k.Name(), Value: string(v)})
+			dims = append(dims, tag.Tag{Key: k, Value: string(v)})
 		}
 	}
 	vb.ReadIndex = 0
-	sort.Slice(dims, func(i, j int) bool { return dims[i].Name < dims[j].Name })
 	return
 }

@@ -37,7 +37,7 @@ type View struct {
 
 	// Dimensions describe the grouping of this view by tags associated with each Record call.
 	// A single logical output Row will be produced for each combination of associated tag values.
-	Dimensions []TagSelector
+	Dimensions []Dimension
 
 	// Measure is a stats.Measure to aggregate in this view.
 	Measure stats.Measure
@@ -46,13 +46,13 @@ type View struct {
 	Aggregation Aggregation
 }
 
-type TagSelector interface {
-	OutputKey() tag.Key
+type Dimension interface {
+	Name() string
 	Extract(*tag.Map) (string, bool)
 }
 
 // Deprecated: Use &View{}.
-func New(name, description string, keys []TagSelector, measure stats.Measure, agg Aggregation) (*View, error) {
+func New(name, description string, keys []Dimension, measure stats.Measure, agg Aggregation) (*View, error) {
 	if measure == nil {
 		panic("measure may not be nil")
 	}
@@ -105,10 +105,10 @@ func (v *View) canonicalized() (*View, error) {
 	if err := checkViewName(vc.Name); err != nil {
 		return nil, err
 	}
-	vc.Dimensions = make([]TagSelector, len(v.Dimensions))
+	vc.Dimensions = make([]Dimension, len(v.Dimensions))
 	copy(vc.Dimensions, v.Dimensions)
 	sort.Slice(vc.Dimensions, func(i, j int) bool {
-		return vc.Dimensions[i].Name() < vc.Dimensions[j].Name()
+		return vc.Dimensions[i].OutputKey().Name() < vc.Dimensions[j].OutputKey().Name()
 	})
 	return &vc, nil
 }
@@ -171,21 +171,16 @@ type Data struct {
 
 // Row is the collected value for a specific set of key value pairs a.k.a tags.
 type Row struct {
-	DimensionValues []DimensionValue
-	Data            AggregationData
-}
-
-type DimensionValue struct {
-	Name  string
-	Value string
+	Tags []tag.Tag
+	Data AggregationData
 }
 
 func (r *Row) String() string {
 	var buffer bytes.Buffer
 	buffer.WriteString("{ ")
 	buffer.WriteString("{ ")
-	for _, t := range r.DimensionValues {
-		buffer.WriteString(fmt.Sprintf("{%v %v}", t.Name, t.Value))
+	for _, t := range r.Tags {
+		buffer.WriteString(fmt.Sprintf("{%v %v}", t.Key, t.Value))
 	}
 	buffer.WriteString(" }")
 	buffer.WriteString(fmt.Sprintf("%v", r.Data))
@@ -200,7 +195,7 @@ func (r *Row) Equal(other *Row) bool {
 	if r == other {
 		return true
 	}
-	return reflect.DeepEqual(r.DimensionValues, other.DimensionValues) && r.Data.equal(other.Data)
+	return reflect.DeepEqual(r.Tags, other.Tags) && r.Data.equal(other.Data)
 }
 
 func checkViewName(name string) error {

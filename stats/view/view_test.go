@@ -30,7 +30,7 @@ func Test_View_MeasureFloat64_AggregationDistribution(t *testing.T) {
 	agg1 := DistributionAggregation([]float64{2})
 	m, _ := stats.Int64("Test_View_MeasureFloat64_AggregationDistribution/m1", "", stats.UnitNone)
 	view1 := &View{
-		Dimensions:  []tag.Key{k1, k2},
+		Dimensions:  []Dimension{k1, k2},
 		Measure:     m,
 		Aggregation: agg1,
 	}
@@ -198,7 +198,7 @@ func Test_View_MeasureFloat64_AggregationSum(t *testing.T) {
 	k2, _ := tag.NewKey("k2")
 	k3, _ := tag.NewKey("k3")
 	m, _ := stats.Int64("Test_View_MeasureFloat64_AggregationSum/m1", "", stats.UnitNone)
-	view, err := newViewInternal(&View{Dimensions: []tag.Key{k1, k2}, Measure: m, Aggregation: SumAggregation{}})
+	view, err := newViewInternal(&View{Dimensions: []Dimension{k1, k2}, Measure: m, Aggregation: SumAggregation{}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -313,7 +313,7 @@ func TestCanonicalize(t *testing.T) {
 	k1, _ := tag.NewKey("k1")
 	k2, _ := tag.NewKey("k2")
 	m, _ := stats.Int64("TestCanonicalize/m1", "desc desc", stats.UnitNone)
-	v := &View{Dimensions: []tag.Key{k2, k1}, Measure: m, Aggregation: MeanAggregation{}}
+	v := &View{Dimensions: []Dimension{k2, k1}, Measure: m, Aggregation: MeanAggregation{}}
 	vc, err := v.canonicalized()
 	if err != nil {
 		t.Fatal(err)
@@ -327,7 +327,7 @@ func TestCanonicalize(t *testing.T) {
 	if got, want := len(vc.Dimensions), 2; got != want {
 		t.Errorf("len(vc.Dimensions) = %d; want %d", got, want)
 	}
-	if got, want := vc.Dimensions[0].Name(), "k1"; got != want {
+	if got, want := vc.Dimensions[0].OutputKey().Name(), "k1"; got != want {
 		t.Errorf("vc.Dimensions[0].Name() = %q; want %q", got, want)
 	}
 }
@@ -337,7 +337,7 @@ func Test_View_MeasureFloat64_AggregationMean(t *testing.T) {
 	k2, _ := tag.NewKey("k2")
 	k3, _ := tag.NewKey("k3")
 	m, _ := stats.Int64("Test_View_MeasureFloat64_AggregationMean/m1", "", stats.UnitNone)
-	viewDesc := &View{Dimensions: []tag.Key{k1, k2}, Measure: m, Aggregation: MeanAggregation{}}
+	viewDesc := &View{Dimensions: []Dimension{k1, k2}, Measure: m, Aggregation: MeanAggregation{}}
 	view, err := newViewInternal(viewDesc)
 	if err != nil {
 		t.Fatal(err)
@@ -455,7 +455,7 @@ func TestViewSortedKeys(t *testing.T) {
 	k1, _ := tag.NewKey("a")
 	k2, _ := tag.NewKey("b")
 	k3, _ := tag.NewKey("c")
-	ks := []tag.Key{k1, k3, k2}
+	ks := []Dimension{k1, k3, k2}
 
 	m, _ := stats.Int64("TestViewSortedKeys/m1", "", stats.UnitNone)
 	Subscribe(&View{
@@ -475,7 +475,7 @@ func TestViewSortedKeys(t *testing.T) {
 	}
 
 	for i, v := range want {
-		if got, want := v, vks[i].Name(); got != want {
+		if got, want := v, vks[i].OutputKey().Name(); got != want {
 			t.Errorf("View name = %q; want %q", got, want)
 		}
 	}

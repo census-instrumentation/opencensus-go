@@ -254,19 +254,11 @@ func (c *collector) toMetric(desc *prometheus.Desc, v *view.View, row *view.Row)
 	}
 }
 
-func tagKeysToLabels(keys []tag.Key) (labels []string) {
+func tagKeysToLabels(keys []view.Dimension) (labels []string) {
 	for _, key := range keys {
 		labels = append(labels, internal.Sanitize(key.Name()))
 	}
 	return labels
-}
-
-func tagsToLabels(tags []tag.Tag) []string {
-	var names []string
-	for _, tag := range tags {
-		names = append(names, internal.Sanitize(tag.Key.Name()))
-	}
-	return names
 }
 
 func newCollector(opts Options, registrar *prometheus.Registry) *collector {

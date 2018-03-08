@@ -41,7 +41,7 @@ var (
 	ClientErrorCountView = &view.View{
 		Name:        "grpc.io/client/error_count",
 		Description: "RPC Errors",
-		Dimensions:  []tag.Key{KeyStatus, KeyMethod},
+		Dimensions:  []view.Dimension{KeyStatus, KeyMethod},
 		Measure:     ClientErrorCount,
 		Aggregation: view.MeanAggregation{},
 	}
@@ -49,7 +49,7 @@ var (
 	ClientRoundTripLatencyView = &view.View{
 		Name:        "grpc.io/client/roundtrip_latency",
 		Description: "Latency in msecs",
-		Dimensions:  []tag.Key{KeyMethod},
+		Dimensions:  []view.Dimension{KeyMethod},
 		Measure:     ClientRoundTripLatency,
 		Aggregation: DefaultMillisecondsDistribution,
 	}
@@ -57,7 +57,7 @@ var (
 	ClientRequestBytesView = &view.View{
 		Name:        "grpc.io/client/request_bytes",
 		Description: "Request bytes",
-		Dimensions:  []tag.Key{KeyMethod},
+		Dimensions:  []view.Dimension{KeyMethod},
 		Measure:     ClientRequestBytes,
 		Aggregation: DefaultBytesDistribution,
 	}
@@ -65,7 +65,7 @@ var (
 	ClientResponseBytesView = &view.View{
 		Name:        "grpc.io/client/response_bytes",
 		Description: "Response bytes",
-		Dimensions:  []tag.Key{KeyMethod},
+		Dimensions:  []view.Dimension{KeyMethod},
 		Measure:     ClientResponseBytes,
 		Aggregation: DefaultBytesDistribution,
 	}
@@ -73,7 +73,7 @@ var (
 	ClientRequestCountView = &view.View{
 		Name:        "grpc.io/client/request_count",
 		Description: "Count of request messages per client RPC",
-		Dimensions:  []tag.Key{KeyMethod},
+		Dimensions:  []view.Dimension{KeyMethod},
 		Measure:     ClientRequestCount,
 		Aggregation: DefaultMessageCountDistribution,
 	}
@@ -81,7 +81,7 @@ var (
 	ClientResponseCountView = &view.View{
 		Name:        "grpc.io/client/response_count",
 		Description: "Count of response messages per client RPC",
-		Dimensions:  []tag.Key{KeyMethod},
+		Dimensions:  []view.Dimension{KeyMethod},
 		Measure:     ClientResponseCount,
 		Aggregation: DefaultMessageCountDistribution,
 	}
