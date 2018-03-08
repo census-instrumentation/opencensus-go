@@ -155,8 +155,8 @@ func TestHandler(t *testing.T) {
 						t.Errorf("TraceOptions = %v; want %v", got, want)
 					}
 				}),
-				Sampler:     trace.ProbabilitySampler(0.0),
-				Propagation: propagator,
+				StartOptions: trace.StartOptions{Sampler: trace.ProbabilitySampler(0.0)},
+				Propagation:  propagator,
 			}
 			req, _ := http.NewRequest("GET", "http://foo.com", nil)
 			req.Header.Add("trace", tt.header)

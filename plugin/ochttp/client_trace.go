@@ -20,14 +20,11 @@ import (
 	"net/url"
 	"sync"
 
-	"go.opencensus.io/plugin/ochttp/propagation/b3"
 	"go.opencensus.io/trace"
 	"go.opencensus.io/trace/propagation"
 )
 
 // TODO(jbd): Add godoc examples.
-
-var defaultFormat propagation.HTTPFormat = &b3.HTTPFormat{}
 
 // Attributes recorded on the span for the requests.
 // Only trace exporters will need them.
@@ -40,9 +37,9 @@ const (
 )
 
 type traceTransport struct {
-	base    http.RoundTripper
-	sampler trace.Sampler
-	format  propagation.HTTPFormat
+	base         http.RoundTripper
+	startOptions trace.StartOptions
+	format       propagation.HTTPFormat
 }
 
 // TODO(jbd): Add message events for request and response size.
@@ -55,7 +52,7 @@ func (t *traceTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	// TODO(jbd): Discuss whether we want to prefix
 	// outgoing requests with Sent.
 	parent := trace.FromContext(req.Context())
-	span := trace.NewSpan(name, parent, trace.StartOptions{Sampler: t.sampler})
+	span := trace.NewSpan(name, parent, t.startOptions)
 	req = req.WithContext(trace.WithSpan(req.Context(), span))
 
 	if t.format != nil {

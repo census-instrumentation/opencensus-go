@@ -44,12 +44,23 @@ type Handler struct {
 	// NoTrace may be set to disable recording of traces.
 	NoTrace bool
 
-	// Propagation defines how traces are propagated. If unspecified,
-	// B3 propagation will be used.
+	// Propagation defines the header convention used to read tracing information
+	// from incoming requests.
+	//
+	// If not specified, no tracing information will be read from the incoming
+	// request. In this case, a new root span will be created around the
+	// server-side processing of each request if the Sampler samples this request.
+	//
+	// You should only set this to a non-default value if you trust the caller
+	// of this service. For example, this is safe if the current service will
+	// only be called by other services that you control.
 	Propagation propagation.HTTPFormat
 
 	// Handler is the handler used to handle the incoming request.
 	Handler http.Handler
+
+	// StartOptions may be used to configure new Spans started by this Handler.
+	StartOptions trace.StartOptions
 }
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -73,20 +84,24 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) startTrace(w http.ResponseWriter, r *http.Request) (*http.Request, func()) {
 	name := spanNameFromURL("Recv", r.URL)
-	p := h.Propagation
-	if p == nil {
-		p = defaultFormat
-	}
 	ctx := r.Context()
 	var span *trace.Span
-	if sc, ok := p.SpanContextFromRequest(r); ok {
-		ctx, span = trace.StartSpanWithRemoteParent(ctx, name, sc, trace.StartOptions{})
+	if sc, ok := h.extractSpanContext(r); ok {
+		span = trace.NewSpanWithRemoteParent(name, sc, h.StartOptions)
+		ctx = trace.WithSpan(ctx, span)
 	} else {
 		ctx, span = trace.StartSpan(ctx, name)
 	}
 
 	span.SetAttributes(requestAttrs(r)...)
 	return r.WithContext(trace.WithSpan(r.Context(), span)), span.End
+}
+
+func (h *Handler) extractSpanContext(r *http.Request) (trace.SpanContext, bool) {
+	if h.Propagation == nil {
+		return trace.SpanContext{}, false
+	}
+	return h.Propagation.SpanContextFromRequest(r)
 }
 
 func (h *Handler) startStats(w http.ResponseWriter, r *http.Request) (http.ResponseWriter, func()) {
