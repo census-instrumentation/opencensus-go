@@ -20,11 +20,14 @@ import (
 	"net/url"
 	"sync"
 
+	"go.opencensus.io/plugin/ochttp/propagation/b3"
 	"go.opencensus.io/trace"
 	"go.opencensus.io/trace/propagation"
 )
 
 // TODO(jbd): Add godoc examples.
+
+var defaultFormat propagation.HTTPFormat = &b3.HTTPFormat{}
 
 // Attributes recorded on the span for the requests.
 // Only trace exporters will need them.
@@ -130,71 +133,6 @@ func (t *traceTransport) CancelRequest(req *http.Request) {
 	if cr, ok := t.base.(canceler); ok {
 		cr.CancelRequest(req)
 	}
-}
-
-// Handler is a http.Handler that is aware of the incoming request's span.
-//
-// The extracted span can be accessed from the incoming request's
-// context.
-//
-//    span := trace.FromContext(r.Context())
-//
-// The server span will be automatically ended at the end of ServeHTTP.
-//
-// Incoming propagation mechanism is determined by the given HTTP propagators.
-type Handler struct {
-	// NoStats may be set to disable recording of stats.
-	NoStats bool
-
-	// NoTrace may be set to disable recording of traces.
-	NoTrace bool
-
-	// Propagation defines how traces are propagated. If unspecified,
-	// B3 propagation will be used.
-	Propagation propagation.HTTPFormat
-
-	// Handler is the handler used to handle the incoming request.
-	Handler http.Handler
-}
-
-func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	var endTrace, endStats func()
-	if !h.NoTrace {
-		w, r, endTrace = h.startTrace(w, r)
-	}
-	if !h.NoStats {
-		w, r, endStats = h.startStats(w, r)
-	}
-
-	handler := h.Handler
-	if handler == nil {
-		handler = http.DefaultServeMux
-	}
-	handler.ServeHTTP(w, r)
-	if endTrace != nil {
-		endTrace()
-	}
-	if endStats != nil {
-		endStats()
-	}
-}
-
-func (h *Handler) startTrace(w http.ResponseWriter, r *http.Request) (http.ResponseWriter, *http.Request, func()) {
-	name := spanNameFromURL("Recv", r.URL)
-	p := h.Propagation
-	if p == nil {
-		p = defaultFormat
-	}
-	ctx := r.Context()
-	var span *trace.Span
-	if sc, ok := p.SpanContextFromRequest(r); ok {
-		ctx, span = trace.StartSpanWithRemoteParent(ctx, name, sc, trace.StartOptions{})
-	} else {
-		ctx, span = trace.StartSpan(ctx, name)
-	}
-
-	span.SetAttributes(requestAttrs(r)...)
-	return w, r.WithContext(ctx), func() { span.End() }
 }
 
 func spanNameFromURL(prefix string, u *url.URL) string {
