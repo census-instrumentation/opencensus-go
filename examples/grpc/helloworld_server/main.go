@@ -59,7 +59,7 @@ func main() {
 
 	// Set up a new server with the OpenCensus
 	// stats handler to enable stats and tracing.
-	s := grpc.NewServer(grpc.StatsHandler(ocgrpc.NewServerStatsHandler()))
+	s := grpc.NewServer(grpc.StatsHandler(&ocgrpc.ServerHandler{}))
 	pb.RegisterGreeterServer(s, &server{})
 	// Register reflection service on gRPC server.
 	reflection.Register(s)

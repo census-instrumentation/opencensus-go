@@ -20,12 +20,6 @@ import (
 	"google.golang.org/grpc/stats"
 )
 
-// NewServerStatsHandler enables OpenCensus stats and trace
-// for gRPC servers. Deprecated, construct a ServerHandler directly.
-func NewServerStatsHandler() stats.Handler {
-	return &ServerHandler{}
-}
-
 // ServerHandler implements gRPC stats.Handler recording OpenCensus stats and
 // traces. Use with gRPC servers.
 type ServerHandler struct {
