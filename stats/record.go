@@ -24,20 +24,8 @@ import (
 
 // Record records one or multiple measurements with the same tags at once.
 // If there are any tags in the context, measurements will be tagged with them.
-//
-// Record returns fast and recorded measurements will have little overhead
-// if there are no views assicaiated with them.
 func Record(ctx context.Context, ms ...Measurement) {
 	if internal.DefaultRecorder != nil {
-		var record bool
-		for _, m := range ms {
-			if m.Measure != nil {
-				record = true
-			}
-		}
-		if !record {
-			return
-		}
 		internal.DefaultRecorder(tag.FromContext(ctx), ms)
 	}
 }
