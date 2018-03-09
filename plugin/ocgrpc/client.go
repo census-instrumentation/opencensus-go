@@ -38,11 +38,6 @@ type ClientHandler struct {
 	NoStats bool
 }
 
-var (
-	clientTrace clientTraceHandler
-	clientStats clientStatsHandler
-)
-
 func (c *ClientHandler) HandleConn(ctx context.Context, cs stats.ConnStats) {
 	// no-op
 }
@@ -54,19 +49,19 @@ func (c *ClientHandler) TagConn(ctx context.Context, cti *stats.ConnTagInfo) con
 
 func (c *ClientHandler) HandleRPC(ctx context.Context, rs stats.RPCStats) {
 	if !c.NoTrace {
-		clientTrace.HandleRPC(ctx, rs)
+		c.traceHandleRPC(ctx, rs)
 	}
 	if !c.NoStats {
-		clientStats.HandleRPC(ctx, rs)
+		c.statsHandleRPC(ctx, rs)
 	}
 }
 
 func (c *ClientHandler) TagRPC(ctx context.Context, rti *stats.RPCTagInfo) context.Context {
 	if !c.NoTrace {
-		ctx = clientTrace.TagRPC(ctx, rti)
+		ctx = c.traceTagRPC(ctx, rti)
 	}
 	if !c.NoStats {
-		ctx = clientStats.TagRPC(ctx, rti)
+		ctx = c.statsTagRPC(ctx, rti)
 	}
 	return ctx
 }
