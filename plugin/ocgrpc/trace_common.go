@@ -54,10 +54,11 @@ func (s *ServerHandler) traceTagRPC(ctx context.Context, rti *stats.RPCTagInfo) 
 	name := "Recv" + strings.Replace(rti.FullMethodName, "/", ".", -1)
 	if s := md[traceContextKey]; len(s) > 0 {
 		if parent, ok := propagation.FromBinary([]byte(s[0])); ok {
-			ctx, _ = trace.StartSpanWithRemoteParent(ctx, name, parent, trace.StartOptions{})
-			return ctx
+			span := trace.NewSpanWithRemoteParent(name, parent, trace.StartOptions{})
+			return trace.WithSpan(ctx, span)
 		}
 	}
+	// TODO(ramonza): should we ignore the in-process parent here?
 	ctx, _ = trace.StartSpan(ctx, name)
 	return ctx
 }

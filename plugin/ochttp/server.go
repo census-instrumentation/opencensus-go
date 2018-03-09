@@ -80,11 +80,11 @@ func (h *Handler) startTrace(w http.ResponseWriter, r *http.Request) (*http.Requ
 	ctx := r.Context()
 	var span *trace.Span
 	if sc, ok := p.SpanContextFromRequest(r); ok {
-		ctx, span = trace.StartSpanWithRemoteParent(ctx, name, sc, trace.StartOptions{})
+		span = trace.NewSpanWithRemoteParent(name, sc, trace.StartOptions{})
 	} else {
-		ctx, span = trace.StartSpan(ctx, name)
+		span = trace.NewSpan(name, nil, trace.StartOptions{})
 	}
-
+	ctx = trace.WithSpan(ctx, span)
 	span.SetAttributes(requestAttrs(r)...)
 	return r.WithContext(trace.WithSpan(r.Context(), span)), span.End
 }
