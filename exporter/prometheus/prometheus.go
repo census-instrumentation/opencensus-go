@@ -12,8 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package prometheus contains the Prometheus exporters for
-// Stackdriver Monitoring.
+// Package prometheus contains a Prometheus exporter.
 //
 // Please note that this exporter is currently work in progress and not complete.
 package prometheus // import "go.opencensus.io/exporter/prometheus"
