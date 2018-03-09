@@ -302,7 +302,7 @@ func TestServerDefaultCollections(t *testing.T) {
 			}
 		}
 
-		h := &serverStatsHandler{}
+		h := &ServerHandler{NoTrace: true}
 		for _, rpc := range tc.rpcs {
 			mods := []tag.Mutator{}
 			for _, t := range rpc.tags {
