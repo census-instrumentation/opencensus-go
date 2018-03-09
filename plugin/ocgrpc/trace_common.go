@@ -17,12 +17,14 @@ package ocgrpc
 import (
 	"strings"
 
+	"google.golang.org/grpc/codes"
+
 	"go.opencensus.io/trace"
 	"go.opencensus.io/trace/propagation"
 	"golang.org/x/net/context"
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/stats"
+	"google.golang.org/grpc/status"
 )
 
 const traceContextKey = "grpc-trace-bin"
@@ -84,8 +86,12 @@ func handleRPC(ctx context.Context, rs stats.RPCStats) {
 		span.AddMessageSendEvent(0, int64(rs.Length), int64(rs.WireLength))
 	case *stats.End:
 		if rs.Error != nil {
-			code, desc := grpc.Code(rs.Error), grpc.ErrorDesc(rs.Error)
-			span.SetStatus(trace.Status{Code: int32(code), Message: desc})
+			s, ok := status.FromError(rs.Error)
+			if ok {
+				span.SetStatus(trace.Status{Code: int32(s.Code()), Message: s.Message()})
+			} else {
+				span.SetStatus(trace.Status{Code: int32(codes.Internal), Message: rs.Error.Error()})
+			}
 		}
 		span.End()
 	}
