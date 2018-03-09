@@ -35,9 +35,9 @@ type View struct {
 	Name        string // Name of View. Must be unique. If unset, will default to the name of the Measure.
 	Description string // Description is a human-readable description for this view.
 
-	// TagKeys are the tag keys describing the grouping of this view.
-	// A single Row will be produced for each combination of associated tag values.
-	TagKeys []tag.Key
+	// Dimensions describe the grouping of this view by tags associated with each Record call.
+	// A single logical output Row will be produced for each combination of associated tag values.
+	Dimensions []Dimension
 
 	// Measure is a stats.Measure to aggregate in this view.
 	Measure stats.Measure
@@ -46,15 +46,20 @@ type View struct {
 	Aggregation Aggregation
 }
 
+type Dimension interface {
+	Name() string
+	Extract(*tag.Map) (string, bool)
+}
+
 // Deprecated: Use &View{}.
-func New(name, description string, keys []tag.Key, measure stats.Measure, agg Aggregation) (*View, error) {
+func New(name, description string, keys []Dimension, measure stats.Measure, agg Aggregation) (*View, error) {
 	if measure == nil {
 		panic("measure may not be nil")
 	}
 	return &View{
 		Name:        name,
 		Description: description,
-		TagKeys:     keys,
+		Dimensions:  keys,
 		Measure:     measure,
 		Aggregation: agg,
 	}, nil
@@ -82,7 +87,7 @@ func (v *View) same(other *View) bool {
 }
 
 // canonicalized returns a validated View canonicalized by setting explicit
-// defaults for Name and Description and sorting the TagKeys
+// defaults for Name and Description and sorting the Dimensions
 func (v *View) canonicalized() (*View, error) {
 	if v.Measure == nil {
 		return nil, fmt.Errorf("cannot subscribe view %q: measure not set", v.Name)
@@ -100,10 +105,10 @@ func (v *View) canonicalized() (*View, error) {
 	if err := checkViewName(vc.Name); err != nil {
 		return nil, err
 	}
-	vc.TagKeys = make([]tag.Key, len(v.TagKeys))
-	copy(vc.TagKeys, v.TagKeys)
-	sort.Slice(vc.TagKeys, func(i, j int) bool {
-		return vc.TagKeys[i].Name() < vc.TagKeys[j].Name()
+	vc.Dimensions = make([]Dimension, len(v.Dimensions))
+	copy(vc.Dimensions, v.Dimensions)
+	sort.Slice(vc.Dimensions, func(i, j int) bool {
+		return vc.Dimensions[i].OutputKey().Name() < vc.Dimensions[j].OutputKey().Name()
 	})
 	return &vc, nil
 }
@@ -145,14 +150,14 @@ func (v *viewInternal) clearRows() {
 }
 
 func (v *viewInternal) collectedRows() []*Row {
-	return v.collector.collectedRows(v.view.TagKeys)
+	return v.collector.collectedRows(v.view.Dimensions)
 }
 
 func (v *viewInternal) addSample(m *tag.Map, val float64) {
 	if !v.isSubscribed() {
 		return
 	}
-	sig := string(encodeWithKeys(m, v.view.TagKeys))
+	sig := string(encodeWithKeys(m, v.view.Dimensions))
 	v.collector.addSample(sig, val)
 }
 
@@ -175,7 +180,7 @@ func (r *Row) String() string {
 	buffer.WriteString("{ ")
 	buffer.WriteString("{ ")
 	for _, t := range r.Tags {
-		buffer.WriteString(fmt.Sprintf("{%v %v}", t.Key.Name(), t.Value))
+		buffer.WriteString(fmt.Sprintf("{%v %v}", t.Key, t.Value))
 	}
 	buffer.WriteString(" }")
 	buffer.WriteString(fmt.Sprintf("%v", r.Data))

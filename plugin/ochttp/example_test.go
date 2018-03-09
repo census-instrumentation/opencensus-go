@@ -33,7 +33,7 @@ func ExampleTransport() {
 		// Subscribe to a custom view
 		&view.View{
 			Name:        "httpclient_latency_by_hostpath",
-			TagKeys:     []tag.Key{ochttp.Host, ochttp.Path},
+			Dimensions:  []tag.Key{ochttp.Host, ochttp.Path},
 			Measure:     ochttp.ClientLatency,
 			Aggregation: ochttp.DefaultLatencyDistribution,
 		},

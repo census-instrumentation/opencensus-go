@@ -86,7 +86,7 @@ func TestExporter_makeReq(t *testing.T) {
 	v := &view.View{
 		Name:        "testview",
 		Description: "desc",
-		TagKeys:     []tag.Key{key},
+		Dimensions:  []view.Dimension{key},
 		Measure:     m,
 		Aggregation: view.CountAggregation{},
 	}
@@ -391,7 +391,7 @@ func TestExporter_makeReq_batching(t *testing.T) {
 	v := &view.View{
 		Name:        "view",
 		Description: "desc",
-		TagKeys:     []tag.Key{key},
+		Dimensions:  []view.Dimension{key},
 		Measure:     m,
 		Aggregation: view.CountAggregation{},
 	}
@@ -458,7 +458,7 @@ func TestEqualAggWindowTagKeys(t *testing.T) {
 		name    string
 		md      *metricpb.MetricDescriptor
 		agg     view.Aggregation
-		keys    []tag.Key
+		keys    []view.Dimension
 		wantErr bool
 	}{
 		{
@@ -523,7 +523,7 @@ func TestEqualAggWindowTagKeys(t *testing.T) {
 				},
 			},
 			agg:     view.DistributionAggregation{},
-			keys:    []tag.Key{key1, key2},
+			keys:    []view.Dimension{key1, key2},
 			wantErr: false,
 		},
 		{
@@ -533,7 +533,7 @@ func TestEqualAggWindowTagKeys(t *testing.T) {
 				ValueType:  metricpb.MetricDescriptor_DISTRIBUTION,
 			},
 			agg:     view.DistributionAggregation{},
-			keys:    []tag.Key{key1, key2},
+			keys:    []view.Dimension{key1, key2},
 			wantErr: true,
 		},
 		{
@@ -579,7 +579,7 @@ func TestExporter_createMeasure(t *testing.T) {
 	v := &view.View{
 		Name:        "testview",
 		Description: "desc",
-		TagKeys:     []tag.Key{key},
+		Dimensions:  []view.Dimension{key},
 		Measure:     m,
 		Aggregation: view.CountAggregation{},
 	}
@@ -605,7 +605,7 @@ func TestExporter_createMeasure(t *testing.T) {
 			Type:        "hello",
 			MetricKind:  metricpb.MetricDescriptor_CUMULATIVE,
 			ValueType:   metricpb.MetricDescriptor_INT64,
-			Labels:      newLabelDescriptors(vd.View.TagKeys),
+			Labels:      newLabelDescriptors(vd.View.Dimensions),
 		}, nil
 	}
 
@@ -641,7 +641,7 @@ func TestExporter_makeReq_withCustomMonitoredResource(t *testing.T) {
 	v := &view.View{
 		Name:        "testview",
 		Description: "desc",
-		TagKeys:     []tag.Key{key},
+		Dimensions:  []view.Dimension{key},
 		Measure:     m,
 		Aggregation: view.CountAggregation{},
 	}
@@ -753,9 +753,8 @@ func TestExporter_makeReq_withCustomMonitoredResource(t *testing.T) {
 }
 
 func newTestViewData(v *view.View, start, end time.Time, data1, data2 view.AggregationData) *view.Data {
-	key, _ := tag.NewKey("test-key")
-	tag1 := tag.Tag{Key: key, Value: "test-value-1"}
-	tag2 := tag.Tag{Key: key, Value: "test-value-2"}
+	tag1 := tag.Tag{Name: "test-key", Value: "test-value-1"}
+	tag2 := tag.Tag{Name: "test-key", Value: "test-value-2"}
 	return &view.Data{
 		View: v,
 		Rows: []*view.Row{
