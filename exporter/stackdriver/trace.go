@@ -30,8 +30,6 @@ import (
 // traceExporter is an implementation of trace.Exporter that uploads spans to
 // Stackdriver.
 //
-// traceExporter also implements trace/propagation.HTTPFormat and can
-// propagate Stackdriver Traces over HTTP requests.
 type traceExporter struct {
 	projectID string
 	bundler   *bundler.Bundler
