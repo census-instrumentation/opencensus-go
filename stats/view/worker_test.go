@@ -33,28 +33,12 @@ func Test_Worker_MeasureCreation(t *testing.T) {
 		t.Errorf("stats.Float64(\"MF1\", \"desc MF1\") got error %v, want no error", err)
 	}
 
-	if _, err := stats.Float64("MF1", "Duplicate measure with same name as MF1.", "unit"); err == nil {
-		t.Error("stats.Float64(\"MF1\", \"Duplicate Float64Measure with same name as MF1.\") got no error, want no error")
-	}
-
-	if _, err := stats.Int64("MF1", "Duplicate measure with same name as MF1.", "unit"); err == nil {
-		t.Error("stats.Int64(\"MF1\", \"Duplicate Int64Measure with same name as MF1.\") got no error, want no error")
-	}
-
 	if _, err := stats.Float64("MF2", "desc MF2", "unit"); err != nil {
 		t.Errorf("stats.Float64(\"MF2\", \"desc MF2\") got error %v, want no error", err)
 	}
 
 	if _, err := stats.Int64("MI1", "desc MI1", "unit"); err != nil {
 		t.Errorf("stats.Int64(\"MI1\", \"desc MI1\") got error %v, want no error", err)
-	}
-
-	if _, err := stats.Int64("MI1", "Duplicate measure with same name as MI1.", "unit"); err == nil {
-		t.Error("stats.Int64(\"MI1\", \"Duplicate Int64 with same name as MI1.\") got no error, want no error")
-	}
-
-	if _, err := stats.Float64("MI1", "Duplicate measure with same name as MI1.", "unit"); err == nil {
-		t.Error("stats.Float64(\"MI1\", \"Duplicate Float64 with same name as MI1.\") got no error, want no error")
 	}
 }
 
@@ -177,7 +161,6 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 	}
 	type testCase struct {
 		label         string
-		registrations []*View
 		subscriptions []*View
 		records       []float64
 		wants         []want
@@ -185,18 +168,16 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 
 	tcs := []testCase{
 		{
-			"0",
-			[]*View{v1, v2},
-			[]*View{},
-			[]float64{1, 1},
-			[]want{{v1, nil, someError}, {v2, nil, someError}},
+			label:         "0",
+			subscriptions: []*View{},
+			records:       []float64{1, 1},
+			wants:         []want{{v1, nil, someError}, {v2, nil, someError}},
 		},
 		{
-			"1",
-			[]*View{v1, v2},
-			[]*View{v1},
-			[]float64{1, 1},
-			[]want{
+			label:         "1",
+			subscriptions: []*View{v1},
+			records:       []float64{1, 1},
+			wants: []want{
 				{
 					v1,
 					[]*Row{
@@ -211,11 +192,10 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 			},
 		},
 		{
-			"2",
-			[]*View{v1, v2},
-			[]*View{v1, v2},
-			[]float64{1, 1},
-			[]want{
+			label:         "2",
+			subscriptions: []*View{v1, v2},
+			records:       []float64{1, 1},
+			wants: []want{
 				{
 					v1,
 					[]*Row{
@@ -241,12 +221,6 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 	}
 
 	for _, tc := range tcs {
-		for _, v := range tc.registrations {
-			if err := Register(v); err != nil {
-				t.Fatalf("%v: Register(%v) = %v; want no errors", tc.label, v.Name, err)
-			}
-		}
-
 		for _, v := range tc.subscriptions {
 			if err := v.Subscribe(); err != nil {
 				t.Fatalf("%v: Subscribe(%v) = %v; want no errors", tc.label, v.Name, err)
@@ -283,11 +257,6 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 			}
 		}
 
-		for _, v := range tc.registrations {
-			if err := Unregister(v); err != nil {
-				t.Fatalf("%v: Unregistering view %v errrored with %v; want no error", tc.label, v.Name, err)
-			}
-		}
 	}
 }
 
