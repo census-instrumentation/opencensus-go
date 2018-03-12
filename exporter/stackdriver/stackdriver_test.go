@@ -76,4 +76,8 @@ func TestExport(t *testing.T) {
 	if want, got := "Hello, world!", string(body); want != got {
 		t.Fatalf("resp.Body = %q; want %q", want, got)
 	}
+
+	// Flush twice to expose issue of exporter creating traces internally (#557)
+	exporter.Flush()
+	exporter.Flush()
 }
