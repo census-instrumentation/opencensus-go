@@ -50,6 +50,10 @@ type Handler struct {
 
 	// Handler is the handler used to handle the incoming request.
 	Handler http.Handler
+
+	// StartOptions are applied to the span started by this Handler around each
+	// request.
+	StartOptions trace.StartOptions
 }
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -80,9 +84,9 @@ func (h *Handler) startTrace(w http.ResponseWriter, r *http.Request) (*http.Requ
 	ctx := r.Context()
 	var span *trace.Span
 	if sc, ok := p.SpanContextFromRequest(r); ok {
-		span = trace.NewSpanWithRemoteParent(name, sc, trace.StartOptions{})
+		span = trace.NewSpanWithRemoteParent(name, sc, h.StartOptions)
 	} else {
-		span = trace.NewSpan(name, nil, trace.StartOptions{})
+		span = trace.NewSpan(name, nil, h.StartOptions)
 	}
 	ctx = trace.WithSpan(ctx, span)
 	span.SetAttributes(requestAttrs(r)...)
