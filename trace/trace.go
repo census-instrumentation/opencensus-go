@@ -165,7 +165,7 @@ func startSpanInternal(name string, hasParent bool, parent SpanContext, remotePa
 		if o.Sampler != nil {
 			sampler = o.Sampler
 		}
-		span.spanContext.setIsSampled(sampler.Sample(SamplingParameters{
+		span.spanContext.setIsSampled(sampler(SamplingParameters{
 			ParentContext:   parent,
 			TraceID:         span.spanContext.TraceID,
 			SpanID:          span.spanContext.SpanID,
@@ -402,11 +402,12 @@ func (s *Span) String() string {
 }
 
 var (
-	mu          sync.Mutex // protects the variables below
-	traceIDRand *rand.Rand
-	traceIDAdd  [2]uint64
-	nextSpanID  uint64
-	spanIDInc   uint64
+	mu             sync.Mutex // protects the variables below
+	traceIDRand    *rand.Rand
+	traceIDAdd     [2]uint64
+	nextSpanID     uint64
+	spanIDInc      uint64
+	defaultSampler Sampler
 )
 
 func init() {
