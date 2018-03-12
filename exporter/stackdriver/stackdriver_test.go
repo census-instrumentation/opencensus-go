@@ -27,6 +27,13 @@ import (
 	"go.opencensus.io/stats/view"
 	"go.opencensus.io/trace"
 	"golang.org/x/net/context/ctxhttp"
+
+	// Import some other packages known to integrate OpenCensus to check for compilation errors.
+	_ "cloud.google.com/go/datastore"
+	_ "cloud.google.com/go/pubsub"
+	_ "cloud.google.com/go/spanner"
+	_ "google.golang.org/api/transport/grpc"
+	_ "google.golang.org/api/transport/http"
 )
 
 func TestExport(t *testing.T) {
