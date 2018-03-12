@@ -27,7 +27,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// TagRPC gets the tag.Map populated by the application code, serializes
+// statsTagRPC gets the tag.Map populated by the application code, serializes
 // its tags into the GRPC metadata in order to be sent to the server.
 func (h *ClientHandler) statsTagRPC(ctx context.Context, info *stats.RPCTagInfo) context.Context {
 	startTime := time.Now()
@@ -54,7 +54,7 @@ func (h *ClientHandler) statsTagRPC(ctx context.Context, info *stats.RPCTagInfo)
 	return context.WithValue(ctx, grpcClientRPCKey, d)
 }
 
-// HandleRPC processes the RPC events.
+// statsHandleRPC processes the RPC events.
 func (h *ClientHandler) statsHandleRPC(ctx context.Context, s stats.RPCStats) {
 	switch st := s.(type) {
 	case *stats.Begin, *stats.OutHeader, *stats.InHeader, *stats.InTrailer, *stats.OutTrailer:
@@ -87,7 +87,7 @@ func (h *ClientHandler) handleRPCInPayload(ctx context.Context, s *stats.InPaylo
 	d, ok := ctx.Value(grpcClientRPCKey).(*rpcData)
 	if !ok {
 		if grpclog.V(2) {
-			grpclog.Infoln("clientHandler.handleRPCInPayload failed to retrieve *rpcData from context")
+			grpclog.Infoln("failed to retrieve *rpcData from context")
 		}
 		return
 	}
@@ -100,7 +100,7 @@ func (h *ClientHandler) handleRPCEnd(ctx context.Context, s *stats.End) {
 	d, ok := ctx.Value(grpcClientRPCKey).(*rpcData)
 	if !ok {
 		if grpclog.V(2) {
-			grpclog.Infoln("clientHandler.handleRPCEnd failed to retrieve *rpcData from context")
+			grpclog.Infoln("failed to retrieve *rpcData from context")
 		}
 		return
 	}
