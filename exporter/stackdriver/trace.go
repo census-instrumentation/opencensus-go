@@ -114,15 +114,16 @@ func (e *traceExporter) uploadSpans(spans []*trace.SpanData) {
 	for _, span := range spans {
 		req.Spans = append(req.Spans, protoFromSpanData(span, e.projectID))
 	}
-	// create a never-sampled span to prevent traces associated with exporter
+	// Create a never-sampled span to prevent traces associated with exporter.
 	span := trace.NewSpan("go.opencensus.io/exporter/stackdriver.uploadSpans", nil, trace.StartOptions{Sampler: trace.NeverSample()})
 	defer span.End()
-	span.SetAttributes(trace.Int64Attribute{Key: "num_spans", Value: int64(len(spans))})
+	span.SetAttributes(trace.Int64Attribute("num_spans", int64(len(spans))))
+
 	ctx := trace.WithSpan(context.Background(), span) // TODO: add timeouts
 	err := e.client.BatchWriteSpans(ctx, &req)
 	if err != nil {
 		span.SetStatus(trace.Status{Code: 2, Message: err.Error()})
-		//TODO: allow configuring a logger for exporters
+		// TODO: Allow configuring a logger for exporters.
 		log.Printf("OpenCensus Stackdriver exporter: failed to upload %d spans: %v", len(spans), err)
 	}
 }

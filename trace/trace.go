@@ -274,12 +274,12 @@ func (s *Span) SetAttributes(attributes ...Attribute) {
 func copyAttributes(m map[string]interface{}, attributes []Attribute) {
 	for _, a := range attributes {
 		switch a := a.(type) {
-		case BoolAttribute:
-			m[a.Key] = a.Value
-		case Int64Attribute:
-			m[a.Key] = a.Value
-		case StringAttribute:
-			m[a.Key] = a.Value
+		case boolAttribute:
+			m[a.key] = a.value
+		case int64Attribute:
+			m[a.key] = a.value
+		case stringAttribute:
+			m[a.key] = a.value
 		}
 	}
 }

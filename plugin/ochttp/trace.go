@@ -146,15 +146,15 @@ func spanNameFromURL(prefix string, u *url.URL) string {
 
 func requestAttrs(r *http.Request) []trace.Attribute {
 	return []trace.Attribute{
-		trace.StringAttribute{Key: PathAttribute, Value: r.URL.Path},
-		trace.StringAttribute{Key: HostAttribute, Value: r.URL.Host},
-		trace.StringAttribute{Key: MethodAttribute, Value: r.Method},
-		trace.StringAttribute{Key: UserAgentAttribute, Value: r.UserAgent()},
+		trace.StringAttribute(PathAttribute, r.URL.Path),
+		trace.StringAttribute(HostAttribute, r.URL.Host),
+		trace.StringAttribute(MethodAttribute, r.Method),
+		trace.StringAttribute(UserAgentAttribute, r.UserAgent()),
 	}
 }
 
 func responseAttrs(resp *http.Response) []trace.Attribute {
 	return []trace.Attribute{
-		trace.Int64Attribute{Key: StatusCodeAttribute, Value: int64(resp.StatusCode)},
+		trace.Int64Attribute(StatusCodeAttribute, int64(resp.StatusCode)),
 	}
 }

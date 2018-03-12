@@ -297,7 +297,7 @@ func checkTime(x *time.Time) bool {
 
 func TestSetSpanAttributes(t *testing.T) {
 	span := startSpan()
-	span.SetAttributes(StringAttribute{"key1", "value1"})
+	span.SetAttributes(StringAttribute("key1", "value1"))
 	got, err := endSpan(span)
 	if err != nil {
 		t.Fatal(err)
@@ -321,8 +321,8 @@ func TestSetSpanAttributes(t *testing.T) {
 
 func TestAnnotations(t *testing.T) {
 	span := startSpan()
-	span.Annotatef([]Attribute{StringAttribute{"key1", "value1"}}, "%f", 1.5)
-	span.Annotate([]Attribute{StringAttribute{"key2", "value2"}}, "Annotate")
+	span.Annotatef([]Attribute{StringAttribute("key1", "value1")}, "%f", 1.5)
+	span.Annotate([]Attribute{StringAttribute("key2", "value2")}, "Annotate")
 	got, err := endSpan(span)
 	if err != nil {
 		t.Fatal(err)
