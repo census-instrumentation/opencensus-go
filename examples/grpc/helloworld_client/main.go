@@ -44,7 +44,7 @@ func main() {
 
 	// Set up a connection to the server with the OpenCensus
 	// stats handler to enable stats and tracing.
-	conn, err := grpc.Dial(address, grpc.WithStatsHandler(ocgrpc.NewClientStatsHandler()), grpc.WithInsecure())
+	conn, err := grpc.Dial(address, grpc.WithStatsHandler(&ocgrpc.ClientHandler{}), grpc.WithInsecure())
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 	}
