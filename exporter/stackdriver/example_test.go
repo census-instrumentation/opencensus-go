@@ -19,8 +19,8 @@ import (
 	"net/http"
 
 	"go.opencensus.io/exporter/stackdriver"
+	"go.opencensus.io/exporter/stackdriver/propagation"
 	"go.opencensus.io/plugin/ochttp"
-	"go.opencensus.io/plugin/ochttp/propagation/google"
 	"go.opencensus.io/stats/view"
 	"go.opencensus.io/trace"
 )
@@ -42,7 +42,7 @@ func Example() {
 	// Automatically add a Stackdriver trace header to outgoing requests:
 	client := &http.Client{
 		Transport: &ochttp.Transport{
-			Propagation: &google.HTTPFormat{},
+			Propagation: &propagation.HTTPFormat{},
 		},
 	}
 	_ = client // use client
