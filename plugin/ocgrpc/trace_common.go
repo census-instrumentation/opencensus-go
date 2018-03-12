@@ -79,8 +79,8 @@ func handleRPC(ctx context.Context, rs stats.RPCStats) {
 	switch rs := rs.(type) {
 	case *stats.Begin:
 		span.SetAttributes(
-			trace.BoolAttribute{Key: "Client", Value: rs.Client},
-			trace.BoolAttribute{Key: "FailFast", Value: rs.FailFast})
+			trace.BoolAttribute("Client", rs.Client),
+			trace.BoolAttribute("FailFast", rs.FailFast))
 	case *stats.InPayload:
 		span.AddMessageReceiveEvent(0 /* TODO: messageID */, int64(rs.Length), int64(rs.WireLength))
 	case *stats.OutPayload:
