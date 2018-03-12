@@ -145,7 +145,7 @@ func benchmarkClientServer(b *testing.B, transport *ochttp.Transport) {
 		fmt.Fprintf(rw, "Hello world.\n")
 	}))
 	defer ts.Close()
-	transport.Sampler = trace.AlwaysSample()
+	transport.StartOptions.Sampler = trace.AlwaysSample()
 	var client http.Client
 	client.Transport = transport
 	b.ResetTimer()
@@ -195,7 +195,7 @@ func benchmarkClientServerParallel(b *testing.B, parallelism int, transport *och
 		MaxIdleConns:        parallelism,
 		MaxIdleConnsPerHost: parallelism,
 	}
-	transport.Sampler = trace.AlwaysSample()
+	transport.StartOptions.Sampler = trace.AlwaysSample()
 	c.Transport = transport
 
 	b.ResetTimer()

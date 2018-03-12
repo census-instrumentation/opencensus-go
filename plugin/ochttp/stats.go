@@ -20,7 +20,7 @@ import (
 	"go.opencensus.io/tag"
 )
 
-// The following client HTTP measures are supported for use in custom views:
+// The following client HTTP measures are supported for use in custom views.
 var (
 	ClientRequestCount, _  = stats.Int64("opencensus.io/http/client/request_count", "Number of HTTP requests started", stats.UnitNone)
 	ClientRequestBytes, _  = stats.Int64("opencensus.io/http/client/request_bytes", "HTTP request body size if set as ContentLength (uncompressed)", stats.UnitBytes)
@@ -54,6 +54,7 @@ var (
 	Method, _ = tag.NewKey("http.method")
 )
 
+// Default distributions used by views in this package.
 var (
 	DefaultSizeDistribution    = view.DistributionAggregation{0, 1024, 2048, 4096, 16384, 65536, 262144, 1048576, 4194304, 16777216, 67108864, 268435456, 1073741824, 4294967296}
 	DefaultLatencyDistribution = view.DistributionAggregation{0, 1, 2, 3, 4, 5, 6, 8, 10, 13, 16, 20, 25, 30, 40, 50, 65, 80, 100, 130, 160, 200, 250, 300, 400, 500, 650, 800, 1000, 2000, 5000, 10000, 20000, 50000, 100000}
