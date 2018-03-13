@@ -54,6 +54,7 @@ func TestServerDefaultCollections(t *testing.T) {
 		rpcs  []*rpc
 		wants []*wantData
 	}
+
 	tcs := []testCase{
 		{
 			"1",
@@ -296,10 +297,8 @@ func TestServerDefaultCollections(t *testing.T) {
 	}
 
 	for _, tc := range tcs {
-		for _, v := range DefaultServerViews {
-			if err := v.Subscribe(); err != nil {
-				t.Error(err)
-			}
+		if err := view.Subscribe(DefaultServerViews...); err != nil {
+			t.Fatal(err)
 		}
 
 		h := &ServerHandler{NoTrace: true}

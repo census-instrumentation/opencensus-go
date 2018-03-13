@@ -19,8 +19,10 @@ import (
 	"strings"
 	"time"
 
+	ocstats "go.opencensus.io/stats"
 	"go.opencensus.io/stats/view"
 	"go.opencensus.io/tag"
+	"golang.org/x/net/context"
 )
 
 type grpcInstrumentationKey string
@@ -34,6 +36,7 @@ type rpcData struct {
 	// application code invoked GRPC code.
 	startTime           time.Time
 	reqCount, respCount int64 // access atomically
+	method              string
 }
 
 // The following variables define the default hard-coded auxiliary data used by
@@ -57,4 +60,15 @@ var (
 
 func methodName(fullname string) string {
 	return strings.TrimLeft(fullname, "/")
+}
+
+func record(ctx context.Context, data *rpcData, status string, m ...ocstats.Measurement) {
+	mods := []tag.Mutator{
+		tag.Upsert(KeyMethod, methodName(data.method)),
+	}
+	if status != "" {
+		mods = append(mods, tag.Upsert(KeyStatus, status))
+	}
+	ctx, _ = tag.New(ctx, mods...)
+	ocstats.Record(ctx, m...)
 }
