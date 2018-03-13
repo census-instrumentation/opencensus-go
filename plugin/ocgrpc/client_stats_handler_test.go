@@ -298,8 +298,7 @@ func TestClientDefaultCollections(t *testing.T) {
 
 	for _, tc := range tcs {
 		// Register views.
-		err := view.Subscribe(DefaultClientViews...)
-		if err != nil {
+		if err := view.Subscribe(DefaultClientViews...); err != nil {
 			t.Error(err)
 		}
 
