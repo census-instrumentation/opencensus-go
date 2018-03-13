@@ -25,6 +25,9 @@ import (
 // Record records one or multiple measurements with the same tags at once.
 // If there are any tags in the context, measurements will be tagged with them.
 func Record(ctx context.Context, ms ...Measurement) {
+	if len(ms) == 0 {
+		return
+	}
 	if internal.DefaultRecorder != nil {
 		internal.DefaultRecorder(tag.FromContext(ctx), ms)
 	}
