@@ -52,7 +52,7 @@ func main() {
 	// Create view to see the amount of video processed
 	// Subscribe will allow view data to be exported.
 	// Once no longer needed, you can unsubscribe from the view.
-	err = view.Subscribe(
+	if err = view.Subscribe(
 		&view.View{
 			Name:        "video_count",
 			Description: "number of videos processed over time",
@@ -65,8 +65,7 @@ func main() {
 			Measure:     videoSize,
 			Aggregation: view.DistributionAggregation{0, 1 << 16, 1 << 32},
 		},
-	)
-	if err != nil {
+	); err != nil {
 		log.Fatalf("Cannot subscribe to the view: %v", err)
 	}
 

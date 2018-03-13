@@ -62,8 +62,7 @@ func init() {
 	for v := range viewType {
 		views = append(views, v)
 	}
-	err := view.Subscribe(views...)
-	if err != nil {
+	if err := view.Subscribe(views...); err != nil {
 		log.Printf("error subscribing to views: %v", err)
 	}
 	view.RegisterExporter(snapExporter{})
