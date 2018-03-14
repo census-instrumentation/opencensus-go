@@ -36,20 +36,23 @@ func (c *ClientHandler) HandleConn(ctx context.Context, cs stats.ConnStats) {
 	// no-op
 }
 
+// TagConn exists to satisfy gRPC stats.Handler.
 func (c *ClientHandler) TagConn(ctx context.Context, cti *stats.ConnTagInfo) context.Context {
 	// no-op
 	return ctx
 }
 
+// HandleRPC implements per-RPC tracing and stats instrumentation.
 func (c *ClientHandler) HandleRPC(ctx context.Context, rs stats.RPCStats) {
 	if !c.NoTrace {
-		c.traceHandleRPC(ctx, rs)
+		traceHandleRPC(ctx, rs)
 	}
 	if !c.NoStats {
 		c.statsHandleRPC(ctx, rs)
 	}
 }
 
+// TagRPC implements per-RPC context management.
 func (c *ClientHandler) TagRPC(ctx context.Context, rti *stats.RPCTagInfo) context.Context {
 	if !c.NoTrace {
 		ctx = c.traceTagRPC(ctx, rti)

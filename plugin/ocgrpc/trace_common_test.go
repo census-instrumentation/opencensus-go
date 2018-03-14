@@ -54,7 +54,7 @@ func (s *testServer) Multiple(stream testpb.Foo_MultipleServer) error {
 	}
 }
 
-func newTestClientAndServer() (client testpb.FooClient, server *grpc.Server, cleanup func(), err error) {
+func newTracingOnlyTestClientAndServer() (client testpb.FooClient, server *grpc.Server, cleanup func(), err error) {
 	// initialize server
 	listener, err := net.Listen("tcp", "localhost:0")
 	if err != nil {
@@ -93,7 +93,7 @@ func TestStreaming(t *testing.T) {
 	trace.RegisterExporter(&te)
 	defer trace.UnregisterExporter(&te)
 
-	client, _, cleanup, err := newTestClientAndServer()
+	client, _, cleanup, err := newTracingOnlyTestClientAndServer()
 	if err != nil {
 		t.Fatalf("initializing client and server: %v", err)
 	}
@@ -139,7 +139,7 @@ func TestStreamingFail(t *testing.T) {
 	trace.RegisterExporter(&te)
 	defer trace.UnregisterExporter(&te)
 
-	client, _, cleanup, err := newTestClientAndServer()
+	client, _, cleanup, err := newTracingOnlyTestClientAndServer()
 	if err != nil {
 		t.Fatalf("initializing client and server: %v", err)
 	}
@@ -183,7 +183,7 @@ func TestSingle(t *testing.T) {
 	trace.RegisterExporter(&te)
 	defer trace.UnregisterExporter(&te)
 
-	client, _, cleanup, err := newTestClientAndServer()
+	client, _, cleanup, err := newTracingOnlyTestClientAndServer()
 	if err != nil {
 		t.Fatalf("initializing client and server: %v", err)
 	}
@@ -212,7 +212,7 @@ func TestSingleFail(t *testing.T) {
 	trace.RegisterExporter(&te)
 	defer trace.UnregisterExporter(&te)
 
-	client, _, cleanup, err := newTestClientAndServer()
+	client, _, cleanup, err := newTracingOnlyTestClientAndServer()
 	if err != nil {
 		t.Fatalf("initializing client and server: %v", err)
 	}

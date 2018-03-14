@@ -52,28 +52,30 @@ func (c *ClientHandler) traceTagRPC(ctx context.Context, rti *stats.RPCTagInfo) 
 func (s *ServerHandler) traceTagRPC(ctx context.Context, rti *stats.RPCTagInfo) context.Context {
 	md, _ := metadata.FromIncomingContext(ctx)
 	name := "Recv" + strings.Replace(rti.FullMethodName, "/", ".", -1)
-	if s := md[traceContextKey]; len(s) > 0 {
-		if parent, ok := propagation.FromBinary([]byte(s[0])); ok {
-			span := trace.NewSpanWithRemoteParent(name, parent, trace.StartOptions{})
+	traceContext := md[traceContextKey]
+	var (
+		parent     trace.SpanContext
+		haveParent bool
+	)
+	if len(traceContext) > 0 {
+		// Metadata with keys ending in -bin are actually binary. They are base64
+		// encoded before being put on the wire, see:
+		// https://github.com/grpc/grpc-go/blob/08d6261/Documentation/grpc-metadata.md#storing-binary-data-in-metadata
+		traceContextBinary := []byte(traceContext[0])
+		parent, haveParent = propagation.FromBinary(traceContextBinary)
+		if haveParent && !s.IsPublicEndpoint {
+			span := trace.NewSpanWithRemoteParent(name, parent, s.StartOptions)
 			return trace.WithSpan(ctx, span)
 		}
 	}
-	// TODO(ramonza): should we ignore the in-process parent here?
-	ctx, _ = trace.StartSpan(ctx, name)
-	return ctx
+	span := trace.NewSpan(name, nil, s.StartOptions)
+	if haveParent {
+		span.AddLink(trace.Link{TraceID: parent.TraceID, SpanID: parent.SpanID, Type: trace.LinkTypeChild})
+	}
+	return trace.WithSpan(ctx, span)
 }
 
-// HandleRPC processes the RPC stats, adding information to the current trace span.
-func (c *ClientHandler) traceHandleRPC(ctx context.Context, rs stats.RPCStats) {
-	handleRPC(ctx, rs)
-}
-
-// HandleRPC processes the RPC stats, adding information to the current trace span.
-func (s *ServerHandler) traceHandleRPC(ctx context.Context, rs stats.RPCStats) {
-	handleRPC(ctx, rs)
-}
-
-func handleRPC(ctx context.Context, rs stats.RPCStats) {
+func traceHandleRPC(ctx context.Context, rs stats.RPCStats) {
 	span := trace.FromContext(ctx)
 	// TODO: compressed and uncompressed sizes are not populated in every message.
 	switch rs := rs.(type) {
