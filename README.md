@@ -184,4 +184,4 @@ A screenshot of the CPU profile from the program above:
 [exporter-stackdriver]: https://godoc.org/go.opencensus.io/exporter/stackdriver
 [exporter-zipkin]: https://godoc.org/go.opencensus.io/exporter/zipkin
 [exporter-jaeger]: https://godoc.org/go.opencensus.io/exporter/jaeger
-[exporter-xray]: https://godoc.org/go.opencensus.io/exporter/xray
+[exporter-xray]: https://github.com/census-instrumentation/opencensus-go-exporter-aws
