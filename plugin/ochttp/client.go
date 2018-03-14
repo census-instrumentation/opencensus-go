@@ -35,9 +35,6 @@ type Transport struct {
 	// NoStats may be set to disable recording of stats.
 	NoStats bool
 
-	// NoTrace may be set to disable recording of traces.
-	NoTrace bool
-
 	// Propagation defines how traces are propagated. If unspecified, a default
 	// (currently B3 format) will be used.
 	Propagation propagation.HTTPFormat
@@ -53,16 +50,14 @@ type Transport struct {
 func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	rt := t.base()
 	// TODO: remove excessive nesting of http.RoundTrippers here.
-	if !t.NoTrace {
-		format := t.Propagation
-		if format == nil {
-			format = defaultFormat
-		}
-		rt = &traceTransport{
-			base:         rt,
-			format:       format,
-			startOptions: t.StartOptions,
-		}
+	format := t.Propagation
+	if format == nil {
+		format = defaultFormat
+	}
+	rt = &traceTransport{
+		base:         rt,
+		format:       format,
+		startOptions: t.StartOptions,
 	}
 	if !t.NoStats {
 		rt = statsTransport{

@@ -29,11 +29,6 @@ import (
 // present but the SpanContext isn't sampled, then a new trace may be started
 // (as determined by Sampler).
 type ServerHandler struct {
-	// NoTrace may be set to true to disable OpenCensus tracing integration.
-	// If set to true, no trace metadata will be read from inbound RPCs and no
-	// new Spans will be created.
-	NoTrace bool
-
 	// NoStats may be set to true to disable recording OpenCensus stats for RPCs.
 	NoStats bool
 
@@ -72,9 +67,7 @@ func (s *ServerHandler) TagConn(ctx context.Context, cti *stats.ConnTagInfo) con
 
 // HandleRPC implements per-RPC tracing and stats instrumentation.
 func (s *ServerHandler) HandleRPC(ctx context.Context, rs stats.RPCStats) {
-	if !s.NoTrace {
-		traceHandleRPC(ctx, rs)
-	}
+	traceHandleRPC(ctx, rs)
 	if !s.NoStats {
 		s.statsHandleRPC(ctx, rs)
 	}
@@ -82,9 +75,7 @@ func (s *ServerHandler) HandleRPC(ctx context.Context, rs stats.RPCStats) {
 
 // TagRPC implements per-RPC context management.
 func (s *ServerHandler) TagRPC(ctx context.Context, rti *stats.RPCTagInfo) context.Context {
-	if !s.NoTrace {
-		ctx = s.traceTagRPC(ctx, rti)
-	}
+	ctx = s.traceTagRPC(ctx, rti)
 	if !s.NoStats {
 		ctx = s.statsTagRPC(ctx, rti)
 	}
