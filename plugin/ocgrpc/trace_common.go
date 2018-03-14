@@ -35,11 +35,9 @@ const traceContextKey = "grpc-trace-bin"
 // SpanContext added to the outgoing gRPC metadata.
 func (c *ClientHandler) traceTagRPC(ctx context.Context, rti *stats.RPCTagInfo) context.Context {
 	name := "Sent" + strings.Replace(rti.FullMethodName, "/", ".", -1)
-	ctx, _ = trace.StartSpan(ctx, name)
-	traceContextBinary := propagation.Binary(trace.FromContext(ctx).SpanContext())
-	if len(traceContextBinary) == 0 {
-		return ctx
-	}
+	span := trace.NewSpan(name, trace.FromContext(ctx), c.StartOptions) // span is ended by traceHandleRPC
+	ctx = trace.WithSpan(ctx, span)
+	traceContextBinary := propagation.Binary(span.SpanContext())
 	return metadata.AppendToOutgoingContext(ctx, traceContextKey, string(traceContextBinary))
 }
 

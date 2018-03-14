@@ -25,6 +25,8 @@ import (
 	"go.opencensus.io/trace"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/stats"
 )
 
 type testServer struct{}
@@ -85,6 +87,28 @@ type testExporter struct {
 
 func (t *testExporter) ExportSpan(s *trace.SpanData) {
 	go func() { t.ch <- s }()
+}
+
+func TestClientHandler_traceTagRPC(t *testing.T) {
+	ch := &ClientHandler{}
+	ch.StartOptions.Sampler = trace.AlwaysSample()
+	rti := &stats.RPCTagInfo{
+		FullMethodName: "xxx",
+	}
+	ctx := context.Background()
+	ctx = ch.traceTagRPC(ctx, rti)
+
+	span := trace.FromContext(ctx)
+	if span == nil {
+		t.Fatal("expected span, got nil")
+	}
+	if !span.IsRecordingEvents() {
+		t.Errorf("span should be sampled")
+	}
+	md, ok := metadata.FromOutgoingContext(ctx)
+	if !ok || len(md) == 0 || len(md[traceContextKey]) == 0 {
+		t.Fatal("no metadata")
+	}
 }
 
 func TestStreaming(t *testing.T) {

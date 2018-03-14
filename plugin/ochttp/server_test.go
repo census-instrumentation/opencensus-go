@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"go.opencensus.io/stats/view"
+	"go.opencensus.io/trace"
 )
 
 func httpHandler(statusCode, respSize int) http.Handler {
@@ -53,9 +54,9 @@ func TestHandlerStatsCollection(t *testing.T) {
 			r := httptest.NewRequest(test.method, test.target, body)
 			w := httptest.NewRecorder()
 			h := &Handler{
-				NoTrace: true,
 				Handler: httpHandler(test.statusCode, test.respSize),
 			}
+			h.StartOptions.Sampler = trace.NeverSample()
 
 			for i := 0; i < test.count; i++ {
 				h.ServeHTTP(w, r)
