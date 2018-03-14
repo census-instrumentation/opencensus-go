@@ -50,6 +50,7 @@ import (
 const maxTimeSeriesPerUpload = 200
 const opencensusTaskKey = "opencensus_task"
 const opencensusTaskDescription = "Opencensus task identifier"
+const defaultDisplayNamePrefix = "OpenCensus"
 
 // statsExporter exports stats to the Stackdriver Monitoring.
 type statsExporter struct {
@@ -278,11 +279,15 @@ func (e *statsExporter) createMeasure(ctx context.Context, vd *view.Data) error 
 	}
 
 	metricKind = metricpb.MetricDescriptor_CUMULATIVE
+	displayNamePrefix := defaultDisplayNamePrefix
+	if e.o.MetricPrefix != "" {
+		displayNamePrefix = e.o.MetricPrefix
+	}
 
 	md, err = createMetricDescriptor(ctx, e.c, &monitoringpb.CreateMetricDescriptorRequest{
 		Name: monitoring.MetricProjectPath(e.o.ProjectID),
 		MetricDescriptor: &metricpb.MetricDescriptor{
-			DisplayName: path.Join("OpenCensus", viewName),
+			DisplayName: path.Join(displayNamePrefix, viewName),
 			Description: m.Description(),
 			Unit:        m.Unit(),
 			Type:        namespacedViewName(viewName, false),
