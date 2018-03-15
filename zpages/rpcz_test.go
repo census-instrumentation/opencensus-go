@@ -1,4 +1,4 @@
-// Copyright 2017, OpenCensus Authors
+// Copyright 2018, OpenCensus Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -101,6 +101,9 @@ func TestRpcz(t *testing.T) {
 	view.SetReportingPeriod(time.Millisecond)
 	time.Sleep(2 * time.Millisecond)
 	view.SetReportingPeriod(time.Second)
+
+	mu.Lock()
+	defer mu.Unlock()
 
 	if len(snaps) == 0 {
 		t.Fatal("Expected len(snaps) > 0")

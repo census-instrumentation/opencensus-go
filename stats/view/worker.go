@@ -80,8 +80,7 @@ func (v *View) Subscribe() error {
 // Once a view is subscribed, it reports data to the registered exporters.
 func Subscribe(views ...*View) error {
 	for _, v := range views {
-		err := v.canonicalize()
-		if err != nil {
+		if err := v.canonicalize(); err != nil {
 			return err
 		}
 	}

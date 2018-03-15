@@ -408,14 +408,10 @@ type summaryPageRow struct {
 	Errors  int
 }
 
-func (s *summaryPageData) Len() int           { return len(s.Rows) }
-func (s *summaryPageData) Less(i, j int) bool { return s.Rows[i].Name < s.Rows[j].Name }
-func (s *summaryPageData) Swap(i, j int)      { s.Rows[i], s.Rows[j] = s.Rows[j], s.Rows[i] }
-
 func getSummaryPageData() summaryPageData {
 	data := summaryPageData{
 		Links:          true,
-		TracesEndpoint: "/tracez",
+		TracesEndpoint: "tracez",
 	}
 	internalTrace := internal.Trace.(interface {
 		ReportSpansPerMethod() map[string]internal.PerMethodSummary
@@ -443,6 +439,8 @@ func getSummaryPageData() summaryPageData {
 		}
 		data.Rows = append(data.Rows, row)
 	}
-	sort.Sort(&data)
+	sort.Slice(data.Rows, func(i, j int) bool {
+		return data.Rows[i].Name < data.Rows[j].Name
+	})
 	return data
 }
