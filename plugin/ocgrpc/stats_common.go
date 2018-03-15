@@ -31,12 +31,15 @@ type grpcInstrumentationKey string
 // and end of an call. It holds the info that this package needs to keep track
 // of between the various GRPC events.
 type rpcData struct {
+	// reqCount and respCount has to be the first words
+	// in order to be 64-aligned on 32-bit architectures.
+	reqCount, respCount int64 // access atomically
+
 	// startTime represents the time at which TagRPC was invoked at the
 	// beginning of an RPC. It is an appoximation of the time when the
 	// application code invoked GRPC code.
-	startTime           time.Time
-	reqCount, respCount int64 // access atomically
-	method              string
+	startTime time.Time
+	method    string
 }
 
 // The following variables define the default hard-coded auxiliary data used by
