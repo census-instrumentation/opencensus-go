@@ -79,6 +79,12 @@ func (v *View) Subscribe() error {
 // Subscribe begins collecting data for the given views.
 // Once a view is subscribed, it reports data to the registered exporters.
 func Subscribe(views ...*View) error {
+	for _, v := range views {
+		err := v.canonicalize()
+		if err != nil {
+			return err
+		}
+	}
 	req := &subscribeToViewReq{
 		views: views,
 		err:   make(chan error),

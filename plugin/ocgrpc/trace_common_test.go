@@ -21,7 +21,7 @@ import (
 	"testing"
 	"time"
 
-	"go.opencensus.io/plugin/ocgrpc/internal/testpb"
+	"go.opencensus.io/internal/testpb"
 	"go.opencensus.io/trace"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"

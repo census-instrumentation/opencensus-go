@@ -48,7 +48,7 @@ func main() {
 	view.RegisterExporter(&exporter.PrintExporter{})
 
 	// Subscribe to collect server request count.
-	if err := ocgrpc.ServerRequestCountView.Subscribe(); err != nil {
+	if err := view.Subscribe(ocgrpc.DefaultServerViews...); err != nil {
 		log.Fatal(err)
 	}
 

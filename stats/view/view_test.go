@@ -314,20 +314,20 @@ func TestCanonicalize(t *testing.T) {
 	k2, _ := tag.NewKey("k2")
 	m, _ := stats.Int64("TestCanonicalize/m1", "desc desc", stats.UnitNone)
 	v := &View{TagKeys: []tag.Key{k2, k1}, Measure: m, Aggregation: MeanAggregation{}}
-	vc, err := v.canonicalized()
+	err := v.canonicalize()
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got, want := vc.Name, "TestCanonicalize/m1"; got != want {
+	if got, want := v.Name, "TestCanonicalize/m1"; got != want {
 		t.Errorf("vc.Name = %q; want %q", got, want)
 	}
-	if got, want := vc.Description, "desc desc"; got != want {
+	if got, want := v.Description, "desc desc"; got != want {
 		t.Errorf("vc.Description = %q; want %q", got, want)
 	}
-	if got, want := len(vc.TagKeys), 2; got != want {
+	if got, want := len(v.TagKeys), 2; got != want {
 		t.Errorf("len(vc.TagKeys) = %d; want %d", got, want)
 	}
-	if got, want := vc.TagKeys[0].Name(), "k1"; got != want {
+	if got, want := v.TagKeys[0].Name(), "k1"; got != want {
 		t.Errorf("vc.TagKeys[0].Name() = %q; want %q", got, want)
 	}
 }
