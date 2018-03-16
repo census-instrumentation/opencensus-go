@@ -255,10 +255,10 @@ func (s *Span) SetStatus(status Status) {
 	s.mu.Unlock()
 }
 
-// SetAttributes sets attributes in the span.
+// AddAttributes sets attributes in the span.
 //
 // Existing attributes whose keys appear in the attributes parameter are overwritten.
-func (s *Span) SetAttributes(attributes ...Attribute) {
+func (s *Span) AddAttributes(attributes ...Attribute) {
 	if !s.IsRecordingEvents() {
 		return
 	}
