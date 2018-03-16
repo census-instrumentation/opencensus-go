@@ -36,7 +36,7 @@ func TestClient(t *testing.T) {
 	}))
 	defer server.Close()
 
-	for _, v := range ochttp.DefaultViews {
+	for _, v := range ochttp.DefaultClientViews {
 		v.Subscribe()
 	}
 

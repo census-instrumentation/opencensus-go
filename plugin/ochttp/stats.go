@@ -150,19 +150,24 @@ var (
 		Measure:     ServerLatency,
 		Aggregation: view.CountAggregation{},
 	}
-
-	DefaultViews = []*view.View{
-		ClientRequestCountView,
-		ClientRequestBytesView,
-		ClientResponseBytesView,
-		ClientLatencyView,
-		ClientRequestCountByMethod,
-		ClientResponseCountByStatusCode,
-		ServerRequestCountView,
-		ServerRequestBytesView,
-		ServerResponseBytesView,
-		ServerLatencyView,
-		ServerRequestCountByMethod,
-		ServerResponseCountByStatusCode,
-	}
 )
+
+// DefaultClientViews are the default client views provided by this package.
+var DefaultClientViews = []*view.View{
+	ClientRequestCountView,
+	ClientRequestBytesView,
+	ClientResponseBytesView,
+	ClientLatencyView,
+	ClientRequestCountByMethod,
+	ClientResponseCountByStatusCode,
+}
+
+// DefaultServerViews are the default server views provided by this package.
+var DefaultServerViews = []*view.View{
+	ServerRequestCountView,
+	ServerRequestBytesView,
+	ServerResponseBytesView,
+	ServerLatencyView,
+	ServerRequestCountByMethod,
+	ServerResponseCountByStatusCode,
+}
