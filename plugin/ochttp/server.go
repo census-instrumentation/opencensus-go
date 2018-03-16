@@ -51,6 +51,12 @@ type Handler struct {
 	// StartOptions are applied to the span started by this Handler around each
 	// request.
 	StartOptions trace.StartOptions
+
+	// IsPublicEndpoint should be set to true for publicly accessible HTTP(S)
+	// servers. If true, any trace metadata set on the incoming request will
+	// be added as a linked trace instead of being added as a parent of the
+	// current trace.
+	IsPublicEndpoint bool
 }
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -72,20 +78,33 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) startTrace(w http.ResponseWriter, r *http.Request) (*http.Request, func()) {
 	name := spanNameFromURL("Recv", r.URL)
-	p := h.Propagation
-	if p == nil {
-		p = defaultFormat
-	}
 	ctx := r.Context()
 	var span *trace.Span
-	if sc, ok := p.SpanContextFromRequest(r); ok {
+	sc, ok := h.extractSpanContext(r)
+	if ok && !h.IsPublicEndpoint {
 		span = trace.NewSpanWithRemoteParent(name, sc, h.StartOptions)
+		ctx = trace.WithSpan(ctx, span)
 	} else {
 		span = trace.NewSpan(name, nil, h.StartOptions)
+		if ok {
+			span.AddLink(trace.Link{
+				TraceID:    sc.TraceID,
+				SpanID:     sc.SpanID,
+				Type:       trace.LinkTypeChild,
+				Attributes: nil,
+			})
+		}
 	}
 	ctx = trace.WithSpan(ctx, span)
 	span.AddAttributes(requestAttrs(r)...)
 	return r.WithContext(trace.WithSpan(r.Context(), span)), span.End
+}
+
+func (h *Handler) extractSpanContext(r *http.Request) (trace.SpanContext, bool) {
+	if h.Propagation == nil {
+		return defaultFormat.SpanContextFromRequest(r)
+	}
+	return h.Propagation.SpanContextFromRequest(r)
 }
 
 func (h *Handler) startStats(w http.ResponseWriter, r *http.Request) (http.ResponseWriter, func()) {
