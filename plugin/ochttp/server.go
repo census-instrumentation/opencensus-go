@@ -38,8 +38,8 @@ import (
 //
 // Incoming propagation mechanism is determined by the given HTTP propagators.
 type Handler struct {
-	// NoStats may be set to disable recording of stats.
-	NoStats bool
+	// DisableStats disables the recording of stats.
+	DisableStats bool
 
 	// Propagation defines how traces are propagated. If unspecified,
 	// B3 propagation will be used.
@@ -57,7 +57,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var end func()
 	r, end = h.startTrace(w, r)
 	defer end()
-	if !h.NoStats {
+	if !h.DisableStats {
 		var end func()
 		w, end = h.startStats(w, r)
 		defer end()

@@ -62,12 +62,12 @@ func newTracingOnlyTestClientAndServer() (client testpb.FooClient, server *grpc.
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("net.Listen: %v", err)
 	}
-	server = grpc.NewServer(grpc.StatsHandler(&ServerHandler{NoStats: true}))
+	server = grpc.NewServer(grpc.StatsHandler(&ServerHandler{DisableStats: true}))
 	testpb.RegisterFooServer(server, &testServer{})
 	go server.Serve(listener)
 
 	// initialize client
-	clientConn, err := grpc.Dial(listener.Addr().String(), grpc.WithInsecure(), grpc.WithStatsHandler(&ClientHandler{NoStats: true}), grpc.WithBlock())
+	clientConn, err := grpc.Dial(listener.Addr().String(), grpc.WithInsecure(), grpc.WithStatsHandler(&ClientHandler{DisableStats: true}), grpc.WithBlock())
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("grpc.Dial: %v", err)
 	}

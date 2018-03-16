@@ -91,9 +91,9 @@ func TestTransport_RoundTrip(t *testing.T) {
 			transport := &testTransport{ch: make(chan *http.Request, 1)}
 
 			rt := &Transport{
-				NoStats:     true,
-				Propagation: &testPropagator{},
-				Base:        transport,
+				DisableStats: true,
+				Propagation:  &testPropagator{},
+				Base:         transport,
 			}
 
 			req, _ := http.NewRequest("GET", "http://foo.com", nil)
@@ -199,9 +199,9 @@ func TestEndToEnd(t *testing.T) {
 	req = req.WithContext(ctx)
 
 	rt := &Transport{
-		NoStats:     true,
-		Propagation: defaultFormat,
-		Base:        http.DefaultTransport,
+		DisableStats: true,
+		Propagation:  defaultFormat,
+		Base:         http.DefaultTransport,
 	}
 	resp, err := rt.RoundTrip(req)
 	if err != nil {
