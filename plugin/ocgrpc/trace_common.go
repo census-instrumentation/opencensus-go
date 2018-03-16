@@ -78,7 +78,7 @@ func traceHandleRPC(ctx context.Context, rs stats.RPCStats) {
 	// TODO: compressed and uncompressed sizes are not populated in every message.
 	switch rs := rs.(type) {
 	case *stats.Begin:
-		span.SetAttributes(
+		span.AddAttributes(
 			trace.BoolAttribute("Client", rs.Client),
 			trace.BoolAttribute("FailFast", rs.FailFast))
 	case *stats.InPayload:

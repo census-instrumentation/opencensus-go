@@ -297,7 +297,7 @@ func checkTime(x *time.Time) bool {
 
 func TestSetSpanAttributes(t *testing.T) {
 	span := startSpan()
-	span.SetAttributes(StringAttribute("key1", "value1"))
+	span.AddAttributes(StringAttribute("key1", "value1"))
 	got, err := endSpan(span)
 	if err != nil {
 		t.Fatal(err)

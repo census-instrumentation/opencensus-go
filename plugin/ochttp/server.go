@@ -84,7 +84,7 @@ func (h *Handler) startTrace(w http.ResponseWriter, r *http.Request) (*http.Requ
 		span = trace.NewSpan(name, nil, h.StartOptions)
 	}
 	ctx = trace.WithSpan(ctx, span)
-	span.SetAttributes(requestAttrs(r)...)
+	span.AddAttributes(requestAttrs(r)...)
 	return r.WithContext(trace.WithSpan(r.Context(), span)), span.End
 }
 

@@ -62,7 +62,7 @@ func (t *traceTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 		t.format.SpanContextToRequest(span.SpanContext(), req)
 	}
 
-	span.SetAttributes(requestAttrs(req)...)
+	span.AddAttributes(requestAttrs(req)...)
 	resp, err := t.base.RoundTrip(req)
 	if err != nil {
 		span.SetStatus(trace.Status{Code: 2, Message: err.Error()})
@@ -70,7 +70,7 @@ func (t *traceTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 		return resp, err
 	}
 
-	span.SetAttributes(responseAttrs(resp)...)
+	span.AddAttributes(responseAttrs(resp)...)
 
 	// span.End() will be invoked after
 	// a read from resp.Body returns io.EOF or when
