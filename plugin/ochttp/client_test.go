@@ -126,11 +126,11 @@ func TestClient(t *testing.T) {
 var noTrace = trace.StartOptions{Sampler: trace.NeverSample()}
 
 func BenchmarkTransportNoInstrumentation(b *testing.B) {
-	benchmarkClientServer(b, &ochttp.Transport{NoStats: true, StartOptions: noTrace})
+	benchmarkClientServer(b, &ochttp.Transport{DisableStats: true, StartOptions: noTrace})
 }
 
 func BenchmarkTransportTraceOnly(b *testing.B) {
-	benchmarkClientServer(b, &ochttp.Transport{NoStats: true})
+	benchmarkClientServer(b, &ochttp.Transport{DisableStats: true})
 }
 
 func BenchmarkTransportStatsOnly(b *testing.B) {
@@ -170,11 +170,11 @@ func benchmarkClientServer(b *testing.B, transport *ochttp.Transport) {
 }
 
 func BenchmarkTransportParallel64NoInstrumentation(b *testing.B) {
-	benchmarkClientServerParallel(b, 64, &ochttp.Transport{StartOptions: noTrace, NoStats: true})
+	benchmarkClientServerParallel(b, 64, &ochttp.Transport{StartOptions: noTrace, DisableStats: true})
 }
 
 func BenchmarkTransportParallel64TraceOnly(b *testing.B) {
-	benchmarkClientServerParallel(b, 64, &ochttp.Transport{NoStats: true})
+	benchmarkClientServerParallel(b, 64, &ochttp.Transport{DisableStats: true})
 }
 
 func BenchmarkTransportParallel64StatsOnly(b *testing.B) {

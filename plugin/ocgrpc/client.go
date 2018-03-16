@@ -24,9 +24,9 @@ import (
 // ClientHandler implements a gRPC stats.Handler for recording OpenCensus stats and
 // traces. Use with gRPC clients only.
 type ClientHandler struct {
-	// NoStats may be set to disable recording OpenCensus Stats around each
+	// DisableStats may be set to disable recording OpenCensus Stats around each
 	// gRPC method.
-	NoStats bool
+	DisableStats bool
 
 	// StartOptions allows configuring the StartOptions used to create new spans.
 	StartOptions trace.StartOptions
@@ -45,7 +45,7 @@ func (c *ClientHandler) TagConn(ctx context.Context, cti *stats.ConnTagInfo) con
 // HandleRPC implements per-RPC tracing and stats instrumentation.
 func (c *ClientHandler) HandleRPC(ctx context.Context, rs stats.RPCStats) {
 	traceHandleRPC(ctx, rs)
-	if !c.NoStats {
+	if !c.DisableStats {
 		c.statsHandleRPC(ctx, rs)
 	}
 }
@@ -53,7 +53,7 @@ func (c *ClientHandler) HandleRPC(ctx context.Context, rs stats.RPCStats) {
 // TagRPC implements per-RPC context management.
 func (c *ClientHandler) TagRPC(ctx context.Context, rti *stats.RPCTagInfo) context.Context {
 	ctx = c.traceTagRPC(ctx, rti)
-	if !c.NoStats {
+	if !c.DisableStats {
 		ctx = c.statsTagRPC(ctx, rti)
 	}
 	return ctx
