@@ -85,13 +85,13 @@ func (h *Handler) startTrace(w http.ResponseWriter, r *http.Request) (*http.Requ
 	name := spanNameFromURL("Recv", r.URL)
 	ctx := r.Context()
 	var span *trace.Span
-	sc, haveSC := h.extractSpanContext(r)
-	if haveSC && !h.IsPublicEndpoint {
+	sc, ok := h.extractSpanContext(r)
+	if ok && !h.IsPublicEndpoint {
 		span = trace.NewSpanWithRemoteParent(name, sc, h.StartOptions)
 		ctx = trace.WithSpan(ctx, span)
 	} else {
 		span = trace.NewSpan(name, nil, h.StartOptions)
-		if haveSC {
+		if ok {
 			span.AddLink(trace.Link{
 				TraceID:    sc.TraceID,
 				SpanID:     sc.SpanID,

@@ -175,43 +175,43 @@ func (c *collector) ExportSpan(s *trace.SpanData) {
 func TestEndToEnd(t *testing.T) {
 	trace.SetDefaultSampler(trace.AlwaysSample())
 
-	cases := []struct {
-		Name              string
-		ServerMiddleware  *Handler
-		ClientMiddleware  *Transport
-		ExpectSameTraceID bool
-		ExpectLinks       bool // expect a link between client and server span
+	tc := []struct {
+		name            string
+		handler         *Handler
+		transport       *Transport
+		wantSameTraceID bool
+		wantLinks       bool // expect a link between client and server span
 	}{
 		{
-			Name:              "internal default propagation",
-			ServerMiddleware:  &Handler{},
-			ClientMiddleware:  &Transport{NoStats: true},
-			ExpectSameTraceID: true,
+			name:            "internal default propagation",
+			handler:         &Handler{},
+			transport:       &Transport{NoStats: true},
+			wantSameTraceID: true,
 		},
 		{
-			Name:              "external default propagation",
-			ServerMiddleware:  &Handler{IsPublicEndpoint: true},
-			ClientMiddleware:  &Transport{NoStats: true},
-			ExpectSameTraceID: false,
-			ExpectLinks:       true,
+			name:            "external default propagation",
+			handler:         &Handler{IsPublicEndpoint: true},
+			transport:       &Transport{NoStats: true},
+			wantSameTraceID: false,
+			wantLinks:       true,
 		},
 		{
-			Name:              "internal TraceContext propagation",
-			ServerMiddleware:  &Handler{Propagation: &tracecontext.HTTPFormat{}},
-			ClientMiddleware:  &Transport{NoStats: true, Propagation: &tracecontext.HTTPFormat{}},
-			ExpectSameTraceID: true,
+			name:            "internal TraceContext propagation",
+			handler:         &Handler{Propagation: &tracecontext.HTTPFormat{}},
+			transport:       &Transport{NoStats: true, Propagation: &tracecontext.HTTPFormat{}},
+			wantSameTraceID: true,
 		},
 		{
-			Name:              "misconfigured propagation",
-			ServerMiddleware:  &Handler{IsPublicEndpoint: true, Propagation: &tracecontext.HTTPFormat{}},
-			ClientMiddleware:  &Transport{NoStats: true, Propagation: &b3.HTTPFormat{}},
-			ExpectSameTraceID: false,
-			ExpectLinks:       false,
+			name:            "misconfigured propagation",
+			handler:         &Handler{IsPublicEndpoint: true, Propagation: &tracecontext.HTTPFormat{}},
+			transport:       &Transport{NoStats: true, Propagation: &b3.HTTPFormat{}},
+			wantSameTraceID: false,
+			wantLinks:       false,
 		},
 	}
 
-	for _, c := range cases {
-		t.Run(c.Name, func(t *testing.T) {
+	for _, tt := range tc {
+		t.Run(tt.name, func(t *testing.T) {
 			var spans collector
 			trace.RegisterExporter(&spans)
 			defer trace.UnregisterExporter(&spans)
@@ -219,7 +219,7 @@ func TestEndToEnd(t *testing.T) {
 			// Start the server.
 			serverDone := make(chan struct{})
 			serverReturn := make(chan time.Time)
-			url := serveHTTP(c.ServerMiddleware, serverDone, serverReturn)
+			url := serveHTTP(tt.handler, serverDone, serverReturn)
 
 			// Start a root Span in the client.
 			root := trace.NewSpan(
@@ -234,15 +234,15 @@ func TestEndToEnd(t *testing.T) {
 				fmt.Sprintf("%s/example/url/path?qparam=val", url),
 				strings.NewReader("expected-request-body"))
 			if err != nil {
-				t.Fatalf("unexpected error %#v", err)
+				t.Fatal(err)
 			}
 			req = req.WithContext(ctx)
-			resp, err := c.ClientMiddleware.RoundTrip(req)
+			resp, err := tt.transport.RoundTrip(req)
 			if err != nil {
-				t.Fatalf("unexpected error %s", err)
+				t.Fatal(err)
 			}
 			if resp.StatusCode != http.StatusOK {
-				t.Fatalf("unexpected stats: %d", resp.StatusCode)
+				t.Fatalf("resp.StatusCode = %d", resp.StatusCode)
 			}
 
 			// Tell the server to return from request handling.
@@ -250,10 +250,10 @@ func TestEndToEnd(t *testing.T) {
 
 			respBody, err := ioutil.ReadAll(resp.Body)
 			if err != nil {
-				t.Fatalf("unexpected read error: %#v", err)
+				t.Fatal(err)
 			}
-			if string(respBody) != "expected-response" {
-				t.Fatalf("unexpected response: %s", string(respBody))
+			if got, want := string(respBody), "expected-response"; got != want {
+				t.Fatalf("respBody = %q; want %q", got, want)
 			}
 
 			resp.Body.Close()
@@ -284,7 +284,7 @@ func TestEndToEnd(t *testing.T) {
 			if server == nil || client == nil {
 				t.Fatalf("server or client span missing")
 			}
-			if c.ExpectSameTraceID {
+			if tt.wantSameTraceID {
 				if server.TraceID != client.TraceID {
 					t.Errorf("TraceID does not match: server.TraceID=%q client.TraceID=%q", server.TraceID, client.TraceID)
 				}
@@ -295,12 +295,12 @@ func TestEndToEnd(t *testing.T) {
 					t.Errorf("server span should have client span as parent")
 				}
 			}
-			if !c.ExpectSameTraceID {
+			if !tt.wantSameTraceID {
 				if server.TraceID == client.TraceID {
 					t.Errorf("TraceID should not be trusted")
 				}
 			}
-			if c.ExpectLinks {
+			if tt.wantLinks {
 				if got, want := len(server.Links), 1; got != want {
 					t.Errorf("len(server.Links) = %d; want %d", got, want)
 				} else {
