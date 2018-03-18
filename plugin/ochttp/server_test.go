@@ -26,7 +26,7 @@ func updateMean(mean float64, sample, count int) float64 {
 }
 
 func TestHandlerStatsCollection(t *testing.T) {
-	for _, v := range DefaultViews {
+	for _, v := range DefaultServerViews {
 		v.Subscribe()
 	}
 
