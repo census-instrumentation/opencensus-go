@@ -32,9 +32,6 @@ type Transport struct {
 	// the returned round tripper will be cancelable.
 	Base http.RoundTripper
 
-	// NoStats may be set to disable recording of stats.
-	NoStats bool
-
 	// Propagation defines how traces are propagated. If unspecified, a default
 	// (currently B3 format) will be used.
 	Propagation propagation.HTTPFormat
@@ -59,11 +56,7 @@ func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 		format:       format,
 		startOptions: t.StartOptions,
 	}
-	if !t.NoStats {
-		rt = statsTransport{
-			base: rt,
-		}
-	}
+	rt = statsTransport{base: rt}
 	return rt.RoundTrip(req)
 }
 

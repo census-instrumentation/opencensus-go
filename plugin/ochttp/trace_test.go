@@ -93,7 +93,6 @@ func TestTransport_RoundTrip(t *testing.T) {
 			transport := &testTransport{ch: make(chan *http.Request, 1)}
 
 			rt := &Transport{
-				NoStats:     true,
 				Propagation: &testPropagator{},
 				Base:        transport,
 			}
@@ -185,26 +184,26 @@ func TestEndToEnd(t *testing.T) {
 		{
 			name:            "internal default propagation",
 			handler:         &Handler{},
-			transport:       &Transport{NoStats: true},
+			transport:       &Transport{},
 			wantSameTraceID: true,
 		},
 		{
 			name:            "external default propagation",
 			handler:         &Handler{IsPublicEndpoint: true},
-			transport:       &Transport{NoStats: true},
+			transport:       &Transport{},
 			wantSameTraceID: false,
 			wantLinks:       true,
 		},
 		{
 			name:            "internal TraceContext propagation",
 			handler:         &Handler{Propagation: &tracecontext.HTTPFormat{}},
-			transport:       &Transport{NoStats: true, Propagation: &tracecontext.HTTPFormat{}},
+			transport:       &Transport{Propagation: &tracecontext.HTTPFormat{}},
 			wantSameTraceID: true,
 		},
 		{
 			name:            "misconfigured propagation",
 			handler:         &Handler{IsPublicEndpoint: true, Propagation: &tracecontext.HTTPFormat{}},
-			transport:       &Transport{NoStats: true, Propagation: &b3.HTTPFormat{}},
+			transport:       &Transport{Propagation: &b3.HTTPFormat{}},
 			wantSameTraceID: false,
 			wantLinks:       false,
 		},
