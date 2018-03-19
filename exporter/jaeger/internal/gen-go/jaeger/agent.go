@@ -76,7 +76,7 @@ func (p *AgentClient) sendEmitBatch(batch *Batch) (err error) {
 	if err = oprot.WriteMessageEnd(); err != nil {
 		return
 	}
-	return oprot.Flush()
+	return oprot.Flush(context.Background())
 }
 
 type AgentProcessor struct {
@@ -119,7 +119,7 @@ func (p *AgentProcessor) Process(iprot, oprot thrift.TProtocol) (success bool, e
 	oprot.WriteMessageBegin(name, thrift.EXCEPTION, seqId)
 	x1.Write(oprot)
 	oprot.WriteMessageEnd()
-	oprot.Flush()
+	oprot.Flush(ctx)
 	return false, x1
 }
 
