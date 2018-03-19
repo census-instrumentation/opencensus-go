@@ -39,6 +39,10 @@ type Options struct {
 	// For example, http://localhost:14268.
 	Endpoint string
 
+	// AgentEndpoint instructs exporter to send spans to jaeger-agent at this address.
+	// For example, localhost:6831.
+	AgentEndpoint string
+
 	// OnError is the hook to be called when there is
 	// an error occurred when uploading the stats data.
 	// If no custom hook is set, errors are logged.
@@ -61,10 +65,20 @@ type Options struct {
 // the collected spans to Jaeger.
 func NewExporter(o Options) (*Exporter, error) {
 	endpoint := o.Endpoint
-	if endpoint == "" {
+	if endpoint == "" && o.AgentEndpoint == "" {
 		return nil, errors.New("missing endpoint for Jaeger exporter")
 	}
-	endpoint = endpoint + "/api/traces?format=jaeger.thrift"
+
+	var client *agentClientUDP
+	var err error
+	if endpoint != "" {
+		endpoint = endpoint + "/api/traces?format=jaeger.thrift"
+	} else {
+		client, err = newAgentClientUDP(o.AgentEndpoint, udpPacketMaxLength)
+		if err != nil {
+			return nil, err
+		}
+	}
 	onError := func(err error) {
 		if o.OnError != nil {
 			o.OnError(err)
@@ -77,10 +91,12 @@ func NewExporter(o Options) (*Exporter, error) {
 		service = defaultServiceName
 	}
 	e := &Exporter{
-		endpoint: endpoint,
-		username: o.Username,
-		password: o.Password,
-		service:  service,
+		endpoint:      endpoint,
+		agentEndpoint: o.AgentEndpoint,
+		client:        client,
+		username:      o.Username,
+		password:      o.Password,
+		service:       service,
 	}
 	bundler := bundler.NewBundler((*gen.Span)(nil), func(bundle interface{}) {
 		if err := e.upload(bundle.([]*gen.Span)); err != nil {
@@ -93,9 +109,11 @@ func NewExporter(o Options) (*Exporter, error) {
 
 // Exporter is an implementation of trace.Exporter that uploads spans to Jaeger.
 type Exporter struct {
-	endpoint string
-	service  string
-	bundler  *bundler.Bundler
+	endpoint      string
+	agentEndpoint string
+	service       string
+	bundler       *bundler.Bundler
+	client        *agentClientUDP
 
 	username, password string
 }
@@ -188,6 +206,17 @@ func (e *Exporter) upload(spans []*gen.Span) error {
 			ServiceName: e.service,
 		},
 	}
+	if e.endpoint != "" {
+		return e.uploadCollector(batch)
+	}
+	return e.uploadAgent(batch)
+}
+
+func (e *Exporter) uploadAgent(batch *gen.Batch) error {
+	return e.client.EmitBatch(batch)
+}
+
+func (e *Exporter) uploadCollector(batch *gen.Batch) error {
 	body, err := serialize(batch)
 	if err != nil {
 		return err
