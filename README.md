@@ -45,7 +45,7 @@ you to instrument your services and collect diagnostics data all
 through your services end-to-end.
 
 Start with instrumenting HTTP and gRPC clients and servers,
-then add additional custom instrumentation.
+then add additional custom instrumentation if needed.
 
 * [HTTP guide](https://github.com/census-instrumentation/opencensus-go/tree/master/examples/http)
 * [gRPC guide](https://github.com/census-instrumentation/opencensus-go/tree/master/examples/grpc)
