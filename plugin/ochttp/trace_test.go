@@ -266,23 +266,22 @@ func TestEndToEnd(t *testing.T) {
 
 			var client, server *trace.SpanData
 			for _, sp := range spans {
-				if strings.HasPrefix(sp.Name, "Sent.") {
+				switch sp.SpanKind {
+				case trace.SpanKindClient:
 					client = sp
-					serverHostport := req.URL.Hostname() + ":" + req.URL.Port()
-					if got, want := client.Name, "Sent."+serverHostport+"/example/url/path"; got != want {
+					if got, want := client.Name, "/example/url/path"; got != want {
 						t.Errorf("Span name: %q; want %q", got, want)
 					}
-				} else if strings.HasPrefix(sp.Name, "Recv.") {
+				case trace.SpanKindServer:
 					server = sp
-					if got, want := server.Name, "Recv./example/url/path"; got != want {
+					if got, want := server.Name, "/example/url/path"; got != want {
 						t.Errorf("Span name: %q; want %q", got, want)
 					}
+				default:
+					t.Fatalf("server or client span missing")
 				}
 			}
 
-			if server == nil || client == nil {
-				t.Fatalf("server or client span missing")
-			}
 			if tt.wantSameTraceID {
 				if server.TraceID != client.TraceID {
 					t.Errorf("TraceID does not match: server.TraceID=%q client.TraceID=%q", server.TraceID, client.TraceID)
@@ -346,38 +345,25 @@ func serveHTTP(handler *Handler, done chan struct{}, wait chan time.Time) string
 
 func TestSpanNameFromURL(t *testing.T) {
 	tests := []struct {
-		prefix string
-		u      string
-		want   string
+		u    string
+		want string
 	}{
 		{
-			prefix: "Sent",
-			u:      "http://localhost:80/hello?q=a",
-			want:   "Sent.localhost/hello",
+			u:    "http://localhost:80/hello?q=a",
+			want: "/hello",
 		},
 		{
-			prefix: "Recv",
-			u:      "https://localhost:443/a",
-			want:   "Recv.localhost/a",
-		},
-		{
-			prefix: "Recv",
-			u:      "https://example.com:7654/a",
-			want:   "Recv.example.com:7654/a",
-		},
-		{
-			prefix: "Sent",
-			u:      "/a/b?q=c",
-			want:   "Sent./a/b",
+			u:    "/a/b?q=c",
+			want: "/a/b",
 		},
 	}
 	for _, tt := range tests {
-		t.Run(tt.prefix+"-"+tt.u, func(t *testing.T) {
+		t.Run(tt.u, func(t *testing.T) {
 			u, err := url.Parse(tt.u)
 			if err != nil {
 				t.Errorf("url.Parse() = %v", err)
 			}
-			if got := spanNameFromURL(tt.prefix, u); got != tt.want {
+			if got := spanNameFromURL(u); got != tt.want {
 				t.Errorf("spanNameFromURL() = %v, want %v", got, tt.want)
 			}
 		})
@@ -393,13 +379,13 @@ func TestRequestAttributes(t *testing.T) {
 		{
 			name: "GET example.com/hello",
 			makeReq: func() *http.Request {
-				req, _ := http.NewRequest("GET", "http://example.com/hello", nil)
+				req, _ := http.NewRequest("GET", "http://example.com:779/hello", nil)
 				req.Header.Add("User-Agent", "ua")
 				return req
 			},
 			wantAttrs: []trace.Attribute{
 				trace.StringAttribute("http.path", "/hello"),
-				trace.StringAttribute("http.host", "example.com"),
+				trace.StringAttribute("http.host", "example.com:779"),
 				trace.StringAttribute("http.method", "GET"),
 				trace.StringAttribute("http.user_agent", "ua"),
 			},

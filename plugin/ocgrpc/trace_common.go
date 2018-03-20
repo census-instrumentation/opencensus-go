@@ -34,7 +34,8 @@ const traceContextKey = "grpc-trace-bin"
 // It returns ctx with the new trace span added and a serialization of the
 // SpanContext added to the outgoing gRPC metadata.
 func (c *ClientHandler) traceTagRPC(ctx context.Context, rti *stats.RPCTagInfo) context.Context {
-	name := "Sent" + strings.Replace(rti.FullMethodName, "/", ".", -1)
+	name := strings.TrimPrefix(rti.FullMethodName, "/")
+	name = strings.Replace(name, "/", ".", -1)
 	span := trace.NewSpan(name, trace.FromContext(ctx), trace.StartOptions{
 		Sampler:  c.StartOptions.Sampler,
 		SpanKind: trace.SpanKindClient,
@@ -57,7 +58,8 @@ func (s *ServerHandler) traceTagRPC(ctx context.Context, rti *stats.RPCTagInfo) 
 	}
 
 	md, _ := metadata.FromIncomingContext(ctx)
-	name := "Recv" + strings.Replace(rti.FullMethodName, "/", ".", -1)
+	name := strings.TrimPrefix(rti.FullMethodName, "/")
+	name = strings.Replace(name, "/", ".", -1)
 	traceContext := md[traceContextKey]
 	var (
 		parent     trace.SpanContext

@@ -158,7 +158,7 @@ func (e *Exporter) ExportSpan(data *trace.SpanData) {
 		TraceIdLow:    bytesToInt64(data.TraceID[8:16]),
 		SpanId:        bytesToInt64(data.SpanID[:]),
 		ParentSpanId:  bytesToInt64(data.ParentSpanID[:]),
-		OperationName: data.Name,
+		OperationName: name(data),
 		Flags:         int32(data.TraceOptions),
 		StartTime:     data.StartTime.UnixNano() / 1000,
 		Duration:      data.EndTime.Sub(data.StartTime).Nanoseconds() / 1000,
@@ -168,6 +168,17 @@ func (e *Exporter) ExportSpan(data *trace.SpanData) {
 	}
 	e.bundler.Add(span, 1)
 	// TODO(jbd): Handle oversized bundlers.
+}
+
+func name(sd *trace.SpanData) string {
+	n := sd.Name
+	switch sd.SpanKind {
+	case trace.SpanKindClient:
+		n = "Sent." + n
+	case trace.SpanKindServer:
+		n = "Recv." + n
+	}
+	return n
 }
 
 func attributeToTag(key string, a interface{}) *gen.Tag {
