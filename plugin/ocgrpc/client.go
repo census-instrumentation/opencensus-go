@@ -25,6 +25,9 @@ import (
 // traces. Use with gRPC clients only.
 type ClientHandler struct {
 	// StartOptions allows configuring the StartOptions used to create new spans.
+	//
+	// StartOptions.SpanKind will always be set to trace.SpanKindClient
+	// for spans started by this handler.
 	StartOptions trace.StartOptions
 }
 

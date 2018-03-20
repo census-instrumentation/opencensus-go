@@ -45,7 +45,11 @@ type ServerHandler struct {
 	// present on the inbound RPC but the SpanContext is not sampled. This
 	// ensures that each service has some opportunity to be traced. If you would
 	// like to not add any additional traces for this gRPC service, set:
+	//
 	//   StartOptions.Sampler = trace.ProbabilitySampler(0.0)
+	//
+	// StartOptions.SpanKind will always be set to trace.SpanKindServer
+	// for spans started by this handler.
 	StartOptions trace.StartOptions
 }
 

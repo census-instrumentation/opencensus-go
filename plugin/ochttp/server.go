@@ -47,6 +47,9 @@ type Handler struct {
 
 	// StartOptions are applied to the span started by this Handler around each
 	// request.
+	//
+	// StartOptions.SpanKind will always be set to trace.SpanKindServer
+	// for spans started by this transport.
 	StartOptions trace.StartOptions
 
 	// IsPublicEndpoint should be set to true for publicly accessible HTTP(S)
@@ -71,15 +74,20 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) startTrace(w http.ResponseWriter, r *http.Request) (*http.Request, func()) {
+	opts := trace.StartOptions{
+		Sampler:  h.StartOptions.Sampler,
+		SpanKind: trace.SpanKindServer,
+	}
+
 	name := spanNameFromURL("Recv", r.URL)
 	ctx := r.Context()
 	var span *trace.Span
 	sc, ok := h.extractSpanContext(r)
 	if ok && !h.IsPublicEndpoint {
-		span = trace.NewSpanWithRemoteParent(name, sc, h.StartOptions)
+		span = trace.NewSpanWithRemoteParent(name, sc, opts)
 		ctx = trace.WithSpan(ctx, span)
 	} else {
-		span = trace.NewSpan(name, nil, h.StartOptions)
+		span = trace.NewSpan(name, nil, opts)
 		if ok {
 			span.AddLink(trace.Link{
 				TraceID:    sc.TraceID,
