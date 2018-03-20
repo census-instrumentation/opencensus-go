@@ -46,9 +46,9 @@ var (
 func BenchmarkRecordReqCommand(b *testing.B) {
 	w := newWorker()
 
-	subscribe := &subscribeToViewReq{views: []*View{view}, err: make(chan error, 1)}
-	subscribe.handleCommand(w)
-	if err := <-subscribe.err; err != nil {
+	register := &registerViewReq{views: []*View{view}, err: make(chan error, 1)}
+	register.handleCommand(w)
+	if err := <-register.err; err != nil {
 		b.Fatal(err)
 	}
 

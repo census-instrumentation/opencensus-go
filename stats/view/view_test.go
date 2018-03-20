@@ -339,7 +339,7 @@ func TestViewSortedKeys(t *testing.T) {
 	ks := []tag.Key{k1, k3, k2}
 
 	m := stats.Int64("TestViewSortedKeys/m1", "", stats.UnitNone)
-	Subscribe(&View{
+	Register(&View{
 		Name:        "sort_keys",
 		Description: "desc sort_keys",
 		TagKeys:     ks,

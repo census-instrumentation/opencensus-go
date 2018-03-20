@@ -26,24 +26,24 @@ import (
 	"go.opencensus.io/tag"
 )
 
-func Test_Worker_ViewSubscription(t *testing.T) {
+func Test_Worker_ViewRegistration(t *testing.T) {
 	someError := errors.New("some error")
 
 	sc1 := make(chan *Data)
 
-	type subscription struct {
+	type registration struct {
 		c   chan *Data
 		vID string
 		err error
 	}
 	type testCase struct {
 		label         string
-		subscriptions []subscription
+		registrations []registration
 	}
 	tcs := []testCase{
 		{
 			"register and subscribe to v1ID",
-			[]subscription{
+			[]registration{
 				{
 					sc1,
 					"v1ID",
@@ -53,7 +53,7 @@ func Test_Worker_ViewSubscription(t *testing.T) {
 		},
 		{
 			"register v1ID+v2ID, susbsribe to v1ID",
-			[]subscription{
+			[]registration{
 				{
 					sc1,
 					"v1ID",
@@ -63,7 +63,7 @@ func Test_Worker_ViewSubscription(t *testing.T) {
 		},
 		{
 			"register to v1ID; subscribe to v1ID and view with same ID",
-			[]subscription{
+			[]registration{
 				{
 					sc1,
 					"v1ID",
@@ -105,11 +105,11 @@ func Test_Worker_ViewSubscription(t *testing.T) {
 				"vNilID": nil,
 			}
 
-			for _, s := range tc.subscriptions {
-				v := views[s.vID]
-				err := Subscribe(v)
-				if (err != nil) != (s.err != nil) {
-					t.Errorf("%v: Subscribe() = %v, want %v", tc.label, err, s.err)
+			for _, r := range tc.registrations {
+				v := views[r.vID]
+				err := Register(v)
+				if (err != nil) != (r.err != nil) {
+					t.Errorf("%v: Register() = %v, want %v", tc.label, err, r.err)
 				}
 			}
 		})
@@ -142,7 +142,7 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 	}
 	type testCase struct {
 		label         string
-		subscriptions []*View
+		registrations []*View
 		records       []float64
 		wants         []want
 	}
@@ -150,13 +150,13 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 	tcs := []testCase{
 		{
 			label:         "0",
-			subscriptions: []*View{},
+			registrations: []*View{},
 			records:       []float64{1, 1},
 			wants:         []want{{v1, nil, someError}, {v2, nil, someError}},
 		},
 		{
 			label:         "1",
-			subscriptions: []*View{v1},
+			registrations: []*View{v1},
 			records:       []float64{1, 1},
 			wants: []want{
 				{
@@ -174,7 +174,7 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 		},
 		{
 			label:         "2",
-			subscriptions: []*View{v1, v2},
+			registrations: []*View{v1, v2},
 			records:       []float64{1, 1},
 			wants: []want{
 				{
@@ -202,9 +202,9 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 	}
 
 	for _, tc := range tcs {
-		for _, v := range tc.subscriptions {
-			if err := Subscribe(v); err != nil {
-				t.Fatalf("%v: Subscribe(%v) = %v; want no errors", tc.label, v.Name, err)
+		for _, v := range tc.registrations {
+			if err := Register(v); err != nil {
+				t.Fatalf("%v: Register(%v) = %v; want no errors", tc.label, v.Name, err)
 			}
 		}
 
@@ -215,7 +215,7 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 		for _, w := range tc.wants {
 			gotRows, err := RetrieveData(w.v.Name)
 			if (err != nil) != (w.err != nil) {
-				t.Fatalf("%s: RetrieveData(%v) = %v; want no errors", tc.label, w.v.Name, err)
+				t.Fatalf("%s: RetrieveData(%v) = %v; want error = %v", tc.label, w.v.Name, err, w.err)
 			}
 			for _, got := range gotRows {
 				if !containsRow(w.rows, got) {
@@ -232,7 +232,11 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 		}
 
 		// cleaning up
-		Unsubscribe(tc.subscriptions...)
+		for _, v := range tc.registrations {
+			if err := v.Unregister(); err != nil {
+				t.Fatalf("%v: Unregistering from view %v errored with %v; want no error", tc.label, v.Name, err)
+			}
+		}
 	}
 }
 
@@ -262,7 +266,7 @@ func TestReportUsage(t *testing.T) {
 		restart()
 		SetReportingPeriod(25 * time.Millisecond)
 
-		if err := Subscribe(tt.view); err != nil {
+		if err := Register(tt.view); err != nil {
 			t.Fatalf("%v: cannot subscribe: %v", tt.name, err)
 		}
 
@@ -319,8 +323,8 @@ func TestWorkerStarttime(t *testing.T) {
 	v, _ := New("testview", "", nil, m, Count())
 
 	SetReportingPeriod(25 * time.Millisecond)
-	if err := v.Subscribe(); err != nil {
-		t.Fatalf("cannot subscribe to %v: %v", v.Name, err)
+	if err := v.Register(); err != nil {
+		t.Fatalf("cannot register to %v: %v", v.Name, err)
 	}
 
 	e := &vdExporter{}

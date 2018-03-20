@@ -26,7 +26,7 @@ func Example() {
 	m := stats.Int64("my.org/measure/openconns", "open connections", stats.UnitNone)
 
 	// Views are usually subscribed in your application main function.
-	if err := view.Subscribe(&view.View{
+	if err := view.Register(&view.View{
 		Name:        "my.org/views/openconns",
 		Description: "open connections",
 		Measure:     m,

@@ -57,8 +57,8 @@ func main() {
 
 	// Create view to see the processed video size
 	// distribution broken down by frontend.
-	// Subscribe will allow view data to be exported.
-	if err := view.Subscribe(&view.View{
+	// Register will allow view data to be exported.
+	if err := view.Register(&view.View{
 		Name:        "my.org/views/video_size",
 		Description: "processed video size over time",
 		TagKeys:     []tag.Key{frontendKey},
