@@ -100,7 +100,7 @@ func WithSpan(parent context.Context, s *Span) context.Context {
 	return context.WithValue(parent, contextKey{}, s)
 }
 
-// All available span kinds.
+// All available span kinds. Span kind must be either one of these values.
 const (
 	SpanKindUnspecified = iota
 	SpanKindServer
