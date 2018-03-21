@@ -79,7 +79,7 @@ func (h *Handler) startTrace(w http.ResponseWriter, r *http.Request) (*http.Requ
 		SpanKind: trace.SpanKindServer,
 	}
 
-	name := spanNameFromURL("Recv", r.URL)
+	name := spanNameFromURL(r.URL)
 	ctx := r.Context()
 	var span *trace.Span
 	sc, ok := h.extractSpanContext(r)

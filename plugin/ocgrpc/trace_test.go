@@ -16,7 +16,6 @@ package ocgrpc_test
 
 import (
 	"io"
-	"strings"
 	"testing"
 	"time"
 
@@ -67,7 +66,7 @@ func TestStreaming(t *testing.T) {
 	s1 := <-te.ch
 	s2 := <-te.ch
 
-	checkSpanData(t, s1, s2, ".testpb.Foo.Multiple", true)
+	checkSpanData(t, s1, s2, "testpb.Foo.Multiple", true)
 
 	select {
 	case <-te.ch:
@@ -107,7 +106,7 @@ func TestStreamingFail(t *testing.T) {
 	s1 := <-te.ch
 	s2 := <-te.ch
 
-	checkSpanData(t, s1, s2, ".testpb.Foo.Multiple", false)
+	checkSpanData(t, s1, s2, "testpb.Foo.Multiple", false)
 	cleanup()
 
 	select {
@@ -133,7 +132,7 @@ func TestSingle(t *testing.T) {
 	s1 := <-te.ch
 	s2 := <-te.ch
 
-	checkSpanData(t, s1, s2, ".testpb.Foo.Single", true)
+	checkSpanData(t, s1, s2, "testpb.Foo.Single", true)
 	cleanup()
 
 	select {
@@ -161,7 +160,7 @@ loop:
 	for {
 		select {
 		case span := <-te.ch:
-			if !strings.HasPrefix(span.Name, "Recv.") {
+			if span.SpanKind != trace.SpanKindServer {
 				continue loop
 			}
 			if got, want := span.EndTime.Sub(span.StartTime), sleep; got < want {
@@ -190,7 +189,7 @@ func TestSingleFail(t *testing.T) {
 	s1 := <-te.ch
 	s2 := <-te.ch
 
-	checkSpanData(t, s1, s2, ".testpb.Foo.Single", false)
+	checkSpanData(t, s1, s2, "testpb.Foo.Single", false)
 	cleanup()
 
 	select {
@@ -203,14 +202,14 @@ func TestSingleFail(t *testing.T) {
 func checkSpanData(t *testing.T, s1, s2 *trace.SpanData, methodName string, success bool) {
 	t.Helper()
 
-	if s1.Name < s2.Name {
+	if s1.SpanKind == trace.SpanKindServer {
 		s1, s2 = s2, s1
 	}
 
-	if got, want := s1.Name, "Sent"+methodName; got != want {
+	if got, want := s1.Name, methodName; got != want {
 		t.Errorf("Got name %q want %q", got, want)
 	}
-	if got, want := s2.Name, "Recv"+methodName; got != want {
+	if got, want := s2.Name, methodName; got != want {
 		t.Errorf("Got name %q want %q", got, want)
 	}
 	if got, want := s2.SpanContext.TraceID, s1.SpanContext.TraceID; got != want {

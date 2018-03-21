@@ -50,7 +50,7 @@ type traceTransport struct {
 // The created span can follow a parent span, if a parent is presented in
 // the request's context.
 func (t *traceTransport) RoundTrip(req *http.Request) (*http.Response, error) {
-	name := spanNameFromURL("Sent", req.URL)
+	name := spanNameFromURL(req.URL)
 	// TODO(jbd): Discuss whether we want to prefix
 	// outgoing requests with Sent.
 	parent := trace.FromContext(req.Context())
@@ -126,13 +126,8 @@ func (t *traceTransport) CancelRequest(req *http.Request) {
 	}
 }
 
-func spanNameFromURL(prefix string, u *url.URL) string {
-	host := u.Hostname()
-	port := ":" + u.Port()
-	if port == ":" || port == ":80" || port == ":443" {
-		port = ""
-	}
-	return prefix + "." + host + port + u.Path
+func spanNameFromURL(u *url.URL) string {
+	return u.Path
 }
 
 func requestAttrs(r *http.Request) []trace.Attribute {
