@@ -152,7 +152,7 @@ func responseAttrs(resp *http.Response) []trace.Attribute {
 
 func status(statusCode int) trace.Status {
 	var code int32
-	if code < 200 || code >= 400 {
+	if statusCode < 200 || statusCode >= 400 {
 		code = codeUnknown
 	}
 	switch statusCode {

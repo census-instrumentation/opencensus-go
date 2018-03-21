@@ -447,3 +447,27 @@ func TestResponseAttributes(t *testing.T) {
 		})
 	}
 }
+
+func TestStatusUnitTest(t *testing.T) {
+	tests := []struct {
+		in   int
+		want trace.Status
+	}{
+		{200, trace.Status{Code: 0, Message: `"OK"`}},
+		{100, trace.Status{Code: 2, Message: `"UNKNOWN"`}},
+		{500, trace.Status{Code: 2, Message: `"UNKNOWN"`}},
+		{404, trace.Status{Code: 5, Message: `"NOT_FOUND"`}},
+		{600, trace.Status{Code: 2, Message: `"UNKNOWN"`}},
+		{401, trace.Status{Code: 16, Message: `"UNAUTHENTICATED"`}},
+		{403, trace.Status{Code: 7, Message: `"PERMISSION_DENIED"`}},
+		{301, trace.Status{Code: 0, Message: `"OK"`}},
+		{501, trace.Status{Code: 12, Message: `"UNIMPLEMENTED"`}},
+	}
+
+	for _, tt := range tests {
+		got, want := status(tt.in), tt.want
+		if got != want {
+			t.Errorf("status(%d) got = (%#v) want = (%#v)", tt.in, got, want)
+		}
+	}
+}
