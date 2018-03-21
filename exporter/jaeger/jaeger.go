@@ -120,26 +120,36 @@ type Exporter struct {
 
 var _ trace.Exporter = (*Exporter)(nil)
 
-// TODO(jbd): Also implement propagation.HTTPFormat.
-
 // ExportSpan exports a SpanData to Jaeger.
 func (e *Exporter) ExportSpan(data *trace.SpanData) {
-	var tags []*gen.Tag
+	e.bundler.Add(spanDataToThrift(data), 1)
+	// TODO(jbd): Handle oversized bundlers.
+}
+
+func spanDataToThrift(data *trace.SpanData) *gen.Span {
+	tags := make([]*gen.Tag, 0, len(data.Attributes))
 	for k, v := range data.Attributes {
 		tag := attributeToTag(k, v)
 		if tag != nil {
 			tags = append(tags, tag)
 		}
 	}
+
+	tags = append(tags,
+		attributeToTag("status.code", data.Status.Code),
+		attributeToTag("status.message", data.Status.Message),
+	)
+
 	var logs []*gen.Log
 	for _, a := range data.Annotations {
-		var fields []*gen.Tag
+		fields := make([]*gen.Tag, 0, len(a.Attributes))
 		for k, v := range a.Attributes {
 			tag := attributeToTag(k, v)
 			if tag != nil {
-				fields = append(tags, tag)
+				fields = append(fields, tag)
 			}
 		}
+		fields = append(fields, attributeToTag("message", a.Message))
 		logs = append(logs, &gen.Log{
 			Timestamp: a.Time.UnixNano() / 1000,
 			Fields:    fields,
@@ -153,7 +163,7 @@ func (e *Exporter) ExportSpan(data *trace.SpanData) {
 			SpanId:      bytesToInt64(link.SpanID[:]),
 		})
 	}
-	span := &gen.Span{
+	return &gen.Span{
 		TraceIdHigh:   bytesToInt64(data.TraceID[0:8]),
 		TraceIdLow:    bytesToInt64(data.TraceID[8:16]),
 		SpanId:        bytesToInt64(data.SpanID[:]),
@@ -166,8 +176,6 @@ func (e *Exporter) ExportSpan(data *trace.SpanData) {
 		Logs:          logs,
 		References:    refs,
 	}
-	e.bundler.Add(span, 1)
-	// TODO(jbd): Handle oversized bundlers.
 }
 
 func name(sd *trace.SpanData) string {
@@ -188,16 +196,26 @@ func attributeToTag(key string, a interface{}) *gen.Tag {
 		tag = &gen.Tag{
 			Key:   key,
 			VBool: &value,
+			VType: gen.TagType_BOOL,
 		}
 	case string:
 		tag = &gen.Tag{
-			Key:  key,
-			VStr: &value,
+			Key:   key,
+			VStr:  &value,
+			VType: gen.TagType_STRING,
 		}
 	case int64:
 		tag = &gen.Tag{
 			Key:   key,
 			VLong: &value,
+			VType: gen.TagType_LONG,
+		}
+	case int32:
+		v := int64(value)
+		tag = &gen.Tag{
+			Key:   key,
+			VLong: &v,
+			VType: gen.TagType_LONG,
 		}
 	}
 	return tag
