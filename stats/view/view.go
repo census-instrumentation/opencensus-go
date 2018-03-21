@@ -47,7 +47,7 @@ type View struct {
 }
 
 // Deprecated: Use &View{}.
-func New(name, description string, keys []tag.Key, measure stats.Measure, agg ToAggregation) (*View, error) {
+func New(name, description string, keys []tag.Key, measure stats.Measure, agg *Aggregation) (*View, error) {
 	if measure == nil {
 		panic("measure may not be nil")
 	}
@@ -56,25 +56,8 @@ func New(name, description string, keys []tag.Key, measure stats.Measure, agg To
 		Description: description,
 		TagKeys:     keys,
 		Measure:     measure,
-		Aggregation: agg.ToAggregation(),
+		Aggregation: agg,
 	}, nil
-}
-
-// ToAggregation is a temporary bridge for SumAggregation to Aggregation. It is
-// needed to support existing external uses of SumAggregation in cloud.google.com/go
-// and should be removed once those are removed.
-type ToAggregation interface {
-	ToAggregation() *Aggregation
-}
-
-// ToAggregation returns Sum.
-func (s SumAggregation) ToAggregation() *Aggregation {
-	return Sum()
-}
-
-// ToAggregation returns the receiver.
-func (a *Aggregation) ToAggregation() *Aggregation {
-	return a
 }
 
 // WithName returns a copy of the View with a new name. This is useful for
