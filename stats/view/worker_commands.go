@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"go.opencensus.io/stats"
+	"go.opencensus.io/stats/exporter"
 	"go.opencensus.io/stats/internal"
 	"go.opencensus.io/tag"
 )
@@ -101,7 +102,7 @@ type retrieveDataReq struct {
 }
 
 type retrieveDataResp struct {
-	rows []*Row
+	rows []*exporter.Row
 	err  error
 }
 

@@ -16,17 +16,31 @@
 package view
 
 import (
-	"bytes"
 	"fmt"
 	"reflect"
 	"sort"
 	"sync/atomic"
-	"time"
 
 	"go.opencensus.io/stats"
+	"go.opencensus.io/stats/exporter"
 	"go.opencensus.io/stats/internal"
 	"go.opencensus.io/tag"
 )
+
+// Deprecated: use exporter.Register
+func RegisterExporter(e interface{}) {
+	// TODO(ramonza): move this to the exporter package
+	if e, ok := e.(exporter.Exporter); ok {
+		exporter.Register(e)
+	}
+}
+
+// Deprecated: use exporter.Unregister
+func UnregisterExporter(e interface{}) {
+	if e, ok := e.(exporter.Exporter); ok {
+		exporter.Unregister(e)
+	}
+}
 
 // View allows users to aggregate the recorded stats.Measurements.
 // Views need to be passed to the Subscribe function to be before data will be
@@ -137,7 +151,7 @@ func (v *viewInternal) clearRows() {
 	v.collector.clearRows()
 }
 
-func (v *viewInternal) collectedRows() []*Row {
+func (v *viewInternal) collectedRows() []*exporter.Row {
 	return v.collector.collectedRows(v.view.TagKeys)
 }
 
@@ -147,43 +161,6 @@ func (v *viewInternal) addSample(m *tag.Map, val float64) {
 	}
 	sig := string(encodeWithKeys(m, v.view.TagKeys))
 	v.collector.addSample(sig, val)
-}
-
-// A Data is a set of rows about usage of the single measure associated
-// with the given view. Each row is specific to a unique set of tags.
-type Data struct {
-	View       *View
-	Start, End time.Time
-	Rows       []*Row
-}
-
-// Row is the collected value for a specific set of key value pairs a.k.a tags.
-type Row struct {
-	Tags []tag.Tag
-	Data AggregationData
-}
-
-func (r *Row) String() string {
-	var buffer bytes.Buffer
-	buffer.WriteString("{ ")
-	buffer.WriteString("{ ")
-	for _, t := range r.Tags {
-		buffer.WriteString(fmt.Sprintf("{%v %v}", t.Key.Name(), t.Value))
-	}
-	buffer.WriteString(" }")
-	buffer.WriteString(fmt.Sprintf("%v", r.Data))
-	buffer.WriteString(" }")
-	return buffer.String()
-}
-
-// same returns true if both Rows are equal. Tags are expected to be ordered
-// by the key name. Even both rows have the same tags but the tags appear in
-// different orders it will return false.
-func (r *Row) Equal(other *Row) bool {
-	if r == other {
-		return true
-	}
-	return reflect.DeepEqual(r.Tags, other.Tags) && r.Data.Equal(other.Data)
 }
 
 func checkViewName(name string) error {

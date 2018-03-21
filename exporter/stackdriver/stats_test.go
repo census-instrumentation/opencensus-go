@@ -23,6 +23,7 @@ import (
 	"cloud.google.com/go/monitoring/apiv3"
 	"github.com/golang/protobuf/ptypes/timestamp"
 	"go.opencensus.io/stats"
+	"go.opencensus.io/stats/exporter"
 	"go.opencensus.io/stats/view"
 	"go.opencensus.io/tag"
 	"google.golang.org/api/option"
@@ -100,22 +101,22 @@ func TestExporter_makeReq(t *testing.T) {
 
 	start := time.Now()
 	end := start.Add(time.Minute)
-	count1 := view.AggregationData{Count: 10}
-	count2 := view.AggregationData{Count: 16}
-	sum1 := view.AggregationData{Mean: 5.5, Count: 1}
-	sum2 := view.AggregationData{Mean: -11.1, Count: 1}
+	count1 := exporter.AggregationData{Count: 10}
+	count2 := exporter.AggregationData{Count: 16}
+	sum1 := exporter.AggregationData{Mean: 5.5, Count: 1}
+	sum2 := exporter.AggregationData{Mean: -11.1, Count: 1}
 	taskValue := getTaskValue()
 
 	tests := []struct {
 		name   string
 		projID string
-		vd     *view.Data
+		vd     *exporter.ViewData
 		want   []*monitoringpb.CreateTimeSeriesRequest
 	}{
 		{
 			name:   "count agg + timeline",
 			projID: "proj-id",
-			vd:     newTestViewData(countView, start, end, count1, count2),
+			vd:     newTestViewData(countView, start, end, count1, count2, exporter.Count()),
 			want: []*monitoringpb.CreateTimeSeriesRequest{{
 				Name: monitoring.MetricProjectPath("proj-id"),
 				TimeSeries: []*monitoringpb.TimeSeries{
@@ -183,7 +184,7 @@ func TestExporter_makeReq(t *testing.T) {
 		{
 			name:   "sum agg + timeline",
 			projID: "proj-id",
-			vd:     newTestViewData(sumView, start, end, sum1, sum2),
+			vd:     newTestViewData(sumView, start, end, sum1, sum2, exporter.Sum()),
 			want: []*monitoringpb.CreateTimeSeriesRequest{{
 				Name: monitoring.MetricProjectPath("proj-id"),
 				TimeSeries: []*monitoringpb.TimeSeries{
@@ -261,7 +262,7 @@ func TestExporter_makeReq(t *testing.T) {
 				o:         Options{ProjectID: tt.projID},
 				taskValue: taskValue,
 			}
-			resps := e.makeReq([]*view.Data{tt.vd}, maxTimeSeriesPerUpload)
+			resps := e.makeReq([]*exporter.ViewData{tt.vd}, maxTimeSeriesPerUpload)
 			if tt.want == nil {
 				t.Skip("Missing expectation")
 			}
@@ -324,13 +325,13 @@ func TestExporter_makeReq_batching(t *testing.T) {
 		},
 	}
 
-	count1 := view.AggregationData{Count: 10}
-	count2 := view.AggregationData{Count: 16}
+	count1 := exporter.AggregationData{Count: 10}
+	count2 := exporter.AggregationData{Count: 16}
 
 	for _, tt := range tests {
-		var vds []*view.Data
+		var vds []*exporter.ViewData
 		for i := 0; i < tt.iter; i++ {
-			vds = append(vds, newTestViewData(v, time.Now(), time.Now(), count1, count2))
+			vds = append(vds, newTestViewData(v, time.Now(), time.Now(), count1, count2, exporter.Count()))
 		}
 
 		e := &statsExporter{}
@@ -355,7 +356,7 @@ func TestEqualAggWindowTagKeys(t *testing.T) {
 	tests := []struct {
 		name    string
 		md      *metricpb.MetricDescriptor
-		agg     *view.Aggregation
+		agg     exporter.AggType
 		keys    []tag.Key
 		wantErr bool
 	}{
@@ -366,7 +367,7 @@ func TestEqualAggWindowTagKeys(t *testing.T) {
 				ValueType:  metricpb.MetricDescriptor_INT64,
 				Labels:     []*label.LabelDescriptor{{Key: opencensusTaskKey}},
 			},
-			agg:     view.Count(),
+			agg:     exporter.AggTypeCount,
 			wantErr: false,
 		},
 		{
@@ -376,7 +377,7 @@ func TestEqualAggWindowTagKeys(t *testing.T) {
 				ValueType:  metricpb.MetricDescriptor_DOUBLE,
 				Labels:     []*label.LabelDescriptor{{Key: opencensusTaskKey}},
 			},
-			agg:     view.Sum(),
+			agg:     exporter.AggTypeSum,
 			wantErr: false,
 		},
 		{
@@ -386,7 +387,7 @@ func TestEqualAggWindowTagKeys(t *testing.T) {
 				ValueType:  metricpb.MetricDescriptor_DISTRIBUTION,
 				Labels:     []*label.LabelDescriptor{{Key: opencensusTaskKey}},
 			},
-			agg:     view.Count(),
+			agg:     exporter.AggTypeCount,
 			wantErr: true,
 		},
 		{
@@ -400,7 +401,7 @@ func TestEqualAggWindowTagKeys(t *testing.T) {
 					{Key: opencensusTaskKey},
 				},
 			},
-			agg:     view.Distribution(),
+			agg:     exporter.AggTypeDistribution,
 			keys:    []tag.Key{key1, key2},
 			wantErr: false,
 		},
@@ -410,7 +411,7 @@ func TestEqualAggWindowTagKeys(t *testing.T) {
 				MetricKind: metricpb.MetricDescriptor_CUMULATIVE,
 				ValueType:  metricpb.MetricDescriptor_DISTRIBUTION,
 			},
-			agg:     view.Distribution(),
+			agg:     exporter.AggTypeDistribution,
 			keys:    []tag.Key{key1, key2},
 			wantErr: true,
 		},
@@ -421,7 +422,7 @@ func TestEqualAggWindowTagKeys(t *testing.T) {
 				ValueType:  metricpb.MetricDescriptor_INT64,
 				Labels:     []*label.LabelDescriptor{{Key: opencensusTaskKey}},
 			},
-			agg:     view.Count(),
+			agg:     exporter.AggTypeCount,
 			wantErr: false,
 		},
 	}
@@ -457,8 +458,8 @@ func TestExporter_createMeasure(t *testing.T) {
 		Aggregation: view.Sum(),
 	}
 
-	data := view.AggregationData{Count: 0}
-	vd := newTestViewData(v, time.Now(), time.Now(), data, data)
+	data := exporter.AggregationData{Count: 0}
+	vd := newTestViewData(v, time.Now(), time.Now(), data, data, exporter.Sum())
 
 	e := &statsExporter{
 		createdViews: make(map[string]*metricpb.MetricDescriptor),
@@ -496,7 +497,7 @@ func TestExporter_createMeasure(t *testing.T) {
 			Type:        "custom.googleapis.com/opencensus/test_view_sum",
 			MetricKind:  metricpb.MetricDescriptor_CUMULATIVE,
 			ValueType:   metricpb.MetricDescriptor_DOUBLE,
-			Labels:      newLabelDescriptors(vd.View.TagKeys),
+			Labels:      newLabelDescriptors(vd.TagKeys),
 		}, nil
 	}
 
@@ -533,8 +534,8 @@ func TestExporter_createMeasure_CountAggregation(t *testing.T) {
 		Aggregation: view.Count(),
 	}
 
-	data := view.AggregationData{Count: 0}
-	vd := newTestViewData(v, time.Now(), time.Now(), data, data)
+	data := exporter.AggregationData{Count: 0}
+	vd := newTestViewData(v, time.Now(), time.Now(), data, data, exporter.Count())
 
 	e := &statsExporter{
 		createdViews: make(map[string]*metricpb.MetricDescriptor),
@@ -570,7 +571,7 @@ func TestExporter_createMeasure_CountAggregation(t *testing.T) {
 			Type:        "custom.googleapis.com/opencensus/test_view_count",
 			MetricKind:  metricpb.MetricDescriptor_CUMULATIVE,
 			ValueType:   metricpb.MetricDescriptor_INT64,
-			Labels:      newLabelDescriptors(vd.View.TagKeys),
+			Labels:      newLabelDescriptors(vd.TagKeys),
 		}, nil
 	}
 	ctx := context.Background()
@@ -601,8 +602,8 @@ func TestExporter_makeReq_withCustomMonitoredResource(t *testing.T) {
 
 	start := time.Now()
 	end := start.Add(time.Minute)
-	count1 := view.AggregationData{Count: 10}
-	count2 := view.AggregationData{Count: 16}
+	count1 := exporter.AggregationData{Count: 10}
+	count2 := exporter.AggregationData{Count: 16}
 	taskValue := getTaskValue()
 
 	resource := &monitoredrespb.MonitoredResource{
@@ -613,13 +614,13 @@ func TestExporter_makeReq_withCustomMonitoredResource(t *testing.T) {
 	tests := []struct {
 		name   string
 		projID string
-		vd     *view.Data
+		vd     *exporter.ViewData
 		want   []*monitoringpb.CreateTimeSeriesRequest
 	}{
 		{
 			name:   "count agg timeline",
 			projID: "proj-id",
-			vd:     newTestViewData(v, start, end, count1, count2),
+			vd:     newTestViewData(v, start, end, count1, count2, exporter.Count()),
 			want: []*monitoringpb.CreateTimeSeriesRequest{{
 				Name: monitoring.MetricProjectPath("proj-id"),
 				TimeSeries: []*monitoringpb.TimeSeries{
@@ -687,7 +688,7 @@ func TestExporter_makeReq_withCustomMonitoredResource(t *testing.T) {
 				o:         Options{ProjectID: tt.projID, Resource: resource},
 				taskValue: taskValue,
 			}
-			resps := e.makeReq([]*view.Data{tt.vd}, maxTimeSeriesPerUpload)
+			resps := e.makeReq([]*exporter.ViewData{tt.vd}, maxTimeSeriesPerUpload)
 			if got, want := len(resps), len(tt.want); got != want {
 				t.Fatalf("%v: Exporter.makeReq() returned %d responses; want %d", tt.name, got, want)
 			}
@@ -701,13 +702,18 @@ func TestExporter_makeReq_withCustomMonitoredResource(t *testing.T) {
 	}
 }
 
-func newTestViewData(v *view.View, start, end time.Time, data1, data2 view.AggregationData) *view.Data {
+func newTestViewData(v *view.View, start, end time.Time, data1, data2 exporter.AggregationData, agg exporter.Aggregation) *exporter.ViewData {
 	key, _ := tag.NewKey("test-key")
 	tag1 := tag.Tag{Key: key, Value: "test-value-1"}
 	tag2 := tag.Tag{Key: key, Value: "test-value-2"}
-	return &view.Data{
-		View: v,
-		Rows: []*view.Row{
+	return &exporter.ViewData{
+		Name:         v.Name,
+		Description:  v.Description,
+		Unit:         agg.Type.AggregatedUnit(v.Measure.Unit()),
+		MeasureFloat: true,
+		TagKeys:      v.TagKeys,
+		Aggregation:  agg,
+		Rows: []*exporter.Row{
 			{
 				Tags: []tag.Tag{tag1},
 				Data: data1,
@@ -722,11 +728,10 @@ func newTestViewData(v *view.View, start, end time.Time, data1, data2 view.Aggre
 	}
 }
 
-func newTestDistViewData(v *view.View, start, end time.Time) *view.Data {
-	return &view.Data{
-		View: v,
-		Rows: []*view.Row{
-			{Data: view.AggregationData{
+func newTestDistViewData(v *view.View, start, end time.Time) *exporter.ViewData {
+	return &exporter.ViewData{
+		Rows: []*exporter.Row{
+			{Data: exporter.AggregationData{
 				Count:           5,
 				Min:             1,
 				Max:             7,

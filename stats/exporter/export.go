@@ -1,4 +1,4 @@
-// Copyright 2017, OpenCensus Authors
+// Copyright 2018, OpenCensus Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package view
+package exporter
 
 import "sync"
 
@@ -25,29 +25,37 @@ var (
 //
 // The ExportView method should return quickly; if an
 // Exporter takes a significant amount of time to
-// process a Data, that work should be done on another goroutine.
+// process a ViewData, that work should be done on another goroutine.
 //
-// The Data should not be modified.
+// The ViewData should not be modified.
 type Exporter interface {
-	ExportView(viewData *Data)
+	ExportView(viewData *ViewData)
 }
 
-// RegisterExporter registers an exporter.
+// Register registers an exporter.
 // Collected data will be reported via all the
 // registered exporters. Once you no longer
-// want data to be exported, invoke UnregisterExporter
+// want data to be exported, invoke Unregister
 // with the previously registered exporter.
-func RegisterExporter(e Exporter) {
+func Register(e Exporter) {
 	exportersMu.Lock()
 	defer exportersMu.Unlock()
 
 	exporters[e] = struct{}{}
 }
 
-// UnregisterExporter unregisters an exporter.
-func UnregisterExporter(e Exporter) {
+// Unregister unregisters an exporter.
+func Unregister(e Exporter) {
 	exportersMu.Lock()
 	defer exportersMu.Unlock()
 
 	delete(exporters, e)
+}
+
+func ExportToAll(viewData *ViewData) {
+	exportersMu.Lock()
+	for e := range exporters {
+		e.ExportView(viewData)
+	}
+	exportersMu.Unlock()
 }

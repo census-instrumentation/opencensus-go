@@ -19,6 +19,7 @@ import (
 	"sort"
 
 	"go.opencensus.io/internal/tagencoding"
+	"go.opencensus.io/stats/exporter"
 	"go.opencensus.io/tag"
 )
 
@@ -34,17 +35,17 @@ type collector struct {
 func (c *collector) addSample(s string, v float64) {
 	aggregator, ok := c.signatures[s]
 	if !ok {
-		aggregator = c.a.newData()
+		aggregator = c.a.newAggregator()
 		c.signatures[s] = aggregator
 	}
 	aggregator.addSample(v)
 }
 
-func (c *collector) collectedRows(keys []tag.Key) []*Row {
-	var rows []*Row
+func (c *collector) collectedRows(keys []tag.Key) []*exporter.Row {
+	var rows []*exporter.Row
 	for sig, aggregator := range c.signatures {
 		tags := decodeTags([]byte(sig), keys)
-		row := &Row{Tags: tags}
+		row := &exporter.Row{Tags: tags}
 		aggregator.writeTo(&row.Data)
 		rows = append(rows, row)
 	}

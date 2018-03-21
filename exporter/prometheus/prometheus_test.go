@@ -26,42 +26,43 @@ import (
 	"time"
 
 	"go.opencensus.io/stats"
+	"go.opencensus.io/stats/exporter"
 	"go.opencensus.io/stats/view"
 	"go.opencensus.io/tag"
 
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-func newView(measureName string, agg *view.Aggregation) *view.View {
+func newViewData(measureName string, agg exporter.Aggregation, rows []*exporter.Row) *exporter.ViewData {
 	m := stats.Int64(measureName, "bytes", stats.UnitBytes)
-	return &view.View{
+	return &exporter.ViewData{
 		Name:        "foo",
 		Description: "bar",
-		Measure:     m,
+		Unit:        agg.Type.AggregatedUnit(m.Unit()),
 		Aggregation: agg,
+		TagKeys:     nil,
+		Rows:        rows,
+		Start:       time.Now(),
+		End:         time.Now(),
 	}
 }
 
 func TestOnlyCumulativeWindowSupported(t *testing.T) {
 	// See Issue https://github.com/census-instrumentation/opencensus-go/issues/214.
-	count1 := view.AggregationData{Count: 1}
+	count1 := exporter.AggregationData{Count: 1}
 	tests := []struct {
-		vds  *view.Data
+		vds  *exporter.ViewData
 		want int
 	}{
 		0: {
-			vds: &view.Data{
-				View: newView("TestOnlyCumulativeWindowSupported/m1", view.Count()),
-			},
+			vds:  newViewData("TestOnlyCumulativeWindowSupported/m1", exporter.Count(), nil),
 			want: 0, // no rows present
 		},
 		1: {
-			vds: &view.Data{
-				View: newView("TestOnlyCumulativeWindowSupported/m2", view.Count()),
-				Rows: []*view.Row{
+			vds: newViewData("TestOnlyCumulativeWindowSupported/m2", exporter.Count(),
+				[]*exporter.Row{
 					{Data: count1},
-				},
-			},
+				}),
 			want: 1,
 		},
 	}
@@ -126,9 +127,9 @@ func TestCollectNonRacy(t *testing.T) {
 		}()
 
 		for i := 0; i < 1e3; i++ {
-			count1 := view.AggregationData{Count: 1}
-			vds := []*view.Data{
-				{View: newView(fmt.Sprintf("TestCollectNonRacy/m2-%d", i), view.Count()), Rows: []*view.Row{{Data: count1}}},
+			count1 := exporter.AggregationData{Count: 1}
+			vds := []*exporter.ViewData{
+				newViewData(fmt.Sprintf("TestCollectNonRacy/m2-%d", i), exporter.Count(), []*exporter.Row{{Data: count1}}),
 			}
 			for _, v := range vds {
 				exp.ExportView(v)

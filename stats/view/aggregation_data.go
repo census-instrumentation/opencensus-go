@@ -17,22 +17,16 @@ package view
 
 import (
 	"math"
+
+	"go.opencensus.io/stats/exporter"
 )
 
-// aggregator represents an aggregated value from a collection.
-// They are reported on the view data during exporting.
-// Mosts users won't directly access aggregration data.
+// aggregator receives data points and aggregates them in place.
 type aggregator interface {
 	addSample(v float64)
-	writeTo(d *AggregationData)
+	writeTo(d *exporter.AggregationData)
 }
 
-const epsilon = 1e-9
-
-// countData is the aggregated data for the Count aggregation.
-// A count aggregation processes data and counts the recordings.
-//
-// Most users won't directly access count data.
 type countData int64
 
 func newCountData(v int64) *countData {
@@ -40,8 +34,8 @@ func newCountData(v int64) *countData {
 	return &tmp
 }
 
-func newCountDist(v int64) AggregationData {
-	var dd AggregationData
+func newCountDist(v int64) exporter.AggregationData {
+	var dd exporter.AggregationData
 	newCountData(v).writeTo(&dd)
 	return dd
 }
@@ -50,14 +44,10 @@ func (a *countData) addSample(_ float64) {
 	*a = *a + 1
 }
 
-func (a *countData) writeTo(dd *AggregationData) {
+func (a *countData) writeTo(dd *exporter.AggregationData) {
 	dd.Count = int64(*a)
 }
 
-// sumData is the aggregated data for the Sum aggregation.
-// A sum aggregation processes data and sums up the recordings.
-//
-// Most users won't directly access sum data.
 type sumData float64
 
 func newSumData(v float64) *sumData {
@@ -65,65 +55,39 @@ func newSumData(v float64) *sumData {
 	return &tmp
 }
 
-func newSumDist(v float64) AggregationData {
-	return AggregationData{Count: 1, Mean: v}
+func newSumDist(v float64) exporter.AggregationData {
+	return exporter.AggregationData{Count: 1, Mean: v}
 }
 
 func (a *sumData) addSample(f float64) {
 	*a += sumData(f)
 }
 
-func (a *sumData) writeTo(dd *AggregationData) {
+func (a *sumData) writeTo(dd *exporter.AggregationData) {
 	dd.Mean = float64(*a)
 	dd.Count = 1
 }
 
-// DistributionData is the aggregated data for the
-// Distribution aggregation.
-//
-// Most users won't directly access AggregationData, only exporters.
-type AggregationData struct {
+type distributionData struct {
 	Count           int64     // number of data points aggregated
 	Min             float64   // minimum value in the distribution
 	Max             float64   // max value in the distribution
 	Mean            float64   // mean of the distribution
 	SumOfSquaredDev float64   // sum of the squared deviation from the mean
 	CountPerBucket  []int64   // number of occurrences per bucket
-	bounds          []float64 // histogram distribution of the values
+	Bounds          []float64 // histogram distribution of the values
 }
 
-func (a AggregationData) Equal(a2 AggregationData) bool {
-	if len(a.CountPerBucket) != len(a2.CountPerBucket) {
-		return false
-	}
-	for i := range a.CountPerBucket {
-		if a.CountPerBucket[i] != a2.CountPerBucket[i] {
-			return false
-		}
-	}
-	return a.Count == a2.Count && a.Min == a2.Min && a.Max == a2.Max && math.Pow(a.Mean-a2.Mean, 2) < epsilon && math.Pow(a.variance()-a2.variance(), 2) < epsilon
-}
-
-func newDistributionData(bounds []float64) *AggregationData {
-	return &AggregationData{
+func newDistributionData(bounds []float64) *distributionData {
+	return &distributionData{
 		CountPerBucket: make([]int64, len(bounds)+1),
-		bounds:         bounds,
+		Bounds:         bounds,
 		Min:            math.MaxFloat64,
 		Max:            math.SmallestNonzeroFloat64,
 	}
 }
 
-// Sum returns the sum of all samples collected.
-func (a *AggregationData) Sum() float64 { return a.Mean * float64(a.Count) }
-
-func (a *AggregationData) variance() float64 {
-	if a.Count <= 1 {
-		return 0
-	}
-	return a.SumOfSquaredDev / float64(a.Count-1)
-}
-
-func (a *AggregationData) addSample(f float64) {
+func (a *distributionData) addSample(f float64) {
 	if f < a.Min {
 		a.Min = f
 	}
@@ -143,23 +107,23 @@ func (a *AggregationData) addSample(f float64) {
 	a.SumOfSquaredDev = a.SumOfSquaredDev + (f-oldMean)*(f-a.Mean)
 }
 
-func (a *AggregationData) incrementBucketCount(f float64) {
-	if len(a.bounds) == 0 {
+func (a *distributionData) incrementBucketCount(f float64) {
+	if len(a.Bounds) == 0 {
 		a.CountPerBucket[0]++
 		return
 	}
 
-	for i, b := range a.bounds {
+	for i, b := range a.Bounds {
 		if f < b {
 			a.CountPerBucket[i]++
 			return
 		}
 	}
-	a.CountPerBucket[len(a.bounds)]++
+	a.CountPerBucket[len(a.Bounds)]++
 }
 
-func (a *AggregationData) writeTo(dd *AggregationData) {
-	*dd = *a
+func (a *distributionData) writeTo(dd *exporter.AggregationData) {
+	*dd = exporter.AggregationData(*a)
 	dd.CountPerBucket = make([]int64, len(a.CountPerBucket))
 	copy(dd.CountPerBucket, a.CountPerBucket)
 }

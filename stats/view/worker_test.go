@@ -23,16 +23,17 @@ import (
 	"time"
 
 	"go.opencensus.io/stats"
+	"go.opencensus.io/stats/exporter"
 	"go.opencensus.io/tag"
 )
 
 func Test_Worker_ViewRegistration(t *testing.T) {
 	someError := errors.New("some error")
 
-	sc1 := make(chan *Data)
+	sc1 := make(chan *exporter.ViewData)
 
 	type registration struct {
-		c   chan *Data
+		c   chan *exporter.ViewData
 		vID string
 		err error
 	}
@@ -137,7 +138,7 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 
 	type want struct {
 		v    *View
-		rows []*Row
+		rows []*exporter.Row
 		err  error
 	}
 	type testCase struct {
@@ -161,7 +162,7 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 			wants: []want{
 				{
 					v1,
-					[]*Row{
+					[]*exporter.Row{
 						{
 							[]tag.Tag{{Key: k1, Value: "v1"}, {Key: k2, Value: "v2"}},
 							newCountDist(2),
@@ -179,7 +180,7 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 			wants: []want{
 				{
 					v1,
-					[]*Row{
+					[]*exporter.Row{
 						{
 							[]tag.Tag{{Key: k1, Value: "v1"}, {Key: k2, Value: "v2"}},
 							newCountDist(2),
@@ -189,7 +190,7 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 				},
 				{
 					v2,
-					[]*Row{
+					[]*exporter.Row{
 						{
 							[]tag.Tag{{Key: k1, Value: "v1"}, {Key: k2, Value: "v2"}},
 							newCountDist(2),
@@ -271,7 +272,7 @@ func TestReportUsage(t *testing.T) {
 		}
 
 		e := &countExporter{}
-		RegisterExporter(e)
+		exporter.Register(e)
 
 		stats.Record(ctx, m.M(1))
 		stats.Record(ctx, m.M(1))
@@ -328,8 +329,8 @@ func TestWorkerStarttime(t *testing.T) {
 	}
 
 	e := &vdExporter{}
-	RegisterExporter(e)
-	defer UnregisterExporter(e)
+	exporter.Register(e)
+	defer exporter.Unregister(e)
 
 	stats.Record(ctx, m.M(1))
 	stats.Record(ctx, m.M(1))
@@ -367,7 +368,7 @@ type countExporter struct {
 	count int64
 }
 
-func (e *countExporter) ExportView(vd *Data) {
+func (e *countExporter) ExportView(vd *exporter.ViewData) {
 	if len(vd.Rows) == 0 {
 		return
 	}
@@ -380,10 +381,10 @@ func (e *countExporter) ExportView(vd *Data) {
 
 type vdExporter struct {
 	sync.Mutex
-	vds []*Data
+	vds []*exporter.ViewData
 }
 
-func (e *vdExporter) ExportView(vd *Data) {
+func (e *vdExporter) ExportView(vd *exporter.ViewData) {
 	e.Lock()
 	defer e.Unlock()
 

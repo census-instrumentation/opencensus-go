@@ -1,4 +1,4 @@
-// Copyright 2017, OpenCensus Authors
+// Copyright 2018, OpenCensus Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,26 +11,14 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+//
 
-package exporter
-
-import (
-	"log"
-
-	"go.opencensus.io/stats/exporter"
-	"go.opencensus.io/trace"
-)
-
-// PrintExporter is a stats and trace exporter that logs
-// the exported data to the console.
-type PrintExporter struct{}
-
-// ExportView logs the view data.
-func (e *PrintExporter) ExportView(vd *exporter.ViewData) {
-	log.Println(vd)
-}
-
-// ExportSpan logs the trace span.
-func (e *PrintExporter) ExportSpan(vd *trace.SpanData) {
-	log.Println(vd)
-}
+// Package exporter contains support for exporting view data to backends.
+//
+// Collected and aggregated data can be exported to a metric collection
+// backend by registering its exporter.
+//
+// Multiple exporters can be registered to upload the data to various
+// different backends. Users need to unregister the exporters once they
+// no longer are needed.
+package exporter // import "go.opencensus.io/stats/exporter"

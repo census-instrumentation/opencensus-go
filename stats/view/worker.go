@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"go.opencensus.io/stats"
+	"go.opencensus.io/stats/exporter"
 	"go.opencensus.io/stats/internal"
 	"go.opencensus.io/tag"
 )
@@ -119,7 +120,8 @@ func (v *View) Unsubscribe() error {
 	return nil
 }
 
-func RetrieveData(viewName string) ([]*Row, error) {
+// RetrieveData is an unsupported way to extract exporter rows.
+func RetrieveData(viewName string) ([]*exporter.Row, error) {
 	req := &retrieveDataReq{
 		now: time.Now(),
 		v:   viewName,
@@ -229,16 +231,18 @@ func (w *worker) reportUsage(now time.Time) {
 		if !ok {
 			w.startTimes[v] = now
 		}
-		viewData := &Data{
-			View:  v.view,
-			Start: w.startTimes[v],
-			End:   time.Now(),
-			Rows:  rows,
+		_, isFloat64Measure := v.view.Measure.(*stats.Float64Measure)
+		viewData := &exporter.ViewData{
+			Name:         v.view.Name,
+			Description:  v.view.Description,
+			Start:        w.startTimes[v],
+			End:          time.Now(),
+			Aggregation:  v.view.Aggregation.agg,
+			TagKeys:      v.view.TagKeys,
+			Unit:         v.view.Aggregation.agg.Type.AggregatedUnit(v.view.Measure.Unit()),
+			MeasureFloat: isFloat64Measure,
+			Rows:         rows,
 		}
-		exportersMu.Lock()
-		for e := range exporters {
-			e.ExportView(viewData)
-		}
-		exportersMu.Unlock()
+		exporter.ExportToAll(viewData)
 	}
 }

@@ -26,7 +26,7 @@ import (
 	"sync"
 
 	"go.opencensus.io/internal"
-	"go.opencensus.io/stats/view"
+	"go.opencensus.io/stats/exporter"
 	"go.opencensus.io/tag"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -88,9 +88,9 @@ func newExporter(o Options) (*Exporter, error) {
 }
 
 var _ http.Handler = (*Exporter)(nil)
-var _ view.Exporter = (*Exporter)(nil)
+var _ exporter.Exporter = (*Exporter)(nil)
 
-func (c *collector) registerViews(views ...*view.View) {
+func (c *collector) registerViews(views ...*exporter.ViewData) {
 	count := 0
 	for _, view := range views {
 		sig := viewSignature(c.opts.Namespace, view)
@@ -141,14 +141,14 @@ func (o *Options) onError(err error) {
 	}
 }
 
-// ExportView exports to the Prometheus if view data has one or more rows.
+// ExportView exports to the Prometheus if exporter.ViewData has one or more rows.
 // Each OpenCensus AggregationData will be converted to
 // corresponding Prometheus Metric: Sum will be converted
 // to Untyped Metric, Count will be Counter Metric,
 // Distribution will be Histogram Metric, and Mean
 // will be Summary Metric. Please note the Summary Metric from
 // Mean does not have any quantiles.
-func (e *Exporter) ExportView(vd *view.Data) {
+func (e *Exporter) ExportView(vd *exporter.ViewData) {
 	if len(vd.Rows) == 0 {
 		return
 	}
@@ -174,16 +174,16 @@ type collector struct {
 	// appended to on every Export invocation, from
 	// stats. These views are cleared out when
 	// Collect is invoked and the cycle is repeated.
-	viewData map[string]*view.Data
+	viewData map[string]*exporter.ViewData
 
 	registeredViewsMu sync.Mutex
 	// registeredViews maps a view to a prometheus desc.
 	registeredViews map[string]*prometheus.Desc
 }
 
-func (c *collector) addViewData(vd *view.Data) {
-	c.registerViews(vd.View)
-	sig := viewSignature(c.opts.Namespace, vd.View)
+func (c *collector) addViewData(vd *exporter.ViewData) {
+	c.registerViews(vd)
+	sig := viewSignature(c.opts.Namespace, vd)
 
 	c.mu.Lock()
 	c.viewData[sig] = vd
@@ -208,17 +208,17 @@ func (c *collector) Describe(ch chan<- *prometheus.Desc) {
 // Collect is invoked everytime a prometheus.Gatherer is run
 // for example when the HTTP endpoint is invoked by Prometheus.
 func (c *collector) Collect(ch chan<- prometheus.Metric) {
-	// We need a copy of all the view data up until this point.
+	// We need a copy of all the exporter.ViewData up until this point.
 	viewData := c.cloneViewData()
 
 	for _, vd := range viewData {
-		sig := viewSignature(c.opts.Namespace, vd.View)
+		sig := viewSignature(c.opts.Namespace, vd)
 		c.registeredViewsMu.Lock()
 		desc := c.registeredViews[sig]
 		c.registeredViewsMu.Unlock()
 
 		for _, row := range vd.Rows {
-			metric, err := c.toMetric(desc, vd.View, row)
+			metric, err := c.toMetric(desc, vd, row)
 			if err != nil {
 				c.opts.onError(err)
 			} else {
@@ -229,19 +229,19 @@ func (c *collector) Collect(ch chan<- prometheus.Metric) {
 
 }
 
-func (c *collector) toMetric(desc *prometheus.Desc, v *view.View, row *view.Row) (prometheus.Metric, error) {
+func (c *collector) toMetric(desc *prometheus.Desc, v *exporter.ViewData, row *exporter.Row) (prometheus.Metric, error) {
 	switch v.Aggregation.Type {
-	case view.AggTypeCount:
+	case exporter.AggTypeCount:
 		return prometheus.NewConstMetric(desc, prometheus.CounterValue, float64(row.Data.Count), tagValues(row.Tags)...)
 
-	case view.AggTypeDistribution:
+	case exporter.AggTypeDistribution:
 		points := make(map[float64]uint64)
 		for i, b := range v.Aggregation.Buckets {
 			points[b] = uint64(row.Data.CountPerBucket[i])
 		}
 		return prometheus.NewConstHistogram(desc, uint64(row.Data.Count), row.Data.Sum(), points, tagValues(row.Tags)...)
 
-	case view.AggTypeSum:
+	case exporter.AggTypeSum:
 		return prometheus.NewConstMetric(desc, prometheus.UntypedValue, row.Data.Sum(), tagValues(row.Tags)...)
 
 	default:
@@ -269,7 +269,7 @@ func newCollector(opts Options, registrar *prometheus.Registry) *collector {
 		reg:             registrar,
 		opts:            opts,
 		registeredViews: make(map[string]*prometheus.Desc),
-		viewData:        make(map[string]*view.Data),
+		viewData:        make(map[string]*exporter.ViewData),
 	}
 }
 
@@ -281,11 +281,11 @@ func tagValues(t []tag.Tag) []string {
 	return values
 }
 
-func viewName(namespace string, v *view.View) string {
+func viewName(namespace string, v *exporter.ViewData) string {
 	return namespace + "_" + internal.Sanitize(v.Name)
 }
 
-func viewSignature(namespace string, v *view.View) string {
+func viewSignature(namespace string, v *exporter.ViewData) string {
 	var buf bytes.Buffer
 	buf.WriteString(viewName(namespace, v))
 	for _, k := range v.TagKeys {
@@ -294,11 +294,11 @@ func viewSignature(namespace string, v *view.View) string {
 	return buf.String()
 }
 
-func (c *collector) cloneViewData() map[string]*view.Data {
+func (c *collector) cloneViewData() map[string]*exporter.ViewData {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	viewDataCopy := make(map[string]*view.Data)
+	viewDataCopy := make(map[string]*exporter.ViewData)
 	for sig, viewData := range c.viewData {
 		viewDataCopy[sig] = viewData
 	}

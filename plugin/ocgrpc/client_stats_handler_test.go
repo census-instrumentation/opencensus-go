@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"testing"
 
+	"go.opencensus.io/stats/exporter"
 	"go.opencensus.io/trace"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -42,7 +43,7 @@ func TestClientDefaultCollections(t *testing.T) {
 
 	type wantData struct {
 		v    func() *view.View
-		rows []*view.Row
+		rows []*exporter.Row
 	}
 	type rpc struct {
 		tags        []tagPair
@@ -76,7 +77,7 @@ func TestClientDefaultCollections(t *testing.T) {
 			[]*wantData{
 				{
 					func() *view.View { return ClientRequestCountView },
-					[]*view.Row{
+					[]*exporter.Row{
 						{
 							Tags: []tag.Tag{
 								{Key: KeyMethod, Value: "package.service/method"},
@@ -87,7 +88,7 @@ func TestClientDefaultCollections(t *testing.T) {
 				},
 				{
 					func() *view.View { return ClientResponseCountView },
-					[]*view.Row{
+					[]*exporter.Row{
 						{
 							Tags: []tag.Tag{
 								{Key: KeyMethod, Value: "package.service/method"},
@@ -98,7 +99,7 @@ func TestClientDefaultCollections(t *testing.T) {
 				},
 				{
 					func() *view.View { return ClientRequestBytesView },
-					[]*view.Row{
+					[]*exporter.Row{
 						{
 							Tags: []tag.Tag{
 								{Key: KeyMethod, Value: "package.service/method"},
@@ -109,7 +110,7 @@ func TestClientDefaultCollections(t *testing.T) {
 				},
 				{
 					func() *view.View { return ClientResponseBytesView },
-					[]*view.Row{
+					[]*exporter.Row{
 						{
 							Tags: []tag.Tag{
 								{Key: KeyMethod, Value: "package.service/method"},
@@ -153,7 +154,7 @@ func TestClientDefaultCollections(t *testing.T) {
 			[]*wantData{
 				{
 					func() *view.View { return ClientErrorCountView },
-					[]*view.Row{
+					[]*exporter.Row{
 						{
 							Tags: []tag.Tag{
 								{Key: KeyStatus, Value: "Canceled"},
@@ -165,7 +166,7 @@ func TestClientDefaultCollections(t *testing.T) {
 				},
 				{
 					func() *view.View { return ClientRequestCountView },
-					[]*view.Row{
+					[]*exporter.Row{
 						{
 							Tags: []tag.Tag{
 								{Key: KeyMethod, Value: "package.service/method"},
@@ -176,7 +177,7 @@ func TestClientDefaultCollections(t *testing.T) {
 				},
 				{
 					func() *view.View { return ClientResponseCountView },
-					[]*view.Row{
+					[]*exporter.Row{
 						{
 							Tags: []tag.Tag{
 								{Key: KeyMethod, Value: "package.service/method"},
@@ -233,7 +234,7 @@ func TestClientDefaultCollections(t *testing.T) {
 			[]*wantData{
 				{
 					func() *view.View { return ClientErrorCountView },
-					[]*view.Row{
+					[]*exporter.Row{
 						{
 							Tags: []tag.Tag{
 								{Key: KeyStatus, Value: "Canceled"},
@@ -252,7 +253,7 @@ func TestClientDefaultCollections(t *testing.T) {
 				},
 				{
 					func() *view.View { return ClientRequestCountView },
-					[]*view.Row{
+					[]*exporter.Row{
 						{
 							Tags: []tag.Tag{
 								{Key: KeyMethod, Value: "package.service/method"},
@@ -263,7 +264,7 @@ func TestClientDefaultCollections(t *testing.T) {
 				},
 				{
 					func() *view.View { return ClientResponseCountView },
-					[]*view.Row{
+					[]*exporter.Row{
 						{
 							Tags: []tag.Tag{
 								{Key: KeyMethod, Value: "package.service/method"},
@@ -274,7 +275,7 @@ func TestClientDefaultCollections(t *testing.T) {
 				},
 				{
 					func() *view.View { return ClientRequestBytesView },
-					[]*view.Row{
+					[]*exporter.Row{
 						{
 							Tags: []tag.Tag{
 								{Key: KeyMethod, Value: "package.service/method"},
@@ -285,7 +286,7 @@ func TestClientDefaultCollections(t *testing.T) {
 				},
 				{
 					func() *view.View { return ClientResponseBytesView },
-					[]*view.Row{
+					[]*exporter.Row{
 						{
 							Tags: []tag.Tag{
 								{Key: KeyMethod, Value: "package.service/method"},
@@ -359,7 +360,7 @@ func TestClientDefaultCollections(t *testing.T) {
 }
 
 // containsRow returns true if rows contain r.
-func containsRow(rows []*view.Row, r *view.Row) bool {
+func containsRow(rows []*exporter.Row, r *exporter.Row) bool {
 	for _, x := range rows {
 		if r.Equal(x) {
 			return true

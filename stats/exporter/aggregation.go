@@ -1,4 +1,4 @@
-// Copyright 2017, OpenCensus Authors
+// Copyright 2018, OpenCensus Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,31 +13,37 @@
 // limitations under the License.
 //
 
-package view
+package exporter
 
 import (
-	"go.opencensus.io/stats/exporter"
+	"go.opencensus.io/stats"
+)
+
+//go:generate stringer -type AggType
+
+// AggType represents the type of aggregation function used on a View.
+type AggType int
+
+const (
+	AggTypeNone         AggType = iota // no aggregation; reserved for future use.
+	AggTypeCount                       // the count aggregation, see Count.
+	AggTypeSum                         // the sum aggregation, see Sum.
+	AggTypeDistribution                // the distribution aggregation, see Distribution.
 )
 
 // Aggregation represents a data aggregation method. Use one of the functions:
 // Count, Sum, Mean, or Distribution to construct an Aggregation.
 type Aggregation struct {
-	agg           exporter.Aggregation
-	newAggregator func() aggregator
+	Type    AggType   // Type is the Aggregation of this Aggregation.
+	Buckets []float64 // Buckets are the bucket endpoints if this Aggregation represents a distribution, see: Distribution().
 }
 
 var (
-	aggCount = &Aggregation{
-		agg: exporter.Aggregation{Type: exporter.AggTypeCount},
-		newAggregator: func() aggregator {
-			return newCountData(0)
-		},
+	aggCount = Aggregation{
+		Type: AggTypeCount,
 	}
-	aggSum = &Aggregation{
-		agg: exporter.Aggregation{Type: exporter.AggTypeSum},
-		newAggregator: func() aggregator {
-			return newSumData(0)
-		},
+	aggSum = Aggregation{
+		Type: AggTypeSum,
 	}
 )
 
@@ -45,15 +51,22 @@ var (
 // with this method will be turned into a count value.
 // For example, total number of accepted requests can be
 // aggregated by using Count.
-func Count() *Aggregation {
+func Count() Aggregation {
 	return aggCount
 }
+
+// SumAggregation indicates that data collected and aggregated
+// with this method will be summed up.
+// For example, accumulated request bytes can be aggregated by using
+// SumAggregation.
+// Deprecated: Use the Sum function to construct.
+type SumAggregation struct{}
 
 // Sum indicates that data collected and aggregated
 // with this method will be summed up.
 // For example, accumulated request bytes can be aggregated by using
 // Sum.
-func Sum() *Aggregation {
+func Sum() Aggregation {
 	return aggSum
 }
 
@@ -76,15 +89,17 @@ func Sum() *Aggregation {
 //
 // If len(bounds) is 1 then there is no finite buckets, and that single
 // element is the common boundary of the overflow and underflow buckets.
-func Distribution(bounds ...float64) *Aggregation {
-	return &Aggregation{
-		agg: exporter.Aggregation{
-			Type:    exporter.AggTypeDistribution,
-			Buckets: bounds,
-		},
-		newAggregator: func() aggregator {
-			return newDistributionData(bounds)
-		},
+func Distribution(bounds ...float64) Aggregation {
+	return Aggregation{
+		Type:    AggTypeDistribution,
+		Buckets: bounds,
 	}
 }
 
+func (aggType AggType) AggregatedUnit(measuredUnit string) string {
+	if aggType == AggTypeCount {
+		return stats.UnitNone
+	} else {
+		return measuredUnit
+	}
+}
