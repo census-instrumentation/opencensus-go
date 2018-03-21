@@ -132,7 +132,7 @@ type viewInternal struct {
 func newViewInternal(v *View) (*viewInternal, error) {
 	return &viewInternal{
 		view:      v,
-		collector: &collector{make(map[string]AggregationData), v.Aggregation},
+		collector: &collector{make(map[string]aggregator), v.Aggregation},
 	}, nil
 }
 
@@ -200,7 +200,7 @@ func (r *Row) Equal(other *Row) bool {
 	if r == other {
 		return true
 	}
-	return reflect.DeepEqual(r.Tags, other.Tags) && r.Data.equal(other.Data)
+	return reflect.DeepEqual(r.Tags, other.Tags) && r.Data.Equal(other.Data)
 }
 
 func checkViewName(name string) error {
