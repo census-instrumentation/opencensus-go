@@ -21,23 +21,18 @@ package view
 type AggType int
 
 const (
-	// AggTypeNone represents no aggregation. Reserved for future use.
-	AggTypeNone AggType = iota
-	// AggTypeCount represents the count aggregation, See Count().
-	AggTypeCount
-	// AggTypeSum represents the sum aggregation, See Sum().
-	AggTypeSum
-	// AggTypeMean represents the mean aggregation, see Mean()
-	AggTypeMean
-	// AggTypeDistribution represents a distribution aggregation, see Distribution().
-	AggTypeDistribution
+	AggTypeNone         AggType = iota // no aggregation; reserved for future use.
+	AggTypeCount                       // the count aggregation, see Count.
+	AggTypeSum                         // the sum aggregation, see Sum.
+	AggTypeMean                        // the mean aggregation, see Mean.
+	AggTypeDistribution                // the distribution aggregation, see Distribution.
 )
 
 // Aggregation represents a data aggregation method. Use one of the functions:
 // Count, Sum, Mean, or Distribution to construct an Aggregation.
 type Aggregation struct {
 	Type    AggType   // Type is the AggType of this Aggregation.
-	Buckets []float64 // Buckets are the bucket endpoints if this Aggregation represents a distribution, see: Distribution().
+	Buckets []float64 // Buckets are the bucket endpoints if this Aggregation represents a distribution, see Distribution.
 
 	newData func() AggregationData
 }
@@ -70,13 +65,6 @@ var (
 func Count() *Aggregation {
 	return aggCount
 }
-
-// SumAggregation indicates that data collected and aggregated
-// with this method will be summed up.
-// For example, accumulated request bytes can be aggregated by using
-// SumAggregation.
-// Deprecated: Use the Sum function to construct.
-type SumAggregation struct{}
 
 // Sum indicates that data collected and aggregated
 // with this method will be summed up.
