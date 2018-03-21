@@ -73,7 +73,7 @@ func Unsubscribe(v ...*View) error {
 }
 
 // Deprecated: Use the Register function.
-func (v *View) Register() error {
+func (v *View) Subscribe() error {
 	return Register(v)
 }
 
@@ -111,7 +111,7 @@ func Unregister(views ...*View) {
 }
 
 // Deprecated: Use the Unregister function instead.
-func (v *View) Unregister() error {
+func (v *View) Unsubscribe() error {
 	if v == nil {
 		return nil
 	}
