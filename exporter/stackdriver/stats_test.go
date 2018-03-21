@@ -77,12 +77,19 @@ func TestExporter_makeReq(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	v := &view.View{
+	countView := &view.View{
 		Name:        "testview",
 		Description: "desc",
 		TagKeys:     []tag.Key{key},
 		Measure:     m,
 		Aggregation: view.Count(),
+	}
+	sumView := &view.View{
+		Name:        "testview",
+		Description: "desc",
+		TagKeys:     []tag.Key{key},
+		Measure:     m,
+		Aggregation: view.Sum(),
 	}
 	distView := &view.View{
 		Name:        "distview",
@@ -93,10 +100,10 @@ func TestExporter_makeReq(t *testing.T) {
 
 	start := time.Now()
 	end := start.Add(time.Minute)
-	count1 := view.CountData(10)
-	count2 := view.CountData(16)
-	sum1 := view.SumData(5.5)
-	sum2 := view.SumData(-11.1)
+	count1 := view.AggregationData{Count: 10}
+	count2 := view.AggregationData{Count: 16}
+	sum1 := view.AggregationData{Mean: 5.5, Count: 1}
+	sum2 := view.AggregationData{Mean: -11.1, Count: 1}
 	taskValue := getTaskValue()
 
 	tests := []struct {
@@ -108,7 +115,7 @@ func TestExporter_makeReq(t *testing.T) {
 		{
 			name:   "count agg + timeline",
 			projID: "proj-id",
-			vd:     newTestViewData(v, start, end, &count1, &count2),
+			vd:     newTestViewData(countView, start, end, count1, count2),
 			want: []*monitoringpb.CreateTimeSeriesRequest{{
 				Name: monitoring.MetricProjectPath("proj-id"),
 				TimeSeries: []*monitoringpb.TimeSeries{
@@ -176,7 +183,7 @@ func TestExporter_makeReq(t *testing.T) {
 		{
 			name:   "sum agg + timeline",
 			projID: "proj-id",
-			vd:     newTestViewData(v, start, end, &sum1, &sum2),
+			vd:     newTestViewData(sumView, start, end, sum1, sum2),
 			want: []*monitoringpb.CreateTimeSeriesRequest{{
 				Name: monitoring.MetricProjectPath("proj-id"),
 				TimeSeries: []*monitoringpb.TimeSeries{
@@ -317,13 +324,13 @@ func TestExporter_makeReq_batching(t *testing.T) {
 		},
 	}
 
-	count1 := view.CountData(10)
-	count2 := view.CountData(16)
+	count1 := view.AggregationData{Count: 10}
+	count2 := view.AggregationData{Count: 16}
 
 	for _, tt := range tests {
 		var vds []*view.Data
 		for i := 0; i < tt.iter; i++ {
-			vds = append(vds, newTestViewData(v, time.Now(), time.Now(), &count1, &count2))
+			vds = append(vds, newTestViewData(v, time.Now(), time.Now(), count1, count2))
 		}
 
 		e := &statsExporter{}
@@ -450,8 +457,8 @@ func TestExporter_createMeasure(t *testing.T) {
 		Aggregation: view.Sum(),
 	}
 
-	data := view.CountData(0)
-	vd := newTestViewData(v, time.Now(), time.Now(), &data, &data)
+	data := view.AggregationData{Count: 0}
+	vd := newTestViewData(v, time.Now(), time.Now(), data, data)
 
 	e := &statsExporter{
 		createdViews: make(map[string]*metricpb.MetricDescriptor),
@@ -526,8 +533,8 @@ func TestExporter_createMeasure_CountAggregation(t *testing.T) {
 		Aggregation: view.Count(),
 	}
 
-	data := view.CountData(0)
-	vd := newTestViewData(v, time.Now(), time.Now(), &data, &data)
+	data := view.AggregationData{Count: 0}
+	vd := newTestViewData(v, time.Now(), time.Now(), data, data)
 
 	e := &statsExporter{
 		createdViews: make(map[string]*metricpb.MetricDescriptor),
@@ -594,8 +601,8 @@ func TestExporter_makeReq_withCustomMonitoredResource(t *testing.T) {
 
 	start := time.Now()
 	end := start.Add(time.Minute)
-	count1 := view.CountData(10)
-	count2 := view.CountData(16)
+	count1 := view.AggregationData{Count: 10}
+	count2 := view.AggregationData{Count: 16}
 	taskValue := getTaskValue()
 
 	resource := &monitoredrespb.MonitoredResource{
@@ -612,7 +619,7 @@ func TestExporter_makeReq_withCustomMonitoredResource(t *testing.T) {
 		{
 			name:   "count agg timeline",
 			projID: "proj-id",
-			vd:     newTestViewData(v, start, end, &count1, &count2),
+			vd:     newTestViewData(v, start, end, count1, count2),
 			want: []*monitoringpb.CreateTimeSeriesRequest{{
 				Name: monitoring.MetricProjectPath("proj-id"),
 				TimeSeries: []*monitoringpb.TimeSeries{
@@ -719,7 +726,7 @@ func newTestDistViewData(v *view.View, start, end time.Time) *view.Data {
 	return &view.Data{
 		View: v,
 		Rows: []*view.Row{
-			{Data: &view.DistributionData{
+			{Data: view.AggregationData{
 				Count:           5,
 				Min:             1,
 				Max:             7,

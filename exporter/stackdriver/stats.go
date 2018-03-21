@@ -261,8 +261,6 @@ func (e *statsExporter) createMeasure(ctx context.Context, vd *view.Data) error 
 		case *stats.Float64Measure:
 			valueType = metricpb.MetricDescriptor_DOUBLE
 		}
-	case view.AggTypeMean:
-		valueType = metricpb.MetricDescriptor_DISTRIBUTION
 	case view.AggTypeDistribution:
 		valueType = metricpb.MetricDescriptor_DISTRIBUTION
 	default:
@@ -313,28 +311,21 @@ func newPoint(v *view.View, row *view.Row, start, end time.Time) *monitoringpb.P
 }
 
 func newTypedValue(vd *view.View, r *view.Row) *monitoringpb.TypedValue {
-	switch v := r.Data.(type) {
-	case *view.CountData:
+	switch vd.Aggregation.Type {
+	case view.AggTypeCount:
 		return &monitoringpb.TypedValue{Value: &monitoringpb.TypedValue_Int64Value{
-			Int64Value: int64(*v),
+			Int64Value: r.Data.Count,
 		}}
-	case *view.SumData:
-		switch vd.Measure.(type) {
-		case *stats.Int64Measure:
-			return &monitoringpb.TypedValue{Value: &monitoringpb.TypedValue_Int64Value{
-				Int64Value: int64(*v),
-			}}
-		case *stats.Float64Measure:
-			return &monitoringpb.TypedValue{Value: &monitoringpb.TypedValue_DoubleValue{
-				DoubleValue: float64(*v),
-			}}
-		}
-	case *view.DistributionData:
+	case view.AggTypeSum:
+		return &monitoringpb.TypedValue{Value: &monitoringpb.TypedValue_DoubleValue{
+			DoubleValue: r.Data.Sum(),
+		}}
+	case view.AggTypeDistribution:
 		return &monitoringpb.TypedValue{Value: &monitoringpb.TypedValue_DistributionValue{
 			DistributionValue: &distributionpb.Distribution{
-				Count: v.Count,
-				Mean:  v.Mean,
-				SumOfSquaredDeviation: v.SumOfSquaredDev,
+				Count: r.Data.Count,
+				Mean:  r.Data.Mean,
+				SumOfSquaredDeviation: r.Data.SumOfSquaredDev,
 				// TODO(songya): uncomment this once Stackdriver supports min/max.
 				// Range: &distributionpb.Distribution_Range{
 				// 	Min: v.Min,
@@ -347,7 +338,7 @@ func newTypedValue(vd *view.View, r *view.Row) *monitoringpb.TypedValue {
 						},
 					},
 				},
-				BucketCounts: v.CountPerBucket,
+				BucketCounts: r.Data.CountPerBucket,
 			},
 		}}
 	}
@@ -392,7 +383,7 @@ func equalAggTagKeys(md *metricpb.MetricDescriptor, agg *view.Aggregation, keys 
 	case metricpb.MetricDescriptor_DOUBLE:
 		aggTypeMatch = agg.Type == view.AggTypeSum
 	case metricpb.MetricDescriptor_DISTRIBUTION:
-		aggTypeMatch = agg.Type == view.AggTypeMean || agg.Type == view.AggTypeDistribution
+		aggTypeMatch = agg.Type == view.AggTypeDistribution
 	}
 
 	if !aggTypeMatch {

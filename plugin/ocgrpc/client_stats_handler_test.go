@@ -16,6 +16,7 @@
 package ocgrpc
 
 import (
+	"fmt"
 	"testing"
 
 	"go.opencensus.io/trace"
@@ -335,7 +336,11 @@ func TestClientDefaultCollections(t *testing.T) {
 
 			for _, gotRow := range gotRows {
 				if !containsRow(wantData.rows, gotRow) {
-					t.Errorf("%q: unwanted row for view %q = %v", tc.label, wantData.v().Name, gotRow)
+					msg := fmt.Sprintf("%q: unwanted row for view %q = \n%#v\n; want any of:\n", tc.label, wantData.v().Name, gotRow)
+					for _, row := range wantData.rows {
+						msg += fmt.Sprintf("%#v\n", row)
+					}
+					t.Error(msg)
 					break
 				}
 			}

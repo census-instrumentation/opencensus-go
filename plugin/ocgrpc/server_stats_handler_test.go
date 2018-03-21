@@ -353,13 +353,12 @@ func TestServerDefaultCollections(t *testing.T) {
 	}
 }
 
-func newCountData(v int) *view.CountData {
-	cav := view.CountData(v)
-	return &cav
+func newCountData(v int) view.AggregationData {
+	return view.AggregationData{Count: int64(v)}
 }
 
-func newDistributionData(countPerBucket []int64, count int64, min, max, mean, sumOfSquaredDev float64) *view.DistributionData {
-	return &view.DistributionData{
+func newDistributionData(countPerBucket []int64, count int64, min, max, mean, sumOfSquaredDev float64) view.AggregationData {
+	return view.AggregationData{
 		Count:           count,
 		Min:             min,
 		Max:             max,

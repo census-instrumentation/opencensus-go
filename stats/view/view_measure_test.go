@@ -36,15 +36,15 @@ func TestMeasureFloat64AndInt64(t *testing.T) {
 	d1, _ := RetrieveData(v1.Name)
 	d2, _ := RetrieveData(v2.Name)
 
-	sum1 := d1[0].Data.(*SumData)
-	sum2 := d2[0].Data.(*SumData)
+	sum1 := d1[0].Data.Sum()
+	sum2 := d2[0].Data.Sum()
 
 	// We expect both views to return 7.2, as though we recorded on a single measure.
 
-	if got, want := float64(*sum1), 7.2; got != want {
+	if got, want := float64(sum1), 7.2; got != want {
 		t.Errorf("sum1 = %v; want %v", got, want)
 	}
-	if got, want := float64(*sum2), 7.2; got != want {
+	if got, want := float64(sum2), 7.2; got != want {
 		t.Errorf("sum2 = %v; want %v", got, want)
 	}
 }

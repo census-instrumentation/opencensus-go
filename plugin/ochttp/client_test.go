@@ -107,16 +107,7 @@ func TestClient(t *testing.T) {
 			continue
 		}
 		data := rows[0].Data
-		var count int64
-		switch data := data.(type) {
-		case *view.CountData:
-			count = *(*int64)(data)
-		case *view.DistributionData:
-			count = data.Count
-		default:
-			t.Errorf("Unkown data type: %v", data)
-			continue
-		}
+		count := data.Count
 		if got := count; got != reqCount {
 			t.Fatalf("%s = %d; want %d", viewName, got, reqCount)
 		}

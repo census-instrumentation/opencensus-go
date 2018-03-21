@@ -44,7 +44,7 @@ func newView(measureName string, agg *view.Aggregation) *view.View {
 
 func TestOnlyCumulativeWindowSupported(t *testing.T) {
 	// See Issue https://github.com/census-instrumentation/opencensus-go/issues/214.
-	count1 := view.CountData(1)
+	count1 := view.AggregationData{Count: 1}
 	tests := []struct {
 		vds  *view.Data
 		want int
@@ -59,7 +59,7 @@ func TestOnlyCumulativeWindowSupported(t *testing.T) {
 			vds: &view.Data{
 				View: newView("TestOnlyCumulativeWindowSupported/m2", view.Count()),
 				Rows: []*view.Row{
-					{Data: &count1},
+					{Data: count1},
 				},
 			},
 			want: 1,
@@ -126,9 +126,9 @@ func TestCollectNonRacy(t *testing.T) {
 		}()
 
 		for i := 0; i < 1e3; i++ {
-			count1 := view.CountData(1)
+			count1 := view.AggregationData{Count: 1}
 			vds := []*view.Data{
-				{View: newView(fmt.Sprintf("TestCollectNonRacy/m2-%d", i), view.Count()), Rows: []*view.Row{{Data: &count1}}},
+				{View: newView(fmt.Sprintf("TestCollectNonRacy/m2-%d", i), view.Count()), Rows: []*view.Row{{Data: count1}}},
 			}
 			for _, v := range vds {
 				exp.ExportView(v)

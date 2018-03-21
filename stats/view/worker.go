@@ -229,9 +229,6 @@ func (w *worker) reportUsage(now time.Time) {
 		if !ok {
 			w.startTimes[v] = now
 		}
-		// Make sure collector is never going
-		// to mutate the exported data.
-		rows = deepCopyRowData(rows)
 		viewData := &Data{
 			View:  v.view,
 			Start: w.startTimes[v],
@@ -244,15 +241,4 @@ func (w *worker) reportUsage(now time.Time) {
 		}
 		exportersMu.Unlock()
 	}
-}
-
-func deepCopyRowData(rows []*Row) []*Row {
-	newRows := make([]*Row, 0, len(rows))
-	for _, r := range rows {
-		newRows = append(newRows, &Row{
-			Data: r.Data.clone(),
-			Tags: r.Tags,
-		})
-	}
-	return newRows
 }

@@ -25,7 +25,7 @@ import (
 type collector struct {
 	// signatures holds the aggregations values for each unique tag signature
 	// (values for all keys) to its aggregator.
-	signatures map[string]AggregationData
+	signatures map[string]aggregator
 	// Aggregation is the description of the aggregation to perform for this
 	// view.
 	a *Aggregation
@@ -44,14 +44,15 @@ func (c *collector) collectedRows(keys []tag.Key) []*Row {
 	var rows []*Row
 	for sig, aggregator := range c.signatures {
 		tags := decodeTags([]byte(sig), keys)
-		row := &Row{tags, aggregator}
+		row := &Row{Tags: tags}
+		aggregator.writeTo(&row.Data)
 		rows = append(rows, row)
 	}
 	return rows
 }
 
 func (c *collector) clearRows() {
-	c.signatures = make(map[string]AggregationData)
+	c.signatures = make(map[string]aggregator)
 }
 
 // encodeWithKeys encodes the map by using values
