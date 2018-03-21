@@ -59,8 +59,8 @@ func Test_spanDataToThrift(t *testing.T) {
 	now := time.Now()
 
 	answerValue := int64(42)
-	resultValue := true
 	keyValue := "value"
+	resultValue := true
 	statusCodeValue := int64(2)
 	statusMessage := "error"
 
@@ -80,9 +80,7 @@ func Test_spanDataToThrift(t *testing.T) {
 				StartTime: now,
 				EndTime:   now,
 				Attributes: map[string]interface{}{
-					"answer": answerValue,
-					"key":    keyValue,
-					"result": resultValue,
+					"key": keyValue,
 				},
 				Annotations: []trace.Annotation{
 					{
@@ -90,6 +88,13 @@ func Test_spanDataToThrift(t *testing.T) {
 						Message: statusMessage,
 						Attributes: map[string]interface{}{
 							"answer": answerValue,
+						},
+					},
+					{
+						Time:    now,
+						Message: statusMessage,
+						Attributes: map[string]interface{}{
+							"result": resultValue,
 						},
 					},
 				},
@@ -103,15 +108,17 @@ func Test_spanDataToThrift(t *testing.T) {
 				StartTime:     now.UnixNano() / 1000,
 				Duration:      0,
 				Tags: []*gen.Tag{
-					{Key: "answer", VType: gen.TagType_LONG, VLong: &answerValue},
 					{Key: "key", VType: gen.TagType_STRING, VStr: &keyValue},
-					{Key: "result", VType: gen.TagType_BOOL, VBool: &resultValue},
 					{Key: "status.code", VType: gen.TagType_LONG, VLong: &statusCodeValue},
 					{Key: "status.message", VType: gen.TagType_STRING, VStr: &statusMessage},
 				},
 				Logs: []*gen.Log{
 					{Timestamp: now.UnixNano() / 1000, Fields: []*gen.Tag{
 						{Key: "answer", VType: gen.TagType_LONG, VLong: &answerValue},
+						{Key: "message", VType: gen.TagType_STRING, VStr: &statusMessage},
+					}},
+					{Timestamp: now.UnixNano() / 1000, Fields: []*gen.Tag{
+						{Key: "result", VType: gen.TagType_BOOL, VBool: &resultValue},
 						{Key: "message", VType: gen.TagType_STRING, VStr: &statusMessage},
 					}},
 				},
