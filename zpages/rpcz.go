@@ -69,7 +69,7 @@ func init() {
 	if err := view.Register(views...); err != nil {
 		log.Printf("error subscribing to views: %v", err)
 	}
-	exporter.Register(snapExporter{})
+	exporter.RegisterViewExporter(snapExporter{})
 }
 
 func rpczHandler(w http.ResponseWriter, r *http.Request) {

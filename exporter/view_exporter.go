@@ -17,8 +17,8 @@ package exporter
 import "sync"
 
 var (
-	exportersMu   sync.RWMutex // guards exporters
-	viewExporters = make(map[View]struct{})
+	viewExportersMu sync.RWMutex // guards exporters
+	viewExporters   = make(map[ViewExporter]struct{})
 )
 
 // View exports the collected view data.
@@ -28,37 +28,36 @@ var (
 // process a ViewData, that work should be done on another goroutine.
 //
 // The ViewData should not be modified.
-type View interface {
+type ViewExporter interface {
 	ExportView(viewData *ViewData)
 }
 
-// Register registers an exporter. The exporter should implement one of the
-// export interfaces: exporter.View.
+// RegisterViewExporter registers a View exporter.
 // Collected data will be reported via all the registered exporters.
-// If you no longer want data to be exported, invoke Unregister with the
-// previously registered exporter.
+// If you no longer want data to be exported, you can invoke UnregisterViewExporter
+// with the previously registered exporter.
 // Exporters are required to be valid map keys.
-func Register(exporter interface{}) {
-	exportersMu.Lock()
-	defer exportersMu.Unlock()
-	if ev, ok := exporter.(View); ok {
+func RegisterViewExporter(exporter ViewExporter) {
+	viewExportersMu.Lock()
+	defer viewExportersMu.Unlock()
+	if ev, ok := exporter.(ViewExporter); ok {
 		viewExporters[ev] = struct{}{}
 	}
 }
 
-// Unregister unregisters a previously registered exporter.
-func Unregister(exporter interface{}) {
-	exportersMu.Lock()
-	defer exportersMu.Unlock()
-	if ev, ok := exporter.(View); ok {
+// UnregisterViewExporter unregisters a previously registered exporter.
+func UnregisterViewExporter(exporter ViewExporter) {
+	viewExportersMu.Lock()
+	defer viewExportersMu.Unlock()
+	if ev, ok := exporter.(ViewExporter); ok {
 		delete(viewExporters, ev)
 	}
 }
 
-// ExportViewData calls all registered View exporters with the given ViewData.
-func ExportViewData(viewData *ViewData) {
-	exportersMu.Lock()
-	defer exportersMu.Unlock()
+// CallViewExporters calls all registered View exporters with the given ViewData.
+func CallViewExporters(viewData *ViewData) {
+	viewExportersMu.Lock()
+	defer viewExportersMu.Unlock()
 	for e := range viewExporters {
 		e.ExportView(viewData)
 	}

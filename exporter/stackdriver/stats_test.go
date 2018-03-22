@@ -702,6 +702,22 @@ func TestExporter_makeReq_withCustomMonitoredResource(t *testing.T) {
 	}
 }
 
+func TestNewTypedValue_NoMeasureFloat(t *testing.T) {
+	got := newTypedValue(&exporter.ViewData{Aggregation: exporter.Aggregation{Type: exporter.AggTypeSum}, MeasureFloat: false}, &exporter.Row{})
+	_, ok := got.Value.(*monitoringpb.TypedValue_Int64Value)
+	if !ok {
+		t.Errorf("got %#v; want *monitoringpb.TypedValue_Int64Value", got.Value)
+	}
+}
+
+func TestNewTypedValue_MeasureFloat(t *testing.T) {
+	got := newTypedValue(&exporter.ViewData{Aggregation: exporter.Aggregation{Type: exporter.AggTypeSum}, MeasureFloat: true}, &exporter.Row{})
+	_, ok := got.Value.(*monitoringpb.TypedValue_DoubleValue)
+	if !ok {
+		t.Errorf("got %#v; want *monitoringpb.TypedValue_DoubleValue", got.Value)
+	}
+}
+
 func newTestViewData(v *view.View, start, end time.Time, data1, data2 exporter.AggregationData, agg exporter.Aggregation) *exporter.ViewData {
 	key, _ := tag.NewKey("test-key")
 	tag1 := tag.Tag{Key: key, Value: "test-value-1"}

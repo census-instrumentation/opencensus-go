@@ -27,19 +27,14 @@ import (
 	"go.opencensus.io/tag"
 )
 
-// Deprecated: use exporter.Register
-func RegisterExporter(e interface{}) {
-	// TODO(ramonza): move this to the exporter package
-	if e, ok := e.(exporter.View); ok {
-		exporter.Register(e)
-	}
+// Deprecated: use exporter.RegisterViewExporter
+func RegisterExporter(e exporter.ViewExporter) {
+	exporter.RegisterViewExporter(e)
 }
 
-// Deprecated: use exporter.Unregister
-func UnregisterExporter(e interface{}) {
-	if e, ok := e.(exporter.View); ok {
-		exporter.Unregister(e)
-	}
+// Deprecated: use exporter.UnregisterViewExporter
+func UnregisterExporter(e exporter.ViewExporter) {
+	exporter.UnregisterViewExporter(e)
 }
 
 // View allows users to aggregate the recorded stats.Measurements.

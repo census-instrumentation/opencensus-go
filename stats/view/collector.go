@@ -46,7 +46,7 @@ func (c *collector) collectedRows(keys []tag.Key) []*exporter.Row {
 	for sig, aggregator := range c.signatures {
 		tags := decodeTags([]byte(sig), keys)
 		row := &exporter.Row{Tags: tags}
-		aggregator.writeTo(&row.Data)
+		aggregator.exportTo(&row.Data)
 		rows = append(rows, row)
 	}
 	return rows

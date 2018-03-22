@@ -258,7 +258,7 @@ func (e *statsExporter) createMeasure(ctx context.Context, vd *exporter.ViewData
 	case exporter.AggTypeDistribution:
 		valueType = metricpb.MetricDescriptor_DISTRIBUTION
 	default:
-		return fmt.Errorf("unsupported aggregation type: %s", agg.String())
+		return fmt.Errorf("unsupported aggregation type: %s", agg)
 	}
 
 	metricKind := metricpb.MetricDescriptor_CUMULATIVE
@@ -311,9 +311,15 @@ func newTypedValue(vd *exporter.ViewData, r *exporter.Row) *monitoringpb.TypedVa
 			Int64Value: r.Data.Count,
 		}}
 	case exporter.AggTypeSum:
-		return &monitoringpb.TypedValue{Value: &monitoringpb.TypedValue_DoubleValue{
-			DoubleValue: r.Data.Sum(),
-		}}
+		if vd.MeasureFloat {
+			return &monitoringpb.TypedValue{Value: &monitoringpb.TypedValue_DoubleValue{
+				DoubleValue: r.Data.Sum(),
+			}}
+		} else {
+			return &monitoringpb.TypedValue{Value: &monitoringpb.TypedValue_Int64Value{
+				Int64Value: int64(r.Data.Sum()),
+			}}
+		}
 	case exporter.AggTypeDistribution:
 		return &monitoringpb.TypedValue{Value: &monitoringpb.TypedValue_DistributionValue{
 			DistributionValue: &distributionpb.Distribution{

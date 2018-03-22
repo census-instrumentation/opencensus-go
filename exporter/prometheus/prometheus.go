@@ -88,7 +88,7 @@ func newExporter(o Options) (*Exporter, error) {
 }
 
 var _ http.Handler = (*Exporter)(nil)
-var _ exporter.View = (*Exporter)(nil)
+var _ exporter.ViewExporter = (*Exporter)(nil)
 
 func (c *collector) registerViews(views ...*exporter.ViewData) {
 	count := 0

@@ -165,7 +165,7 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 					[]*exporter.Row{
 						{
 							[]tag.Tag{{Key: k1, Value: "v1"}, {Key: k2, Value: "v2"}},
-							exporter.AggregationData{Count:2},
+							exporter.AggregationData{Count: 2},
 						},
 					},
 					nil,
@@ -183,7 +183,7 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 					[]*exporter.Row{
 						{
 							[]tag.Tag{{Key: k1, Value: "v1"}, {Key: k2, Value: "v2"}},
-							exporter.AggregationData{Count:2},
+							exporter.AggregationData{Count: 2},
 						},
 					},
 					nil,
@@ -193,7 +193,7 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 					[]*exporter.Row{
 						{
 							[]tag.Tag{{Key: k1, Value: "v1"}, {Key: k2, Value: "v2"}},
-							exporter.AggregationData{Count:2},
+							exporter.AggregationData{Count: 2},
 						},
 					},
 					nil,
@@ -272,7 +272,7 @@ func TestReportUsage(t *testing.T) {
 		}
 
 		e := &countExporter{}
-		exporter.Register(e)
+		exporter.RegisterViewExporter(e)
 
 		stats.Record(ctx, m.M(1))
 		stats.Record(ctx, m.M(1))
@@ -329,8 +329,8 @@ func TestWorkerStarttime(t *testing.T) {
 	}
 
 	e := &vdExporter{}
-	exporter.Register(e)
-	defer exporter.Unregister(e)
+	exporter.RegisterViewExporter(e)
+	defer exporter.UnregisterViewExporter(e)
 
 	stats.Record(ctx, m.M(1))
 	stats.Record(ctx, m.M(1))

@@ -243,6 +243,6 @@ func (w *worker) reportUsage(now time.Time) {
 			MeasureFloat: isFloat64Measure,
 			Rows:         rows,
 		}
-		exporter.ExportViewData(viewData)
+		exporter.CallViewExporters(viewData)
 	}
 }

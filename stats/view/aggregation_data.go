@@ -24,7 +24,7 @@ import (
 // aggregator receives data points and aggregates them in place.
 type aggregator interface {
 	addSample(v float64)
-	writeTo(d *exporter.AggregationData)
+	exportTo(d *exporter.AggregationData)
 }
 
 // TODO(ramonza): remove all the aggregator types and replace with just a
@@ -41,7 +41,7 @@ func (a *countData) addSample(_ float64) {
 	*a = *a + 1
 }
 
-func (a *countData) writeTo(dd *exporter.AggregationData) {
+func (a *countData) exportTo(dd *exporter.AggregationData) {
 	dd.Count = int64(*a)
 }
 
@@ -56,7 +56,7 @@ func (a *sumData) addSample(f float64) {
 	*a += sumData(f)
 }
 
-func (a *sumData) writeTo(dd *exporter.AggregationData) {
+func (a *sumData) exportTo(dd *exporter.AggregationData) {
 	dd.Mean = float64(*a)
 	dd.Count = 1
 }
@@ -115,7 +115,7 @@ func (a *distributionData) incrementBucketCount(f float64) {
 	a.CountPerBucket[len(a.Bounds)]++
 }
 
-func (a *distributionData) writeTo(dd *exporter.AggregationData) {
+func (a *distributionData) exportTo(dd *exporter.AggregationData) {
 	*dd = exporter.AggregationData(*a)
 	dd.CountPerBucket = make([]int64, len(a.CountPerBucket))
 	copy(dd.CountPerBucket, a.CountPerBucket)
