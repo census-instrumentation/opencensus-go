@@ -320,20 +320,20 @@ func newPoint(v *view.View, row *view.Row, start, end time.Time) *monitoringpb.P
 }
 
 func newTypedValue(vd *view.View, r *view.Row) *monitoringpb.TypedValue {
-	switch v := r.Data.(type) {
-	case *view.CountData:
+	switch vd.Aggregation.Type {
+	case view.AggTypeCount:
 		return &monitoringpb.TypedValue{Value: &monitoringpb.TypedValue_Int64Value{
-			Int64Value: int64(*v),
+			Int64Value: r.Data.Count,
 		}}
-	case *view.SumData:
+	case view.AggTypeSum:
 		return &monitoringpb.TypedValue{Value: &monitoringpb.TypedValue_DoubleValue{
-			DoubleValue: float64(*v),
+			DoubleValue: r.Data.Sum(),
 		}}
-	case *view.MeanData:
+	case view.AggTypeMean:
 		return &monitoringpb.TypedValue{Value: &monitoringpb.TypedValue_DistributionValue{
 			DistributionValue: &distributionpb.Distribution{
-				Count: int64(v.Count),
-				Mean:  v.Mean,
+				Count: r.Data.Count,
+				Mean:  r.Data.Mean,
 				SumOfSquaredDeviation: 0,
 				BucketOptions: &distributionpb.Distribution_BucketOptions{
 					Options: &distributionpb.Distribution_BucketOptions_ExplicitBuckets{
@@ -342,15 +342,15 @@ func newTypedValue(vd *view.View, r *view.Row) *monitoringpb.TypedValue {
 						},
 					},
 				},
-				BucketCounts: []int64{0, int64(v.Count)},
+				BucketCounts: []int64{0, r.Data.Count},
 			},
 		}}
-	case *view.DistributionData:
+	case view.AggTypeDistribution:
 		return &monitoringpb.TypedValue{Value: &monitoringpb.TypedValue_DistributionValue{
 			DistributionValue: &distributionpb.Distribution{
-				Count: v.Count,
-				Mean:  v.Mean,
-				SumOfSquaredDeviation: v.SumOfSquaredDev,
+				Count: r.Data.Count,
+				Mean:  r.Data.Mean,
+				SumOfSquaredDeviation: r.Data.SumOfSquaredDev,
 				// TODO(songya): uncomment this once Stackdriver supports min/max.
 				// Range: &distributionpb.Distribution_Range{
 				// 	Min: v.Min,
@@ -363,7 +363,7 @@ func newTypedValue(vd *view.View, r *view.Row) *monitoringpb.TypedValue {
 						},
 					},
 				},
-				BucketCounts: v.CountPerBucket,
+				BucketCounts: r.Data.CountPerBucket,
 			},
 		}}
 	}

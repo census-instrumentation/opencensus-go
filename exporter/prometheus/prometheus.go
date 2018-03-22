@@ -143,11 +143,11 @@ func (o *Options) onError(err error) {
 
 // ExportView exports to the Prometheus if view data has one or more rows.
 // Each OpenCensus AggregationData will be converted to
-// corresponding Prometheus Metric: SumData will be converted
-// to Untyped Metric, CountData will be Counter Metric,
-// DistributionData will be Histogram Metric, and MeanData
+// corresponding Prometheus Metric: Sum will be converted
+// to Untyped Metric, Count will be Counter Metric,
+// Distribution will be Histogram Metric, and Mean
 // will be Summary Metric. Please note the Summary Metric from
-// MeanData does not have any quantiles.
+// Mean does not have any quantiles.
 func (e *Exporter) ExportView(vd *view.Data) {
 	if len(vd.Rows) == 0 {
 		return
@@ -230,22 +230,22 @@ func (c *collector) Collect(ch chan<- prometheus.Metric) {
 }
 
 func (c *collector) toMetric(desc *prometheus.Desc, v *view.View, row *view.Row) (prometheus.Metric, error) {
-	switch data := row.Data.(type) {
-	case *view.CountData:
-		return prometheus.NewConstMetric(desc, prometheus.CounterValue, float64(*data), tagValues(row.Tags)...)
+	switch v.Aggregation.Type {
+	case view.AggTypeCount:
+		return prometheus.NewConstMetric(desc, prometheus.CounterValue, float64(row.Data.Count), tagValues(row.Tags)...)
 
-	case *view.DistributionData:
+	case view.AggTypeDistribution:
 		points := make(map[float64]uint64)
 		for i, b := range v.Aggregation.Buckets {
-			points[b] = uint64(data.CountPerBucket[i])
+			points[b] = uint64(row.Data.CountPerBucket[i])
 		}
-		return prometheus.NewConstHistogram(desc, uint64(data.Count), data.Sum(), points, tagValues(row.Tags)...)
+		return prometheus.NewConstHistogram(desc, uint64(row.Data.Count), row.Data.Sum(), points, tagValues(row.Tags)...)
 
-	case *view.MeanData:
-		return prometheus.NewConstSummary(desc, uint64(data.Count), data.Sum(), make(map[float64]float64), tagValues(row.Tags)...)
+	case view.AggTypeMean:
+		return prometheus.NewConstSummary(desc, uint64(row.Data.Count), row.Data.Sum(), make(map[float64]float64), tagValues(row.Tags)...)
 
-	case *view.SumData:
-		return prometheus.NewConstMetric(desc, prometheus.UntypedValue, float64(*data), tagValues(row.Tags)...)
+	case view.AggTypeSum:
+		return prometheus.NewConstMetric(desc, prometheus.UntypedValue, row.Data.Sum(), tagValues(row.Tags)...)
 
 	default:
 		return nil, fmt.Errorf("aggregation %T is not yet supported", v.Aggregation)

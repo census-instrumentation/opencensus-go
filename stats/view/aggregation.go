@@ -34,25 +34,25 @@ type Aggregation struct {
 	Type    AggType   // Type is the AggType of this Aggregation.
 	Buckets []float64 // Buckets are the bucket endpoints if this Aggregation represents a distribution, see Distribution.
 
-	newData func() AggregationData
+	newData func() aggregator
 }
 
 var (
 	aggCount = &Aggregation{
 		Type: AggTypeCount,
-		newData: func() AggregationData {
+		newData: func() aggregator {
 			return newCountData(0)
 		},
 	}
 	aggSum = &Aggregation{
 		Type: AggTypeSum,
-		newData: func() AggregationData {
+		newData: func() aggregator {
 			return newSumData(0)
 		},
 	}
 	aggMean = &Aggregation{
 		Type: AggTypeMean,
-		newData: func() AggregationData {
+		newData: func() aggregator {
 			return newMeanData(0, 0)
 		},
 	}
@@ -105,7 +105,7 @@ func Distribution(bounds ...float64) *Aggregation {
 	return &Aggregation{
 		Type:    AggTypeDistribution,
 		Buckets: bounds,
-		newData: func() AggregationData {
+		newData: func() aggregator {
 			return newDistributionData(bounds)
 		},
 	}
