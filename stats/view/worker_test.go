@@ -165,7 +165,7 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 					[]*exporter.Row{
 						{
 							[]tag.Tag{{Key: k1, Value: "v1"}, {Key: k2, Value: "v2"}},
-							newCountDist(2),
+							exporter.AggregationData{Count:2},
 						},
 					},
 					nil,
@@ -183,7 +183,7 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 					[]*exporter.Row{
 						{
 							[]tag.Tag{{Key: k1, Value: "v1"}, {Key: k2, Value: "v2"}},
-							newCountDist(2),
+							exporter.AggregationData{Count:2},
 						},
 					},
 					nil,
@@ -193,7 +193,7 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 					[]*exporter.Row{
 						{
 							[]tag.Tag{{Key: k1, Value: "v1"}, {Key: k2, Value: "v2"}},
-							newCountDist(2),
+							exporter.AggregationData{Count:2},
 						},
 					},
 					nil,

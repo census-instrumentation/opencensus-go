@@ -27,17 +27,14 @@ type aggregator interface {
 	writeTo(d *exporter.AggregationData)
 }
 
+// TODO(ramonza): remove all the aggregator types and replace with just a
+// func(*exporter.AggregationData) that updates its argument in-place.
+
 type countData int64
 
 func newCountData(v int64) *countData {
 	tmp := countData(v)
 	return &tmp
-}
-
-func newCountDist(v int64) exporter.AggregationData {
-	var dd exporter.AggregationData
-	newCountData(v).writeTo(&dd)
-	return dd
 }
 
 func (a *countData) addSample(_ float64) {
@@ -53,10 +50,6 @@ type sumData float64
 func newSumData(v float64) *sumData {
 	tmp := sumData(v)
 	return &tmp
-}
-
-func newSumDist(v float64) exporter.AggregationData {
-	return exporter.AggregationData{Count: 1, Mean: v}
 }
 
 func (a *sumData) addSample(f float64) {

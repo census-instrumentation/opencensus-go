@@ -310,7 +310,7 @@ func Test_View_MeasureFloat64_AggregationSum(t *testing.T) {
 			wantRows: []*exporter.Row{
 				{
 					[]tag.Tag{{Key: k1, Value: "v1"}},
-					newSumDist(6),
+					exporter.AggregationData{Count: 1, Mean: 6},
 				},
 			},
 		},
@@ -323,11 +323,11 @@ func Test_View_MeasureFloat64_AggregationSum(t *testing.T) {
 			[]*exporter.Row{
 				{
 					[]tag.Tag{{Key: k1, Value: "v1"}},
-					newSumDist(1),
+					exporter.AggregationData{Count: 1, Mean: 1},
 				},
 				{
 					[]tag.Tag{{Key: k2, Value: "v2"}},
-					newSumDist(5),
+					exporter.AggregationData{Count: 1, Mean: 5},
 				},
 			},
 		},
@@ -343,19 +343,19 @@ func Test_View_MeasureFloat64_AggregationSum(t *testing.T) {
 			[]*exporter.Row{
 				{
 					[]tag.Tag{{Key: k1, Value: "v1"}},
-					newSumDist(6),
+					exporter.AggregationData{Count: 1, Mean: 6},
 				},
 				{
 					[]tag.Tag{{Key: k1, Value: "v1 other"}},
-					newSumDist(1),
+					exporter.AggregationData{Count: 1, Mean: 1},
 				},
 				{
 					[]tag.Tag{{Key: k2, Value: "v2"}},
-					newSumDist(5),
+					exporter.AggregationData{Count: 1, Mean: 5},
 				},
 				{
 					[]tag.Tag{{Key: k1, Value: "v1"}, {Key: k2, Value: "v2"}},
-					newSumDist(5),
+					exporter.AggregationData{Count: 1, Mean: 5},
 				},
 			},
 		},
