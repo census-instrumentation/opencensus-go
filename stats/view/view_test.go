@@ -19,8 +19,8 @@ import (
 	"context"
 	"testing"
 
+	"go.opencensus.io/exporter"
 	"go.opencensus.io/stats"
-	"go.opencensus.io/stats/exporter"
 	"go.opencensus.io/tag"
 )
 

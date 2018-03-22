@@ -18,8 +18,8 @@ package view
 import (
 	"sort"
 
+	"go.opencensus.io/exporter"
 	"go.opencensus.io/internal/tagencoding"
-	"go.opencensus.io/stats/exporter"
 	"go.opencensus.io/tag"
 )
 

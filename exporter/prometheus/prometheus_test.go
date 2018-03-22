@@ -25,8 +25,8 @@ import (
 	"testing"
 	"time"
 
+	"go.opencensus.io/exporter"
 	"go.opencensus.io/stats"
-	"go.opencensus.io/stats/exporter"
 	"go.opencensus.io/stats/view"
 	"go.opencensus.io/tag"
 
@@ -55,11 +55,11 @@ func TestOnlyCumulativeWindowSupported(t *testing.T) {
 		want int
 	}{
 		0: {
-			vds:  newViewData("TestOnlyCumulativeWindowSupported/m1", exporter.Count(), nil),
+			vds:  newViewData("TestOnlyCumulativeWindowSupported/m1", exporter.Aggregation{Type: exporter.AggTypeCount}, nil),
 			want: 0, // no rows present
 		},
 		1: {
-			vds: newViewData("TestOnlyCumulativeWindowSupported/m2", exporter.Count(),
+			vds: newViewData("TestOnlyCumulativeWindowSupported/m2", exporter.Aggregation{Type: exporter.AggTypeCount},
 				[]*exporter.Row{
 					{Data: count1},
 				}),
@@ -129,7 +129,7 @@ func TestCollectNonRacy(t *testing.T) {
 		for i := 0; i < 1e3; i++ {
 			count1 := exporter.AggregationData{Count: 1}
 			vds := []*exporter.ViewData{
-				newViewData(fmt.Sprintf("TestCollectNonRacy/m2-%d", i), exporter.Count(), []*exporter.Row{{Data: count1}}),
+				newViewData(fmt.Sprintf("TestCollectNonRacy/m2-%d", i), exporter.Aggregation{Type: exporter.AggTypeCount}, []*exporter.Row{{Data: count1}}),
 			}
 			for _, v := range vds {
 				exp.ExportView(v)

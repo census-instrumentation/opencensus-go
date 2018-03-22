@@ -57,6 +57,8 @@ func (r *Row) String() string {
 	return buffer.String()
 }
 
+// Equal compares two Rows, ignoring small floating point differences. Useful
+// for testing.
 func (r *Row) Equal(other *Row) bool {
 	return reflect.DeepEqual(r.Tags, other.Tags) && r.Data.Equal(other.Data)
 }

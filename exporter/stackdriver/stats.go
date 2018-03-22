@@ -26,8 +26,8 @@ import (
 	"sync"
 	"time"
 
+	"go.opencensus.io/exporter"
 	"go.opencensus.io/internal"
-	"go.opencensus.io/stats/exporter"
 	"go.opencensus.io/tag"
 	"go.opencensus.io/trace"
 

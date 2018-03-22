@@ -21,8 +21,8 @@ import (
 	"sort"
 	"sync/atomic"
 
+	"go.opencensus.io/exporter"
 	"go.opencensus.io/stats"
-	"go.opencensus.io/stats/exporter"
 	"go.opencensus.io/stats/internal"
 	"go.opencensus.io/tag"
 )
@@ -30,14 +30,14 @@ import (
 // Deprecated: use exporter.Register
 func RegisterExporter(e interface{}) {
 	// TODO(ramonza): move this to the exporter package
-	if e, ok := e.(exporter.Exporter); ok {
+	if e, ok := e.(exporter.View); ok {
 		exporter.Register(e)
 	}
 }
 
 // Deprecated: use exporter.Unregister
 func UnregisterExporter(e interface{}) {
-	if e, ok := e.(exporter.Exporter); ok {
+	if e, ok := e.(exporter.View); ok {
 		exporter.Unregister(e)
 	}
 }

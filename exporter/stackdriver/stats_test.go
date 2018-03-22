@@ -22,8 +22,8 @@ import (
 
 	"cloud.google.com/go/monitoring/apiv3"
 	"github.com/golang/protobuf/ptypes/timestamp"
+	"go.opencensus.io/exporter"
 	"go.opencensus.io/stats"
-	"go.opencensus.io/stats/exporter"
 	"go.opencensus.io/stats/view"
 	"go.opencensus.io/tag"
 	"google.golang.org/api/option"
@@ -116,7 +116,7 @@ func TestExporter_makeReq(t *testing.T) {
 		{
 			name:   "count agg + timeline",
 			projID: "proj-id",
-			vd:     newTestViewData(countView, start, end, count1, count2, exporter.Count()),
+			vd:     newTestViewData(countView, start, end, count1, count2, exporter.Aggregation{Type: exporter.AggTypeCount}),
 			want: []*monitoringpb.CreateTimeSeriesRequest{{
 				Name: monitoring.MetricProjectPath("proj-id"),
 				TimeSeries: []*monitoringpb.TimeSeries{
@@ -184,7 +184,7 @@ func TestExporter_makeReq(t *testing.T) {
 		{
 			name:   "sum agg + timeline",
 			projID: "proj-id",
-			vd:     newTestViewData(sumView, start, end, sum1, sum2, exporter.Sum()),
+			vd:     newTestViewData(sumView, start, end, sum1, sum2, exporter.Aggregation{Type: exporter.AggTypeSum}),
 			want: []*monitoringpb.CreateTimeSeriesRequest{{
 				Name: monitoring.MetricProjectPath("proj-id"),
 				TimeSeries: []*monitoringpb.TimeSeries{
@@ -331,7 +331,7 @@ func TestExporter_makeReq_batching(t *testing.T) {
 	for _, tt := range tests {
 		var vds []*exporter.ViewData
 		for i := 0; i < tt.iter; i++ {
-			vds = append(vds, newTestViewData(v, time.Now(), time.Now(), count1, count2, exporter.Count()))
+			vds = append(vds, newTestViewData(v, time.Now(), time.Now(), count1, count2, exporter.Aggregation{Type: exporter.AggTypeCount}))
 		}
 
 		e := &statsExporter{}
@@ -459,7 +459,7 @@ func TestExporter_createMeasure(t *testing.T) {
 	}
 
 	data := exporter.AggregationData{Count: 0}
-	vd := newTestViewData(v, time.Now(), time.Now(), data, data, exporter.Sum())
+	vd := newTestViewData(v, time.Now(), time.Now(), data, data, exporter.Aggregation{Type: exporter.AggTypeSum})
 
 	e := &statsExporter{
 		createdViews: make(map[string]*metricpb.MetricDescriptor),
@@ -535,7 +535,7 @@ func TestExporter_createMeasure_CountAggregation(t *testing.T) {
 	}
 
 	data := exporter.AggregationData{Count: 0}
-	vd := newTestViewData(v, time.Now(), time.Now(), data, data, exporter.Count())
+	vd := newTestViewData(v, time.Now(), time.Now(), data, data, exporter.Aggregation{Type: exporter.AggTypeCount})
 
 	e := &statsExporter{
 		createdViews: make(map[string]*metricpb.MetricDescriptor),
@@ -620,7 +620,7 @@ func TestExporter_makeReq_withCustomMonitoredResource(t *testing.T) {
 		{
 			name:   "count agg timeline",
 			projID: "proj-id",
-			vd:     newTestViewData(v, start, end, count1, count2, exporter.Count()),
+			vd:     newTestViewData(v, start, end, count1, count2, exporter.Aggregation{Type: exporter.AggTypeCount}),
 			want: []*monitoringpb.CreateTimeSeriesRequest{{
 				Name: monitoring.MetricProjectPath("proj-id"),
 				TimeSeries: []*monitoringpb.TimeSeries{

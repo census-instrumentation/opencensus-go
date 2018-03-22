@@ -19,8 +19,8 @@ import (
 	"fmt"
 	"time"
 
+	"go.opencensus.io/exporter"
 	"go.opencensus.io/stats"
-	"go.opencensus.io/stats/exporter"
 	"go.opencensus.io/stats/internal"
 	"go.opencensus.io/tag"
 )
@@ -243,6 +243,6 @@ func (w *worker) reportUsage(now time.Time) {
 			MeasureFloat: isFloat64Measure,
 			Rows:         rows,
 		}
-		exporter.ExportToAll(viewData)
+		exporter.ExportViewData(viewData)
 	}
 }

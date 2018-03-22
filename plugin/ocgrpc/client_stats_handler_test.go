@@ -19,7 +19,7 @@ import (
 	"fmt"
 	"testing"
 
-	"go.opencensus.io/stats/exporter"
+	"go.opencensus.io/exporter"
 	"go.opencensus.io/trace"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

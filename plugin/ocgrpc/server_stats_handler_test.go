@@ -18,7 +18,7 @@ package ocgrpc
 import (
 	"testing"
 
-	"go.opencensus.io/stats/exporter"
+	"go.opencensus.io/exporter"
 	"go.opencensus.io/trace"
 	"golang.org/x/net/context"
 

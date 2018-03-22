@@ -35,6 +35,8 @@ type AggregationData struct {
 	Bounds          []float64 // histogram distribution of the values
 }
 
+// Equal compares two data points and returns true if they are mostly the same,
+// except for small floating point differences. Useful for testing.
 func (a AggregationData) Equal(a2 AggregationData) bool {
 	if len(a.CountPerBucket) != len(a2.CountPerBucket) {
 		return false

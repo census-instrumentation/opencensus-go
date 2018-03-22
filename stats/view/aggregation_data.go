@@ -18,7 +18,7 @@ package view
 import (
 	"math"
 
-	"go.opencensus.io/stats/exporter"
+	"go.opencensus.io/exporter"
 )
 
 // aggregator receives data points and aggregates them in place.

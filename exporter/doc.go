@@ -21,4 +21,4 @@
 // Multiple exporters can be registered to upload the data to various
 // different backends. Users need to unregister the exporters once they
 // no longer are needed.
-package exporter // import "go.opencensus.io/stats/exporter"
+package exporter // import "go.opencensus.io/exporter"

@@ -17,45 +17,49 @@ package exporter
 import "sync"
 
 var (
-	exportersMu sync.RWMutex // guards exporters
-	exporters   = make(map[Exporter]struct{})
+	exportersMu   sync.RWMutex // guards exporters
+	viewExporters = make(map[View]struct{})
 )
 
-// Exporter exports the collected records as view data.
+// View exports the collected view data.
 //
 // The ExportView method should return quickly; if an
 // Exporter takes a significant amount of time to
 // process a ViewData, that work should be done on another goroutine.
 //
 // The ViewData should not be modified.
-type Exporter interface {
+type View interface {
 	ExportView(viewData *ViewData)
 }
 
-// Register registers an exporter.
-// Collected data will be reported via all the
-// registered exporters. Once you no longer
-// want data to be exported, invoke Unregister
-// with the previously registered exporter.
-func Register(e Exporter) {
+// Register registers an exporter. The exporter should implement one of the
+// export interfaces: exporter.View.
+// Collected data will be reported via all the registered exporters.
+// If you no longer want data to be exported, invoke Unregister with the
+// previously registered exporter.
+// Exporters are required to be valid map keys.
+func Register(exporter interface{}) {
 	exportersMu.Lock()
 	defer exportersMu.Unlock()
-
-	exporters[e] = struct{}{}
+	if ev, ok := exporter.(View); ok {
+		viewExporters[ev] = struct{}{}
+	}
 }
 
-// Unregister unregisters an exporter.
-func Unregister(e Exporter) {
+// Unregister unregisters a previously registered exporter.
+func Unregister(exporter interface{}) {
 	exportersMu.Lock()
 	defer exportersMu.Unlock()
-
-	delete(exporters, e)
+	if ev, ok := exporter.(View); ok {
+		delete(viewExporters, ev)
+	}
 }
 
-func ExportToAll(viewData *ViewData) {
+// ExportViewData calls all registered View exporters with the given ViewData.
+func ExportViewData(viewData *ViewData) {
 	exportersMu.Lock()
-	for e := range exporters {
+	defer exportersMu.Unlock()
+	for e := range viewExporters {
 		e.ExportView(viewData)
 	}
-	exportersMu.Unlock()
 }

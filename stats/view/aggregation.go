@@ -15,9 +15,7 @@
 
 package view
 
-import (
-	"go.opencensus.io/stats/exporter"
-)
+import "go.opencensus.io/exporter"
 
 // Aggregation represents a data aggregation method. Use one of the functions:
 // Count, Sum, Mean, or Distribution to construct an Aggregation.

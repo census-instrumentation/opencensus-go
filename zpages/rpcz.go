@@ -26,8 +26,8 @@ import (
 	"text/tabwriter"
 	"time"
 
+	"go.opencensus.io/exporter"
 	"go.opencensus.io/plugin/ocgrpc"
-	"go.opencensus.io/stats/exporter"
 	"go.opencensus.io/stats/view"
 )
 

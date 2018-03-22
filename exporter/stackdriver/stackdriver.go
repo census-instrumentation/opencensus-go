@@ -28,7 +28,7 @@ import (
 	"time"
 
 	traceapi "cloud.google.com/go/trace/apiv2"
-	"go.opencensus.io/stats/exporter"
+	"go.opencensus.io/exporter"
 	"go.opencensus.io/trace"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/option"

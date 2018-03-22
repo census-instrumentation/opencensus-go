@@ -25,8 +25,8 @@ import (
 	"net/http"
 	"sync"
 
+	"go.opencensus.io/exporter"
 	"go.opencensus.io/internal"
-	"go.opencensus.io/stats/exporter"
 	"go.opencensus.io/tag"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -88,7 +88,7 @@ func newExporter(o Options) (*Exporter, error) {
 }
 
 var _ http.Handler = (*Exporter)(nil)
-var _ exporter.Exporter = (*Exporter)(nil)
+var _ exporter.View = (*Exporter)(nil)
 
 func (c *collector) registerViews(views ...*exporter.ViewData) {
 	count := 0
