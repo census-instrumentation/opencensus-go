@@ -34,11 +34,6 @@ func statsExamples() {
 		log.Fatal(err)
 	}
 
-	m := stats.FindMeasure("my.org/video_size")
-	if m == nil {
-		log.Fatalln("measure not found")
-	}
-
 	// START aggs
 	distAgg := view.Distribution(0, 1<<32, 2<<32, 3<<32)
 	countAgg := view.Count()
