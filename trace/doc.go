@@ -17,7 +17,7 @@ Package trace contains types for representing trace information, and
 functions for global configuration of tracing.
 
 The following assumes a basic familiarity with OpenCensus concepts.
-See http://opencensus.io.
+See http://opencensus.io
 
 
 Enabling Tracing for a Program
