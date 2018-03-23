@@ -19,7 +19,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"net/url"
 	"os"
 	"path"
 	"strconv"
@@ -43,8 +42,6 @@ import (
 	metricpb "google.golang.org/genproto/googleapis/api/metric"
 	monitoredrespb "google.golang.org/genproto/googleapis/api/monitoredres"
 	monitoringpb "google.golang.org/genproto/googleapis/monitoring/v3"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
 )
 
 const maxTimeSeriesPerUpload = 200
@@ -206,7 +203,7 @@ func (e *statsExporter) makeReq(vds []*view.Data, limit int) []*monitoringpb.Cre
 		for _, row := range vd.Rows {
 			ts := &monitoringpb.TimeSeries{
 				Metric: &metricpb.Metric{
-					Type:   namespacedViewName(vd.View.Name, false),
+					Type:   namespacedViewName(vd.View.Name),
 					Labels: newLabels(row.Tags, e.taskValue),
 				},
 				Resource: resource,
@@ -247,21 +244,7 @@ func (e *statsExporter) createMeasure(ctx context.Context, vd *view.Data) error 
 		return equalAggTagKeys(md, agg, tagKeys)
 	}
 
-	metricName := monitoring.MetricMetricDescriptorPath(e.o.ProjectID, namespacedViewName(viewName, true))
-	md, err := getMetricDescriptor(ctx, e.c, &monitoringpb.GetMetricDescriptorRequest{
-		Name: metricName,
-	})
-	if err == nil {
-		if err := equalAggTagKeys(md, agg, tagKeys); err != nil {
-			return err
-		}
-		e.createdViews[viewName] = md
-		return nil
-	}
-	if grpc.Code(err) != codes.NotFound {
-		return err
-	}
-
+	metricType := namespacedViewName(viewName)
 	var valueType metricpb.MetricDescriptor_ValueType
 	unit := m.Unit()
 
@@ -287,13 +270,14 @@ func (e *statsExporter) createMeasure(ctx context.Context, vd *view.Data) error 
 		displayNamePrefix = e.o.MetricPrefix
 	}
 
-	md, err = createMetricDescriptor(ctx, e.c, &monitoringpb.CreateMetricDescriptorRequest{
-		Name: monitoring.MetricProjectPath(e.o.ProjectID),
+	md, err := createMetricDescriptor(ctx, e.c, &monitoringpb.CreateMetricDescriptorRequest{
+		Name: fmt.Sprintf("projects/%s", e.o.ProjectID),
 		MetricDescriptor: &metricpb.MetricDescriptor{
+			Name:        fmt.Sprintf("projects/%s/metricDescriptors/%s", e.o.ProjectID, metricType),
 			DisplayName: path.Join(displayNamePrefix, viewName),
 			Description: vd.View.Description,
 			Unit:        unit,
-			Type:        namespacedViewName(viewName, false),
+			Type:        metricType,
 			MetricKind:  metricKind,
 			ValueType:   valueType,
 			Labels:      newLabelDescriptors(vd.View.TagKeys),
@@ -374,12 +358,8 @@ func newTypedValue(vd *view.View, r *view.Row) *monitoringpb.TypedValue {
 	return nil
 }
 
-func namespacedViewName(v string, escaped bool) string {
-	p := path.Join("opencensus", v)
-	if escaped {
-		p = url.PathEscape(p)
-	}
-	return path.Join("custom.googleapis.com", p)
+func namespacedViewName(v string) string {
+	return path.Join("custom.googleapis.com", "opencensus", v)
 }
 
 func newLabels(tags []tag.Tag, taskValue string) map[string]string {
