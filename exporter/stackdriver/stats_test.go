@@ -601,8 +601,8 @@ func TestExporter_createMeasure(t *testing.T) {
 		if metricType := mdr.MetricDescriptor.Type; metricType != "custom.googleapis.com/opencensus/test_view_sum" {
 			t.Errorf("MetricDescriptor should have the metricType = custom.googleapis.com/opencensus/testview; got %v", metricType)
 		}
-		if ValueTypeStr := mdr.MetricDescriptor.ValueType.String(); ValueTypeStr != "DOUBLE" {
-			t.Errorf("MetricDescriptor should have the ValueTypeStr = DOUBLE; got %v", ValueTypeStr)
+		if valueTypeStr := mdr.MetricDescriptor.ValueType.String(); valueTypeStr != "DOUBLE" {
+			t.Errorf("MetricDescriptor should have the ValueTypeStr = DOUBLE; got %v", valueTypeStr)
 		}
 		if metricKindStr := mdr.MetricDescriptor.MetricKind.String(); metricKindStr != "CUMULATIVE" {
 			t.Errorf("MetricDescriptor should have the metricKindStr = CUMULATIVE; got %v", metricKindStr)
@@ -685,8 +685,8 @@ func TestExporter_createMeasure_CountAggregation(t *testing.T) {
 		if metricType := mdr.MetricDescriptor.Type; metricType != "custom.googleapis.com/opencensus/test_view_count" {
 			t.Errorf("MetricDescriptor should have the metricType = custom.googleapis.com/opencensus/test_view_count; got %v", metricType)
 		}
-		if ValueTypeStr := mdr.MetricDescriptor.ValueType.String(); ValueTypeStr != "INT64" {
-			t.Errorf("MetricDescriptor should have the ValueTypeStr = INT64; got %v", ValueTypeStr)
+		if valueTypeStr := mdr.MetricDescriptor.ValueType.String(); valueTypeStr != "INT64" {
+			t.Errorf("MetricDescriptor should have the ValueTypeStr = INT64; got %v", valueTypeStr)
 		}
 		if metricKindStr := mdr.MetricDescriptor.MetricKind.String(); metricKindStr != "CUMULATIVE" {
 			t.Errorf("MetricDescriptor should have the metricKindStr = CUMULATIVE; got %v", metricKindStr)
@@ -697,8 +697,8 @@ func TestExporter_createMeasure_CountAggregation(t *testing.T) {
 		if diplayName := mdr.MetricDescriptor.DisplayName; diplayName != "OpenCensus/test_view_count" {
 			t.Errorf("MetricDescriptor should have the diplayName = OpenCensus/test_view_count; got %v", diplayName)
 		}
-		if unit := mdr.MetricDescriptor.Unit; unit != "1" {
-			t.Errorf("MetricDescriptor should have the unit = 1; got %v", unit)
+		if unit := mdr.MetricDescriptor.Unit; unit != stats.UnitNone {
+			t.Errorf("MetricDescriptor should have the unit = %v; got %v", stats.UnitNone, unit)
 		}
 		return &metric.MetricDescriptor{
 			DisplayName: "OpenCensus/test_view_sum",
