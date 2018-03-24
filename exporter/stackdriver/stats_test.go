@@ -571,17 +571,17 @@ func TestExporter_createMeasure(t *testing.T) {
 	}()
 
 	key, _ := tag.NewKey("test-key-one")
-	m, err := stats.Float64("test-measure/TestExporter_createMeasure", "measure desc", "unit")
+	m, err := stats.Float64("test-measure/TestExporter_createMeasure", "measure desc", "ms")
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	v := &view.View{
-		Name:        "testview",
-		Description: "desc",
+		Name:        "test_view_sum",
+		Description: "view_description",
 		TagKeys:     []tag.Key{key},
 		Measure:     m,
-		Aggregation: view.Count(),
+		Aggregation: view.Sum(),
 	}
 
 	data := view.CountData(0)
@@ -598,13 +598,31 @@ func TestExporter_createMeasure(t *testing.T) {
 	}
 	createMetricDescriptor = func(ctx context.Context, c *monitoring.MetricClient, mdr *monitoringpb.CreateMetricDescriptorRequest) (*metric.MetricDescriptor, error) {
 		createCalls++
+		if metricType := mdr.MetricDescriptor.Type; metricType != "custom.googleapis.com/opencensus/test_view_sum" {
+			t.Errorf("MetricDescriptor should have the metricType = custom.googleapis.com/opencensus/testview; got %v", metricType)
+		}
+		if ValueTypeStr := mdr.MetricDescriptor.ValueType.String(); ValueTypeStr != "DOUBLE" {
+			t.Errorf("MetricDescriptor should have the ValueTypeStr = DOUBLE; got %v", ValueTypeStr)
+		}
+		if metricKindStr := mdr.MetricDescriptor.MetricKind.String(); metricKindStr != "CUMULATIVE" {
+			t.Errorf("MetricDescriptor should have the metricKindStr = CUMULATIVE; got %v", metricKindStr)
+		}
+		if description := mdr.MetricDescriptor.Description; description != "view_description" {
+			t.Errorf("MetricDescriptor should have the description = view_description; got %v", description)
+		}
+		if diplayName := mdr.MetricDescriptor.DisplayName; diplayName != "OpenCensus/test_view_sum" {
+			t.Errorf("MetricDescriptor should have the diplayName = OpenCensus/test_view_sum; got %v", diplayName)
+		}
+		if unit := mdr.MetricDescriptor.Unit; unit != "ms" {
+			t.Errorf("MetricDescriptor should have the unit = ms; got %v", unit)
+		}
 		return &metric.MetricDescriptor{
-			DisplayName: "display",
-			Description: "desc",
-			Unit:        "unit",
-			Type:        "hello",
+			DisplayName: "OpenCensus/test_view_sum",
+			Description: "view_description",
+			Unit:        "ms",
+			Type:        "custom.googleapis.com/opencensus/test_view_sum",
 			MetricKind:  metricpb.MetricDescriptor_CUMULATIVE,
-			ValueType:   metricpb.MetricDescriptor_INT64,
+			ValueType:   metricpb.MetricDescriptor_DOUBLE,
 			Labels:      newLabelDescriptors(vd.View.TagKeys),
 		}, nil
 	}
@@ -624,6 +642,77 @@ func TestExporter_createMeasure(t *testing.T) {
 	}
 	if count := len(e.createdViews); count != 1 {
 		t.Errorf("len(e.createdViews) = %v; want 1", count)
+	}
+}
+
+func TestExporter_createMeasure_CountAggregation(t *testing.T) {
+	oldGetMetricDescriptor := getMetricDescriptor
+	oldCreateMetricDescriptor := createMetricDescriptor
+
+	defer func() {
+		getMetricDescriptor = oldGetMetricDescriptor
+		createMetricDescriptor = oldCreateMetricDescriptor
+	}()
+
+	key, _ := tag.NewKey("test-key-one")
+	m, err := stats.Float64("test-measure/TestExporter_createMeasure", "measure desc", "unit")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	v := &view.View{
+		Name:        "test_view_count",
+		Description: "view_description",
+		TagKeys:     []tag.Key{key},
+		Measure:     m,
+		Aggregation: view.Count(),
+	}
+
+	data := view.CountData(0)
+	vd := newTestViewData(v, time.Now(), time.Now(), &data, &data)
+
+	e := &statsExporter{
+		createdViews: make(map[string]*metricpb.MetricDescriptor),
+	}
+
+	var getCalls, createCalls int
+	getMetricDescriptor = func(ctx context.Context, c *monitoring.MetricClient, mdr *monitoringpb.GetMetricDescriptorRequest) (*metric.MetricDescriptor, error) {
+		getCalls++
+		return nil, status.Error(codes.NotFound, "")
+	}
+	createMetricDescriptor = func(ctx context.Context, c *monitoring.MetricClient, mdr *monitoringpb.CreateMetricDescriptorRequest) (*metric.MetricDescriptor, error) {
+		createCalls++
+		if metricType := mdr.MetricDescriptor.Type; metricType != "custom.googleapis.com/opencensus/test_view_count" {
+			t.Errorf("MetricDescriptor should have the metricType = custom.googleapis.com/opencensus/test_view_count; got %v", metricType)
+		}
+		if ValueTypeStr := mdr.MetricDescriptor.ValueType.String(); ValueTypeStr != "INT64" {
+			t.Errorf("MetricDescriptor should have the ValueTypeStr = INT64; got %v", ValueTypeStr)
+		}
+		if metricKindStr := mdr.MetricDescriptor.MetricKind.String(); metricKindStr != "CUMULATIVE" {
+			t.Errorf("MetricDescriptor should have the metricKindStr = CUMULATIVE; got %v", metricKindStr)
+		}
+		if description := mdr.MetricDescriptor.Description; description != "view_description" {
+			t.Errorf("MetricDescriptor should have the description = view_description; got %v", description)
+		}
+		if diplayName := mdr.MetricDescriptor.DisplayName; diplayName != "OpenCensus/test_view_count" {
+			t.Errorf("MetricDescriptor should have the diplayName = OpenCensus/test_view_count; got %v", diplayName)
+		}
+		if unit := mdr.MetricDescriptor.Unit; unit != "1" {
+			t.Errorf("MetricDescriptor should have the unit = 1; got %v", unit)
+		}
+		return &metric.MetricDescriptor{
+			DisplayName: "OpenCensus/test_view_sum",
+			Description: "view_description",
+			Unit:        "ms",
+			Type:        "custom.googleapis.com/opencensus/test_view_count",
+			MetricKind:  metricpb.MetricDescriptor_CUMULATIVE,
+			ValueType:   metricpb.MetricDescriptor_INT64,
+			Labels:      newLabelDescriptors(vd.View.TagKeys),
+		}, nil
+	}
+	ctx := context.Background()
+	if err := e.createMeasure(ctx, vd); err != nil {
+		t.Errorf("Exporter.createMeasure() error = %v", err)
 	}
 }
 
