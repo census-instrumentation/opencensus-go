@@ -28,6 +28,7 @@ import (
 	"time"
 
 	"go.opencensus.io/internal"
+	"go.opencensus.io/stats"
 	"go.opencensus.io/stats/view"
 	"go.opencensus.io/tag"
 	"go.opencensus.io/trace"
@@ -261,12 +262,15 @@ func (e *statsExporter) createMeasure(ctx context.Context, vd *view.Data) error 
 		return err
 	}
 
-	var metricKind metricpb.MetricDescriptor_MetricKind
 	var valueType metricpb.MetricDescriptor_ValueType
+	unit := m.Unit()
 
 	switch agg.Type {
 	case view.AggTypeCount:
 		valueType = metricpb.MetricDescriptor_INT64
+		// If the aggregation type is count, which counts the number of recorded measurements, the unit must be "1",
+		// because this view does not apply to the recorded values.
+		unit = stats.UnitNone
 	case view.AggTypeSum:
 		valueType = metricpb.MetricDescriptor_DOUBLE
 	case view.AggTypeMean:
@@ -277,7 +281,7 @@ func (e *statsExporter) createMeasure(ctx context.Context, vd *view.Data) error 
 		return fmt.Errorf("unsupported aggregation type: %s", agg.Type.String())
 	}
 
-	metricKind = metricpb.MetricDescriptor_CUMULATIVE
+	metricKind := metricpb.MetricDescriptor_CUMULATIVE
 	displayNamePrefix := defaultDisplayNamePrefix
 	if e.o.MetricPrefix != "" {
 		displayNamePrefix = e.o.MetricPrefix
@@ -287,8 +291,8 @@ func (e *statsExporter) createMeasure(ctx context.Context, vd *view.Data) error 
 		Name: monitoring.MetricProjectPath(e.o.ProjectID),
 		MetricDescriptor: &metricpb.MetricDescriptor{
 			DisplayName: path.Join(displayNamePrefix, viewName),
-			Description: m.Description(),
-			Unit:        m.Unit(),
+			Description: vd.View.Description,
+			Unit:        unit,
 			Type:        namespacedViewName(viewName, false),
 			MetricKind:  metricKind,
 			ValueType:   valueType,
