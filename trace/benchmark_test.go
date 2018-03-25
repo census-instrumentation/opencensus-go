@@ -19,6 +19,65 @@ import (
 	"testing"
 )
 
+func doWork(ctx context.Context) context.Context {
+	vx, _ := ctx.Value("introduction").(string)
+	if len(vx) > 100 {
+		vx = vx[:15]
+		ctx = context.WithValue(ctx, "introduction", vx)
+	}
+	return ctx
+}
+
+func BenchmarkWithSpan_NewContextInLoop_doWork(b *testing.B) {
+	traceBenchmark(b, func(b *testing.B) {
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			ctx := context.Background()
+			_, span := StartSpan(ctx, "/foo")
+			ctx = doWork(ctx)
+			span.End()
+		}
+	})
+}
+
+func BenchmarkWithSpan_ContextReuse_doWork(b *testing.B) {
+	traceBenchmark(b, func(b *testing.B) {
+		ctx := context.Background()
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			_, span := StartSpan(ctx, "/foo")
+			ctx = doWork(ctx)
+			span.End()
+		}
+	})
+}
+
+var sink context.Context
+
+func BenchmarkNoTracing_ContextReuse_doWork(b *testing.B) {
+	traceBenchmark(b, func(b *testing.B) {
+		ctx := context.Background()
+		for i := 0; i < b.N; i++ {
+			sink = doWork(ctx)
+		}
+		if sink == nil {
+			b.Fatalf("Benchmark didn't run!")
+		}
+	})
+}
+
+func BenchmarkNoTracing_NewContextInLoop_doWork(b *testing.B) {
+	traceBenchmark(b, func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			ctx := context.Background()
+			sink = doWork(ctx)
+		}
+		if sink == nil {
+			b.Fatalf("Benchmark didn't run!")
+		}
+	})
+}
+
 func BenchmarkStartEndSpan(b *testing.B) {
 	traceBenchmark(b, func(b *testing.B) {
 		ctx := context.Background()
@@ -94,10 +153,12 @@ func BenchmarkSpanID_DotString(b *testing.B) {
 func traceBenchmark(b *testing.B, fn func(*testing.B)) {
 	b.Run("AlwaysSample", func(b *testing.B) {
 		b.ReportAllocs()
+		b.ResetTimer()
 		SetDefaultSampler(AlwaysSample())
 		fn(b)
 	})
 	b.Run("NeverSample", func(b *testing.B) {
+		b.ResetTimer()
 		b.ReportAllocs()
 		SetDefaultSampler(NeverSample())
 		fn(b)
