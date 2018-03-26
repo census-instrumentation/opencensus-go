@@ -18,7 +18,6 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -34,10 +33,7 @@ import (
 )
 
 func newView(measureName string, agg *view.Aggregation) *view.View {
-	m, err := stats.Int64(measureName, "bytes", stats.UnitBytes)
-	if err != nil {
-		log.Fatal(err)
-	}
+	m := stats.Int64(measureName, "bytes", stats.UnitBytes)
 	return &view.View{
 		Name:        "foo",
 		Description: "bar",
@@ -175,28 +171,24 @@ func TestCollectNonRacy(t *testing.T) {
 	}()
 }
 
-type mCreator struct {
-	m   *stats.Int64Measure
-	err error
-}
-
 type mSlice []*stats.Int64Measure
 
-func (mc *mCreator) createAndAppend(measures *mSlice, name, desc, unit string) {
-	mc.m, mc.err = stats.Int64(name, desc, unit)
-	*measures = append(*measures, mc.m)
+func (measures *mSlice) createAndAppend(name, desc, unit string) {
+	m := stats.Int64(name, desc, unit)
+	*measures = append(*measures, m)
 }
 
-type vCreator struct {
-	v   *view.View
-	err error
-}
+type vCreator []*view.View
 
-func (vc *vCreator) createAndSubscribe(name, description string, keys []tag.Key, measure stats.Measure, agg *view.Aggregation) {
-	vc.v, vc.err = view.New(name, description, keys, measure, agg)
-	if err := vc.v.Subscribe(); err != nil {
-		vc.err = err
+func (vc *vCreator) createAndAppend(name, description string, keys []tag.Key, measure stats.Measure, agg *view.Aggregation) {
+	v := &view.View{
+		Name:        name,
+		Description: description,
+		TagKeys:     keys,
+		Measure:     measure,
+		Aggregation: agg,
 	}
+	*vc = append(*vc, v)
 }
 
 func TestMetricsEndpointOutput(t *testing.T) {
@@ -208,20 +200,17 @@ func TestMetricsEndpointOutput(t *testing.T) {
 
 	names := []string{"foo", "bar", "baz"}
 
-	measures := make(mSlice, 0)
-	mc := &mCreator{}
+	var measures mSlice
 	for _, name := range names {
-		mc.createAndAppend(&measures, "tests/"+name, name, "")
-	}
-	if mc.err != nil {
-		t.Errorf("failed to create measures: %v", err)
+		measures.createAndAppend("tests/"+name, name, "")
 	}
 
-	vc := &vCreator{}
+	var vc vCreator
 	for _, m := range measures {
-		vc.createAndSubscribe(m.Name(), m.Description(), nil, m, view.Count())
+		vc.createAndAppend(m.Name(), m.Description(), nil, m, view.Count())
 	}
-	if vc.err != nil {
+
+	if err := view.Subscribe(vc...); err != nil {
 		t.Fatalf("failed to create views: %v", err)
 	}
 	view.SetReportingPeriod(time.Millisecond)

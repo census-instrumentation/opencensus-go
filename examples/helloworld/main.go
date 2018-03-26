@@ -53,10 +53,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	videoSize, err = stats.Int64("my.org/measure/video_size", "size of processed videos", "MBy")
-	if err != nil {
-		log.Fatalf("Video size measure not created: %v", err)
-	}
+	videoSize = stats.Int64("my.org/measure/video_size", "size of processed videos", stats.UnitBytes)
 
 	// Create view to see the processed video size
 	// distribution broken down by frontend.

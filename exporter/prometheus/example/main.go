@@ -28,6 +28,13 @@ import (
 	"go.opencensus.io/stats/view"
 )
 
+// Create measures. The program will record measures for the size of
+// processed videos and the number of videos marked as spam.
+var (
+	videoCount = stats.Int64("my.org/measures/video_count", "number of processed videos", stats.UnitNone)
+	videoSize  = stats.Int64("my.org/measures/video_size", "size of processed video", stats.UnitBytes)
+)
+
 func main() {
 	ctx := context.Background()
 
@@ -36,17 +43,6 @@ func main() {
 		log.Fatal(err)
 	}
 	view.RegisterExporter(exporter)
-
-	// Create measures. The program will record measures for the size of
-	// processed videos and the number of videos marked as spam.
-	videoCount, err := stats.Int64("my.org/measures/video_count", "number of processed videos", "")
-	if err != nil {
-		log.Fatalf("Video count measure not created: %v", err)
-	}
-	videoSize, err := stats.Int64("my.org/measures/video_size", "size of processed video", "MBy")
-	if err != nil {
-		log.Fatalf("Video size measure not created: %v", err)
-	}
 
 	// Create view to see the number of processed videos cumulatively.
 	// Create view to see the amount of video processed

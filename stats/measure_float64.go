@@ -46,7 +46,7 @@ func (m *Float64Measure) M(v float64) Measurement {
 
 // Float64 creates a new measure of type Float64Measure.
 // It never returns an error.
-func Float64(name, description, unit string) (*Float64Measure, error) {
+func Float64(name, description, unit string) *Float64Measure {
 	mi := registerMeasureHandle(name, description, unit)
-	return &Float64Measure{mi}, nil
+	return &Float64Measure{mi}
 }

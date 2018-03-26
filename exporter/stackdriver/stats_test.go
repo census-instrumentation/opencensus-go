@@ -70,10 +70,7 @@ func TestNewExporterSingletonPerProcess(t *testing.T) {
 }
 
 func TestExporter_makeReq(t *testing.T) {
-	m, err := stats.Float64("test-measure", "measure desc", "unit")
-	if err != nil {
-		t.Fatal(err)
-	}
+	m := stats.Float64("test-measure", "measure desc", "unit")
 
 	key, err := tag.NewKey("test_key")
 	if err != nil {
@@ -275,10 +272,7 @@ func TestExporter_makeReq(t *testing.T) {
 }
 
 func TestExporter_makeReq_batching(t *testing.T) {
-	m, err := stats.Float64("test-measure/makeReq_batching", "measure desc", "unit")
-	if err != nil {
-		t.Fatal(err)
-	}
+	m := stats.Float64("test-measure/makeReq_batching", "measure desc", "unit")
 
 	key, err := tag.NewKey("test_key")
 	if err != nil {
@@ -446,10 +440,7 @@ func TestExporter_createMeasure(t *testing.T) {
 	}()
 
 	key, _ := tag.NewKey("test-key-one")
-	m, err := stats.Float64("test-measure/TestExporter_createMeasure", "measure desc", stats.UnitMilliseconds)
-	if err != nil {
-		t.Fatal(err)
-	}
+	m := stats.Float64("test-measure/TestExporter_createMeasure", "measure desc", stats.UnitMilliseconds)
 
 	v := &view.View{
 		Name:        "test_view_sum",
@@ -525,10 +516,7 @@ func TestExporter_createMeasure_CountAggregation(t *testing.T) {
 	}()
 
 	key, _ := tag.NewKey("test-key-one")
-	m, err := stats.Float64("test-measure/TestExporter_createMeasure", "measure desc", stats.UnitMilliseconds)
-	if err != nil {
-		t.Fatal(err)
-	}
+	m := stats.Float64("test-measure/TestExporter_createMeasure", "measure desc", stats.UnitMilliseconds)
 
 	v := &view.View{
 		Name:        "test_view_count",
@@ -585,10 +573,7 @@ func TestExporter_createMeasure_CountAggregation(t *testing.T) {
 }
 
 func TestExporter_makeReq_withCustomMonitoredResource(t *testing.T) {
-	m, err := stats.Float64("test-measure/TestExporter_makeReq_withCustomMonitoredResource", "measure desc", "unit")
-	if err != nil {
-		t.Fatal(err)
-	}
+	m := stats.Float64("test-measure/TestExporter_makeReq_withCustomMonitoredResource", "measure desc", "unit")
 
 	key, err := tag.NewKey("test_key")
 	if err != nil {
