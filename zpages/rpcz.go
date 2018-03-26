@@ -251,9 +251,6 @@ func (s snapExporter) ExportView(vd *view.Data) {
 		case *view.DistributionData:
 			sum = v.Sum()
 			count = float64(v.Count)
-		case *view.MeanData:
-			sum = v.Sum()
-			count = float64(v.Count)
 		case *view.SumData:
 			sum = float64(*v)
 			count = float64(*v)

@@ -42,10 +42,6 @@ func TestDataClone(t *testing.T) {
 			src:  dist,
 		},
 		{
-			name: "mean data",
-			src:  newMeanData(11.0, 5),
-		},
-		{
 			name: "sum data",
 			src:  newSumData(65.7),
 		},

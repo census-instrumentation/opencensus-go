@@ -313,7 +313,7 @@ func TestCanonicalize(t *testing.T) {
 	k1, _ := tag.NewKey("k1")
 	k2, _ := tag.NewKey("k2")
 	m, _ := stats.Int64("TestCanonicalize/m1", "desc desc", stats.UnitNone)
-	v := &View{TagKeys: []tag.Key{k2, k1}, Measure: m, Aggregation: Mean()}
+	v := &View{TagKeys: []tag.Key{k2, k1}, Measure: m, Aggregation: Sum()}
 	err := v.canonicalize()
 	if err != nil {
 		t.Fatal(err)
@@ -332,125 +332,6 @@ func TestCanonicalize(t *testing.T) {
 	}
 }
 
-func Test_View_MeasureFloat64_AggregationMean(t *testing.T) {
-	k1, _ := tag.NewKey("k1")
-	k2, _ := tag.NewKey("k2")
-	k3, _ := tag.NewKey("k3")
-	m, _ := stats.Int64("Test_View_MeasureFloat64_AggregationMean/m1", "", stats.UnitNone)
-	viewDesc := &View{TagKeys: []tag.Key{k1, k2}, Measure: m, Aggregation: Mean()}
-	view, err := newViewInternal(viewDesc)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	type tagString struct {
-		k tag.Key
-		v string
-	}
-	type record struct {
-		f    float64
-		tags []tagString
-	}
-
-	tcs := []struct {
-		label    string
-		records  []record
-		wantRows []*Row
-	}{
-		{
-			"1",
-			[]record{
-				{1, []tagString{{k1, "v1"}}},
-				{5, []tagString{{k1, "v1"}}},
-			},
-			[]*Row{
-				{
-					[]tag.Tag{{Key: k1, Value: "v1"}},
-					newMeanData(3, 2),
-				},
-			},
-		},
-		{
-			"2",
-			[]record{
-				{1, []tagString{{k1, "v1"}}},
-				{5, []tagString{{k2, "v2"}}},
-				{-0.5, []tagString{{k2, "v2"}}},
-			},
-			[]*Row{
-				{
-					[]tag.Tag{{Key: k1, Value: "v1"}},
-					newMeanData(1, 1),
-				},
-				{
-					[]tag.Tag{{Key: k2, Value: "v2"}},
-					newMeanData(2.25, 2),
-				},
-			},
-		},
-		{
-			"3",
-			[]record{
-				{1, []tagString{{k1, "v1"}}},
-				{5, []tagString{{k1, "v1"}, {k3, "v3"}}},
-				{1, []tagString{{k1, "v1 other"}}},
-				{5, []tagString{{k2, "v2"}}},
-				{5, []tagString{{k1, "v1"}, {k2, "v2"}}},
-				{-4, []tagString{{k1, "v1"}, {k2, "v2"}}},
-			},
-			[]*Row{
-				{
-					[]tag.Tag{{Key: k1, Value: "v1"}},
-					newMeanData(3, 2),
-				},
-				{
-					[]tag.Tag{{Key: k1, Value: "v1 other"}},
-					newMeanData(1, 1),
-				},
-				{
-					[]tag.Tag{{Key: k2, Value: "v2"}},
-					newMeanData(5, 1),
-				},
-				{
-					[]tag.Tag{{Key: k1, Value: "v1"}, {Key: k2, Value: "v2"}},
-					newMeanData(0.5, 2),
-				},
-			},
-		},
-	}
-
-	for _, tt := range tcs {
-		view.clearRows()
-		view.subscribe()
-		for _, r := range tt.records {
-			mods := []tag.Mutator{}
-			for _, t := range r.tags {
-				mods = append(mods, tag.Insert(t.k, t.v))
-			}
-			ctx, err := tag.New(context.Background(), mods...)
-			if err != nil {
-				t.Errorf("%v: New = %v", tt.label, err)
-			}
-			view.addSample(tag.FromContext(ctx), r.f)
-		}
-
-		gotRows := view.collectedRows()
-		for i, got := range gotRows {
-			if !containsRow(tt.wantRows, got) {
-				t.Errorf("%v-%d: got row %v; want none", tt.label, i, got)
-				break
-			}
-		}
-
-		for i, want := range tt.wantRows {
-			if !containsRow(gotRows, want) {
-				t.Errorf("%v-%d: got none; want row %v", tt.label, i, want)
-				break
-			}
-		}
-	}
-}
-
 func TestViewSortedKeys(t *testing.T) {
 	k1, _ := tag.NewKey("a")
 	k2, _ := tag.NewKey("b")
@@ -463,7 +344,7 @@ func TestViewSortedKeys(t *testing.T) {
 		Description: "desc sort_keys",
 		TagKeys:     ks,
 		Measure:     m,
-		Aggregation: Mean(),
+		Aggregation: Sum(),
 	})
 	// Subscribe normalizes the view by sorting the tag keys, retrieve the normalized view
 	v := Find("sort_keys")

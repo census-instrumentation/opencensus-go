@@ -38,10 +38,9 @@ func statsExamples() {
 	distAgg := view.Distribution(0, 1<<32, 2<<32, 3<<32)
 	countAgg := view.Count()
 	sumAgg := view.Sum()
-	meanAgg := view.Mean()
 	// END aggs
 
-	_, _, _, _ = distAgg, countAgg, sumAgg, meanAgg
+	_, _, _ = distAgg, countAgg, sumAgg
 
 	// START view
 	if err = view.Subscribe(&view.View{

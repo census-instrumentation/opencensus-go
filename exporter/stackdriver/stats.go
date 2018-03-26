@@ -333,22 +333,6 @@ func newTypedValue(vd *view.View, r *view.Row) *monitoringpb.TypedValue {
 		return &monitoringpb.TypedValue{Value: &monitoringpb.TypedValue_DoubleValue{
 			DoubleValue: float64(*v),
 		}}
-	case *view.MeanData:
-		return &monitoringpb.TypedValue{Value: &monitoringpb.TypedValue_DistributionValue{
-			DistributionValue: &distributionpb.Distribution{
-				Count: int64(v.Count),
-				Mean:  v.Mean,
-				SumOfSquaredDeviation: 0,
-				BucketOptions: &distributionpb.Distribution_BucketOptions{
-					Options: &distributionpb.Distribution_BucketOptions_ExplicitBuckets{
-						ExplicitBuckets: &distributionpb.Distribution_BucketOptions_Explicit{
-							Bounds: []float64{0},
-						},
-					},
-				},
-				BucketCounts: []int64{0, int64(v.Count)},
-			},
-		}}
 	case *view.DistributionData:
 		return &monitoringpb.TypedValue{Value: &monitoringpb.TypedValue_DistributionValue{
 			DistributionValue: &distributionpb.Distribution{

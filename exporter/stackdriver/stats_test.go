@@ -26,7 +26,6 @@ import (
 	"go.opencensus.io/stats/view"
 	"go.opencensus.io/tag"
 	"google.golang.org/api/option"
-	distributionpb "google.golang.org/genproto/googleapis/api/distribution"
 	"google.golang.org/genproto/googleapis/api/label"
 	"google.golang.org/genproto/googleapis/api/metric"
 	metricpb "google.golang.org/genproto/googleapis/api/metric"
@@ -103,14 +102,6 @@ func TestExporter_makeReq(t *testing.T) {
 	count2 := view.CountData(16)
 	sum1 := view.SumData(5.5)
 	sum2 := view.SumData(-11.1)
-	mean1 := view.MeanData{
-		Mean:  3.3,
-		Count: 7,
-	}
-	mean2 := view.MeanData{
-		Mean:  -7.7,
-		Count: 5,
-	}
 	taskValue := getTaskValue()
 
 	tests := []struct {
@@ -256,98 +247,6 @@ func TestExporter_makeReq(t *testing.T) {
 			}},
 		},
 		{
-			name:   "mean agg + timeline",
-			projID: "proj-id",
-			vd:     newTestViewData(v, start, end, &mean1, &mean2),
-			want: []*monitoringpb.CreateTimeSeriesRequest{{
-				Name: monitoring.MetricProjectPath("proj-id"),
-				TimeSeries: []*monitoringpb.TimeSeries{
-					{
-						Metric: &metricpb.Metric{
-							Type: "custom.googleapis.com/opencensus/testview",
-							Labels: map[string]string{
-								"test_key":        "test-value-1",
-								opencensusTaskKey: taskValue,
-							},
-						},
-						Resource: &monitoredrespb.MonitoredResource{
-							Type: "global",
-						},
-						Points: []*monitoringpb.Point{
-							{
-								Interval: &monitoringpb.TimeInterval{
-									StartTime: &timestamp.Timestamp{
-										Seconds: start.Unix(),
-										Nanos:   int32(start.Nanosecond()),
-									},
-									EndTime: &timestamp.Timestamp{
-										Seconds: end.Unix(),
-										Nanos:   int32(end.Nanosecond()),
-									},
-								},
-								Value: &monitoringpb.TypedValue{Value: &monitoringpb.TypedValue_DistributionValue{
-									DistributionValue: &distributionpb.Distribution{
-										Count: 7,
-										Mean:  3.3,
-										SumOfSquaredDeviation: 0,
-										BucketOptions: &distributionpb.Distribution_BucketOptions{
-											Options: &distributionpb.Distribution_BucketOptions_ExplicitBuckets{
-												ExplicitBuckets: &distributionpb.Distribution_BucketOptions_Explicit{
-													Bounds: []float64{0},
-												},
-											},
-										},
-										BucketCounts: []int64{0, 7},
-									},
-								}},
-							},
-						},
-					},
-					{
-						Metric: &metricpb.Metric{
-							Type: "custom.googleapis.com/opencensus/testview",
-							Labels: map[string]string{
-								"test_key":        "test-value-2",
-								opencensusTaskKey: taskValue,
-							},
-						},
-						Resource: &monitoredrespb.MonitoredResource{
-							Type: "global",
-						},
-						Points: []*monitoringpb.Point{
-							{
-								Interval: &monitoringpb.TimeInterval{
-									StartTime: &timestamp.Timestamp{
-										Seconds: start.Unix(),
-										Nanos:   int32(start.Nanosecond()),
-									},
-									EndTime: &timestamp.Timestamp{
-										Seconds: end.Unix(),
-										Nanos:   int32(end.Nanosecond()),
-									},
-								},
-								Value: &monitoringpb.TypedValue{Value: &monitoringpb.TypedValue_DistributionValue{
-									DistributionValue: &distributionpb.Distribution{
-										Count: 5,
-										Mean:  -7.7,
-										SumOfSquaredDeviation: 0,
-										BucketOptions: &distributionpb.Distribution_BucketOptions{
-											Options: &distributionpb.Distribution_BucketOptions_ExplicitBuckets{
-												ExplicitBuckets: &distributionpb.Distribution_BucketOptions_Explicit{
-													Bounds: []float64{0},
-												},
-											},
-										},
-										BucketCounts: []int64{0, 5},
-									},
-								}},
-							},
-						},
-					},
-				},
-			}},
-		},
-		{
 			name:   "dist agg + time window",
 			projID: "proj-id",
 			vd:     newTestDistViewData(distView, start, end),
@@ -482,16 +381,6 @@ func TestEqualAggWindowTagKeys(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "mean agg",
-			md: &metricpb.MetricDescriptor{
-				MetricKind: metricpb.MetricDescriptor_CUMULATIVE,
-				ValueType:  metricpb.MetricDescriptor_DISTRIBUTION,
-				Labels:     []*label.LabelDescriptor{{Key: opencensusTaskKey}},
-			},
-			agg:     view.Mean(),
-			wantErr: false,
-		},
-		{
 			name: "distribution agg - mismatch",
 			md: &metricpb.MetricDescriptor{
 				MetricKind: metricpb.MetricDescriptor_CUMULATIVE,
@@ -499,16 +388,6 @@ func TestEqualAggWindowTagKeys(t *testing.T) {
 				Labels:     []*label.LabelDescriptor{{Key: opencensusTaskKey}},
 			},
 			agg:     view.Count(),
-			wantErr: true,
-		},
-		{
-			name: "mean agg - mismatch",
-			md: &metricpb.MetricDescriptor{
-				MetricKind: metricpb.MetricDescriptor_CUMULATIVE,
-				ValueType:  metricpb.MetricDescriptor_DOUBLE,
-				Labels:     []*label.LabelDescriptor{{Key: opencensusTaskKey}},
-			},
-			agg:     view.Mean(),
 			wantErr: true,
 		},
 		{
