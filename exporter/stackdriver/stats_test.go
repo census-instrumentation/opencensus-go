@@ -33,8 +33,6 @@ import (
 	monitoredrespb "google.golang.org/genproto/googleapis/api/monitoredres"
 	monitoringpb "google.golang.org/genproto/googleapis/monitoring/v3"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 var authOptions = []option.ClientOption{option.WithGRPCConn(&grpc.ClientConn{})}
@@ -562,11 +560,9 @@ func TestEqualAggWindowTagKeys(t *testing.T) {
 }
 
 func TestExporter_createMeasure(t *testing.T) {
-	oldGetMetricDescriptor := getMetricDescriptor
 	oldCreateMetricDescriptor := createMetricDescriptor
 
 	defer func() {
-		getMetricDescriptor = oldGetMetricDescriptor
 		createMetricDescriptor = oldCreateMetricDescriptor
 	}()
 
@@ -589,15 +585,15 @@ func TestExporter_createMeasure(t *testing.T) {
 
 	e := &statsExporter{
 		createdViews: make(map[string]*metricpb.MetricDescriptor),
+		o:            Options{ProjectID: "test_project"},
 	}
 
-	var getCalls, createCalls int
-	getMetricDescriptor = func(ctx context.Context, c *monitoring.MetricClient, mdr *monitoringpb.GetMetricDescriptorRequest) (*metric.MetricDescriptor, error) {
-		getCalls++
-		return nil, status.Error(codes.NotFound, "")
-	}
+	var createCalls int
 	createMetricDescriptor = func(ctx context.Context, c *monitoring.MetricClient, mdr *monitoringpb.CreateMetricDescriptorRequest) (*metric.MetricDescriptor, error) {
 		createCalls++
+		if got, want := mdr.MetricDescriptor.Name, "projects/test_project/metricDescriptors/custom.googleapis.com/opencensus/test_view_sum"; got != want {
+			t.Errorf("MetricDescriptor.Name = %q; want %q", got, want)
+		}
 		if got, want := mdr.MetricDescriptor.Type, "custom.googleapis.com/opencensus/test_view_sum"; got != want {
 			t.Errorf("MetricDescriptor.Type = %q; want %q", got, want)
 		}
@@ -634,9 +630,6 @@ func TestExporter_createMeasure(t *testing.T) {
 	if err := e.createMeasure(ctx, vd); err != nil {
 		t.Errorf("Exporter.createMeasure() error = %v", err)
 	}
-	if count := getCalls; count != 1 {
-		t.Errorf("getMetricDescriptor needs to be called for once; called %v times", count)
-	}
 	if count := createCalls; count != 1 {
 		t.Errorf("createMetricDescriptor needs to be called for once; called %v times", count)
 	}
@@ -646,11 +639,9 @@ func TestExporter_createMeasure(t *testing.T) {
 }
 
 func TestExporter_createMeasure_CountAggregation(t *testing.T) {
-	oldGetMetricDescriptor := getMetricDescriptor
 	oldCreateMetricDescriptor := createMetricDescriptor
 
 	defer func() {
-		getMetricDescriptor = oldGetMetricDescriptor
 		createMetricDescriptor = oldCreateMetricDescriptor
 	}()
 
@@ -673,12 +664,13 @@ func TestExporter_createMeasure_CountAggregation(t *testing.T) {
 
 	e := &statsExporter{
 		createdViews: make(map[string]*metricpb.MetricDescriptor),
+		o:            Options{ProjectID: "test_project"},
 	}
 
-	getMetricDescriptor = func(ctx context.Context, c *monitoring.MetricClient, mdr *monitoringpb.GetMetricDescriptorRequest) (*metric.MetricDescriptor, error) {
-		return nil, status.Error(codes.NotFound, "")
-	}
 	createMetricDescriptor = func(ctx context.Context, c *monitoring.MetricClient, mdr *monitoringpb.CreateMetricDescriptorRequest) (*metric.MetricDescriptor, error) {
+		if got, want := mdr.MetricDescriptor.Name, "projects/test_project/metricDescriptors/custom.googleapis.com/opencensus/test_view_count"; got != want {
+			t.Errorf("MetricDescriptor.Name = %q; want %q", got, want)
+		}
 		if got, want := mdr.MetricDescriptor.Type, "custom.googleapis.com/opencensus/test_view_count"; got != want {
 			t.Errorf("MetricDescriptor.Type = %q; want %q", got, want)
 		}
