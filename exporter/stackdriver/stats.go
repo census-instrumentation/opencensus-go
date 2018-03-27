@@ -255,7 +255,12 @@ func (e *statsExporter) createMeasure(ctx context.Context, vd *view.Data) error 
 		// because this view does not apply to the recorded values.
 		unit = stats.UnitNone
 	case view.AggTypeSum:
-		valueType = metricpb.MetricDescriptor_DOUBLE
+		switch m.(type) {
+		case *stats.Int64Measure:
+			valueType = metricpb.MetricDescriptor_INT64
+		case *stats.Float64Measure:
+			valueType = metricpb.MetricDescriptor_DOUBLE
+		}
 	case view.AggTypeMean:
 		valueType = metricpb.MetricDescriptor_DISTRIBUTION
 	case view.AggTypeDistribution:
@@ -314,9 +319,16 @@ func newTypedValue(vd *view.View, r *view.Row) *monitoringpb.TypedValue {
 			Int64Value: int64(*v),
 		}}
 	case *view.SumData:
-		return &monitoringpb.TypedValue{Value: &monitoringpb.TypedValue_DoubleValue{
-			DoubleValue: float64(*v),
-		}}
+		switch vd.Measure.(type) {
+		case *stats.Int64Measure:
+			return &monitoringpb.TypedValue{Value: &monitoringpb.TypedValue_Int64Value{
+				Int64Value: int64(*v),
+			}}
+		case *stats.Float64Measure:
+			return &monitoringpb.TypedValue{Value: &monitoringpb.TypedValue_DoubleValue{
+				DoubleValue: float64(*v),
+			}}
+		}
 	case *view.DistributionData:
 		return &monitoringpb.TypedValue{Value: &monitoringpb.TypedValue_DistributionValue{
 			DistributionValue: &distributionpb.Distribution{
