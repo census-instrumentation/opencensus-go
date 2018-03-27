@@ -21,7 +21,7 @@ var (
 	viewExporters   = make(map[ViewExporter]struct{})
 )
 
-// View exports the collected view data.
+// ViewExporter exports the collected view data to a monitoring backend.
 //
 // The ExportView method should return quickly; if an
 // Exporter takes a significant amount of time to
@@ -32,12 +32,12 @@ type ViewExporter interface {
 	ExportView(viewData *ViewData)
 }
 
-// RegisterViewExporter registers a View exporter.
+// Register registers a View exporter.
 // Collected data will be reported via all the registered exporters.
-// If you no longer want data to be exported, you can invoke UnregisterViewExporter
+// If you no longer want data to be exported, you can invoke Unregister
 // with the previously registered exporter.
 // Exporters are required to be valid map keys.
-func RegisterViewExporter(exporter ViewExporter) {
+func Register(exporter ViewExporter) {
 	viewExportersMu.Lock()
 	defer viewExportersMu.Unlock()
 	if ev, ok := exporter.(ViewExporter); ok {
@@ -45,8 +45,8 @@ func RegisterViewExporter(exporter ViewExporter) {
 	}
 }
 
-// UnregisterViewExporter unregisters a previously registered exporter.
-func UnregisterViewExporter(exporter ViewExporter) {
+// Unregister unregisters a previously registered exporter.
+func Unregister(exporter ViewExporter) {
 	viewExportersMu.Lock()
 	defer viewExportersMu.Unlock()
 	if ev, ok := exporter.(ViewExporter); ok {

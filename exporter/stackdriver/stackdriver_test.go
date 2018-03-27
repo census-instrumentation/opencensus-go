@@ -23,6 +23,7 @@ import (
 	"testing"
 	"time"
 
+	"go.opencensus.io/exporter"
 	"go.opencensus.io/internal/testpb"
 	"go.opencensus.io/plugin/ochttp"
 	"go.opencensus.io/stats/view"
@@ -36,16 +37,16 @@ func TestExport(t *testing.T) {
 		t.Skip("STACKDRIVER_TEST_PROJECT_ID not set")
 	}
 
-	exporter, err := NewExporter(Options{ProjectID: projectID})
+	e, err := NewExporter(Options{ProjectID: projectID})
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer exporter.Flush()
+	defer e.Flush()
 
-	trace.RegisterExporter(exporter)
-	defer trace.UnregisterExporter(exporter)
-	view.RegisterExporter(exporter)
-	defer view.UnregisterExporter(exporter)
+	trace.RegisterExporter(e)
+	defer trace.UnregisterExporter(e)
+	exporter.Register(e)
+	defer exporter.Unregister(e)
 
 	trace.SetDefaultSampler(trace.AlwaysSample())
 
@@ -79,8 +80,8 @@ func TestExport(t *testing.T) {
 	}
 
 	// Flush twice to expose issue of exporter creating traces internally (#557)
-	exporter.Flush()
-	exporter.Flush()
+	e.Flush()
+	e.Flush()
 }
 
 func TestGRPC(t *testing.T) {
@@ -89,16 +90,16 @@ func TestGRPC(t *testing.T) {
 		t.Skip("STACKDRIVER_TEST_PROJECT_ID not set")
 	}
 
-	exporter, err := NewExporter(Options{ProjectID: projectID})
+	e, err := NewExporter(Options{ProjectID: projectID})
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer exporter.Flush()
+	defer e.Flush()
 
-	trace.RegisterExporter(exporter)
-	defer trace.UnregisterExporter(exporter)
-	view.RegisterExporter(exporter)
-	defer view.UnregisterExporter(exporter)
+	trace.RegisterExporter(e)
+	defer trace.UnregisterExporter(e)
+	exporter.Register(e)
+	defer exporter.Unregister(e)
 
 	trace.SetDefaultSampler(trace.AlwaysSample())
 

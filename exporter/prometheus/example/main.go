@@ -23,6 +23,7 @@ import (
 	"net/http"
 	"time"
 
+	"go.opencensus.io/exporter"
 	"go.opencensus.io/exporter/prometheus"
 	"go.opencensus.io/stats"
 	"go.opencensus.io/stats/view"
@@ -38,11 +39,11 @@ var (
 func main() {
 	ctx := context.Background()
 
-	exporter, err := prometheus.NewExporter(prometheus.Options{})
+	e, err := prometheus.NewExporter(prometheus.Options{})
 	if err != nil {
 		log.Fatal(err)
 	}
-	view.RegisterExporter(exporter)
+	exporter.Register(e)
 
 	// Create view to see the number of processed videos cumulatively.
 	// Create view to see the amount of video processed
@@ -78,6 +79,6 @@ func main() {
 
 	addr := ":9999"
 	log.Printf("Serving at %s", addr)
-	http.Handle("/metrics", exporter)
+	http.Handle("/metrics", e)
 	log.Fatal(http.ListenAndServe(addr, nil))
 }

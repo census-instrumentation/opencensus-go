@@ -23,8 +23,9 @@ import (
 	"net/http"
 	"time"
 
-	"go.opencensus.io/examples/exporter"
+	example "go.opencensus.io/examples/exporter"
 	pb "go.opencensus.io/examples/grpc/proto"
+	exporter "go.opencensus.io/exporter"
 	"go.opencensus.io/plugin/ocgrpc"
 	"go.opencensus.io/stats/view"
 	"go.opencensus.io/trace"
@@ -54,7 +55,7 @@ func main() {
 	}()
 	// Register stats and trace exporters to export
 	// the collected data.
-	view.RegisterExporter(&exporter.PrintExporter{})
+	exporter.Register(&example.PrintExporter{})
 
 	// Register the views to collect server request count.
 	if err := view.Register(ocgrpc.DefaultServerViews...); err != nil {

@@ -18,6 +18,7 @@ import (
 	"log"
 	"net/http"
 
+	"go.opencensus.io/exporter"
 	"go.opencensus.io/exporter/stackdriver"
 	"go.opencensus.io/exporter/stackdriver/propagation"
 	"go.opencensus.io/plugin/ochttp"
@@ -26,13 +27,13 @@ import (
 )
 
 func Example() {
-	exporter, err := stackdriver.NewExporter(stackdriver.Options{ProjectID: "google-project-id"})
+	e, err := stackdriver.NewExporter(stackdriver.Options{ProjectID: "google-project-id"})
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// Export to Stackdriver Monitoring.
-	view.RegisterExporter(exporter)
+	exporter.Register(e)
 
 	// Subscribe views to see stats in Stackdriver Monitoring.
 	if err := view.Subscribe(
@@ -43,7 +44,7 @@ func Example() {
 	}
 
 	// Export to Stackdriver Trace.
-	trace.RegisterExporter(exporter)
+	trace.RegisterExporter(e)
 
 	// Automatically add a Stackdriver trace header to outgoing requests:
 	client := &http.Client{

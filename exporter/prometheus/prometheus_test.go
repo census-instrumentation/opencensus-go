@@ -193,11 +193,11 @@ func (vc *vCreator) createAndAppend(name, description string, keys []tag.Key, me
 }
 
 func TestMetricsEndpointOutput(t *testing.T) {
-	exporter, err := newExporter(Options{})
+	e, err := newExporter(Options{})
 	if err != nil {
 		t.Fatalf("failed to create prometheus exporter: %v", err)
 	}
-	view.RegisterExporter(exporter)
+	exporter.Register(e)
 
 	names := []string{"foo", "bar", "baz"}
 
@@ -220,7 +220,7 @@ func TestMetricsEndpointOutput(t *testing.T) {
 		stats.Record(context.Background(), m.M(1))
 	}
 
-	srv := httptest.NewServer(exporter)
+	srv := httptest.NewServer(e)
 	defer srv.Close()
 
 	var i int

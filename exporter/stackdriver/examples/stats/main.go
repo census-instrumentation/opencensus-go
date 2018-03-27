@@ -23,6 +23,7 @@ import (
 	"log"
 	"time"
 
+	"go.opencensus.io/exporter"
 	"go.opencensus.io/exporter/stackdriver"
 	"go.opencensus.io/stats"
 	"go.opencensus.io/stats/view"
@@ -45,13 +46,13 @@ func main() {
 	// to setup the authorization.
 	// See https://developers.google.com/identity/protocols/application-default-credentials
 	// for more details.
-	exporter, err := stackdriver.NewExporter(stackdriver.Options{
+	e, err := stackdriver.NewExporter(stackdriver.Options{
 		ProjectID: "project-id", // Google Cloud Console project ID.
 	})
 	if err != nil {
 		log.Fatal(err)
 	}
-	view.RegisterExporter(exporter)
+	exporter.Register(e)
 
 	// Set reporting period to report data at every second.
 	view.SetReportingPeriod(1 * time.Second)

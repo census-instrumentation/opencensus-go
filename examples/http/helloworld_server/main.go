@@ -20,21 +20,21 @@ import (
 	"net/http"
 	"time"
 
-	"go.opencensus.io/zpages"
-
-	"go.opencensus.io/examples/exporter"
+	example "go.opencensus.io/examples/exporter"
+	"go.opencensus.io/exporter"
 	"go.opencensus.io/plugin/ochttp"
 	"go.opencensus.io/stats/view"
 	"go.opencensus.io/trace"
+	"go.opencensus.io/zpages"
 )
 
 func main() {
 	go func() { log.Fatal(http.ListenAndServe(":8081", zpages.Handler)) }()
 
 	// Register stats and trace exporters to export the collected data.
-	exporter := &exporter.PrintExporter{}
-	view.RegisterExporter(exporter)
-	trace.RegisterExporter(exporter)
+	e := &example.PrintExporter{}
+	exporter.Register(e)
+	trace.RegisterExporter(e)
 
 	// Always trace for this demo.
 	trace.SetDefaultSampler(trace.AlwaysSample())

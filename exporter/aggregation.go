@@ -38,10 +38,10 @@ type Aggregation struct {
 	Buckets []float64 // Buckets are the bucket endpoints if this Aggregation represents a distribution, see: Distribution().
 }
 
+// AggregatedUnit computes the unit of measure for the result of an aggregation of this type.
 func (aggType AggType) AggregatedUnit(measuredUnit string) string {
 	if aggType == AggTypeCount {
 		return stats.UnitNone
-	} else {
-		return measuredUnit
 	}
+	return measuredUnit
 }

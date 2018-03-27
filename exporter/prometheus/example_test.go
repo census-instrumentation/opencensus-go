@@ -18,18 +18,18 @@ import (
 	"log"
 	"net/http"
 
+	"go.opencensus.io/exporter"
 	"go.opencensus.io/exporter/prometheus"
-	"go.opencensus.io/stats/view"
 )
 
 func Example() {
-	exporter, err := prometheus.NewExporter(prometheus.Options{})
+	e, err := prometheus.NewExporter(prometheus.Options{})
 	if err != nil {
 		log.Fatal(err)
 	}
-	view.RegisterExporter(exporter)
+	exporter.Register(e)
 
 	// Serve the scrap endpoint at localhost:9999.
-	http.Handle("/metrics", exporter)
+	http.Handle("/metrics", e)
 	log.Fatal(http.ListenAndServe(":9999", nil))
 }

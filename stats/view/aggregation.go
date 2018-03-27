@@ -85,4 +85,3 @@ func Distribution(bounds ...float64) *Aggregation {
 		},
 	}
 }
-

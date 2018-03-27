@@ -272,7 +272,7 @@ func TestReportUsage(t *testing.T) {
 		}
 
 		e := &countExporter{}
-		exporter.RegisterViewExporter(e)
+		exporter.Register(e)
 
 		stats.Record(ctx, m.M(1))
 		stats.Record(ctx, m.M(1))
@@ -329,8 +329,8 @@ func TestWorkerStarttime(t *testing.T) {
 	}
 
 	e := &vdExporter{}
-	exporter.RegisterViewExporter(e)
-	defer exporter.UnregisterViewExporter(e)
+	exporter.Register(e)
+	defer exporter.Unregister(e)
 
 	stats.Record(ctx, m.M(1))
 	stats.Record(ctx, m.M(1))
