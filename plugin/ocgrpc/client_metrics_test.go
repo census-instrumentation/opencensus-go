@@ -40,7 +40,7 @@ func TestViewsAggregationsConform(t *testing.T) {
 		}
 	}
 
-	assertTypeOf(ClientErrorCountView, view.Mean())
+	assertTypeOf(ClientErrorCountView, view.Sum())
 	assertTypeOf(ClientRoundTripLatencyView, view.Distribution())
 	assertTypeOf(ClientRequestBytesView, view.Distribution())
 	assertTypeOf(ClientResponseBytesView, view.Distribution())

@@ -50,12 +50,6 @@ var (
 			return newSumData(0)
 		},
 	}
-	aggMean = &Aggregation{
-		Type: AggTypeMean,
-		newData: func() AggregationData {
-			return newMeanData(0, 0)
-		},
-	}
 )
 
 // Count indicates that data collected and aggregated
@@ -72,14 +66,6 @@ func Count() *Aggregation {
 // Sum.
 func Sum() *Aggregation {
 	return aggSum
-}
-
-// Mean indicates that collect and aggregate data and maintain
-// the mean value.
-// For example, average latency in milliseconds can be aggregated by using
-// Mean, although in most cases it is preferable to use a Distribution.
-func Mean() *Aggregation {
-	return aggMean
 }
 
 // Distribution indicates that the desired aggregation is

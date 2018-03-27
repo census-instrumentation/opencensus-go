@@ -43,7 +43,7 @@ var (
 		Description: "RPC Errors",
 		TagKeys:     []tag.Key{KeyStatus, KeyMethod},
 		Measure:     ClientErrorCount,
-		Aggregation: view.Mean(),
+		Aggregation: view.Count(),
 	}
 
 	ClientRoundTripLatencyView = &view.View{

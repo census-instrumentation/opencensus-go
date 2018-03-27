@@ -90,48 +90,6 @@ func (a *SumData) equal(other AggregationData) bool {
 	return math.Pow(float64(*a)-float64(*a2), 2) < epsilon
 }
 
-// MeanData is the aggregated data for the Mean aggregation.
-// A mean aggregation processes data and maintains the mean value.
-//
-// Most users won't directly access mean data.
-type MeanData struct {
-	Count int64   // number of data points aggregated
-	Mean  float64 // mean of all data points
-}
-
-func newMeanData(mean float64, count int64) *MeanData {
-	return &MeanData{
-		Mean:  mean,
-		Count: count,
-	}
-}
-
-// Sum returns the sum of all samples collected.
-func (a *MeanData) Sum() float64 { return a.Mean * float64(a.Count) }
-
-func (a *MeanData) isAggregationData() bool { return true }
-
-func (a *MeanData) addSample(f float64) {
-	a.Count++
-	if a.Count == 1 {
-		a.Mean = f
-		return
-	}
-	a.Mean = a.Mean + (f-a.Mean)/float64(a.Count)
-}
-
-func (a *MeanData) clone() AggregationData {
-	return newMeanData(a.Mean, a.Count)
-}
-
-func (a *MeanData) equal(other AggregationData) bool {
-	a2, ok := other.(*MeanData)
-	if !ok {
-		return false
-	}
-	return a.Count == a2.Count && math.Pow(a.Mean-a2.Mean, 2) < epsilon
-}
-
 // DistributionData is the aggregated data for the
 // Distribution aggregation.
 //

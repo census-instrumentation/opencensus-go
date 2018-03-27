@@ -49,10 +49,6 @@ func newView(measureName string, agg *view.Aggregation) *view.View {
 func TestOnlyCumulativeWindowSupported(t *testing.T) {
 	// See Issue https://github.com/census-instrumentation/opencensus-go/issues/214.
 	count1 := view.CountData(1)
-	mean1 := view.MeanData{
-		Mean:  4.5,
-		Count: 5,
-	}
 	tests := []struct {
 		vds  *view.Data
 		want int
@@ -68,15 +64,6 @@ func TestOnlyCumulativeWindowSupported(t *testing.T) {
 				View: newView("TestOnlyCumulativeWindowSupported/m2", view.Count()),
 				Rows: []*view.Row{
 					{Data: &count1},
-				},
-			},
-			want: 1,
-		},
-		2: {
-			vds: &view.Data{
-				View: newView("TestOnlyCumulativeWindowSupported/m3", view.Mean()),
-				Rows: []*view.Row{
-					{Data: &mean1},
 				},
 			},
 			want: 1,
@@ -144,9 +131,7 @@ func TestCollectNonRacy(t *testing.T) {
 
 		for i := 0; i < 1e3; i++ {
 			count1 := view.CountData(1)
-			mean1 := &view.MeanData{Mean: 4.5, Count: 5}
 			vds := []*view.Data{
-				{View: newView(fmt.Sprintf("TestCollectNonRacy/m1-%d", i), view.Mean()), Rows: []*view.Row{{Data: mean1}}},
 				{View: newView(fmt.Sprintf("TestCollectNonRacy/m2-%d", i), view.Count()), Rows: []*view.Row{{Data: &count1}}},
 			}
 			for _, v := range vds {
