@@ -25,7 +25,7 @@ import (
 )
 
 var (
-	m, _  = stats.Float64("m", "", "")
+	m     = stats.Float64("m", "", "")
 	k1, _ = tag.NewKey("k1")
 	k2, _ = tag.NewKey("k2")
 	k3, _ = tag.NewKey("k3")

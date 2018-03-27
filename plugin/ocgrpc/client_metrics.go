@@ -23,14 +23,14 @@ import (
 
 // The following variables are measures are recorded by ClientHandler:
 var (
-	ClientErrorCount, _       = stats.Int64("grpc.io/client/error_count", "RPC Errors", stats.UnitNone)
-	ClientRequestBytes, _     = stats.Int64("grpc.io/client/request_bytes", "Request bytes", stats.UnitBytes)
-	ClientResponseBytes, _    = stats.Int64("grpc.io/client/response_bytes", "Response bytes", stats.UnitBytes)
-	ClientStartedCount, _     = stats.Int64("grpc.io/client/started_count", "Number of client RPCs (streams) started", stats.UnitNone)
-	ClientFinishedCount, _    = stats.Int64("grpc.io/client/finished_count", "Number of client RPCs (streams) finished", stats.UnitNone)
-	ClientRequestCount, _     = stats.Int64("grpc.io/client/request_count", "Number of client RPC request messages", stats.UnitNone)
-	ClientResponseCount, _    = stats.Int64("grpc.io/client/response_count", "Number of client RPC response messages", stats.UnitNone)
-	ClientRoundTripLatency, _ = stats.Float64("grpc.io/client/roundtrip_latency", "RPC roundtrip latency in msecs", stats.UnitMilliseconds)
+	ClientErrorCount       = stats.Int64("grpc.io/client/error_count", "RPC Errors", stats.UnitNone)
+	ClientRequestBytes     = stats.Int64("grpc.io/client/request_bytes", "Request bytes", stats.UnitBytes)
+	ClientResponseBytes    = stats.Int64("grpc.io/client/response_bytes", "Response bytes", stats.UnitBytes)
+	ClientStartedCount     = stats.Int64("grpc.io/client/started_count", "Number of client RPCs (streams) started", stats.UnitNone)
+	ClientFinishedCount    = stats.Int64("grpc.io/client/finished_count", "Number of client RPCs (streams) finished", stats.UnitNone)
+	ClientRequestCount     = stats.Int64("grpc.io/client/request_count", "Number of client RPC request messages", stats.UnitNone)
+	ClientResponseCount    = stats.Int64("grpc.io/client/response_count", "Number of client RPC response messages", stats.UnitNone)
+	ClientRoundTripLatency = stats.Float64("grpc.io/client/roundtrip_latency", "RPC roundtrip latency in msecs", stats.UnitMilliseconds)
 )
 
 // Predefined views may be subscribed to collect data for the above measures.

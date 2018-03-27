@@ -26,22 +26,6 @@ import (
 	"go.opencensus.io/tag"
 )
 
-func Test_Worker_MeasureCreation(t *testing.T) {
-	restart()
-
-	if _, err := stats.Float64("MF1", "desc MF1", "unit"); err != nil {
-		t.Errorf("stats.Float64(\"MF1\", \"desc MF1\") got error %v, want no error", err)
-	}
-
-	if _, err := stats.Float64("MF2", "desc MF2", "unit"); err != nil {
-		t.Errorf("stats.Float64(\"MF2\", \"desc MF2\") got error %v, want no error", err)
-	}
-
-	if _, err := stats.Int64("MI1", "desc MI1", "unit"); err != nil {
-		t.Errorf("stats.Int64(\"MI1\", \"desc MI1\") got error %v, want no error", err)
-	}
-}
-
 func Test_Worker_ViewSubscription(t *testing.T) {
 	someError := errors.New("some error")
 
@@ -94,8 +78,8 @@ func Test_Worker_ViewSubscription(t *testing.T) {
 		},
 	}
 
-	mf1, _ := stats.Float64("MF1/Test_Worker_ViewSubscription", "desc MF1", "unit")
-	mf2, _ := stats.Float64("MF2/Test_Worker_ViewSubscription", "desc MF2", "unit")
+	mf1 := stats.Float64("MF1/Test_Worker_ViewSubscription", "desc MF1", "unit")
+	mf2 := stats.Float64("MF2/Test_Worker_ViewSubscription", "desc MF2", "unit")
 
 	for _, tc := range tcs {
 		t.Run(tc.label, func(t *testing.T) {
@@ -136,10 +120,7 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 	restart()
 
 	someError := errors.New("some error")
-	m, err := stats.Float64("Test_Worker_RecordFloat64/MF1", "desc MF1", "unit")
-	if err != nil {
-		t.Errorf("stats.Float64(\"MF1\", \"desc MF1\") got error '%v', want no error", err)
-	}
+	m := stats.Float64("Test_Worker_RecordFloat64/MF1", "desc MF1", "unit")
 
 	k1, _ := tag.NewKey("k1")
 	k2, _ := tag.NewKey("k2")
@@ -222,7 +203,7 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 
 	for _, tc := range tcs {
 		for _, v := range tc.subscriptions {
-			if err := v.Subscribe(); err != nil {
+			if err := Subscribe(v); err != nil {
 				t.Fatalf("%v: Subscribe(%v) = %v; want no errors", tc.label, v.Name, err)
 			}
 		}
@@ -234,39 +215,31 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 		for _, w := range tc.wants {
 			gotRows, err := RetrieveData(w.v.Name)
 			if (err != nil) != (w.err != nil) {
-				t.Fatalf("%v: RetrieveData(%v) = %v; want no errors", tc.label, w.v.Name, err)
+				t.Fatalf("%s: RetrieveData(%v) = %v; want no errors", tc.label, w.v.Name, err)
 			}
 			for _, got := range gotRows {
 				if !containsRow(w.rows, got) {
-					t.Errorf("%v: got row %v; want none", tc.label, got)
+					t.Errorf("%s: got row %#v; want none", tc.label, got)
 					break
 				}
 			}
 			for _, want := range w.rows {
 				if !containsRow(gotRows, want) {
-					t.Errorf("%v: got none; want %v'", tc.label, want)
+					t.Errorf("%s: got none; want %#v'", tc.label, want)
 					break
 				}
 			}
 		}
 
 		// cleaning up
-		for _, v := range tc.subscriptions {
-			if err := v.Unsubscribe(); err != nil {
-				t.Fatalf("%v: Unsubscribing from view %v errored with %v; want no error", tc.label, v.Name, err)
-			}
-		}
-
+		Unsubscribe(tc.subscriptions...)
 	}
 }
 
 func TestReportUsage(t *testing.T) {
 	ctx := context.Background()
 
-	m, err := stats.Int64("measure", "desc", "unit")
-	if err != nil {
-		t.Fatalf("stats.Int64() = %v", err)
-	}
+	m := stats.Int64("measure", "desc", "unit")
 
 	tests := []struct {
 		name         string
@@ -289,8 +262,7 @@ func TestReportUsage(t *testing.T) {
 		restart()
 		SetReportingPeriod(25 * time.Millisecond)
 
-		err = Subscribe(tt.view)
-		if err != nil {
+		if err := Subscribe(tt.view); err != nil {
 			t.Fatalf("%v: cannot subscribe: %v", tt.name, err)
 		}
 
@@ -343,10 +315,7 @@ func TestWorkerStarttime(t *testing.T) {
 	restart()
 
 	ctx := context.Background()
-	m, err := stats.Int64("measure/TestWorkerStarttime", "desc", "unit")
-	if err != nil {
-		t.Fatalf("stats.Int64() = %v", err)
-	}
+	m := stats.Int64("measure/TestWorkerStarttime", "desc", "unit")
 	v, _ := New("testview", "", nil, m, Count())
 
 	SetReportingPeriod(25 * time.Millisecond)

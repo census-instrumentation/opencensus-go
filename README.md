@@ -121,7 +121,7 @@ Here we create a view with the DistributionAggregation over our measure.
 
 [embedmd]:# (stats.go view)
 ```go
-if err = view.Subscribe(&view.View{
+if err := view.Subscribe(&view.View{
 	Name:        "my.org/video_size_distribution",
 	Description: "distribution of processed video size over time",
 	Measure:     videoSize,

@@ -46,7 +46,7 @@ func (m *Int64Measure) M(v int64) Measurement {
 
 // Int64 creates a new measure of type Int64Measure.
 // It never returns an error.
-func Int64(name, description, unit string) (*Int64Measure, error) {
+func Int64(name, description, unit string) *Int64Measure {
 	mi := registerMeasureHandle(name, description, unit)
-	return &Int64Measure{mi}, nil
+	return &Int64Measure{mi}
 }

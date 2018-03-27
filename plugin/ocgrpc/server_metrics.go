@@ -23,14 +23,14 @@ import (
 
 // The following variables are measures are recorded by ServerHandler:
 var (
-	ServerErrorCount, _        = stats.Int64("grpc.io/server/error_count", "RPC Errors", stats.UnitNone)
-	ServerServerElapsedTime, _ = stats.Float64("grpc.io/server/server_elapsed_time", "Server elapsed time in msecs", stats.UnitMilliseconds)
-	ServerRequestBytes, _      = stats.Int64("grpc.io/server/request_bytes", "Request bytes", stats.UnitBytes)
-	ServerResponseBytes, _     = stats.Int64("grpc.io/server/response_bytes", "Response bytes", stats.UnitBytes)
-	ServerStartedCount, _      = stats.Int64("grpc.io/server/started_count", "Number of server RPCs (streams) started", stats.UnitNone)
-	ServerFinishedCount, _     = stats.Int64("grpc.io/server/finished_count", "Number of server RPCs (streams) finished", stats.UnitNone)
-	ServerRequestCount, _      = stats.Int64("grpc.io/server/request_count", "Number of server RPC request messages", stats.UnitNone)
-	ServerResponseCount, _     = stats.Int64("grpc.io/server/response_count", "Number of server RPC response messages", stats.UnitNone)
+	ServerErrorCount        = stats.Int64("grpc.io/server/error_count", "RPC Errors", stats.UnitNone)
+	ServerServerElapsedTime = stats.Float64("grpc.io/server/server_elapsed_time", "Server elapsed time in msecs", stats.UnitMilliseconds)
+	ServerRequestBytes      = stats.Int64("grpc.io/server/request_bytes", "Request bytes", stats.UnitBytes)
+	ServerResponseBytes     = stats.Int64("grpc.io/server/response_bytes", "Response bytes", stats.UnitBytes)
+	ServerStartedCount      = stats.Int64("grpc.io/server/started_count", "Number of server RPCs (streams) started", stats.UnitNone)
+	ServerFinishedCount     = stats.Int64("grpc.io/server/finished_count", "Number of server RPCs (streams) finished", stats.UnitNone)
+	ServerRequestCount      = stats.Int64("grpc.io/server/request_count", "Number of server RPC request messages", stats.UnitNone)
+	ServerResponseCount     = stats.Int64("grpc.io/server/response_count", "Number of server RPC response messages", stats.UnitNone)
 )
 
 // TODO(acetechnologist): This is temporary and will need to be replaced by a
