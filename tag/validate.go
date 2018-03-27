@@ -26,7 +26,7 @@ const (
 
 var (
 	errInvalidKeyName = errors.New("invalid key name: only ASCII characters accepted; max length must be 255 characters")
-	errInvalidValue   = errors.New("invalid value: only ASCII characters accepted; max length must be 255 characters")
+	errInvalidValue   = errors.New("invalid value: max length must be 255 UTF-8 characters")
 )
 
 func checkKeyName(name string) bool {
@@ -49,8 +49,5 @@ func isASCII(s string) bool {
 }
 
 func checkValue(v string) bool {
-	if len(v) > maxKeyLength {
-		return false
-	}
-	return isASCII(v)
+	return len(v) <= maxKeyLength
 }
