@@ -233,7 +233,7 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 
 		// cleaning up
 		for _, v := range tc.registrations {
-			if err := v.Unregister(); err != nil {
+			if err := v.Unsubscribe(); err != nil {
 				t.Fatalf("%v: Unregistering from view %v errored with %v; want no error", tc.label, v.Name, err)
 			}
 		}
@@ -323,7 +323,7 @@ func TestWorkerStarttime(t *testing.T) {
 	v, _ := New("testview", "", nil, m, Count())
 
 	SetReportingPeriod(25 * time.Millisecond)
-	if err := v.Register(); err != nil {
+	if err := Register(v); err != nil {
 		t.Fatalf("cannot register to %v: %v", v.Name, err)
 	}
 
