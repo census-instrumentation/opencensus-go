@@ -37,7 +37,7 @@ func main() {
 	trace.RegisterExporter(exporter)
 
 	// Always trace for this demo.
-	trace.SetDefaultSampler(trace.AlwaysSample())
+	trace.SetConfig(trace.Config{DefaultSampler: trace.AlwaysSample()})
 
 	// Report stats at every second.
 	view.SetReportingPeriod(1 * time.Second)

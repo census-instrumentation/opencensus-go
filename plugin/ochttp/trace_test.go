@@ -172,7 +172,7 @@ func (c *collector) ExportSpan(s *trace.SpanData) {
 }
 
 func TestEndToEnd(t *testing.T) {
-	trace.SetDefaultSampler(trace.AlwaysSample())
+	trace.SetConfig(trace.Config{DefaultSampler: trace.AlwaysSample()})
 
 	tc := []struct {
 		name            string
