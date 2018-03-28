@@ -91,11 +91,10 @@ set of recorded data points (measurements).
 
 Views have two parts: the tags to group by and the aggregation type used.
 
-Currently four types of aggregations are supported:
+Currently three types of aggregations are supported:
 * CountAggregation is used to count the number of times a sample was recorded.
 * DistributionAggregation is used to provide a histogram of the values of the samples.
 * SumAggregation is used to sum up all sample values.
-* MeanAggregation is used to calculate the mean of sample values.
 
 [embedmd]:# (stats.go aggs)
 

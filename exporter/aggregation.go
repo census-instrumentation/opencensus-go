@@ -27,7 +27,6 @@ const (
 	AggTypeNone         AggType = iota // no aggregation; reserved for future use.
 	AggTypeCount                       // the count aggregation, see Count.
 	AggTypeSum                         // the sum aggregation, see Sum.
-	AggTypeMean                        // the mean aggregation, see Mean.
 	AggTypeDistribution                // the distribution aggregation, see Distribution.
 )
 
