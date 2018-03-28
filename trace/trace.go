@@ -26,6 +26,42 @@ import (
 	"go.opencensus.io/internal"
 )
 
+// Generator provides a configurable interface to generate a TraceID
+type Generator interface {
+	// NewTraceID generates a new TraceID
+	NewTraceID() TraceID
+}
+
+// GeneratorFunc provides a func interface to Generator
+type GeneratorFunc func() TraceID
+
+// NewTraceID implements IDFactory
+func (fn GeneratorFunc) NewTraceID() TraceID {
+	return fn()
+}
+
+var (
+	// defaultGenerator holds the global id factory
+	defaultGenerator Generator
+)
+
+func init() {
+	SetGenerator(nil)
+}
+
+// SetGenerator sets the generator used to create new traceID.  Useful when a
+// custom TraceID format is required e.g. AWS X-Ray
+func SetGenerator(generator Generator) {
+	mu.Lock()
+	defer mu.Unlock()
+
+	if generator == nil {
+		generator = GeneratorFunc(newTraceIDLocked)
+	}
+
+	defaultGenerator = generator
+}
+
 // Span represents a span of a trace.  It has an associated SpanContext, and
 // stores data accumulated while the span is active.
 //
@@ -159,7 +195,7 @@ func startSpanInternal(name string, hasParent bool, parent SpanContext, remotePa
 	span.spanContext = parent
 	mu.Lock()
 	if !hasParent {
-		span.spanContext.TraceID = newTraceIDLocked()
+		span.spanContext.TraceID = defaultGenerator.NewTraceID()
 	}
 	span.spanContext.SpanID = newSpanIDLocked()
 	sampler := defaultSampler
