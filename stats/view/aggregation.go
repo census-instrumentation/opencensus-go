@@ -24,12 +24,11 @@ const (
 	AggTypeNone         AggType = iota // no aggregation; reserved for future use.
 	AggTypeCount                       // the count aggregation, see Count.
 	AggTypeSum                         // the sum aggregation, see Sum.
-	AggTypeMean                        // the mean aggregation, see Mean.
 	AggTypeDistribution                // the distribution aggregation, see Distribution.
 )
 
 // Aggregation represents a data aggregation method. Use one of the functions:
-// Count, Sum, Mean, or Distribution to construct an Aggregation.
+// Count, Sum, or Distribution to construct an Aggregation.
 type Aggregation struct {
 	Type    AggType   // Type is the AggType of this Aggregation.
 	Buckets []float64 // Buckets are the bucket endpoints if this Aggregation represents a distribution, see Distribution.
