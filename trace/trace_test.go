@@ -635,15 +635,35 @@ func TestStartSpanAfterEnd(t *testing.T) {
 	}
 }
 
+type mockGenerator struct {
+	traceID TraceID
+	spanID  SpanID
+}
+
+func (m mockGenerator) NewTraceID() TraceID {
+	return m.traceID
+}
+
+func (m mockGenerator) NewSpanID() SpanID {
+	return m.spanID
+}
+
 func TestCustomerGenerator(t *testing.T) {
-	want := TraceID{0x0, 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0x9, 0xa, 0xb, 0xc, 0xd, 0xd, 0xf}
-	generator := GeneratorFunc(func() TraceID { return want })
+	wantTraceID := TraceID{0x0, 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0x9, 0xa, 0xb, 0xc, 0xd, 0xd, 0xf}
+	wantSpanID := SpanID{0x4, 0x5, 0x6, 0x7, 0x8, 0x9, 0xa, 0xb}
+	generator := mockGenerator{
+		traceID: wantTraceID,
+		spanID:  wantSpanID,
+	}
 
 	SetGenerator(generator)
 	defer SetGenerator(nil)
 
 	span := NewSpan("span", nil, StartOptions{})
-	if got := span.SpanContext().TraceID; want != got {
-		t.Errorf("want %v; got %v", want, got)
+	if got := span.SpanContext().TraceID; wantTraceID != got {
+		t.Errorf("want %v; got %v", wantTraceID, got)
+	}
+	if got := span.SpanContext().SpanID; wantSpanID != got {
+		t.Errorf("want %v; got %v", wantSpanID, got)
 	}
 }

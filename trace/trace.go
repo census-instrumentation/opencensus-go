@@ -26,42 +26,6 @@ import (
 	"go.opencensus.io/internal"
 )
 
-// Generator provides a configurable interface to generate a TraceID
-type Generator interface {
-	// NewTraceID generates a new TraceID
-	NewTraceID() TraceID
-}
-
-// GeneratorFunc provides a func interface to Generator
-type GeneratorFunc func() TraceID
-
-// NewTraceID implements IDFactory
-func (fn GeneratorFunc) NewTraceID() TraceID {
-	return fn()
-}
-
-var (
-	// defaultGenerator holds the global id factory
-	defaultGenerator Generator
-)
-
-func init() {
-	SetGenerator(nil)
-}
-
-// SetGenerator sets the generator used to create new traceID.  Useful when a
-// custom TraceID format is required e.g. AWS X-Ray
-func SetGenerator(generator Generator) {
-	mu.Lock()
-	defer mu.Unlock()
-
-	if generator == nil {
-		generator = GeneratorFunc(newTraceIDLocked)
-	}
-
-	defaultGenerator = generator
-}
-
 // Span represents a span of a trace.  It has an associated SpanContext, and
 // stores data accumulated while the span is active.
 //
@@ -197,7 +161,7 @@ func startSpanInternal(name string, hasParent bool, parent SpanContext, remotePa
 	if !hasParent {
 		span.spanContext.TraceID = defaultGenerator.NewTraceID()
 	}
-	span.spanContext.SpanID = newSpanIDLocked()
+	span.spanContext.SpanID = defaultGenerator.NewSpanID()
 	sampler := defaultSampler
 	mu.Unlock()
 
@@ -461,9 +425,12 @@ func init() {
 	spanIDInc |= 1
 }
 
+type DefaultGenerator struct {
+}
+
 // newSpanIDLocked returns a non-zero SpanID from a randomly-chosen sequence.
 // mu should be held while this function is called.
-func newSpanIDLocked() SpanID {
+func (d DefaultGenerator) NewSpanID() SpanID {
 	id := nextSpanID
 	nextSpanID += spanIDInc
 	if nextSpanID == 0 {
@@ -476,11 +443,44 @@ func newSpanIDLocked() SpanID {
 
 // newTraceIDLocked returns a non-zero TraceID from a randomly-chosen sequence.
 // mu should be held while this function is called.
-func newTraceIDLocked() TraceID {
+func (d DefaultGenerator) NewTraceID() TraceID {
 	var tid TraceID
 	// Construct the trace ID from two outputs of traceIDRand, with a constant
 	// added to each half for additional entropy.
 	binary.LittleEndian.PutUint64(tid[0:8], traceIDRand.Uint64()+traceIDAdd[0])
 	binary.LittleEndian.PutUint64(tid[8:16], traceIDRand.Uint64()+traceIDAdd[1])
 	return tid
+}
+
+// Generator provides a configurable interface to generate a TraceID
+type Generator interface {
+	// NewTraceID generates a new TraceID
+	NewTraceID() TraceID
+
+	// NewSpanID generates a new SpanID
+	NewSpanID() SpanID
+}
+
+var (
+	// defaultGenerator holds the global id factory
+	defaultGenerator Generator
+)
+
+func init() {
+	SetGenerator(nil)
+}
+
+// SetGenerator sets the generator used to create new traceID.  The `trace`
+// package guarantees that there will never be concurrent calls to Generator.
+//
+// Useful when a custom TraceID format is required e.g. AWS X-Ray
+func SetGenerator(generator Generator) {
+	mu.Lock()
+	defer mu.Unlock()
+
+	if generator == nil {
+		generator = DefaultGenerator{}
+	}
+
+	defaultGenerator = generator
 }
