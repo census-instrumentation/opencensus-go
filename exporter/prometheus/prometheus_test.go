@@ -223,6 +223,8 @@ func TestMetricsEndpointOutput(t *testing.T) {
 	srv := httptest.NewServer(e)
 	defer srv.Close()
 
+	time.Sleep(10 * time.Millisecond)
+
 	var i int
 	var output string
 	for {
@@ -250,16 +252,16 @@ func TestMetricsEndpointOutput(t *testing.T) {
 	}
 
 	if strings.Contains(output, "collected before with the same name and label values") {
-		t.Fatal("metric name and labels being duplicated but must be unique")
+		t.Errorf("metric name and labels being duplicated but must be unique")
 	}
 
 	if strings.Contains(output, "error(s) occurred") {
-		t.Fatal("error reported by prometheus registry")
+		t.Errorf("error reported by prometheus registry")
 	}
 
 	for _, name := range names {
 		if !strings.Contains(output, "opencensus_tests_"+name+" 1") {
-			t.Fatalf("measurement missing in output: %v", name)
+			t.Errorf("measurement missing in output: %v", name)
 		}
 	}
 }
