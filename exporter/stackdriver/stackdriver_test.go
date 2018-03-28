@@ -26,7 +26,6 @@ import (
 	"go.opencensus.io/exporter"
 	"go.opencensus.io/internal/testpb"
 	"go.opencensus.io/plugin/ochttp"
-	"go.opencensus.io/stats/view"
 	"go.opencensus.io/trace"
 	"golang.org/x/net/context/ctxhttp"
 )
