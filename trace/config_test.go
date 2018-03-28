@@ -14,25 +14,15 @@
 
 package trace
 
-func init() {
-	config.DefaultSampler = ProbabilitySampler(defaultSamplingProbability)
-}
+import (
+	"reflect"
+	"testing"
+)
 
-// Config represents the global tracing configuration.
-type Config struct {
-	// DefaultSampler is the default sampler used when creating new spans.
-	DefaultSampler Sampler
-}
-
-// ApplyConfig applies changes to the global tracing configuration.
-//
-// Fields not provided in the given config are going to be preserved.
-func ApplyConfig(cfg Config) {
-	mu.Lock()
-	if cfg.DefaultSampler == nil {
-		cfg.DefaultSampler = config.DefaultSampler
+func TestApplyZeroConfig(t *testing.T) {
+	cfg := config
+	ApplyConfig(Config{})
+	if got, want := reflect.ValueOf(config.DefaultSampler).Pointer(), reflect.ValueOf(cfg.DefaultSampler).Pointer(); got != want {
+		t.Fatalf("config.DefaultSampler = %#v; want %#v", got, want)
 	}
-	// TODO(jbd): Reduce the global contention on config.
-	config = cfg
-	mu.Unlock()
 }

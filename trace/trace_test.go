@@ -29,7 +29,7 @@ var (
 
 func init() {
 	// no random sampling, but sample children of sampled spans.
-	SetConfig(Config{DefaultSampler: ProbabilitySampler(0)})
+	ApplyConfig(Config{DefaultSampler: ProbabilitySampler(0)})
 }
 
 func TestStrings(t *testing.T) {
@@ -154,7 +154,7 @@ func TestSampling(t *testing.T) {
 			AlwaysSample(),
 			ProbabilitySampler(0),
 		} {
-			SetConfig(Config{DefaultSampler: defaultSampler})
+			ApplyConfig(Config{DefaultSampler: defaultSampler})
 			sampler := NeverSample()
 			if test.parentTraceOptions == 1 {
 				sampler = AlwaysSample()
@@ -174,7 +174,7 @@ func TestSampling(t *testing.T) {
 			}
 		}
 	}
-	SetConfig(Config{DefaultSampler: ProbabilitySampler(0)}) // reset the default sampler.
+	ApplyConfig(Config{DefaultSampler: ProbabilitySampler(0)}) // reset the default sampler.
 }
 
 func TestProbabilitySampler(t *testing.T) {
