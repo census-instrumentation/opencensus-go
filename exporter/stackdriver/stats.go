@@ -261,8 +261,6 @@ func (e *statsExporter) createMeasure(ctx context.Context, vd *view.Data) error 
 		case *stats.Float64Measure:
 			valueType = metricpb.MetricDescriptor_DOUBLE
 		}
-	case view.AggTypeMean:
-		valueType = metricpb.MetricDescriptor_DISTRIBUTION
 	case view.AggTypeDistribution:
 		valueType = metricpb.MetricDescriptor_DISTRIBUTION
 	default:
@@ -392,7 +390,7 @@ func equalAggTagKeys(md *metricpb.MetricDescriptor, agg *view.Aggregation, keys 
 	case metricpb.MetricDescriptor_DOUBLE:
 		aggTypeMatch = agg.Type == view.AggTypeSum
 	case metricpb.MetricDescriptor_DISTRIBUTION:
-		aggTypeMatch = agg.Type == view.AggTypeMean || agg.Type == view.AggTypeDistribution
+		aggTypeMatch = agg.Type == view.AggTypeDistribution
 	}
 
 	if !aggTypeMatch {

@@ -4,9 +4,9 @@ package view
 
 import "strconv"
 
-const _AggType_name = "AggTypeNoneAggTypeCountAggTypeSumAggTypeMeanAggTypeDistribution"
+const _AggType_name = "AggTypeNoneAggTypeCountAggTypeSumAggTypeDistribution"
 
-var _AggType_index = [...]uint8{0, 11, 23, 33, 44, 63}
+var _AggType_index = [...]uint8{0, 11, 23, 33, 52}
 
 func (i AggType) String() string {
 	if i < 0 || i >= AggType(len(_AggType_index)-1) {

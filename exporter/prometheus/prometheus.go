@@ -144,10 +144,8 @@ func (o *Options) onError(err error) {
 // ExportView exports to the Prometheus if view data has one or more rows.
 // Each OpenCensus AggregationData will be converted to
 // corresponding Prometheus Metric: SumData will be converted
-// to Untyped Metric, CountData will be Counter Metric,
-// DistributionData will be Histogram Metric, and MeanData
-// will be Summary Metric. Please note the Summary Metric from
-// MeanData does not have any quantiles.
+// to Untyped Metric, CountData will be a Counter Metric,
+// DistributionData will be a Histogram Metric.
 func (e *Exporter) ExportView(vd *view.Data) {
 	if len(vd.Rows) == 0 {
 		return

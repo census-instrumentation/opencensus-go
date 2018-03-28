@@ -44,7 +44,7 @@ func newCountData(v int64) *CountData {
 
 func (a *CountData) isAggregationData() bool { return true }
 
-func (a *CountData) addSample(_ float64) {
+func (a *CountData) addSample(v float64) {
 	*a = *a + 1
 }
 
