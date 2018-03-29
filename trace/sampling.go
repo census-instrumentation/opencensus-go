@@ -26,7 +26,7 @@ func newDefaultSampler() Sampler {
 
 // SetDefaultSampler sets the default sampler used when creating new spans.
 //
-// Deprecated: Use SetConfig.
+// Deprecated: Use ApplyConfig.
 func SetDefaultSampler(sampler Sampler) {
 }
 
