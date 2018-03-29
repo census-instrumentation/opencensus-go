@@ -26,8 +26,8 @@ import (
 	"sync"
 	"time"
 
-	"go.opencensus.io/exporter"
 	"go.opencensus.io/internal"
+	"go.opencensus.io/stats/viewexporter"
 	"go.opencensus.io/tag"
 	"go.opencensus.io/trace"
 
@@ -100,8 +100,8 @@ func newStatsExporter(o Options) (*statsExporter, error) {
 		createdViews: make(map[string]*metricpb.MetricDescriptor),
 		taskValue:    getTaskValue(),
 	}
-	e.bundler = bundler.NewBundler((*exporter.ViewData)(nil), func(bundle interface{}) {
-		vds := bundle.([]*exporter.ViewData)
+	e.bundler = bundler.NewBundler((*viewexporter.ViewData)(nil), func(bundle interface{}) {
+		vds := bundle.([]*viewexporter.ViewData)
 		e.handleUpload(vds...)
 	})
 	e.bundler.DelayThreshold = e.o.BundleDelayThreshold
@@ -111,7 +111,7 @@ func newStatsExporter(o Options) (*statsExporter, error) {
 
 // ExportView exports to the Stackdriver Monitoring if view data
 // has one or more rows.
-func (e *statsExporter) ExportView(vd *exporter.ViewData) {
+func (e *statsExporter) ExportView(vd *viewexporter.ViewData) {
 	if len(vd.Rows) == 0 {
 		return
 	}
@@ -140,7 +140,7 @@ func getTaskValue() string {
 
 // handleUpload handles uploading a slice
 // of Data, as well as error handling.
-func (e *statsExporter) handleUpload(vds ...*exporter.ViewData) {
+func (e *statsExporter) handleUpload(vds ...*viewexporter.ViewData) {
 	if err := e.uploadStats(vds); err != nil {
 		e.onError(err)
 	}
@@ -162,7 +162,7 @@ func (e *statsExporter) onError(err error) {
 	log.Printf("Failed to export to Stackdriver Monitoring: %v", err)
 }
 
-func (e *statsExporter) uploadStats(vds []*exporter.ViewData) error {
+func (e *statsExporter) uploadStats(vds []*viewexporter.ViewData) error {
 	span := trace.NewSpan(
 		"go.opencensus.io/exporter/stackdriver.uploadStats",
 		nil,
@@ -187,7 +187,7 @@ func (e *statsExporter) uploadStats(vds []*exporter.ViewData) error {
 	return nil
 }
 
-func (e *statsExporter) makeReq(vds []*exporter.ViewData, limit int) []*monitoringpb.CreateTimeSeriesRequest {
+func (e *statsExporter) makeReq(vds []*viewexporter.ViewData, limit int) []*monitoringpb.CreateTimeSeriesRequest {
 	var reqs []*monitoringpb.CreateTimeSeriesRequest
 	var timeSeries []*monitoringpb.TimeSeries
 
@@ -230,7 +230,7 @@ func (e *statsExporter) makeReq(vds []*exporter.ViewData, limit int) []*monitori
 // createMeasure creates a MetricDescriptor for the given view data in Stackdriver Monitoring.
 // An error will be returned if there is already a metric descriptor created with the same name
 // but it has a different aggregation or keys.
-func (e *statsExporter) createMeasure(ctx context.Context, vd *exporter.ViewData) error {
+func (e *statsExporter) createMeasure(ctx context.Context, vd *viewexporter.ViewData) error {
 	e.createdViewsMu.Lock()
 	defer e.createdViewsMu.Unlock()
 
@@ -247,15 +247,15 @@ func (e *statsExporter) createMeasure(ctx context.Context, vd *exporter.ViewData
 	unit := vd.Unit
 
 	switch agg {
-	case exporter.AggTypeCount:
+	case viewexporter.AggTypeCount:
 		valueType = metricpb.MetricDescriptor_INT64
-	case exporter.AggTypeSum:
+	case viewexporter.AggTypeSum:
 		if vd.MeasureFloat {
 			valueType = metricpb.MetricDescriptor_DOUBLE
 		} else {
 			valueType = metricpb.MetricDescriptor_INT64
 		}
-	case exporter.AggTypeDistribution:
+	case viewexporter.AggTypeDistribution:
 		valueType = metricpb.MetricDescriptor_DISTRIBUTION
 	default:
 		return fmt.Errorf("unsupported aggregation type: %s", agg)
@@ -288,7 +288,7 @@ func (e *statsExporter) createMeasure(ctx context.Context, vd *exporter.ViewData
 	return nil
 }
 
-func newPoint(v *exporter.ViewData, row *exporter.Row, start, end time.Time) *monitoringpb.Point {
+func newPoint(v *viewexporter.ViewData, row *viewexporter.Row, start, end time.Time) *monitoringpb.Point {
 	return &monitoringpb.Point{
 		Interval: &monitoringpb.TimeInterval{
 			StartTime: &timestamp.Timestamp{
@@ -304,13 +304,13 @@ func newPoint(v *exporter.ViewData, row *exporter.Row, start, end time.Time) *mo
 	}
 }
 
-func newTypedValue(vd *exporter.ViewData, r *exporter.Row) *monitoringpb.TypedValue {
+func newTypedValue(vd *viewexporter.ViewData, r *viewexporter.Row) *monitoringpb.TypedValue {
 	switch vd.Aggregation.Type {
-	case exporter.AggTypeCount:
+	case viewexporter.AggTypeCount:
 		return &monitoringpb.TypedValue{Value: &monitoringpb.TypedValue_Int64Value{
 			Int64Value: r.Data.Count,
 		}}
-	case exporter.AggTypeSum:
+	case viewexporter.AggTypeSum:
 		if vd.MeasureFloat {
 			return &monitoringpb.TypedValue{Value: &monitoringpb.TypedValue_DoubleValue{
 				DoubleValue: r.Data.Sum(),
@@ -320,7 +320,7 @@ func newTypedValue(vd *exporter.ViewData, r *exporter.Row) *monitoringpb.TypedVa
 				Int64Value: int64(r.Data.Sum()),
 			}}
 		}
-	case exporter.AggTypeDistribution:
+	case viewexporter.AggTypeDistribution:
 		return &monitoringpb.TypedValue{Value: &monitoringpb.TypedValue_DistributionValue{
 			DistributionValue: &distributionpb.Distribution{
 				Count: r.Data.Count,
@@ -375,15 +375,15 @@ func newLabelDescriptors(keys []tag.Key) []*labelpb.LabelDescriptor {
 	return labelDescriptors
 }
 
-func equalAggTagKeys(md *metricpb.MetricDescriptor, agg exporter.AggType, keys []tag.Key) error {
+func equalAggTagKeys(md *metricpb.MetricDescriptor, agg viewexporter.AggType, keys []tag.Key) error {
 	var aggTypeMatch bool
 	switch md.ValueType {
 	case metricpb.MetricDescriptor_INT64:
-		aggTypeMatch = agg == exporter.AggTypeCount
+		aggTypeMatch = agg == viewexporter.AggTypeCount
 	case metricpb.MetricDescriptor_DOUBLE:
-		aggTypeMatch = agg == exporter.AggTypeSum
+		aggTypeMatch = agg == viewexporter.AggTypeSum
 	case metricpb.MetricDescriptor_DISTRIBUTION:
-		aggTypeMatch = agg == exporter.AggTypeDistribution
+		aggTypeMatch = agg == viewexporter.AggTypeDistribution
 	}
 
 	if !aggTypeMatch {

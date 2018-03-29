@@ -22,18 +22,18 @@ import (
 	"testing"
 	"time"
 
-	"go.opencensus.io/exporter"
 	"go.opencensus.io/stats"
+	"go.opencensus.io/stats/viewexporter"
 	"go.opencensus.io/tag"
 )
 
 func Test_Worker_ViewRegistration(t *testing.T) {
 	someError := errors.New("some error")
 
-	sc1 := make(chan *exporter.ViewData)
+	sc1 := make(chan *viewexporter.ViewData)
 
 	type registration struct {
-		c   chan *exporter.ViewData
+		c   chan *viewexporter.ViewData
 		vID string
 		err error
 	}
@@ -138,7 +138,7 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 
 	type want struct {
 		v    *View
-		rows []*exporter.Row
+		rows []*viewexporter.Row
 		err  error
 	}
 	type testCase struct {
@@ -162,10 +162,10 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 			wants: []want{
 				{
 					v1,
-					[]*exporter.Row{
+					[]*viewexporter.Row{
 						{
 							[]tag.Tag{{Key: k1, Value: "v1"}, {Key: k2, Value: "v2"}},
-							exporter.AggregationData{Count: 2},
+							viewexporter.AggregationData{Count: 2},
 						},
 					},
 					nil,
@@ -180,20 +180,20 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 			wants: []want{
 				{
 					v1,
-					[]*exporter.Row{
+					[]*viewexporter.Row{
 						{
 							[]tag.Tag{{Key: k1, Value: "v1"}, {Key: k2, Value: "v2"}},
-							exporter.AggregationData{Count: 2},
+							viewexporter.AggregationData{Count: 2},
 						},
 					},
 					nil,
 				},
 				{
 					v2,
-					[]*exporter.Row{
+					[]*viewexporter.Row{
 						{
 							[]tag.Tag{{Key: k1, Value: "v1"}, {Key: k2, Value: "v2"}},
-							exporter.AggregationData{Count: 2},
+							viewexporter.AggregationData{Count: 2},
 						},
 					},
 					nil,
@@ -272,7 +272,7 @@ func TestReportUsage(t *testing.T) {
 		}
 
 		e := &countExporter{}
-		exporter.Register(e)
+		viewexporter.Register(e)
 
 		stats.Record(ctx, m.M(1))
 		stats.Record(ctx, m.M(1))
@@ -329,8 +329,8 @@ func TestWorkerStarttime(t *testing.T) {
 	}
 
 	e := &vdExporter{}
-	exporter.Register(e)
-	defer exporter.Unregister(e)
+	viewexporter.Register(e)
+	defer viewexporter.Unregister(e)
 
 	stats.Record(ctx, m.M(1))
 	stats.Record(ctx, m.M(1))
@@ -368,7 +368,7 @@ type countExporter struct {
 	count int64
 }
 
-func (e *countExporter) ExportView(vd *exporter.ViewData) {
+func (e *countExporter) ExportView(vd *viewexporter.ViewData) {
 	if len(vd.Rows) == 0 {
 		return
 	}
@@ -381,10 +381,10 @@ func (e *countExporter) ExportView(vd *exporter.ViewData) {
 
 type vdExporter struct {
 	sync.Mutex
-	vds []*exporter.ViewData
+	vds []*viewexporter.ViewData
 }
 
-func (e *vdExporter) ExportView(vd *exporter.ViewData) {
+func (e *vdExporter) ExportView(vd *viewexporter.ViewData) {
 	e.Lock()
 	defer e.Unlock()
 

@@ -19,11 +19,11 @@ import (
 	"os"
 	"time"
 
-	example "go.opencensus.io/examples/exporter"
+	"go.opencensus.io/examples/exporter"
 	pb "go.opencensus.io/examples/grpc/proto"
-	"go.opencensus.io/exporter"
 	"go.opencensus.io/plugin/ocgrpc"
 	"go.opencensus.io/stats/view"
+	"go.opencensus.io/stats/viewexporter"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
@@ -36,7 +36,7 @@ const (
 func main() {
 	// Register stats and trace exporters to export
 	// the collected data.
-	exporter.Register(&example.PrintExporter{})
+	viewexporter.Register(&exporter.PrintExporter{})
 
 	// Register the view to collect client request count.
 	if err := view.Register(ocgrpc.ClientErrorCountView); err != nil {

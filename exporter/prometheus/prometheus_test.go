@@ -25,17 +25,17 @@ import (
 	"testing"
 	"time"
 
-	"go.opencensus.io/exporter"
 	"go.opencensus.io/stats"
 	"go.opencensus.io/stats/view"
+	"go.opencensus.io/stats/viewexporter"
 	"go.opencensus.io/tag"
 
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-func newViewData(measureName string, agg exporter.Aggregation, rows []*exporter.Row) *exporter.ViewData {
+func newViewData(measureName string, agg viewexporter.Aggregation, rows []*viewexporter.Row) *viewexporter.ViewData {
 	m := stats.Int64(measureName, "bytes", stats.UnitBytes)
-	return &exporter.ViewData{
+	return &viewexporter.ViewData{
 		Name:        "foo",
 		Description: "bar",
 		Unit:        agg.Type.AggregatedUnit(m.Unit()),
@@ -49,18 +49,18 @@ func newViewData(measureName string, agg exporter.Aggregation, rows []*exporter.
 
 func TestOnlyCumulativeWindowSupported(t *testing.T) {
 	// See Issue https://github.com/census-instrumentation/opencensus-go/issues/214.
-	count1 := exporter.AggregationData{Count: 1}
+	count1 := viewexporter.AggregationData{Count: 1}
 	tests := []struct {
-		vds  *exporter.ViewData
+		vds  *viewexporter.ViewData
 		want int
 	}{
 		0: {
-			vds:  newViewData("TestOnlyCumulativeWindowSupported/m1", exporter.Aggregation{Type: exporter.AggTypeCount}, nil),
+			vds:  newViewData("TestOnlyCumulativeWindowSupported/m1", viewexporter.Aggregation{Type: viewexporter.AggTypeCount}, nil),
 			want: 0, // no rows present
 		},
 		1: {
-			vds: newViewData("TestOnlyCumulativeWindowSupported/m2", exporter.Aggregation{Type: exporter.AggTypeCount},
-				[]*exporter.Row{
+			vds: newViewData("TestOnlyCumulativeWindowSupported/m2", viewexporter.Aggregation{Type: viewexporter.AggTypeCount},
+				[]*viewexporter.Row{
 					{Data: count1},
 				}),
 			want: 1,
@@ -127,9 +127,9 @@ func TestCollectNonRacy(t *testing.T) {
 		}()
 
 		for i := 0; i < 1e3; i++ {
-			count1 := exporter.AggregationData{Count: 1}
-			vds := []*exporter.ViewData{
-				newViewData(fmt.Sprintf("TestCollectNonRacy/m2-%d", i), exporter.Aggregation{Type: exporter.AggTypeCount}, []*exporter.Row{{Data: count1}}),
+			count1 := viewexporter.AggregationData{Count: 1}
+			vds := []*viewexporter.ViewData{
+				newViewData(fmt.Sprintf("TestCollectNonRacy/m2-%d", i), viewexporter.Aggregation{Type: viewexporter.AggTypeCount}, []*viewexporter.Row{{Data: count1}}),
 			}
 			for _, v := range vds {
 				exp.ExportView(v)
@@ -197,7 +197,7 @@ func TestMetricsEndpointOutput(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create prometheus exporter: %v", err)
 	}
-	exporter.Register(e)
+	viewexporter.Register(e)
 
 	names := []string{"foo", "bar", "baz"}
 

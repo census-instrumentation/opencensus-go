@@ -23,10 +23,10 @@ import (
 	"math/rand"
 	"time"
 
-	example "go.opencensus.io/examples/exporter"
-	"go.opencensus.io/exporter"
+	"go.opencensus.io/examples/exporter"
 	"go.opencensus.io/stats"
 	"go.opencensus.io/stats/view"
+	"go.opencensus.io/stats/viewexporter"
 	"go.opencensus.io/tag"
 	"go.opencensus.io/trace"
 )
@@ -45,8 +45,8 @@ func main() {
 
 	// Register an exporter to be able to retrieve
 	// the data from the subscribed views.
-	e := &example.PrintExporter{}
-	exporter.Register(e)
+	e := &exporter.PrintExporter{}
+	viewexporter.Register(e)
 	trace.RegisterExporter(e)
 
 	var err error

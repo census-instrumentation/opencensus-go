@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-// Package exporter contains support for exporting view data to backends.
+// Package viewexporter contains support for exporting view data to backends.
 //
 // Collected and aggregated data can be exported to a metric collection
 // backend by registering its exporter.
@@ -21,4 +21,4 @@
 // Multiple exporters can be registered to upload the data to various
 // different backends. Users need to unregister the exporters once they
 // no longer are needed.
-package exporter // import "go.opencensus.io/exporter"
+package viewexporter // import "go.opencensus.io/stats/viewexporter"

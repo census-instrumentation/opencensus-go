@@ -23,10 +23,10 @@ import (
 	"log"
 	"time"
 
-	"go.opencensus.io/exporter"
 	"go.opencensus.io/exporter/stackdriver"
 	"go.opencensus.io/stats"
 	"go.opencensus.io/stats/view"
+	"go.opencensus.io/stats/viewexporter"
 )
 
 // Create measures. The program will record measures for the size of
@@ -52,7 +52,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	exporter.Register(e)
+	viewexporter.Register(e)
 
 	// Set reporting period to report data at every second.
 	view.SetReportingPeriod(1 * time.Second)

@@ -18,7 +18,7 @@ package ocgrpc
 import (
 	"testing"
 
-	"go.opencensus.io/exporter"
+	"go.opencensus.io/stats/viewexporter"
 	"go.opencensus.io/trace"
 	"golang.org/x/net/context"
 
@@ -41,7 +41,7 @@ func TestServerDefaultCollections(t *testing.T) {
 
 	type wantData struct {
 		v    func() *view.View
-		rows []*exporter.Row
+		rows []*viewexporter.Row
 	}
 	type rpc struct {
 		tags        []tagPair
@@ -76,7 +76,7 @@ func TestServerDefaultCollections(t *testing.T) {
 			[]*wantData{
 				{
 					func() *view.View { return ServerRequestCountView },
-					[]*exporter.Row{
+					[]*viewexporter.Row{
 						{
 							Tags: []tag.Tag{
 								{Key: KeyMethod, Value: "package.service/method"},
@@ -87,7 +87,7 @@ func TestServerDefaultCollections(t *testing.T) {
 				},
 				{
 					func() *view.View { return ServerResponseCountView },
-					[]*exporter.Row{
+					[]*viewexporter.Row{
 						{
 							Tags: []tag.Tag{
 								{Key: KeyMethod, Value: "package.service/method"},
@@ -98,7 +98,7 @@ func TestServerDefaultCollections(t *testing.T) {
 				},
 				{
 					func() *view.View { return ServerRequestBytesView },
-					[]*exporter.Row{
+					[]*viewexporter.Row{
 						{
 							Tags: []tag.Tag{
 								{Key: KeyMethod, Value: "package.service/method"},
@@ -109,7 +109,7 @@ func TestServerDefaultCollections(t *testing.T) {
 				},
 				{
 					func() *view.View { return ServerResponseBytesView },
-					[]*exporter.Row{
+					[]*viewexporter.Row{
 						{
 							Tags: []tag.Tag{
 								{Key: KeyMethod, Value: "package.service/method"},
@@ -153,19 +153,19 @@ func TestServerDefaultCollections(t *testing.T) {
 			[]*wantData{
 				{
 					func() *view.View { return ServerErrorCountView },
-					[]*exporter.Row{
+					[]*viewexporter.Row{
 						{
 							Tags: []tag.Tag{
 								{Key: KeyStatus, Value: "Canceled"},
 								{Key: KeyMethod, Value: "package.service/method"},
 							},
-							Data: exporter.AggregationData{Count: 1},
+							Data: viewexporter.AggregationData{Count: 1},
 						},
 					},
 				},
 				{
 					func() *view.View { return ServerRequestCountView },
-					[]*exporter.Row{
+					[]*viewexporter.Row{
 						{
 							Tags: []tag.Tag{
 								{Key: KeyMethod, Value: "package.service/method"},
@@ -176,7 +176,7 @@ func TestServerDefaultCollections(t *testing.T) {
 				},
 				{
 					func() *view.View { return ServerResponseCountView },
-					[]*exporter.Row{
+					[]*viewexporter.Row{
 						{
 							Tags: []tag.Tag{
 								{Key: KeyMethod, Value: "package.service/method"},
@@ -233,26 +233,26 @@ func TestServerDefaultCollections(t *testing.T) {
 			[]*wantData{
 				{
 					func() *view.View { return ServerErrorCountView },
-					[]*exporter.Row{
+					[]*viewexporter.Row{
 						{
 							Tags: []tag.Tag{
 								{Key: KeyStatus, Value: "Canceled"},
 								{Key: KeyMethod, Value: "package.service/method"},
 							},
-							Data: exporter.AggregationData{Count: 1},
+							Data: viewexporter.AggregationData{Count: 1},
 						},
 						{
 							Tags: []tag.Tag{
 								{Key: KeyStatus, Value: "Aborted"},
 								{Key: KeyMethod, Value: "package.service/method"},
 							},
-							Data: exporter.AggregationData{Count: 1},
+							Data: viewexporter.AggregationData{Count: 1},
 						},
 					},
 				},
 				{
 					func() *view.View { return ServerRequestCountView },
-					[]*exporter.Row{
+					[]*viewexporter.Row{
 						{
 							Tags: []tag.Tag{
 								{Key: KeyMethod, Value: "package.service/method"},
@@ -263,7 +263,7 @@ func TestServerDefaultCollections(t *testing.T) {
 				},
 				{
 					func() *view.View { return ServerResponseCountView },
-					[]*exporter.Row{
+					[]*viewexporter.Row{
 						{
 							Tags: []tag.Tag{
 								{Key: KeyMethod, Value: "package.service/method"},
@@ -274,7 +274,7 @@ func TestServerDefaultCollections(t *testing.T) {
 				},
 				{
 					func() *view.View { return ServerRequestBytesView },
-					[]*exporter.Row{
+					[]*viewexporter.Row{
 						{
 							Tags: []tag.Tag{
 								{Key: KeyMethod, Value: "package.service/method"},
@@ -285,7 +285,7 @@ func TestServerDefaultCollections(t *testing.T) {
 				},
 				{
 					func() *view.View { return ServerResponseBytesView },
-					[]*exporter.Row{
+					[]*viewexporter.Row{
 						{
 							Tags: []tag.Tag{
 								{Key: KeyMethod, Value: "package.service/method"},
@@ -354,12 +354,12 @@ func TestServerDefaultCollections(t *testing.T) {
 	}
 }
 
-func newCountData(v int) exporter.AggregationData {
-	return exporter.AggregationData{Count: int64(v)}
+func newCountData(v int) viewexporter.AggregationData {
+	return viewexporter.AggregationData{Count: int64(v)}
 }
 
-func newDistributionData(countPerBucket []int64, count int64, min, max, mean, sumOfSquaredDev float64) exporter.AggregationData {
-	return exporter.AggregationData{
+func newDistributionData(countPerBucket []int64, count int64, min, max, mean, sumOfSquaredDev float64) viewexporter.AggregationData {
+	return viewexporter.AggregationData{
 		Count:           count,
 		Min:             min,
 		Max:             max,

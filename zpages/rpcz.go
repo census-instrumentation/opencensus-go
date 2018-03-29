@@ -26,9 +26,9 @@ import (
 	"text/tabwriter"
 	"time"
 
-	"go.opencensus.io/exporter"
 	"go.opencensus.io/plugin/ocgrpc"
 	"go.opencensus.io/stats/view"
+	"go.opencensus.io/stats/viewexporter"
 )
 
 const bytesPerKb = 1024
@@ -69,7 +69,7 @@ func init() {
 	if err := view.Register(views...); err != nil {
 		log.Printf("error subscribing to views: %v", err)
 	}
-	exporter.Register(snapExporter{})
+	viewexporter.Register(snapExporter{})
 }
 
 func rpczHandler(w http.ResponseWriter, r *http.Request) {
@@ -202,7 +202,7 @@ type methodKey struct {
 
 type snapExporter struct{}
 
-func (s snapExporter) ExportView(vd *exporter.ViewData) {
+func (s snapExporter) ExportView(vd *viewexporter.ViewData) {
 	received, ok := nameToReceived[vd.Name]
 	if !ok {
 		return

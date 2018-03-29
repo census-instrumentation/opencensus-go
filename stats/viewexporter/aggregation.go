@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-package exporter
+package viewexporter
 
 import "go.opencensus.io/stats"
 

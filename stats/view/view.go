@@ -21,9 +21,9 @@ import (
 	"sort"
 	"sync/atomic"
 
-	"go.opencensus.io/exporter"
 	"go.opencensus.io/stats"
 	"go.opencensus.io/stats/internal"
+	"go.opencensus.io/stats/viewexporter"
 	"go.opencensus.io/tag"
 )
 
@@ -136,7 +136,7 @@ func (v *viewInternal) clearRows() {
 	v.collector.clearRows()
 }
 
-func (v *viewInternal) collectedRows() []*exporter.Row {
+func (v *viewInternal) collectedRows() []*viewexporter.Row {
 	return v.collector.collectedRows(v.view.TagKeys)
 }
 

@@ -23,10 +23,10 @@ import (
 	"net/http"
 	"time"
 
-	"go.opencensus.io/exporter"
 	"go.opencensus.io/exporter/prometheus"
 	"go.opencensus.io/stats"
 	"go.opencensus.io/stats/view"
+	"go.opencensus.io/stats/viewexporter"
 )
 
 // Create measures. The program will record measures for the size of
@@ -43,7 +43,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	exporter.Register(e)
+	viewexporter.Register(e)
 
 	// Create view to see the number of processed videos cumulatively.
 	// Create view to see the amount of video processed

@@ -19,7 +19,7 @@ import (
 	"fmt"
 	"testing"
 
-	"go.opencensus.io/exporter"
+	"go.opencensus.io/stats/viewexporter"
 	"go.opencensus.io/trace"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -43,7 +43,7 @@ func TestClientDefaultCollections(t *testing.T) {
 
 	type wantData struct {
 		v    func() *view.View
-		rows []*exporter.Row
+		rows []*viewexporter.Row
 	}
 	type rpc struct {
 		tags        []tagPair
@@ -77,7 +77,7 @@ func TestClientDefaultCollections(t *testing.T) {
 			[]*wantData{
 				{
 					func() *view.View { return ClientRequestCountView },
-					[]*exporter.Row{
+					[]*viewexporter.Row{
 						{
 							Tags: []tag.Tag{
 								{Key: KeyMethod, Value: "package.service/method"},
@@ -88,7 +88,7 @@ func TestClientDefaultCollections(t *testing.T) {
 				},
 				{
 					func() *view.View { return ClientResponseCountView },
-					[]*exporter.Row{
+					[]*viewexporter.Row{
 						{
 							Tags: []tag.Tag{
 								{Key: KeyMethod, Value: "package.service/method"},
@@ -99,7 +99,7 @@ func TestClientDefaultCollections(t *testing.T) {
 				},
 				{
 					func() *view.View { return ClientRequestBytesView },
-					[]*exporter.Row{
+					[]*viewexporter.Row{
 						{
 							Tags: []tag.Tag{
 								{Key: KeyMethod, Value: "package.service/method"},
@@ -110,7 +110,7 @@ func TestClientDefaultCollections(t *testing.T) {
 				},
 				{
 					func() *view.View { return ClientResponseBytesView },
-					[]*exporter.Row{
+					[]*viewexporter.Row{
 						{
 							Tags: []tag.Tag{
 								{Key: KeyMethod, Value: "package.service/method"},
@@ -154,7 +154,7 @@ func TestClientDefaultCollections(t *testing.T) {
 			[]*wantData{
 				{
 					func() *view.View { return ClientErrorCountView },
-					[]*exporter.Row{
+					[]*viewexporter.Row{
 						{
 							Tags: []tag.Tag{
 								{Key: KeyStatus, Value: "Canceled"},
@@ -166,7 +166,7 @@ func TestClientDefaultCollections(t *testing.T) {
 				},
 				{
 					func() *view.View { return ClientRequestCountView },
-					[]*exporter.Row{
+					[]*viewexporter.Row{
 						{
 							Tags: []tag.Tag{
 								{Key: KeyMethod, Value: "package.service/method"},
@@ -177,7 +177,7 @@ func TestClientDefaultCollections(t *testing.T) {
 				},
 				{
 					func() *view.View { return ClientResponseCountView },
-					[]*exporter.Row{
+					[]*viewexporter.Row{
 						{
 							Tags: []tag.Tag{
 								{Key: KeyMethod, Value: "package.service/method"},
@@ -234,7 +234,7 @@ func TestClientDefaultCollections(t *testing.T) {
 			[]*wantData{
 				{
 					func() *view.View { return ClientErrorCountView },
-					[]*exporter.Row{
+					[]*viewexporter.Row{
 						{
 							Tags: []tag.Tag{
 								{Key: KeyStatus, Value: "Canceled"},
@@ -253,7 +253,7 @@ func TestClientDefaultCollections(t *testing.T) {
 				},
 				{
 					func() *view.View { return ClientRequestCountView },
-					[]*exporter.Row{
+					[]*viewexporter.Row{
 						{
 							Tags: []tag.Tag{
 								{Key: KeyMethod, Value: "package.service/method"},
@@ -264,7 +264,7 @@ func TestClientDefaultCollections(t *testing.T) {
 				},
 				{
 					func() *view.View { return ClientResponseCountView },
-					[]*exporter.Row{
+					[]*viewexporter.Row{
 						{
 							Tags: []tag.Tag{
 								{Key: KeyMethod, Value: "package.service/method"},
@@ -275,7 +275,7 @@ func TestClientDefaultCollections(t *testing.T) {
 				},
 				{
 					func() *view.View { return ClientRequestBytesView },
-					[]*exporter.Row{
+					[]*viewexporter.Row{
 						{
 							Tags: []tag.Tag{
 								{Key: KeyMethod, Value: "package.service/method"},
@@ -286,7 +286,7 @@ func TestClientDefaultCollections(t *testing.T) {
 				},
 				{
 					func() *view.View { return ClientResponseBytesView },
-					[]*exporter.Row{
+					[]*viewexporter.Row{
 						{
 							Tags: []tag.Tag{
 								{Key: KeyMethod, Value: "package.service/method"},
@@ -360,7 +360,7 @@ func TestClientDefaultCollections(t *testing.T) {
 }
 
 // containsRow returns true if rows contain r.
-func containsRow(rows []*exporter.Row, r *exporter.Row) bool {
+func containsRow(rows []*viewexporter.Row, r *viewexporter.Row) bool {
 	for _, x := range rows {
 		if r.Equal(x) {
 			return true

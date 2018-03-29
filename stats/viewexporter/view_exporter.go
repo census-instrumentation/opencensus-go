@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package exporter
+package viewexporter
 
 import "sync"
 
@@ -54,8 +54,8 @@ func Unregister(exporter ViewExporter) {
 	}
 }
 
-// CallViewExporters calls all registered View exporters with the given ViewData.
-func CallViewExporters(viewData *ViewData) {
+// Export calls all registered ViewExporters with the given ViewData.
+func Export(viewData *ViewData) {
 	viewExportersMu.Lock()
 	defer viewExportersMu.Unlock()
 	for e := range viewExporters {

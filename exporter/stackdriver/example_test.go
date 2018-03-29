@@ -18,11 +18,11 @@ import (
 	"log"
 	"net/http"
 
-	"go.opencensus.io/exporter"
 	"go.opencensus.io/exporter/stackdriver"
 	"go.opencensus.io/exporter/stackdriver/propagation"
 	"go.opencensus.io/plugin/ochttp"
 	"go.opencensus.io/stats/view"
+	"go.opencensus.io/stats/viewexporter"
 	"go.opencensus.io/trace"
 )
 
@@ -33,7 +33,7 @@ func Example() {
 	}
 
 	// Export to Stackdriver Monitoring.
-	exporter.Register(e)
+	viewexporter.Register(e)
 
 	// Subscribe views to see stats in Stackdriver Monitoring.
 	if err := view.Subscribe(

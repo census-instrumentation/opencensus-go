@@ -18,17 +18,17 @@ package view
 import (
 	"math"
 
-	"go.opencensus.io/exporter"
+	"go.opencensus.io/stats/viewexporter"
 )
 
 // aggregator receives data points and aggregates them in place.
 type aggregator interface {
 	addSample(v float64)
-	exportTo(d *exporter.AggregationData)
+	exportTo(d *viewexporter.AggregationData)
 }
 
 // TODO(ramonza): remove all the aggregator types and replace with just a
-// func(*exporter.AggregationData) that updates its argument in-place.
+// func(*viewexporter.AggregationData) that updates its argument in-place.
 
 type countData int64
 
@@ -41,7 +41,7 @@ func (a *countData) addSample(_ float64) {
 	*a = *a + 1
 }
 
-func (a *countData) exportTo(dd *exporter.AggregationData) {
+func (a *countData) exportTo(dd *viewexporter.AggregationData) {
 	dd.Count = int64(*a)
 }
 
@@ -56,7 +56,7 @@ func (a *sumData) addSample(f float64) {
 	*a += sumData(f)
 }
 
-func (a *sumData) exportTo(dd *exporter.AggregationData) {
+func (a *sumData) exportTo(dd *viewexporter.AggregationData) {
 	dd.Mean = float64(*a)
 	dd.Count = 1
 }
@@ -115,8 +115,8 @@ func (a *distributionData) incrementBucketCount(f float64) {
 	a.CountPerBucket[len(a.Bounds)]++
 }
 
-func (a *distributionData) exportTo(dd *exporter.AggregationData) {
-	*dd = exporter.AggregationData(*a)
+func (a *distributionData) exportTo(dd *viewexporter.AggregationData) {
+	*dd = viewexporter.AggregationData(*a)
 	dd.CountPerBucket = make([]int64, len(a.CountPerBucket))
 	copy(dd.CountPerBucket, a.CountPerBucket)
 }

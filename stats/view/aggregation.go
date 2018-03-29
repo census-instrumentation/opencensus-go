@@ -15,24 +15,26 @@
 
 package view
 
-import "go.opencensus.io/exporter"
+import (
+	"go.opencensus.io/stats/viewexporter"
+)
 
 // Aggregation represents a data aggregation method. Use one of the functions:
 // Count, Sum, or Distribution to construct an Aggregation.
 type Aggregation struct {
-	agg           exporter.Aggregation
+	agg           viewexporter.Aggregation
 	newAggregator func() aggregator
 }
 
 var (
 	aggCount = &Aggregation{
-		agg: exporter.Aggregation{Type: exporter.AggTypeCount},
+		agg: viewexporter.Aggregation{Type: viewexporter.AggTypeCount},
 		newAggregator: func() aggregator {
 			return newCountData(0)
 		},
 	}
 	aggSum = &Aggregation{
-		agg: exporter.Aggregation{Type: exporter.AggTypeSum},
+		agg: viewexporter.Aggregation{Type: viewexporter.AggTypeSum},
 		newAggregator: func() aggregator {
 			return newSumData(0)
 		},
@@ -76,8 +78,8 @@ func Sum() *Aggregation {
 // element is the common boundary of the overflow and underflow buckets.
 func Distribution(bounds ...float64) *Aggregation {
 	return &Aggregation{
-		agg: exporter.Aggregation{
-			Type:    exporter.AggTypeDistribution,
+		agg: viewexporter.Aggregation{
+			Type:    viewexporter.AggTypeDistribution,
 			Buckets: bounds,
 		},
 		newAggregator: func() aggregator {

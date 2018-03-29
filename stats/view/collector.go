@@ -18,8 +18,8 @@ package view
 import (
 	"sort"
 
-	"go.opencensus.io/exporter"
 	"go.opencensus.io/internal/tagencoding"
+	"go.opencensus.io/stats/viewexporter"
 	"go.opencensus.io/tag"
 )
 
@@ -41,11 +41,11 @@ func (c *collector) addSample(s string, v float64) {
 	aggregator.addSample(v)
 }
 
-func (c *collector) collectedRows(keys []tag.Key) []*exporter.Row {
-	var rows []*exporter.Row
+func (c *collector) collectedRows(keys []tag.Key) []*viewexporter.Row {
+	var rows []*viewexporter.Row
 	for sig, aggregator := range c.signatures {
 		tags := decodeTags([]byte(sig), keys)
-		row := &exporter.Row{Tags: tags}
+		row := &viewexporter.Row{Tags: tags}
 		aggregator.exportTo(&row.Data)
 		rows = append(rows, row)
 	}

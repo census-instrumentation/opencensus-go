@@ -19,8 +19,8 @@ import (
 	"context"
 	"testing"
 
-	"go.opencensus.io/exporter"
 	"go.opencensus.io/stats"
+	"go.opencensus.io/stats/viewexporter"
 	"go.opencensus.io/tag"
 )
 
@@ -56,22 +56,22 @@ func Test_View_MeasureFloat64_AggregationDistribution_Simple(t *testing.T) {
 		{f: 3, tags: []tagString{{k1, "v1 is a very long value key"}, {k2, "v2 is a very long value key"}}},
 		{f: 3, tags: []tagString{{k1, "v1 is a very long value key"}, {k2, "v2 is a very long value key"}}},
 	}
-	wantRows := []*exporter.Row{
+	wantRows := []*viewexporter.Row{
 		{
 			[]tag.Tag{{Key: k1, Value: "v1 is a very long value key"}},
-			exporter.AggregationData{
+			viewexporter.AggregationData{
 				Count: 2, Min: 1, Max: 5, Mean: 3, SumOfSquaredDev: 8, CountPerBucket: []int64{1, 1}, Bounds: []float64{2},
 			},
 		},
 		{
 			[]tag.Tag{{Key: k1, Value: "v1 is another very long value key"}},
-			exporter.AggregationData{
+			viewexporter.AggregationData{
 				Count: 1, Min: 1, Max: 1, Mean: 1, CountPerBucket: []int64{1, 0}, Bounds: []float64{2},
 			},
 		},
 		{
 			[]tag.Tag{{Key: k1, Value: "v1 is a very long value key"}, {Key: k2, Value: "v2 is a very long value key"}},
-			exporter.AggregationData{
+			viewexporter.AggregationData{
 				Count: 4, Min: 1, Max: 5, Mean: 3, SumOfSquaredDev: 2.66666666666667 * 3, CountPerBucket: []int64{1, 3}, Bounds: []float64{2},
 			},
 		},
@@ -135,7 +135,7 @@ func Test_View_MeasureFloat64_AggregationDistribution(t *testing.T) {
 	type testCase struct {
 		label    string
 		records  []record
-		wantRows []*exporter.Row
+		wantRows []*viewexporter.Row
 	}
 
 	tcs := []testCase{
@@ -145,10 +145,10 @@ func Test_View_MeasureFloat64_AggregationDistribution(t *testing.T) {
 				{1, []tagString{{k1, "v1"}}},
 				{5, []tagString{{k1, "v1"}}},
 			},
-			[]*exporter.Row{
+			[]*viewexporter.Row{
 				{
 					[]tag.Tag{{Key: k1, Value: "v1"}},
-					exporter.AggregationData{
+					viewexporter.AggregationData{
 						Count: 2, Min: 1, Max: 5, Mean: 3, SumOfSquaredDev: 8, CountPerBucket: []int64{1, 1}, Bounds: []float64{2},
 					},
 				},
@@ -160,16 +160,16 @@ func Test_View_MeasureFloat64_AggregationDistribution(t *testing.T) {
 				{1, []tagString{{k1, "v1"}}},
 				{5, []tagString{{k2, "v2"}}},
 			},
-			[]*exporter.Row{
+			[]*viewexporter.Row{
 				{
 					[]tag.Tag{{Key: k1, Value: "v1"}},
-					exporter.AggregationData{
+					viewexporter.AggregationData{
 						Count: 1, Min: 1, Max: 1, Mean: 1, CountPerBucket: []int64{1, 0}, Bounds: []float64{2},
 					},
 				},
 				{
 					[]tag.Tag{{Key: k2, Value: "v2"}},
-					exporter.AggregationData{
+					viewexporter.AggregationData{
 						Count: 1, Min: 5, Max: 5, Mean: 5, CountPerBucket: []int64{0, 1}, Bounds: []float64{2},
 					},
 				},
@@ -184,28 +184,28 @@ func Test_View_MeasureFloat64_AggregationDistribution(t *testing.T) {
 				{5, []tagString{{k2, "v2"}}},
 				{5, []tagString{{k1, "v1"}, {k2, "v2"}}},
 			},
-			[]*exporter.Row{
+			[]*viewexporter.Row{
 				{
 					[]tag.Tag{{Key: k1, Value: "v1"}},
-					exporter.AggregationData{
+					viewexporter.AggregationData{
 						Count: 2, Min: 1, Max: 5, Mean: 3, SumOfSquaredDev: 8, CountPerBucket: []int64{1, 1}, Bounds: []float64{2},
 					},
 				},
 				{
 					[]tag.Tag{{Key: k1, Value: "v1 other"}},
-					exporter.AggregationData{
+					viewexporter.AggregationData{
 						Count: 1, Min: 1, Max: 1, Mean: 1, CountPerBucket: []int64{1, 0}, Bounds: []float64{2},
 					},
 				},
 				{
 					[]tag.Tag{{Key: k2, Value: "v2"}},
-					exporter.AggregationData{
+					viewexporter.AggregationData{
 						Count: 1, Min: 5, Max: 5, Mean: 5, CountPerBucket: []int64{0, 1}, Bounds: []float64{2},
 					},
 				},
 				{
 					[]tag.Tag{{Key: k1, Value: "v1"}, {Key: k2, Value: "v2"}},
-					exporter.AggregationData{
+					viewexporter.AggregationData{
 						Count: 1, Min: 5, Max: 5, Mean: 5, CountPerBucket: []int64{0, 1}, Bounds: []float64{2},
 					},
 				},
@@ -222,22 +222,22 @@ func Test_View_MeasureFloat64_AggregationDistribution(t *testing.T) {
 				{3, []tagString{{k1, "v1 is a very long value key"}, {k2, "v2 is a very long value key"}}},
 				{3, []tagString{{k1, "v1 is a very long value key"}, {k2, "v2 is a very long value key"}}},
 			},
-			[]*exporter.Row{
+			[]*viewexporter.Row{
 				{
 					[]tag.Tag{{Key: k1, Value: "v1 is a very long value key"}},
-					exporter.AggregationData{
+					viewexporter.AggregationData{
 						Count: 2, Min: 1, Max: 5, Mean: 3, SumOfSquaredDev: 8, CountPerBucket: []int64{1, 1}, Bounds: []float64{2},
 					},
 				},
 				{
 					[]tag.Tag{{Key: k1, Value: "v1 is another very long value key"}},
-					exporter.AggregationData{
+					viewexporter.AggregationData{
 						Count: 1, Min: 1, Max: 1, Mean: 1, CountPerBucket: []int64{1, 0}, Bounds: []float64{2},
 					},
 				},
 				{
 					[]tag.Tag{{Key: k1, Value: "v1 is a very long value key"}, {Key: k2, Value: "v2 is a very long value key"}},
-					exporter.AggregationData{
+					viewexporter.AggregationData{
 						Count: 4, Min: 1, Max: 5, Mean: 3, SumOfSquaredDev: 2.66666666666667 * 3, CountPerBucket: []int64{1, 3}, Bounds: []float64{2},
 					},
 				},
@@ -299,7 +299,7 @@ func Test_View_MeasureFloat64_AggregationSum(t *testing.T) {
 	tcs := []struct {
 		label    string
 		records  []record
-		wantRows []*exporter.Row
+		wantRows []*viewexporter.Row
 	}{
 		{
 			label: "1",
@@ -307,10 +307,10 @@ func Test_View_MeasureFloat64_AggregationSum(t *testing.T) {
 				{1, []tagString{{k1, "v1"}}},
 				{5, []tagString{{k1, "v1"}}},
 			},
-			wantRows: []*exporter.Row{
+			wantRows: []*viewexporter.Row{
 				{
 					[]tag.Tag{{Key: k1, Value: "v1"}},
-					exporter.AggregationData{Count: 1, Mean: 6},
+					viewexporter.AggregationData{Count: 1, Mean: 6},
 				},
 			},
 		},
@@ -320,14 +320,14 @@ func Test_View_MeasureFloat64_AggregationSum(t *testing.T) {
 				{1, []tagString{{k1, "v1"}}},
 				{5, []tagString{{k2, "v2"}}},
 			},
-			[]*exporter.Row{
+			[]*viewexporter.Row{
 				{
 					[]tag.Tag{{Key: k1, Value: "v1"}},
-					exporter.AggregationData{Count: 1, Mean: 1},
+					viewexporter.AggregationData{Count: 1, Mean: 1},
 				},
 				{
 					[]tag.Tag{{Key: k2, Value: "v2"}},
-					exporter.AggregationData{Count: 1, Mean: 5},
+					viewexporter.AggregationData{Count: 1, Mean: 5},
 				},
 			},
 		},
@@ -340,22 +340,22 @@ func Test_View_MeasureFloat64_AggregationSum(t *testing.T) {
 				{5, []tagString{{k2, "v2"}}},
 				{5, []tagString{{k1, "v1"}, {k2, "v2"}}},
 			},
-			[]*exporter.Row{
+			[]*viewexporter.Row{
 				{
 					[]tag.Tag{{Key: k1, Value: "v1"}},
-					exporter.AggregationData{Count: 1, Mean: 6},
+					viewexporter.AggregationData{Count: 1, Mean: 6},
 				},
 				{
 					[]tag.Tag{{Key: k1, Value: "v1 other"}},
-					exporter.AggregationData{Count: 1, Mean: 1},
+					viewexporter.AggregationData{Count: 1, Mean: 1},
 				},
 				{
 					[]tag.Tag{{Key: k2, Value: "v2"}},
-					exporter.AggregationData{Count: 1, Mean: 5},
+					viewexporter.AggregationData{Count: 1, Mean: 5},
 				},
 				{
 					[]tag.Tag{{Key: k1, Value: "v1"}, {Key: k2, Value: "v2"}},
-					exporter.AggregationData{Count: 1, Mean: 5},
+					viewexporter.AggregationData{Count: 1, Mean: 5},
 				},
 			},
 		},
@@ -447,7 +447,7 @@ func TestViewSortedKeys(t *testing.T) {
 }
 
 // containsRow returns true if rows contain r.
-func containsRow(rows []*exporter.Row, r *exporter.Row) bool {
+func containsRow(rows []*viewexporter.Row, r *viewexporter.Row) bool {
 	for _, x := range rows {
 		if r.Equal(x) {
 			return true
