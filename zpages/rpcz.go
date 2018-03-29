@@ -28,6 +28,7 @@ import (
 
 	"go.opencensus.io/plugin/ocgrpc"
 	"go.opencensus.io/stats/view"
+	"go.opencensus.io/stats/viewexporter"
 )
 
 const bytesPerKb = 1024
@@ -54,17 +55,21 @@ var (
 		ocgrpc.ServerResponseCountView:     true,
 		ocgrpc.ServerServerElapsedTimeView: true,
 	}
+
+	nameToReceived map[string]bool
 )
 
 func init() {
+	nameToReceived = make(map[string]bool)
 	views := make([]*view.View, 0, len(viewType))
-	for v := range viewType {
+	for v, received := range viewType {
+		nameToReceived[v.Name] = received
 		views = append(views, v)
 	}
 	if err := view.Register(views...); err != nil {
 		log.Printf("error subscribing to views: %v", err)
 	}
-	view.RegisterExporter(snapExporter{})
+	viewexporter.Register(snapExporter{})
 }
 
 func rpczHandler(w http.ResponseWriter, r *http.Request) {
@@ -197,8 +202,8 @@ type methodKey struct {
 
 type snapExporter struct{}
 
-func (s snapExporter) ExportView(vd *view.Data) {
-	received, ok := viewType[vd.View]
+func (s snapExporter) ExportView(vd *viewexporter.ViewData) {
+	received, ok := nameToReceived[vd.Name]
 	if !ok {
 		return
 	}
@@ -240,57 +245,44 @@ func (s snapExporter) ExportView(vd *view.Data) {
 			snaps[key] = s
 		}
 
-		var (
-			sum   float64
-			count float64
-		)
-		switch v := row.Data.(type) {
-		case *view.CountData:
-			sum = float64(*v)
-			count = float64(*v)
-		case *view.DistributionData:
-			sum = v.Sum()
-			count = float64(v.Count)
-		case *view.SumData:
-			sum = float64(*v)
-			count = float64(*v)
-		}
+		sum := row.Data.Sum()
+		count := float64(row.Data.Count)
 
 		// Update field of s corresponding to the view.
-		switch vd.View {
-		case ocgrpc.ClientErrorCountView:
+		switch vd.Name {
+		case ocgrpc.ClientErrorCountView.Name:
 			s.ErrorsTotal = int(count)
 
-		case ocgrpc.ClientRoundTripLatencyView:
+		case ocgrpc.ClientRoundTripLatencyView.Name:
 			s.AvgLatencyTotal = convertTime(sum / count)
 
-		case ocgrpc.ClientRequestBytesView:
+		case ocgrpc.ClientRequestBytesView.Name:
 			s.OutputRateTotal = computeRate(0, sum)
 
-		case ocgrpc.ClientResponseBytesView:
+		case ocgrpc.ClientResponseBytesView.Name:
 			s.InputRateTotal = computeRate(0, sum)
 
-		case ocgrpc.ClientRequestCountView:
+		case ocgrpc.ClientRequestCountView.Name:
 			s.CountTotal = int(count)
 			s.RPCRateTotal = computeRate(0, count)
 
-		case ocgrpc.ClientResponseCountView:
+		case ocgrpc.ClientResponseCountView.Name:
 			// currently unused
 
-		case ocgrpc.ServerErrorCountView:
+		case ocgrpc.ServerErrorCountView.Name:
 			s.ErrorsTotal = int(count)
 
-		case ocgrpc.ServerServerElapsedTimeView:
+		case ocgrpc.ServerServerElapsedTimeView.Name:
 			s.AvgLatencyTotal = convertTime(sum / count)
 
-		case ocgrpc.ServerResponseBytesView:
+		case ocgrpc.ServerResponseBytesView.Name:
 			s.OutputRateTotal = computeRate(0, sum)
 
-		case ocgrpc.ServerRequestCountView:
+		case ocgrpc.ServerRequestCountView.Name:
 			s.CountTotal = int(count)
 			s.RPCRateTotal = computeRate(0, count)
 
-		case ocgrpc.ServerResponseCountView:
+		case ocgrpc.ServerResponseCountView.Name:
 			// currently unused
 		}
 	}

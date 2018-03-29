@@ -21,6 +21,7 @@ import (
 
 	"go.opencensus.io/stats"
 	"go.opencensus.io/stats/internal"
+	"go.opencensus.io/stats/viewexporter"
 	"go.opencensus.io/tag"
 )
 
@@ -119,7 +120,8 @@ func (v *View) Unsubscribe() error {
 	return nil
 }
 
-func RetrieveData(viewName string) ([]*Row, error) {
+// RetrieveData is an unsupported way to extract exporter rows.
+func RetrieveData(viewName string) ([]*viewexporter.Row, error) {
 	req := &retrieveDataReq{
 		now: time.Now(),
 		v:   viewName,
@@ -229,30 +231,18 @@ func (w *worker) reportUsage(now time.Time) {
 		if !ok {
 			w.startTimes[v] = now
 		}
-		// Make sure collector is never going
-		// to mutate the exported data.
-		rows = deepCopyRowData(rows)
-		viewData := &Data{
-			View:  v.view,
-			Start: w.startTimes[v],
-			End:   time.Now(),
-			Rows:  rows,
+		_, isFloat64Measure := v.view.Measure.(*stats.Float64Measure)
+		viewData := &viewexporter.ViewData{
+			Name:         v.view.Name,
+			Description:  v.view.Description,
+			Start:        w.startTimes[v],
+			End:          time.Now(),
+			Aggregation:  v.view.Aggregation.agg,
+			TagKeys:      v.view.TagKeys,
+			Unit:         v.view.Aggregation.agg.Type.AggregatedUnit(v.view.Measure.Unit()),
+			MeasureFloat: isFloat64Measure,
+			Rows:         rows,
 		}
-		exportersMu.Lock()
-		for e := range exporters {
-			e.ExportView(viewData)
-		}
-		exportersMu.Unlock()
+		viewexporter.Export(viewData)
 	}
-}
-
-func deepCopyRowData(rows []*Row) []*Row {
-	newRows := make([]*Row, 0, len(rows))
-	for _, r := range rows {
-		newRows = append(newRows, &Row{
-			Data: r.Data.clone(),
-			Tags: r.Tags,
-		})
-	}
-	return newRows
 }

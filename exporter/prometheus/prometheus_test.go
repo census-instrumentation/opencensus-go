@@ -27,41 +27,42 @@ import (
 
 	"go.opencensus.io/stats"
 	"go.opencensus.io/stats/view"
+	"go.opencensus.io/stats/viewexporter"
 	"go.opencensus.io/tag"
 
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-func newView(measureName string, agg *view.Aggregation) *view.View {
+func newViewData(measureName string, agg viewexporter.Aggregation, rows []*viewexporter.Row) *viewexporter.ViewData {
 	m := stats.Int64(measureName, "bytes", stats.UnitBytes)
-	return &view.View{
+	return &viewexporter.ViewData{
 		Name:        "foo",
 		Description: "bar",
-		Measure:     m,
+		Unit:        agg.Type.AggregatedUnit(m.Unit()),
 		Aggregation: agg,
+		TagKeys:     nil,
+		Rows:        rows,
+		Start:       time.Now(),
+		End:         time.Now(),
 	}
 }
 
 func TestOnlyCumulativeWindowSupported(t *testing.T) {
 	// See Issue https://github.com/census-instrumentation/opencensus-go/issues/214.
-	count1 := view.CountData(1)
+	count1 := viewexporter.AggregationData{Count: 1}
 	tests := []struct {
-		vds  *view.Data
+		vds  *viewexporter.ViewData
 		want int
 	}{
 		0: {
-			vds: &view.Data{
-				View: newView("TestOnlyCumulativeWindowSupported/m1", view.Count()),
-			},
+			vds:  newViewData("TestOnlyCumulativeWindowSupported/m1", viewexporter.Aggregation{Type: viewexporter.AggTypeCount}, nil),
 			want: 0, // no rows present
 		},
 		1: {
-			vds: &view.Data{
-				View: newView("TestOnlyCumulativeWindowSupported/m2", view.Count()),
-				Rows: []*view.Row{
-					{Data: &count1},
-				},
-			},
+			vds: newViewData("TestOnlyCumulativeWindowSupported/m2", viewexporter.Aggregation{Type: viewexporter.AggTypeCount},
+				[]*viewexporter.Row{
+					{Data: count1},
+				}),
 			want: 1,
 		},
 	}
@@ -126,9 +127,9 @@ func TestCollectNonRacy(t *testing.T) {
 		}()
 
 		for i := 0; i < 1e3; i++ {
-			count1 := view.CountData(1)
-			vds := []*view.Data{
-				{View: newView(fmt.Sprintf("TestCollectNonRacy/m2-%d", i), view.Count()), Rows: []*view.Row{{Data: &count1}}},
+			count1 := viewexporter.AggregationData{Count: 1}
+			vds := []*viewexporter.ViewData{
+				newViewData(fmt.Sprintf("TestCollectNonRacy/m2-%d", i), viewexporter.Aggregation{Type: viewexporter.AggTypeCount}, []*viewexporter.Row{{Data: count1}}),
 			}
 			for _, v := range vds {
 				exp.ExportView(v)
@@ -192,11 +193,11 @@ func (vc *vCreator) createAndAppend(name, description string, keys []tag.Key, me
 }
 
 func TestMetricsEndpointOutput(t *testing.T) {
-	exporter, err := newExporter(Options{})
+	e, err := newExporter(Options{})
 	if err != nil {
 		t.Fatalf("failed to create prometheus exporter: %v", err)
 	}
-	view.RegisterExporter(exporter)
+	viewexporter.Register(e)
 
 	names := []string{"foo", "bar", "baz"}
 
@@ -219,8 +220,10 @@ func TestMetricsEndpointOutput(t *testing.T) {
 		stats.Record(context.Background(), m.M(1))
 	}
 
-	srv := httptest.NewServer(exporter)
+	srv := httptest.NewServer(e)
 	defer srv.Close()
+
+	time.Sleep(10 * time.Millisecond)
 
 	var i int
 	var output string
@@ -249,16 +252,16 @@ func TestMetricsEndpointOutput(t *testing.T) {
 	}
 
 	if strings.Contains(output, "collected before with the same name and label values") {
-		t.Fatal("metric name and labels being duplicated but must be unique")
+		t.Errorf("metric name and labels being duplicated but must be unique")
 	}
 
 	if strings.Contains(output, "error(s) occurred") {
-		t.Fatal("error reported by prometheus registry")
+		t.Errorf("error reported by prometheus registry")
 	}
 
 	for _, name := range names {
 		if !strings.Contains(output, "opencensus_tests_"+name+" 1") {
-			t.Fatalf("measurement missing in output: %v", name)
+			t.Errorf("measurement missing in output: %v", name)
 		}
 	}
 }

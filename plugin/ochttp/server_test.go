@@ -18,7 +18,7 @@ func httpHandler(statusCode, respSize int) http.Handler {
 	})
 }
 
-func updateMean(mean float64, sample, count int) float64 {
+func updateMean(mean float64, sample, count int64) float64 {
 	if count == 1 {
 		return float64(sample)
 	}
@@ -46,7 +46,7 @@ func TestHandlerStatsCollection(t *testing.T) {
 		{"post 503", "POST", "http://opencensus.io/request/two", 5, 503, 1024, 16384},
 		{"no body 302", "GET", "http://opencensus.io/request/three", 2, 302, 0, 0},
 	}
-	totalCount, meanReqSize, meanRespSize := 0, 0.0, 0.0
+	totalCount, meanReqSize, meanRespSize := int64(0), 0.0, 0.0
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -63,8 +63,8 @@ func TestHandlerStatsCollection(t *testing.T) {
 				totalCount++
 				// Distributions do not track sum directly, we must
 				// mimic their behaviour to avoid rounding failures.
-				meanReqSize = updateMean(meanReqSize, test.reqSize, totalCount)
-				meanRespSize = updateMean(meanRespSize, test.respSize, totalCount)
+				meanReqSize = updateMean(meanReqSize, int64(test.reqSize), totalCount)
+				meanRespSize = updateMean(meanRespSize, int64(test.respSize), totalCount)
 			}
 		})
 	}
@@ -86,18 +86,8 @@ func TestHandlerStatsCollection(t *testing.T) {
 		}
 		data := rows[0].Data
 
-		var count int
-		var sum float64
-		switch data := data.(type) {
-		case *view.CountData:
-			count = int(*data)
-		case *view.DistributionData:
-			count = int(data.Count)
-			sum = data.Sum()
-		default:
-			t.Errorf("Unkown data type: %v", data)
-			continue
-		}
+		count := data.Count
+		sum := data.Sum()
 
 		if got, want := count, totalCount; got != want {
 			t.Fatalf("%s = %d; want %d", viewName, got, want)

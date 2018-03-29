@@ -27,18 +27,6 @@ aggregation provides statistical summary of the aggregated data. Sum distributio
 sums up the measurement points. Aggregations are cumulative.
 
 Users can dynamically create and delete views.
-
-Libraries can export their own views and claim the view names
-by registering them themselves.
-
-Exporting
-
-Collected and aggregated data can be exported to a metric collection
-backend by registering its exporter.
-
-Multiple exporters can be registered to upload the data to various
-different backends. Users need to unregister the exporters once they
-no longer are needed.
 */
 package view // import "go.opencensus.io/stats/view"
 

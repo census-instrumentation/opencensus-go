@@ -16,8 +16,10 @@
 package ocgrpc
 
 import (
+	"fmt"
 	"testing"
 
+	"go.opencensus.io/stats/viewexporter"
 	"go.opencensus.io/trace"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -41,7 +43,7 @@ func TestClientDefaultCollections(t *testing.T) {
 
 	type wantData struct {
 		v    func() *view.View
-		rows []*view.Row
+		rows []*viewexporter.Row
 	}
 	type rpc struct {
 		tags        []tagPair
@@ -75,7 +77,7 @@ func TestClientDefaultCollections(t *testing.T) {
 			[]*wantData{
 				{
 					func() *view.View { return ClientRequestCountView },
-					[]*view.Row{
+					[]*viewexporter.Row{
 						{
 							Tags: []tag.Tag{
 								{Key: KeyMethod, Value: "package.service/method"},
@@ -86,7 +88,7 @@ func TestClientDefaultCollections(t *testing.T) {
 				},
 				{
 					func() *view.View { return ClientResponseCountView },
-					[]*view.Row{
+					[]*viewexporter.Row{
 						{
 							Tags: []tag.Tag{
 								{Key: KeyMethod, Value: "package.service/method"},
@@ -97,7 +99,7 @@ func TestClientDefaultCollections(t *testing.T) {
 				},
 				{
 					func() *view.View { return ClientRequestBytesView },
-					[]*view.Row{
+					[]*viewexporter.Row{
 						{
 							Tags: []tag.Tag{
 								{Key: KeyMethod, Value: "package.service/method"},
@@ -108,7 +110,7 @@ func TestClientDefaultCollections(t *testing.T) {
 				},
 				{
 					func() *view.View { return ClientResponseBytesView },
-					[]*view.Row{
+					[]*viewexporter.Row{
 						{
 							Tags: []tag.Tag{
 								{Key: KeyMethod, Value: "package.service/method"},
@@ -152,7 +154,7 @@ func TestClientDefaultCollections(t *testing.T) {
 			[]*wantData{
 				{
 					func() *view.View { return ClientErrorCountView },
-					[]*view.Row{
+					[]*viewexporter.Row{
 						{
 							Tags: []tag.Tag{
 								{Key: KeyStatus, Value: "Canceled"},
@@ -164,7 +166,7 @@ func TestClientDefaultCollections(t *testing.T) {
 				},
 				{
 					func() *view.View { return ClientRequestCountView },
-					[]*view.Row{
+					[]*viewexporter.Row{
 						{
 							Tags: []tag.Tag{
 								{Key: KeyMethod, Value: "package.service/method"},
@@ -175,7 +177,7 @@ func TestClientDefaultCollections(t *testing.T) {
 				},
 				{
 					func() *view.View { return ClientResponseCountView },
-					[]*view.Row{
+					[]*viewexporter.Row{
 						{
 							Tags: []tag.Tag{
 								{Key: KeyMethod, Value: "package.service/method"},
@@ -232,7 +234,7 @@ func TestClientDefaultCollections(t *testing.T) {
 			[]*wantData{
 				{
 					func() *view.View { return ClientErrorCountView },
-					[]*view.Row{
+					[]*viewexporter.Row{
 						{
 							Tags: []tag.Tag{
 								{Key: KeyStatus, Value: "Canceled"},
@@ -251,7 +253,7 @@ func TestClientDefaultCollections(t *testing.T) {
 				},
 				{
 					func() *view.View { return ClientRequestCountView },
-					[]*view.Row{
+					[]*viewexporter.Row{
 						{
 							Tags: []tag.Tag{
 								{Key: KeyMethod, Value: "package.service/method"},
@@ -262,7 +264,7 @@ func TestClientDefaultCollections(t *testing.T) {
 				},
 				{
 					func() *view.View { return ClientResponseCountView },
-					[]*view.Row{
+					[]*viewexporter.Row{
 						{
 							Tags: []tag.Tag{
 								{Key: KeyMethod, Value: "package.service/method"},
@@ -273,7 +275,7 @@ func TestClientDefaultCollections(t *testing.T) {
 				},
 				{
 					func() *view.View { return ClientRequestBytesView },
-					[]*view.Row{
+					[]*viewexporter.Row{
 						{
 							Tags: []tag.Tag{
 								{Key: KeyMethod, Value: "package.service/method"},
@@ -284,7 +286,7 @@ func TestClientDefaultCollections(t *testing.T) {
 				},
 				{
 					func() *view.View { return ClientResponseBytesView },
-					[]*view.Row{
+					[]*viewexporter.Row{
 						{
 							Tags: []tag.Tag{
 								{Key: KeyMethod, Value: "package.service/method"},
@@ -335,7 +337,11 @@ func TestClientDefaultCollections(t *testing.T) {
 
 			for _, gotRow := range gotRows {
 				if !containsRow(wantData.rows, gotRow) {
-					t.Errorf("%q: unwanted row for view %q = %v", tc.label, wantData.v().Name, gotRow)
+					msg := fmt.Sprintf("%q: unwanted row for view %q = \n%#v\n; want any of:\n", tc.label, wantData.v().Name, gotRow)
+					for _, row := range wantData.rows {
+						msg += fmt.Sprintf("%#v\n", row)
+					}
+					t.Error(msg)
 					break
 				}
 			}
@@ -354,7 +360,7 @@ func TestClientDefaultCollections(t *testing.T) {
 }
 
 // containsRow returns true if rows contain r.
-func containsRow(rows []*view.Row, r *view.Row) bool {
+func containsRow(rows []*viewexporter.Row, r *viewexporter.Row) bool {
 	for _, x := range rows {
 		if r.Equal(x) {
 			return true

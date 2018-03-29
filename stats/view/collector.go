@@ -19,13 +19,14 @@ import (
 	"sort"
 
 	"go.opencensus.io/internal/tagencoding"
+	"go.opencensus.io/stats/viewexporter"
 	"go.opencensus.io/tag"
 )
 
 type collector struct {
 	// signatures holds the aggregations values for each unique tag signature
 	// (values for all keys) to its aggregator.
-	signatures map[string]AggregationData
+	signatures map[string]aggregator
 	// Aggregation is the description of the aggregation to perform for this
 	// view.
 	a *Aggregation
@@ -34,24 +35,25 @@ type collector struct {
 func (c *collector) addSample(s string, v float64) {
 	aggregator, ok := c.signatures[s]
 	if !ok {
-		aggregator = c.a.newData()
+		aggregator = c.a.newAggregator()
 		c.signatures[s] = aggregator
 	}
 	aggregator.addSample(v)
 }
 
-func (c *collector) collectedRows(keys []tag.Key) []*Row {
-	var rows []*Row
+func (c *collector) collectedRows(keys []tag.Key) []*viewexporter.Row {
+	var rows []*viewexporter.Row
 	for sig, aggregator := range c.signatures {
 		tags := decodeTags([]byte(sig), keys)
-		row := &Row{tags, aggregator}
+		row := &viewexporter.Row{Tags: tags}
+		aggregator.exportTo(&row.Data)
 		rows = append(rows, row)
 	}
 	return rows
 }
 
 func (c *collector) clearRows() {
-	c.signatures = make(map[string]AggregationData)
+	c.signatures = make(map[string]aggregator)
 }
 
 // encodeWithKeys encodes the map by using values

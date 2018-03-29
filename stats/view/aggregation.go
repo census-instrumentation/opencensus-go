@@ -15,50 +15,34 @@
 
 package view
 
-// AggType represents the type of aggregation function used on a View.
-type AggType int
-
-// All available aggregation types.
-const (
-	AggTypeNone         AggType = iota // no aggregation; reserved for future use.
-	AggTypeCount                       // the count aggregation, see Count.
-	AggTypeSum                         // the sum aggregation, see Sum.
-	AggTypeDistribution                // the distribution aggregation, see Distribution.
-	AggTypeLastValue                   // the last value aggregation, see LastValue.
+import (
+	"go.opencensus.io/stats/viewexporter"
 )
-
-func (t AggType) String() string {
-	return aggTypeName[t]
-}
-
-var aggTypeName = map[AggType]string{
-	AggTypeNone:         "None",
-	AggTypeCount:        "Count",
-	AggTypeSum:          "Sum",
-	AggTypeDistribution: "Distribution",
-	AggTypeLastValue:    "LastValue",
-}
 
 // Aggregation represents a data aggregation method. Use one of the functions:
 // Count, Sum, or Distribution to construct an Aggregation.
 type Aggregation struct {
-	Type    AggType   // Type is the AggType of this Aggregation.
-	Buckets []float64 // Buckets are the bucket endpoints if this Aggregation represents a distribution, see Distribution.
-
-	newData func() AggregationData
+	agg           viewexporter.Aggregation
+	newAggregator func() aggregator
 }
 
 var (
 	aggCount = &Aggregation{
-		Type: AggTypeCount,
-		newData: func() AggregationData {
+		agg: viewexporter.Aggregation{Type: viewexporter.AggTypeCount},
+		newAggregator: func() aggregator {
 			return newCountData(0)
 		},
 	}
 	aggSum = &Aggregation{
-		Type: AggTypeSum,
-		newData: func() AggregationData {
+		agg: viewexporter.Aggregation{Type: viewexporter.AggTypeSum},
+		newAggregator: func() aggregator {
 			return newSumData(0)
+		},
+	}
+	aggLastValue = &Aggregation{
+		agg: viewexporter.Aggregation{Type: viewexporter.AggTypeLastValue},
+		newAggregator: func() aggregator {
+			return &LastValueData{}
 		},
 	}
 )
@@ -100,9 +84,11 @@ func Sum() *Aggregation {
 // element is the common boundary of the overflow and underflow buckets.
 func Distribution(bounds ...float64) *Aggregation {
 	return &Aggregation{
-		Type:    AggTypeDistribution,
-		Buckets: bounds,
-		newData: func() AggregationData {
+		agg: viewexporter.Aggregation{
+			Type:    viewexporter.AggTypeDistribution,
+			Buckets: bounds,
+		},
+		newAggregator: func() aggregator {
 			return newDistributionData(bounds)
 		},
 	}
@@ -111,10 +97,5 @@ func Distribution(bounds ...float64) *Aggregation {
 // LastValue only reports the last value recorded using this
 // aggregation. All other measurements will be dropped.
 func LastValue() *Aggregation {
-	return &Aggregation{
-		Type: AggTypeLastValue,
-		newData: func() AggregationData {
-			return &LastValueData{}
-		},
-	}
+	return aggLastValue
 }

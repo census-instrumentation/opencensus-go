@@ -11,25 +11,14 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+//
 
-package prometheus_test
-
-import (
-	"log"
-	"net/http"
-
-	"go.opencensus.io/exporter/prometheus"
-	"go.opencensus.io/stats/viewexporter"
-)
-
-func Example() {
-	e, err := prometheus.NewExporter(prometheus.Options{})
-	if err != nil {
-		log.Fatal(err)
-	}
-	viewexporter.Register(e)
-
-	// Serve the scrap endpoint at localhost:9999.
-	http.Handle("/metrics", e)
-	log.Fatal(http.ListenAndServe(":9999", nil))
-}
+// Package viewexporter contains support for exporting view data to backends.
+//
+// Collected and aggregated data can be exported to a metric collection
+// backend by registering its exporter.
+//
+// Multiple exporters can be registered to upload the data to various
+// different backends. Users need to unregister the exporters once they
+// no longer are needed.
+package viewexporter // import "go.opencensus.io/stats/viewexporter"

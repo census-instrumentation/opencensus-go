@@ -28,7 +28,7 @@ import (
 	"time"
 
 	traceapi "cloud.google.com/go/trace/apiv2"
-	"go.opencensus.io/stats/view"
+	"go.opencensus.io/stats/viewexporter"
 	"go.opencensus.io/trace"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/option"
@@ -113,7 +113,7 @@ func NewExporter(o Options) (*Exporter, error) {
 
 // ExportView exports to the Stackdriver Monitoring if view data
 // has one or more rows.
-func (e *Exporter) ExportView(vd *view.Data) {
+func (e *Exporter) ExportView(vd *viewexporter.ViewData) {
 	e.statsExporter.ExportView(vd)
 }
 

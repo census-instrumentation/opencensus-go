@@ -26,6 +26,7 @@ import (
 	"go.opencensus.io/exporter/stackdriver"
 	"go.opencensus.io/stats"
 	"go.opencensus.io/stats/view"
+	"go.opencensus.io/stats/viewexporter"
 )
 
 // Create measures. The program will record measures for the size of
@@ -45,13 +46,13 @@ func main() {
 	// to setup the authorization.
 	// See https://developers.google.com/identity/protocols/application-default-credentials
 	// for more details.
-	exporter, err := stackdriver.NewExporter(stackdriver.Options{
+	e, err := stackdriver.NewExporter(stackdriver.Options{
 		ProjectID: "project-id", // Google Cloud Console project ID.
 	})
 	if err != nil {
 		log.Fatal(err)
 	}
-	view.RegisterExporter(exporter)
+	viewexporter.Register(e)
 
 	// Set reporting period to report data at every second.
 	view.SetReportingPeriod(1 * time.Second)

@@ -16,15 +16,14 @@
 package view
 
 import (
-	"bytes"
 	"fmt"
 	"reflect"
 	"sort"
 	"sync/atomic"
-	"time"
 
 	"go.opencensus.io/stats"
 	"go.opencensus.io/stats/internal"
+	"go.opencensus.io/stats/viewexporter"
 	"go.opencensus.io/tag"
 )
 
@@ -115,7 +114,7 @@ type viewInternal struct {
 func newViewInternal(v *View) (*viewInternal, error) {
 	return &viewInternal{
 		view:      v,
-		collector: &collector{make(map[string]AggregationData), v.Aggregation},
+		collector: &collector{make(map[string]aggregator), v.Aggregation},
 	}, nil
 }
 
@@ -137,7 +136,7 @@ func (v *viewInternal) clearRows() {
 	v.collector.clearRows()
 }
 
-func (v *viewInternal) collectedRows() []*Row {
+func (v *viewInternal) collectedRows() []*viewexporter.Row {
 	return v.collector.collectedRows(v.view.TagKeys)
 }
 
@@ -147,43 +146,6 @@ func (v *viewInternal) addSample(m *tag.Map, val float64) {
 	}
 	sig := string(encodeWithKeys(m, v.view.TagKeys))
 	v.collector.addSample(sig, val)
-}
-
-// A Data is a set of rows about usage of the single measure associated
-// with the given view. Each row is specific to a unique set of tags.
-type Data struct {
-	View       *View
-	Start, End time.Time
-	Rows       []*Row
-}
-
-// Row is the collected value for a specific set of key value pairs a.k.a tags.
-type Row struct {
-	Tags []tag.Tag
-	Data AggregationData
-}
-
-func (r *Row) String() string {
-	var buffer bytes.Buffer
-	buffer.WriteString("{ ")
-	buffer.WriteString("{ ")
-	for _, t := range r.Tags {
-		buffer.WriteString(fmt.Sprintf("{%v %v}", t.Key.Name(), t.Value))
-	}
-	buffer.WriteString(" }")
-	buffer.WriteString(fmt.Sprintf("%v", r.Data))
-	buffer.WriteString(" }")
-	return buffer.String()
-}
-
-// Equal returns true if both rows are equal. Tags are expected to be ordered
-// by the key name. Even both rows have the same tags but the tags appear in
-// different orders it will return false.
-func (r *Row) Equal(other *Row) bool {
-	if r == other {
-		return true
-	}
-	return reflect.DeepEqual(r.Tags, other.Tags) && r.Data.equal(other.Data)
 }
 
 func checkViewName(name string) error {

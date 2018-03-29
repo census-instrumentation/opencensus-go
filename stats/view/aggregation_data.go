@@ -17,115 +17,70 @@ package view
 
 import (
 	"math"
+
+	"go.opencensus.io/stats/viewexporter"
 )
 
-// AggregationData represents an aggregated value from a collection.
-// They are reported on the view data during exporting.
-// Mosts users won't directly access aggregration data.
-type AggregationData interface {
-	isAggregationData() bool
+// aggregator receives data points and aggregates them in place.
+type aggregator interface {
 	addSample(v float64)
-	clone() AggregationData
-	equal(other AggregationData) bool
+	exportTo(d *viewexporter.AggregationData)
 }
 
-const epsilon = 1e-9
+// TODO(ramonza): remove all the aggregator types and replace with just a
+// func(*viewexporter.AggregationData) that updates its argument in-place.
 
-// CountData is the aggregated data for the Count aggregation.
-// A count aggregation processes data and counts the recordings.
-//
-// Most users won't directly access count data.
-type CountData int64
+type countData int64
 
-func newCountData(v int64) *CountData {
-	tmp := CountData(v)
+func newCountData(v int64) *countData {
+	tmp := countData(v)
 	return &tmp
 }
 
-func (a *CountData) isAggregationData() bool { return true }
-
-func (a *CountData) addSample(v float64) {
+func (a *countData) addSample(_ float64) {
 	*a = *a + 1
 }
 
-func (a *CountData) clone() AggregationData {
-	return newCountData(int64(*a))
+func (a *countData) exportTo(ad *viewexporter.AggregationData) {
+	ad.Count = int64(*a)
 }
 
-func (a *CountData) equal(other AggregationData) bool {
-	a2, ok := other.(*CountData)
-	if !ok {
-		return false
-	}
+type sumData float64
 
-	return int64(*a) == int64(*a2)
-}
-
-// SumData is the aggregated data for the Sum aggregation.
-// A sum aggregation processes data and sums up the recordings.
-//
-// Most users won't directly access sum data.
-type SumData float64
-
-func newSumData(v float64) *SumData {
-	tmp := SumData(v)
+func newSumData(v float64) *sumData {
+	tmp := sumData(v)
 	return &tmp
 }
 
-func (a *SumData) isAggregationData() bool { return true }
-
-func (a *SumData) addSample(f float64) {
-	*a += SumData(f)
+func (a *sumData) addSample(f float64) {
+	*a += sumData(f)
 }
 
-func (a *SumData) clone() AggregationData {
-	return newSumData(float64(*a))
+func (a *sumData) exportTo(ad *viewexporter.AggregationData) {
+	ad.Mean = float64(*a)
+	ad.Count = 1
 }
 
-func (a *SumData) equal(other AggregationData) bool {
-	a2, ok := other.(*SumData)
-	if !ok {
-		return false
-	}
-	return math.Pow(float64(*a)-float64(*a2), 2) < epsilon
-}
-
-// DistributionData is the aggregated data for the
-// Distribution aggregation.
-//
-// Most users won't directly access distribution data.
-type DistributionData struct {
+type distributionData struct {
 	Count           int64     // number of data points aggregated
 	Min             float64   // minimum value in the distribution
 	Max             float64   // max value in the distribution
 	Mean            float64   // mean of the distribution
 	SumOfSquaredDev float64   // sum of the squared deviation from the mean
 	CountPerBucket  []int64   // number of occurrences per bucket
-	bounds          []float64 // histogram distribution of the values
+	Bounds          []float64 // histogram distribution of the values
 }
 
-func newDistributionData(bounds []float64) *DistributionData {
-	return &DistributionData{
+func newDistributionData(bounds []float64) *distributionData {
+	return &distributionData{
 		CountPerBucket: make([]int64, len(bounds)+1),
-		bounds:         bounds,
+		Bounds:         bounds,
 		Min:            math.MaxFloat64,
 		Max:            math.SmallestNonzeroFloat64,
 	}
 }
 
-// Sum returns the sum of all samples collected.
-func (a *DistributionData) Sum() float64 { return a.Mean * float64(a.Count) }
-
-func (a *DistributionData) variance() float64 {
-	if a.Count <= 1 {
-		return 0
-	}
-	return a.SumOfSquaredDev / float64(a.Count-1)
-}
-
-func (a *DistributionData) isAggregationData() bool { return true }
-
-func (a *DistributionData) addSample(f float64) {
+func (a *distributionData) addSample(f float64) {
 	if f < a.Min {
 		a.Min = f
 	}
@@ -145,46 +100,25 @@ func (a *DistributionData) addSample(f float64) {
 	a.SumOfSquaredDev = a.SumOfSquaredDev + (f-oldMean)*(f-a.Mean)
 }
 
-func (a *DistributionData) incrementBucketCount(f float64) {
-	if len(a.bounds) == 0 {
+func (a *distributionData) incrementBucketCount(f float64) {
+	if len(a.Bounds) == 0 {
 		a.CountPerBucket[0]++
 		return
 	}
 
-	for i, b := range a.bounds {
+	for i, b := range a.Bounds {
 		if f < b {
 			a.CountPerBucket[i]++
 			return
 		}
 	}
-	a.CountPerBucket[len(a.bounds)]++
+	a.CountPerBucket[len(a.Bounds)]++
 }
 
-func (a *DistributionData) clone() AggregationData {
-	counts := make([]int64, len(a.CountPerBucket))
-	copy(counts, a.CountPerBucket)
-	c := *a
-	c.CountPerBucket = counts
-	return &c
-}
-
-func (a *DistributionData) equal(other AggregationData) bool {
-	a2, ok := other.(*DistributionData)
-	if !ok {
-		return false
-	}
-	if a2 == nil {
-		return false
-	}
-	if len(a.CountPerBucket) != len(a2.CountPerBucket) {
-		return false
-	}
-	for i := range a.CountPerBucket {
-		if a.CountPerBucket[i] != a2.CountPerBucket[i] {
-			return false
-		}
-	}
-	return a.Count == a2.Count && a.Min == a2.Min && a.Max == a2.Max && math.Pow(a.Mean-a2.Mean, 2) < epsilon && math.Pow(a.variance()-a2.variance(), 2) < epsilon
+func (a *distributionData) exportTo(ad *viewexporter.AggregationData) {
+	*ad = viewexporter.AggregationData(*a)
+	ad.CountPerBucket = make([]int64, len(a.CountPerBucket))
+	copy(ad.CountPerBucket, a.CountPerBucket)
 }
 
 // LastValueData returns the last value recorded for LastValue aggregation.
@@ -200,14 +134,6 @@ func (l *LastValueData) addSample(v float64) {
 	l.Value = v
 }
 
-func (l *LastValueData) clone() AggregationData {
-	return &LastValueData{l.Value}
-}
-
-func (l *LastValueData) equal(other AggregationData) bool {
-	a2, ok := other.(*LastValueData)
-	if !ok {
-		return false
-	}
-	return l.Value == a2.Value
+func (l *LastValueData) exportTo(ad *viewexporter.AggregationData) {
+	ad.Mean = l.Value
 }

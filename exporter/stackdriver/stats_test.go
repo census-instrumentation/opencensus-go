@@ -24,6 +24,7 @@ import (
 	"github.com/golang/protobuf/ptypes/timestamp"
 	"go.opencensus.io/stats"
 	"go.opencensus.io/stats/view"
+	"go.opencensus.io/stats/viewexporter"
 	"go.opencensus.io/tag"
 	"google.golang.org/api/option"
 	"google.golang.org/genproto/googleapis/api/label"
@@ -77,12 +78,19 @@ func TestExporter_makeReq(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	v := &view.View{
+	countView := &view.View{
 		Name:        "testview",
 		Description: "desc",
 		TagKeys:     []tag.Key{key},
 		Measure:     m,
 		Aggregation: view.Count(),
+	}
+	sumView := &view.View{
+		Name:        "testview",
+		Description: "desc",
+		TagKeys:     []tag.Key{key},
+		Measure:     m,
+		Aggregation: view.Sum(),
 	}
 	distView := &view.View{
 		Name:        "distview",
@@ -93,22 +101,22 @@ func TestExporter_makeReq(t *testing.T) {
 
 	start := time.Now()
 	end := start.Add(time.Minute)
-	count1 := view.CountData(10)
-	count2 := view.CountData(16)
-	sum1 := view.SumData(5.5)
-	sum2 := view.SumData(-11.1)
+	count1 := viewexporter.AggregationData{Count: 10}
+	count2 := viewexporter.AggregationData{Count: 16}
+	sum1 := viewexporter.AggregationData{Mean: 5.5, Count: 1}
+	sum2 := viewexporter.AggregationData{Mean: -11.1, Count: 1}
 	taskValue := getTaskValue()
 
 	tests := []struct {
 		name   string
 		projID string
-		vd     *view.Data
+		vd     *viewexporter.ViewData
 		want   []*monitoringpb.CreateTimeSeriesRequest
 	}{
 		{
 			name:   "count agg + timeline",
 			projID: "proj-id",
-			vd:     newTestViewData(v, start, end, &count1, &count2),
+			vd:     newTestViewData(countView, start, end, count1, count2, viewexporter.Aggregation{Type: viewexporter.AggTypeCount}),
 			want: []*monitoringpb.CreateTimeSeriesRequest{{
 				Name: monitoring.MetricProjectPath("proj-id"),
 				TimeSeries: []*monitoringpb.TimeSeries{
@@ -176,7 +184,7 @@ func TestExporter_makeReq(t *testing.T) {
 		{
 			name:   "sum agg + timeline",
 			projID: "proj-id",
-			vd:     newTestViewData(v, start, end, &sum1, &sum2),
+			vd:     newTestViewData(sumView, start, end, sum1, sum2, viewexporter.Aggregation{Type: viewexporter.AggTypeSum}),
 			want: []*monitoringpb.CreateTimeSeriesRequest{{
 				Name: monitoring.MetricProjectPath("proj-id"),
 				TimeSeries: []*monitoringpb.TimeSeries{
@@ -254,7 +262,7 @@ func TestExporter_makeReq(t *testing.T) {
 				o:         Options{ProjectID: tt.projID},
 				taskValue: taskValue,
 			}
-			resps := e.makeReq([]*view.Data{tt.vd}, maxTimeSeriesPerUpload)
+			resps := e.makeReq([]*viewexporter.ViewData{tt.vd}, maxTimeSeriesPerUpload)
 			if tt.want == nil {
 				t.Skip("Missing expectation")
 			}
@@ -317,13 +325,13 @@ func TestExporter_makeReq_batching(t *testing.T) {
 		},
 	}
 
-	count1 := view.CountData(10)
-	count2 := view.CountData(16)
+	count1 := viewexporter.AggregationData{Count: 10}
+	count2 := viewexporter.AggregationData{Count: 16}
 
 	for _, tt := range tests {
-		var vds []*view.Data
+		var vds []*viewexporter.ViewData
 		for i := 0; i < tt.iter; i++ {
-			vds = append(vds, newTestViewData(v, time.Now(), time.Now(), &count1, &count2))
+			vds = append(vds, newTestViewData(v, time.Now(), time.Now(), count1, count2, viewexporter.Aggregation{Type: viewexporter.AggTypeCount}))
 		}
 
 		e := &statsExporter{}
@@ -348,7 +356,7 @@ func TestEqualAggWindowTagKeys(t *testing.T) {
 	tests := []struct {
 		name    string
 		md      *metricpb.MetricDescriptor
-		agg     *view.Aggregation
+		agg     viewexporter.AggType
 		keys    []tag.Key
 		wantErr bool
 	}{
@@ -359,7 +367,7 @@ func TestEqualAggWindowTagKeys(t *testing.T) {
 				ValueType:  metricpb.MetricDescriptor_INT64,
 				Labels:     []*label.LabelDescriptor{{Key: opencensusTaskKey}},
 			},
-			agg:     view.Count(),
+			agg:     viewexporter.AggTypeCount,
 			wantErr: false,
 		},
 		{
@@ -369,7 +377,7 @@ func TestEqualAggWindowTagKeys(t *testing.T) {
 				ValueType:  metricpb.MetricDescriptor_DOUBLE,
 				Labels:     []*label.LabelDescriptor{{Key: opencensusTaskKey}},
 			},
-			agg:     view.Sum(),
+			agg:     viewexporter.AggTypeSum,
 			wantErr: false,
 		},
 		{
@@ -379,7 +387,7 @@ func TestEqualAggWindowTagKeys(t *testing.T) {
 				ValueType:  metricpb.MetricDescriptor_DISTRIBUTION,
 				Labels:     []*label.LabelDescriptor{{Key: opencensusTaskKey}},
 			},
-			agg:     view.Count(),
+			agg:     viewexporter.AggTypeCount,
 			wantErr: true,
 		},
 		{
@@ -393,7 +401,7 @@ func TestEqualAggWindowTagKeys(t *testing.T) {
 					{Key: opencensusTaskKey},
 				},
 			},
-			agg:     view.Distribution(),
+			agg:     viewexporter.AggTypeDistribution,
 			keys:    []tag.Key{key1, key2},
 			wantErr: false,
 		},
@@ -403,7 +411,7 @@ func TestEqualAggWindowTagKeys(t *testing.T) {
 				MetricKind: metricpb.MetricDescriptor_CUMULATIVE,
 				ValueType:  metricpb.MetricDescriptor_DISTRIBUTION,
 			},
-			agg:     view.Distribution(),
+			agg:     viewexporter.AggTypeDistribution,
 			keys:    []tag.Key{key1, key2},
 			wantErr: true,
 		},
@@ -414,7 +422,7 @@ func TestEqualAggWindowTagKeys(t *testing.T) {
 				ValueType:  metricpb.MetricDescriptor_INT64,
 				Labels:     []*label.LabelDescriptor{{Key: opencensusTaskKey}},
 			},
-			agg:     view.Count(),
+			agg:     viewexporter.AggTypeCount,
 			wantErr: false,
 		},
 	}
@@ -450,8 +458,8 @@ func TestExporter_createMeasure(t *testing.T) {
 		Aggregation: view.Sum(),
 	}
 
-	data := view.CountData(0)
-	vd := newTestViewData(v, time.Now(), time.Now(), &data, &data)
+	data := viewexporter.AggregationData{Count: 0}
+	vd := newTestViewData(v, time.Now(), time.Now(), data, data, viewexporter.Aggregation{Type: viewexporter.AggTypeSum})
 
 	e := &statsExporter{
 		createdViews: make(map[string]*metricpb.MetricDescriptor),
@@ -489,7 +497,7 @@ func TestExporter_createMeasure(t *testing.T) {
 			Type:        "custom.googleapis.com/opencensus/test_view_sum",
 			MetricKind:  metricpb.MetricDescriptor_CUMULATIVE,
 			ValueType:   metricpb.MetricDescriptor_DOUBLE,
-			Labels:      newLabelDescriptors(vd.View.TagKeys),
+			Labels:      newLabelDescriptors(vd.TagKeys),
 		}, nil
 	}
 
@@ -526,8 +534,8 @@ func TestExporter_createMeasure_CountAggregation(t *testing.T) {
 		Aggregation: view.Count(),
 	}
 
-	data := view.CountData(0)
-	vd := newTestViewData(v, time.Now(), time.Now(), &data, &data)
+	data := viewexporter.AggregationData{Count: 0}
+	vd := newTestViewData(v, time.Now(), time.Now(), data, data, viewexporter.Aggregation{Type: viewexporter.AggTypeCount})
 
 	e := &statsExporter{
 		createdViews: make(map[string]*metricpb.MetricDescriptor),
@@ -563,7 +571,7 @@ func TestExporter_createMeasure_CountAggregation(t *testing.T) {
 			Type:        "custom.googleapis.com/opencensus/test_view_count",
 			MetricKind:  metricpb.MetricDescriptor_CUMULATIVE,
 			ValueType:   metricpb.MetricDescriptor_INT64,
-			Labels:      newLabelDescriptors(vd.View.TagKeys),
+			Labels:      newLabelDescriptors(vd.TagKeys),
 		}, nil
 	}
 	ctx := context.Background()
@@ -594,8 +602,8 @@ func TestExporter_makeReq_withCustomMonitoredResource(t *testing.T) {
 
 	start := time.Now()
 	end := start.Add(time.Minute)
-	count1 := view.CountData(10)
-	count2 := view.CountData(16)
+	count1 := viewexporter.AggregationData{Count: 10}
+	count2 := viewexporter.AggregationData{Count: 16}
 	taskValue := getTaskValue()
 
 	resource := &monitoredrespb.MonitoredResource{
@@ -606,13 +614,13 @@ func TestExporter_makeReq_withCustomMonitoredResource(t *testing.T) {
 	tests := []struct {
 		name   string
 		projID string
-		vd     *view.Data
+		vd     *viewexporter.ViewData
 		want   []*monitoringpb.CreateTimeSeriesRequest
 	}{
 		{
 			name:   "count agg timeline",
 			projID: "proj-id",
-			vd:     newTestViewData(v, start, end, &count1, &count2),
+			vd:     newTestViewData(v, start, end, count1, count2, viewexporter.Aggregation{Type: viewexporter.AggTypeCount}),
 			want: []*monitoringpb.CreateTimeSeriesRequest{{
 				Name: monitoring.MetricProjectPath("proj-id"),
 				TimeSeries: []*monitoringpb.TimeSeries{
@@ -680,7 +688,7 @@ func TestExporter_makeReq_withCustomMonitoredResource(t *testing.T) {
 				o:         Options{ProjectID: tt.projID, Resource: resource},
 				taskValue: taskValue,
 			}
-			resps := e.makeReq([]*view.Data{tt.vd}, maxTimeSeriesPerUpload)
+			resps := e.makeReq([]*viewexporter.ViewData{tt.vd}, maxTimeSeriesPerUpload)
 			if got, want := len(resps), len(tt.want); got != want {
 				t.Fatalf("%v: Exporter.makeReq() returned %d responses; want %d", tt.name, got, want)
 			}
@@ -694,13 +702,34 @@ func TestExporter_makeReq_withCustomMonitoredResource(t *testing.T) {
 	}
 }
 
-func newTestViewData(v *view.View, start, end time.Time, data1, data2 view.AggregationData) *view.Data {
+func TestNewTypedValue_NoMeasureFloat(t *testing.T) {
+	got := newTypedValue(&viewexporter.ViewData{Aggregation: viewexporter.Aggregation{Type: viewexporter.AggTypeSum}, MeasureFloat: false}, &viewexporter.Row{})
+	_, ok := got.Value.(*monitoringpb.TypedValue_Int64Value)
+	if !ok {
+		t.Errorf("got %#v; want *monitoringpb.TypedValue_Int64Value", got.Value)
+	}
+}
+
+func TestNewTypedValue_MeasureFloat(t *testing.T) {
+	got := newTypedValue(&viewexporter.ViewData{Aggregation: viewexporter.Aggregation{Type: viewexporter.AggTypeSum}, MeasureFloat: true}, &viewexporter.Row{})
+	_, ok := got.Value.(*monitoringpb.TypedValue_DoubleValue)
+	if !ok {
+		t.Errorf("got %#v; want *monitoringpb.TypedValue_DoubleValue", got.Value)
+	}
+}
+
+func newTestViewData(v *view.View, start, end time.Time, data1, data2 viewexporter.AggregationData, agg viewexporter.Aggregation) *viewexporter.ViewData {
 	key, _ := tag.NewKey("test-key")
 	tag1 := tag.Tag{Key: key, Value: "test-value-1"}
 	tag2 := tag.Tag{Key: key, Value: "test-value-2"}
-	return &view.Data{
-		View: v,
-		Rows: []*view.Row{
+	return &viewexporter.ViewData{
+		Name:         v.Name,
+		Description:  v.Description,
+		Unit:         agg.Type.AggregatedUnit(v.Measure.Unit()),
+		MeasureFloat: true,
+		TagKeys:      v.TagKeys,
+		Aggregation:  agg,
+		Rows: []*viewexporter.Row{
 			{
 				Tags: []tag.Tag{tag1},
 				Data: data1,
@@ -715,11 +744,10 @@ func newTestViewData(v *view.View, start, end time.Time, data1, data2 view.Aggre
 	}
 }
 
-func newTestDistViewData(v *view.View, start, end time.Time) *view.Data {
-	return &view.Data{
-		View: v,
-		Rows: []*view.Row{
-			{Data: &view.DistributionData{
+func newTestDistViewData(v *view.View, start, end time.Time) *viewexporter.ViewData {
+	return &viewexporter.ViewData{
+		Rows: []*viewexporter.Row{
+			{Data: viewexporter.AggregationData{
 				Count:           5,
 				Min:             1,
 				Max:             7,
