@@ -186,3 +186,28 @@ func (a *DistributionData) equal(other AggregationData) bool {
 	}
 	return a.Count == a2.Count && a.Min == a2.Min && a.Max == a2.Max && math.Pow(a.Mean-a2.Mean, 2) < epsilon && math.Pow(a.variance()-a2.variance(), 2) < epsilon
 }
+
+// LastValueData returns the last value recorded for LastValue aggregation.
+type LastValueData struct {
+	Value float64
+}
+
+func (l *LastValueData) isAggregationData() bool {
+	return true
+}
+
+func (l *LastValueData) addSample(v float64) {
+	l.Value = v
+}
+
+func (l *LastValueData) clone() AggregationData {
+	return &LastValueData{l.Value}
+}
+
+func (l *LastValueData) equal(other AggregationData) bool {
+	a2, ok := other.(*LastValueData)
+	if !ok {
+		return false
+	}
+	return l.Value == a2.Value
+}
