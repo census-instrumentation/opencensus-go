@@ -1,10 +1,12 @@
 package ochttp
 
 import (
+	"bufio"
 	"bytes"
 	"crypto/tls"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -123,8 +125,48 @@ func TestHandlerStatsCollection(t *testing.T) {
 	}
 }
 
-// Test to ensure that our Handler proxies to its response the
-// call to (http.Hijack).Hijacker() and that that successfully
+type testResponseWriterHijacker struct {
+	httptest.ResponseRecorder
+}
+
+func (trw *testResponseWriterHijacker) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	return nil, nil, nil
+}
+
+func TestUnitTestHandlerProxiesHijack(t *testing.T) {
+	tests := []struct {
+		w       http.ResponseWriter
+		wantErr string
+	}{
+		{httptest.NewRecorder(), "ResponseWriter does not implement http.Hijacker"},
+		{nil, "ResponseWriter does not implement http.Hijacker"},
+		{new(testResponseWriterHijacker), ""},
+	}
+
+	for i, tt := range tests {
+		tw := &trackingResponseWriter{writer: tt.w}
+		conn, buf, err := tw.Hijack()
+		if tt.wantErr != "" {
+			if err == nil || !strings.Contains(err.Error(), tt.wantErr) {
+				t.Errorf("#%d got error (%v) want error substring (%q)", i, err, tt.wantErr)
+			}
+			if conn != nil {
+				t.Errorf("#%d inconsistent state got non-nil conn (%v)", i, conn)
+			}
+			if buf != nil {
+				t.Errorf("#%d inconsistent state got non-nil buf (%v)", i, buf)
+			}
+			continue
+		}
+
+		if err != nil {
+			t.Errorf("#%d got unexpected error %v", i, err)
+		}
+	}
+}
+
+// Integration test with net/http to ensure that our Handler proxies to its
+// response the call to (http.Hijack).Hijacker() and that that successfully
 // passes with HTTP/1.1 connections. See Issue #642
 func TestHandlerProxiesHijack_HTTP1(t *testing.T) {
 	cst := httptest.NewServer(&Handler{
@@ -180,33 +222,33 @@ func TestHandlerProxiesHijack_HTTP1(t *testing.T) {
 	}
 }
 
-// Test to ensure that our Handler proxies to its response the
-// call to (http.Hijack).Hijacker() and that that crashes since http.Hijacker
-// and HTTP/2.0 connections are incompatible, but the detection is only at runtime.
-// and ensure that we can stream and flush to the connection. See Issue #642
+// Integration test with net/http, x/net/http2 to ensure that our Handler proxies
+// to its response the call to (http.Hijack).Hijacker() and that that crashes
+// since http.Hijacker and HTTP/2.0 connections are incompatible, but the
+// detection is only at runtime and ensure that we can stream and flush to the
+// connection even after invoking Hijack(). See Issue #642.
 func TestHandlerProxiesHijack_HTTP2(t *testing.T) {
 	cst := httptest.NewUnstartedServer(&Handler{
 		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			defer func() {
-				err := recover()
-				switch {
-				case err == nil:
-				default:
-					// Unhandled error
-				case strings.Contains(err.(error).Error(), "Hijack"):
-					// Confirmed HTTP/2.0, let's stream to it
-					for i := 0; i < 5; i++ {
-						fmt.Fprintf(w, "%d\n", i)
-						w.(http.Flusher).Flush()
-					}
-				}
-			}()
-			conn, _, _ := w.(http.Hijacker).Hijack()
+			conn, _, err := w.(http.Hijacker).Hijack()
 			if conn != nil {
 				data := fmt.Sprintf("Surprisingly got the Hijacker() Proto: %s", r.Proto)
 				fmt.Fprintf(conn, "%s 200\nContent-Length:%d\r\n\r\n%s", r.Proto, len(data), data)
 				conn.Close()
 				return
+			}
+
+			switch {
+			case err == nil:
+				fmt.Fprintf(w, "Unexpectedly did not encounter an error!")
+			default:
+				fmt.Fprintf(w, "Unexpected error: %v", err)
+			case strings.Contains(err.(error).Error(), "Hijack"):
+				// Confirmed HTTP/2.0, let's stream to it
+				for i := 0; i < 5; i++ {
+					fmt.Fprintf(w, "%d\n", i)
+					w.(http.Flusher).Flush()
+				}
 			}
 		}),
 	})
