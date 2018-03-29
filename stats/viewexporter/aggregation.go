@@ -22,13 +22,26 @@ import "go.opencensus.io/stats"
 // AggType represents the type of aggregation function used on a View.
 type AggType int
 
-// Types of aggregation supported in views.
+// All available aggregation types.
 const (
 	AggTypeNone         AggType = iota // no aggregation; reserved for future use.
 	AggTypeCount                       // the count aggregation, see Count.
 	AggTypeSum                         // the sum aggregation, see Sum.
 	AggTypeDistribution                // the distribution aggregation, see Distribution.
+	AggTypeLastValue                   // the last value aggregation, see LastValue.
 )
+
+func (t AggType) String() string {
+	return aggTypeName[t]
+}
+
+var aggTypeName = map[AggType]string{
+	AggTypeNone:         "None",
+	AggTypeCount:        "Count",
+	AggTypeSum:          "Sum",
+	AggTypeDistribution: "Distribution",
+	AggTypeLastValue:    "LastValue",
+}
 
 // Aggregation represents a data aggregation method. Use one of the functions:
 // Count, Sum, Mean, or Distribution to construct an Aggregation.

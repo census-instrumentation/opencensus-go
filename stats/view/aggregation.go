@@ -39,6 +39,12 @@ var (
 			return newSumData(0)
 		},
 	}
+	aggLastValue = &Aggregation{
+		agg: viewexporter.Aggregation{Type: viewexporter.AggTypeLastValue},
+		newAggregator: func() aggregator {
+			return &LastValueData{}
+		},
+	}
 )
 
 // Count indicates that data collected and aggregated
@@ -86,4 +92,10 @@ func Distribution(bounds ...float64) *Aggregation {
 			return newDistributionData(bounds)
 		},
 	}
+}
+
+// LastValue only reports the last value recorded using this
+// aggregation. All other measurements will be dropped.
+func LastValue() *Aggregation {
+	return aggLastValue
 }

@@ -41,8 +41,8 @@ func (a *countData) addSample(_ float64) {
 	*a = *a + 1
 }
 
-func (a *countData) exportTo(dd *viewexporter.AggregationData) {
-	dd.Count = int64(*a)
+func (a *countData) exportTo(ad *viewexporter.AggregationData) {
+	ad.Count = int64(*a)
 }
 
 type sumData float64
@@ -56,9 +56,9 @@ func (a *sumData) addSample(f float64) {
 	*a += sumData(f)
 }
 
-func (a *sumData) exportTo(dd *viewexporter.AggregationData) {
-	dd.Mean = float64(*a)
-	dd.Count = 1
+func (a *sumData) exportTo(ad *viewexporter.AggregationData) {
+	ad.Mean = float64(*a)
+	ad.Count = 1
 }
 
 type distributionData struct {
@@ -115,8 +115,25 @@ func (a *distributionData) incrementBucketCount(f float64) {
 	a.CountPerBucket[len(a.Bounds)]++
 }
 
-func (a *distributionData) exportTo(dd *viewexporter.AggregationData) {
-	*dd = viewexporter.AggregationData(*a)
-	dd.CountPerBucket = make([]int64, len(a.CountPerBucket))
-	copy(dd.CountPerBucket, a.CountPerBucket)
+func (a *distributionData) exportTo(ad *viewexporter.AggregationData) {
+	*ad = viewexporter.AggregationData(*a)
+	ad.CountPerBucket = make([]int64, len(a.CountPerBucket))
+	copy(ad.CountPerBucket, a.CountPerBucket)
+}
+
+// LastValueData returns the last value recorded for LastValue aggregation.
+type LastValueData struct {
+	Value float64
+}
+
+func (l *LastValueData) isAggregationData() bool {
+	return true
+}
+
+func (l *LastValueData) addSample(v float64) {
+	l.Value = v
+}
+
+func (l *LastValueData) exportTo(ad *viewexporter.AggregationData) {
+	ad.Mean = l.Value
 }

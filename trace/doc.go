@@ -28,10 +28,10 @@ one of the provided exporters or write your own.
     trace.RegisterExporter(anExporter)
 
 By default, traces will be sampled relatively rarely. To change the sampling
-frequency for your entire program, call SetDefaultSampler. Use a ProbabilitySampler
+frequency for your entire program, call ApplyConfig. Use a ProbabilitySampler
 to sample a subset of traces, or use AlwaysSample to collect a trace on every run:
 
-    trace.SetDefaultSampler(trace.AlwaysSample())
+    trace.ApplyConfig(trace.Config{DefaultSampler: trace.AlwaysSample()})
 
 
 Adding Spans to a Trace

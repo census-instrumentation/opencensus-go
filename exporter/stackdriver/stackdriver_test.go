@@ -47,7 +47,7 @@ func TestExport(t *testing.T) {
 	viewexporter.Register(e)
 	defer viewexporter.Unregister(e)
 
-	trace.SetDefaultSampler(trace.AlwaysSample())
+	trace.ApplyConfig(trace.Config{DefaultSampler: trace.AlwaysSample()})
 
 	span := trace.NewSpan("custom-span", nil, trace.StartOptions{})
 	time.Sleep(10 * time.Millisecond)
@@ -100,7 +100,7 @@ func TestGRPC(t *testing.T) {
 	viewexporter.Register(e)
 	defer viewexporter.Unregister(e)
 
-	trace.SetDefaultSampler(trace.AlwaysSample())
+	trace.ApplyConfig(trace.Config{DefaultSampler: trace.AlwaysSample()})
 
 	client, done := testpb.NewTestClient(t)
 	defer done()
