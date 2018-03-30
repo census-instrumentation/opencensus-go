@@ -95,6 +95,7 @@ func (t *tracker) end() {
 		m := []stats.Measurement{
 			ClientLatency.M(float64(time.Since(t.start)) / float64(time.Millisecond)),
 			ClientResponseBytes.M(t.respSize),
+			ClientResponseStatusCode.M(int64(t.statusCode)),
 		}
 		if t.reqSize >= 0 {
 			m = append(m, ClientRequestBytes.M(t.reqSize))

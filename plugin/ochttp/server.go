@@ -149,6 +149,7 @@ func (t *trackingResponseWriter) end() {
 		m := []stats.Measurement{
 			ServerLatency.M(float64(time.Since(t.start)) / float64(time.Millisecond)),
 			ServerResponseBytes.M(t.respSize),
+			ServerResponseStatusCode.M(int64(t.statusCode)),
 		}
 		if t.reqSize >= 0 {
 			m = append(m, ServerRequestBytes.M(t.reqSize))
