@@ -239,6 +239,8 @@ func (c *collector) toMetric(desc *prometheus.Desc, v *view.View, row *view.Row)
 		return prometheus.NewConstHistogram(desc, uint64(data.Count), data.Sum(), points, tagValues(row.Tags)...)
 	case *view.SumData:
 		return prometheus.NewConstMetric(desc, prometheus.UntypedValue, float64(*data), tagValues(row.Tags)...)
+	case *view.LastValueData:
+		return prometheus.NewConstMetric(desc, prometheus.UntypedValue, data.Value, tagValues(row.Tags)...)
 	default:
 		return nil, fmt.Errorf("aggregation %T is not yet supported", v.Aggregation)
 	}

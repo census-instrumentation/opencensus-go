@@ -97,6 +97,8 @@ func TestExporter_makeReq(t *testing.T) {
 	count2 := view.CountData(16)
 	sum1 := view.SumData(5.5)
 	sum2 := view.SumData(-11.1)
+	last1 := view.LastValueData{Value: 100}
+	last2 := view.LastValueData{Value: 200}
 	taskValue := getTaskValue()
 
 	tests := []struct {
@@ -234,6 +236,74 @@ func TestExporter_makeReq(t *testing.T) {
 								},
 								Value: &monitoringpb.TypedValue{Value: &monitoringpb.TypedValue_DoubleValue{
 									DoubleValue: -11.1,
+								}},
+							},
+						},
+					},
+				},
+			}},
+		},
+		{
+			name:   "last value agg",
+			projID: "proj-id",
+			vd:     newTestViewData(v, start, end, &last1, &last2),
+			want: []*monitoringpb.CreateTimeSeriesRequest{{
+				Name: monitoring.MetricProjectPath("proj-id"),
+				TimeSeries: []*monitoringpb.TimeSeries{
+					{
+						Metric: &metricpb.Metric{
+							Type: "custom.googleapis.com/opencensus/testview",
+							Labels: map[string]string{
+								"test_key":        "test-value-1",
+								opencensusTaskKey: taskValue,
+							},
+						},
+						Resource: &monitoredrespb.MonitoredResource{
+							Type: "global",
+						},
+						Points: []*monitoringpb.Point{
+							{
+								Interval: &monitoringpb.TimeInterval{
+									StartTime: &timestamp.Timestamp{
+										Seconds: start.Unix(),
+										Nanos:   int32(start.Nanosecond()),
+									},
+									EndTime: &timestamp.Timestamp{
+										Seconds: end.Unix(),
+										Nanos:   int32(end.Nanosecond()),
+									},
+								},
+								Value: &monitoringpb.TypedValue{Value: &monitoringpb.TypedValue_DoubleValue{
+									DoubleValue: 100,
+								}},
+							},
+						},
+					},
+					{
+						Metric: &metricpb.Metric{
+							Type: "custom.googleapis.com/opencensus/testview",
+							Labels: map[string]string{
+								"test_key":        "test-value-2",
+								opencensusTaskKey: taskValue,
+							},
+						},
+						Resource: &monitoredrespb.MonitoredResource{
+							Type: "global",
+						},
+						Points: []*monitoringpb.Point{
+							{
+								Interval: &monitoringpb.TimeInterval{
+									StartTime: &timestamp.Timestamp{
+										Seconds: start.Unix(),
+										Nanos:   int32(start.Nanosecond()),
+									},
+									EndTime: &timestamp.Timestamp{
+										Seconds: end.Unix(),
+										Nanos:   int32(end.Nanosecond()),
+									},
+								},
+								Value: &monitoringpb.TypedValue{Value: &monitoringpb.TypedValue_DoubleValue{
+									DoubleValue: 200,
 								}},
 							},
 						},

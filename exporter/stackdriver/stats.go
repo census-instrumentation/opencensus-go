@@ -263,6 +263,8 @@ func (e *statsExporter) createMeasure(ctx context.Context, vd *view.Data) error 
 		}
 	case view.AggTypeDistribution:
 		valueType = metricpb.MetricDescriptor_DISTRIBUTION
+	case view.AggTypeLastValue:
+		valueType = metricpb.MetricDescriptor_DOUBLE
 	default:
 		return fmt.Errorf("unsupported aggregation type: %s", agg.Type.String())
 	}
@@ -347,6 +349,10 @@ func newTypedValue(vd *view.View, r *view.Row) *monitoringpb.TypedValue {
 				},
 				BucketCounts: v.CountPerBucket,
 			},
+		}}
+	case *view.LastValueData:
+		return &monitoringpb.TypedValue{Value: &monitoringpb.TypedValue_DoubleValue{
+			DoubleValue: v.Value,
 		}}
 	}
 	return nil
