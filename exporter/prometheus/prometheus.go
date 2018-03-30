@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"sort"
 	"sync"
 
 	"go.opencensus.io/internal"
@@ -231,16 +232,40 @@ func (c *collector) toMetric(desc *prometheus.Desc, v *view.View, row *view.Row)
 	switch data := row.Data.(type) {
 	case *view.CountData:
 		return prometheus.NewConstMetric(desc, prometheus.CounterValue, float64(*data), tagValues(row.Tags)...)
+
 	case *view.DistributionData:
 		points := make(map[float64]uint64)
+		// Histograms are cumulative in Prometheus.
+		// 1. Sort buckets in ascending order but, retain
+		// their indices for reverse lookup later on.
+		// TODO: If there is a guarantee that distribution elements
+		// are always sorted, then skip the sorting.
+		indicesMap := make(map[float64]int)
+		buckets := make([]float64, 0, len(v.Aggregation.Buckets))
 		for i, b := range v.Aggregation.Buckets {
-			points[b] = uint64(data.CountPerBucket[i])
+			if _, ok := indicesMap[b]; !ok {
+				indicesMap[b] = i
+				buckets = append(buckets, b)
+			}
+		}
+		sort.Float64s(buckets)
+
+		// 2. Now that the buckets are sorted by magnitude
+		// we can create cumulative indicesmap them back by reverse index
+		cumCount := uint64(0)
+		for _, b := range buckets {
+			i := indicesMap[b]
+			cumCount += uint64(data.CountPerBucket[i])
+			points[b] = cumCount
 		}
 		return prometheus.NewConstHistogram(desc, uint64(data.Count), data.Sum(), points, tagValues(row.Tags)...)
+
 	case *view.SumData:
 		return prometheus.NewConstMetric(desc, prometheus.UntypedValue, float64(*data), tagValues(row.Tags)...)
+
 	case *view.LastValueData:
 		return prometheus.NewConstMetric(desc, prometheus.UntypedValue, data.Value, tagValues(row.Tags)...)
+
 	default:
 		return nil, fmt.Errorf("aggregation %T is not yet supported", v.Aggregation)
 	}

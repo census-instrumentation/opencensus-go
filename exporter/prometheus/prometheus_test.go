@@ -210,9 +210,11 @@ func TestMetricsEndpointOutput(t *testing.T) {
 		vc.createAndAppend(m.Name(), m.Description(), nil, m, view.Count())
 	}
 
-	if err := view.Subscribe(vc...); err != nil {
+	if err := view.Register(vc...); err != nil {
 		t.Fatalf("failed to create views: %v", err)
 	}
+	defer view.Unregister(vc...)
+
 	view.SetReportingPeriod(time.Millisecond)
 
 	for _, m := range measures {
@@ -260,5 +262,92 @@ func TestMetricsEndpointOutput(t *testing.T) {
 		if !strings.Contains(output, "opencensus_tests_"+name+" 1") {
 			t.Fatalf("measurement missing in output: %v", name)
 		}
+	}
+}
+
+func TestCumulativenessFromHistograms(t *testing.T) {
+	exporter, err := newExporter(Options{})
+	if err != nil {
+		t.Fatalf("failed to create prometheus exporter: %v", err)
+	}
+	view.RegisterExporter(exporter)
+	reportPeriod := time.Millisecond
+	view.SetReportingPeriod(reportPeriod)
+
+	m := stats.Float64("tests/bills", "payments by denomination", stats.UnitNone)
+	v := &view.View{
+		Name:        "cash/register",
+		Description: "this is a test",
+		Measure:     m,
+
+		// Intentionally used repeated elements in the ascending distribution.
+		// to ensure duplicate distribution items are handles.
+		Aggregation: view.Distribution(1, 5, 5, 5, 5, 10, 20, 50, 100, 250),
+	}
+
+	if err := view.Register(v); err != nil {
+		t.Fatalf("Register error: %v", err)
+	}
+	defer view.Unregister(v)
+
+	// Give the reporter ample time to process registration
+	<-time.After(2 * reportPeriod)
+
+	values := []float64{0.25, 245.67, 12, 1.45, 199.9, 7.69, 187.12}
+	// We want the results that look like this:
+	// 1:   [0.25]      		| 1 + prev(i) = 1 + 0 = 1
+	// 5:   [1.45]			| 1 + prev(i) = 1 + 1 = 2
+	// 10:	[]			| 1 + prev(i) = 1 + 2 = 3
+	// 20:  [12]			| 1 + prev(i) = 1 + 3 = 4
+	// 50:  []			| 0 + prev(i) = 0 + 4 = 4
+	// 100: []			| 0 + prev(i) = 0 + 4 = 4
+	// 250: [187.12, 199.9, 245.67]	| 3 + prev(i) = 3 + 4 = 7
+	wantLines := []string{
+		`opencensus_cash_register_bucket{le="1"} 1`,
+		`opencensus_cash_register_bucket{le="5"} 2`,
+		`opencensus_cash_register_bucket{le="10"} 3`,
+		`opencensus_cash_register_bucket{le="20"} 4`,
+		`opencensus_cash_register_bucket{le="50"} 4`,
+		`opencensus_cash_register_bucket{le="100"} 4`,
+		`opencensus_cash_register_bucket{le="250"} 7`,
+		`opencensus_cash_register_bucket{le="+Inf"} 7`,
+		`opencensus_cash_register_sum 654.0799999999999`, // Summation of the input values
+		`opencensus_cash_register_count 7`,
+	}
+
+	ctx := context.Background()
+	ms := make([]stats.Measurement, len(values))
+	for _, value := range values {
+		mx := m.M(value)
+		ms = append(ms, mx)
+	}
+	stats.Record(ctx, ms...)
+
+	// Give the recorder ample time to process recording
+	<-time.After(3 * reportPeriod)
+
+	cst := httptest.NewServer(exporter)
+	defer cst.Close()
+	res, err := http.Get(cst.URL)
+	if err != nil {
+		t.Fatalf("http.Get error: %v", err)
+	}
+	blob, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		t.Fatalf("Read body error: %v", err)
+	}
+	str := strings.Trim(string(blob), "\n")
+	lines := strings.Split(str, "\n")
+	nonComments := make([]string, 0, len(lines))
+	for _, line := range lines {
+		if !strings.Contains(line, "#") {
+			nonComments = append(nonComments, line)
+		}
+	}
+
+	got := strings.Join(nonComments, "\n")
+	want := strings.Join(wantLines, "\n")
+	if got != want {
+		t.Fatalf("\ngot:\n%s\n\nwant:\n%s\n", got, want)
 	}
 }
