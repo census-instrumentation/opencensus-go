@@ -392,9 +392,9 @@ func equalAggTagKeys(md *metricpb.MetricDescriptor, agg *view.Aggregation, keys 
 	var aggTypeMatch bool
 	switch md.ValueType {
 	case metricpb.MetricDescriptor_INT64:
-		aggTypeMatch = agg.Type == view.AggTypeCount
+		aggTypeMatch = agg.Type == view.AggTypeCount || agg.Type == view.AggTypeSum
 	case metricpb.MetricDescriptor_DOUBLE:
-		aggTypeMatch = agg.Type == view.AggTypeSum
+		aggTypeMatch = agg.Type == view.AggTypeSum || agg.Type == view.AggTypeLastValue
 	case metricpb.MetricDescriptor_DISTRIBUTION:
 		aggTypeMatch = agg.Type == view.AggTypeDistribution
 	}

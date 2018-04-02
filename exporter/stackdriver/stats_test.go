@@ -433,13 +433,33 @@ func TestEqualAggWindowTagKeys(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "sum agg",
+			name: "sum agg double",
 			md: &metricpb.MetricDescriptor{
 				MetricKind: metricpb.MetricDescriptor_CUMULATIVE,
 				ValueType:  metricpb.MetricDescriptor_DOUBLE,
 				Labels:     []*label.LabelDescriptor{{Key: opencensusTaskKey}},
 			},
 			agg:     view.Sum(),
+			wantErr: false,
+		},
+		{
+			name: "sum agg int64",
+			md: &metricpb.MetricDescriptor{
+				MetricKind: metricpb.MetricDescriptor_CUMULATIVE,
+				ValueType:  metricpb.MetricDescriptor_INT64,
+				Labels:     []*label.LabelDescriptor{{Key: opencensusTaskKey}},
+			},
+			agg:     view.Sum(),
+			wantErr: false,
+		},
+		{
+			name: "last value agg double",
+			md: &metricpb.MetricDescriptor{
+				MetricKind: metricpb.MetricDescriptor_CUMULATIVE,
+				ValueType:  metricpb.MetricDescriptor_DOUBLE,
+				Labels:     []*label.LabelDescriptor{{Key: opencensusTaskKey}},
+			},
+			agg:     view.LastValue(),
 			wantErr: false,
 		},
 		{
