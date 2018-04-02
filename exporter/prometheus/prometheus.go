@@ -34,10 +34,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
-const (
-	defaultNamespace = "opencensus"
-)
-
 // Exporter exports stats to Prometheus, users need
 // to register the exporter as an http.Handler to be
 // able to export.
@@ -72,9 +68,6 @@ func NewExporter(o Options) (*Exporter, error) {
 }
 
 func newExporter(o Options) (*Exporter, error) {
-	if o.Namespace == "" {
-		o.Namespace = defaultNamespace
-	}
 	if o.Registry == nil {
 		o.Registry = prometheus.NewRegistry()
 	}
@@ -304,7 +297,11 @@ func tagValues(t []tag.Tag) []string {
 }
 
 func viewName(namespace string, v *view.View) string {
-	return namespace + "_" + internal.Sanitize(v.Name)
+	var name string
+	if namespace != "" {
+		name = namespace + "_"
+	}
+	return name + internal.Sanitize(v.Name)
 }
 
 func viewSignature(namespace string, v *view.View) string {
