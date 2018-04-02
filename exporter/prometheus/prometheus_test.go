@@ -259,7 +259,7 @@ func TestMetricsEndpointOutput(t *testing.T) {
 	}
 
 	for _, name := range names {
-		if !strings.Contains(output, "opencensus_tests_"+name+" 1") {
+		if !strings.Contains(output, "tests_"+name+" 1") {
 			t.Fatalf("measurement missing in output: %v", name)
 		}
 	}
@@ -303,16 +303,16 @@ func TestCumulativenessFromHistograms(t *testing.T) {
 	// 100: []			| 0 + prev(i) = 0 + 4 = 4
 	// 250: [187.12, 199.9, 245.67]	| 3 + prev(i) = 3 + 4 = 7
 	wantLines := []string{
-		`opencensus_cash_register_bucket{le="1"} 1`,
-		`opencensus_cash_register_bucket{le="5"} 2`,
-		`opencensus_cash_register_bucket{le="10"} 3`,
-		`opencensus_cash_register_bucket{le="20"} 4`,
-		`opencensus_cash_register_bucket{le="50"} 4`,
-		`opencensus_cash_register_bucket{le="100"} 4`,
-		`opencensus_cash_register_bucket{le="250"} 7`,
-		`opencensus_cash_register_bucket{le="+Inf"} 7`,
-		`opencensus_cash_register_sum 654.0799999999999`, // Summation of the input values
-		`opencensus_cash_register_count 7`,
+		`cash_register_bucket{le="1"} 1`,
+		`cash_register_bucket{le="5"} 2`,
+		`cash_register_bucket{le="10"} 3`,
+		`cash_register_bucket{le="20"} 4`,
+		`cash_register_bucket{le="50"} 4`,
+		`cash_register_bucket{le="100"} 4`,
+		`cash_register_bucket{le="250"} 7`,
+		`cash_register_bucket{le="+Inf"} 7`,
+		`cash_register_sum 654.0799999999999`, // Summation of the input values
+		`cash_register_count 7`,
 	}
 
 	ctx := context.Background()
