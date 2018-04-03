@@ -52,13 +52,13 @@ var (
 	aggCount = &Aggregation{
 		Type: AggTypeCount,
 		newData: func() AggregationData {
-			return newCountData(0)
+			return &CountData{}
 		},
 	}
 	aggSum = &Aggregation{
 		Type: AggTypeSum,
 		newData: func() AggregationData {
-			return newSumData(0)
+			return &SumData{}
 		},
 	}
 )

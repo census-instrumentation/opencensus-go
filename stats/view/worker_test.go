@@ -164,7 +164,7 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 					[]*Row{
 						{
 							[]tag.Tag{{Key: k1, Value: "v1"}, {Key: k2, Value: "v2"}},
-							newCountData(2),
+							&CountData{Value: 2},
 						},
 					},
 					nil,
@@ -182,7 +182,7 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 					[]*Row{
 						{
 							[]tag.Tag{{Key: k1, Value: "v1"}, {Key: k2, Value: "v2"}},
-							newCountData(2),
+							&CountData{Value: 2},
 						},
 					},
 					nil,
@@ -192,7 +192,7 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 					[]*Row{
 						{
 							[]tag.Tag{{Key: k1, Value: "v1"}, {Key: k2, Value: "v2"}},
-							newCountData(2),
+							&CountData{Value: 2},
 						},
 					},
 					nil,
@@ -375,7 +375,7 @@ func (e *countExporter) ExportView(vd *Data) {
 
 	e.Lock()
 	defer e.Unlock()
-	e.count = int64(*d)
+	e.count = d.Value
 }
 
 type vdExporter struct {

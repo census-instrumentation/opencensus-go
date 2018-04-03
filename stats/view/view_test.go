@@ -226,7 +226,7 @@ func Test_View_MeasureFloat64_AggregationSum(t *testing.T) {
 			[]*Row{
 				{
 					[]tag.Tag{{Key: k1, Value: "v1"}},
-					newSumData(6),
+					&SumData{Value: 6},
 				},
 			},
 		},
@@ -239,11 +239,11 @@ func Test_View_MeasureFloat64_AggregationSum(t *testing.T) {
 			[]*Row{
 				{
 					[]tag.Tag{{Key: k1, Value: "v1"}},
-					newSumData(1),
+					&SumData{Value: 1},
 				},
 				{
 					[]tag.Tag{{Key: k2, Value: "v2"}},
-					newSumData(5),
+					&SumData{Value: 5},
 				},
 			},
 		},
@@ -259,19 +259,19 @@ func Test_View_MeasureFloat64_AggregationSum(t *testing.T) {
 			[]*Row{
 				{
 					[]tag.Tag{{Key: k1, Value: "v1"}},
-					newSumData(6),
+					&SumData{Value: 6},
 				},
 				{
 					[]tag.Tag{{Key: k1, Value: "v1 other"}},
-					newSumData(1),
+					&SumData{Value: 1},
 				},
 				{
 					[]tag.Tag{{Key: k2, Value: "v2"}},
-					newSumData(5),
+					&SumData{Value: 5},
 				},
 				{
 					[]tag.Tag{{Key: k1, Value: "v1"}, {Key: k2, Value: "v2"}},
-					newSumData(5),
+					&SumData{Value: 5},
 				},
 			},
 		},

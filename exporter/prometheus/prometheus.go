@@ -224,7 +224,7 @@ func (c *collector) Collect(ch chan<- prometheus.Metric) {
 func (c *collector) toMetric(desc *prometheus.Desc, v *view.View, row *view.Row) (prometheus.Metric, error) {
 	switch data := row.Data.(type) {
 	case *view.CountData:
-		return prometheus.NewConstMetric(desc, prometheus.CounterValue, float64(*data), tagValues(row.Tags)...)
+		return prometheus.NewConstMetric(desc, prometheus.CounterValue, float64(data.Value), tagValues(row.Tags)...)
 
 	case *view.DistributionData:
 		points := make(map[float64]uint64)
@@ -254,7 +254,7 @@ func (c *collector) toMetric(desc *prometheus.Desc, v *view.View, row *view.Row)
 		return prometheus.NewConstHistogram(desc, uint64(data.Count), data.Sum(), points, tagValues(row.Tags)...)
 
 	case *view.SumData:
-		return prometheus.NewConstMetric(desc, prometheus.UntypedValue, float64(*data), tagValues(row.Tags)...)
+		return prometheus.NewConstMetric(desc, prometheus.UntypedValue, data.Value, tagValues(row.Tags)...)
 
 	case *view.LastValueData:
 		return prometheus.NewConstMetric(desc, prometheus.UntypedValue, data.Value, tagValues(row.Tags)...)

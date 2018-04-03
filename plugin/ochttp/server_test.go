@@ -98,7 +98,7 @@ func TestHandlerStatsCollection(t *testing.T) {
 		var sum float64
 		switch data := data.(type) {
 		case *view.CountData:
-			count = int(*data)
+			count = int(data.Value)
 		case *view.DistributionData:
 			count = int(data.Count)
 			sum = data.Sum()
