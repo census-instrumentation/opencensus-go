@@ -46,20 +46,6 @@ type View struct {
 	Aggregation *Aggregation
 }
 
-// Deprecated: Use &View{}.
-func New(name, description string, keys []tag.Key, measure stats.Measure, agg *Aggregation) (*View, error) {
-	if measure == nil {
-		panic("measure may not be nil")
-	}
-	return &View{
-		Name:        name,
-		Description: description,
-		TagKeys:     keys,
-		Measure:     measure,
-		Aggregation: agg,
-	}, nil
-}
-
 // WithName returns a copy of the View with a new name. This is useful for
 // renaming views to cope with limitations placed on metric names by various
 // backends.

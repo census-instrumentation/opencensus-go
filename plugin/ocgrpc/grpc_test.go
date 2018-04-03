@@ -31,7 +31,7 @@ func TestClientHandler(t *testing.T) {
 	ctx := context.Background()
 	te := &traceExporter{}
 	trace.RegisterExporter(te)
-	if err := ClientRequestCountView.Subscribe(); err != nil {
+	if err := view.Register(ClientRequestCountView); err != nil {
 		t.Fatal(err)
 	}
 
@@ -67,7 +67,7 @@ func TestClientHandler(t *testing.T) {
 	}
 
 	// Cleanup.
-	view.Unsubscribe(ClientErrorCountView)
+	view.Unregister(ClientErrorCountView)
 }
 
 func TestServerHandler(t *testing.T) {
@@ -94,7 +94,7 @@ func TestServerHandler(t *testing.T) {
 
 			te := &traceExporter{}
 			trace.RegisterExporter(te)
-			if err := ServerRequestCountView.Subscribe(); err != nil {
+			if err := view.Register(ServerRequestCountView); err != nil {
 				t.Fatal(err)
 			}
 
@@ -126,7 +126,7 @@ func TestServerHandler(t *testing.T) {
 			}
 
 			// Cleanup.
-			view.Unsubscribe(ServerRequestCountView)
+			view.Unregister(ServerRequestCountView)
 		})
 	}
 }

@@ -61,22 +61,6 @@ func Find(name string) (v *View) {
 	return resp.v
 }
 
-// Deprecated: Use the Register function
-func Subscribe(v ...*View) error {
-	return Register(v...)
-}
-
-// Deprecated: Use the Unregister function
-func Unsubscribe(v ...*View) error {
-	Unregister(v...)
-	return nil
-}
-
-// Deprecated: Use the Register function.
-func (v *View) Subscribe() error {
-	return Register(v)
-}
-
 // Register begins collecting data for the given views.
 // Once a view is subscribed, it reports data to the registered exporters.
 func Register(views ...*View) error {
@@ -108,15 +92,6 @@ func Unregister(views ...*View) {
 	}
 	defaultWorker.c <- req
 	<-req.done
-}
-
-// Deprecated: Use the Unregister function instead.
-func (v *View) Unsubscribe() error {
-	if v == nil {
-		return nil
-	}
-	Unregister(v)
-	return nil
 }
 
 func RetrieveData(viewName string) ([]*Row, error) {

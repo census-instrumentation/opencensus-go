@@ -231,12 +231,8 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 			}
 		}
 
-		// cleaning up
-		for _, v := range tc.registrations {
-			if err := v.Unsubscribe(); err != nil {
-				t.Fatalf("%v: Unregistering from view %v errored with %v; want no error", tc.label, v.Name, err)
-			}
-		}
+		// Cleaning up.
+		Unregister(tc.registrations...)
 	}
 }
 
@@ -320,7 +316,11 @@ func TestWorkerStarttime(t *testing.T) {
 
 	ctx := context.Background()
 	m := stats.Int64("measure/TestWorkerStarttime", "desc", "unit")
-	v, _ := New("testview", "", nil, m, Count())
+	v := &View{
+		Name:        "testview",
+		Measure:     m,
+		Aggregation: Count(),
+	}
 
 	SetReportingPeriod(25 * time.Millisecond)
 	if err := Register(v); err != nil {

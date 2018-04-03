@@ -48,7 +48,7 @@ func main() {
 	// Create view to see the amount of video processed
 	// Subscribe will allow view data to be exported.
 	// Once no longer needed, you can unsubscribe from the view.
-	if err = view.Subscribe(
+	if err = view.Register(
 		&view.View{
 			Name:        "video_count",
 			Description: "number of videos processed over time",

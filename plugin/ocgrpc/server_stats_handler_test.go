@@ -298,7 +298,7 @@ func TestServerDefaultCollections(t *testing.T) {
 	}
 
 	for _, tc := range tcs {
-		if err := view.Subscribe(DefaultServerViews...); err != nil {
+		if err := view.Register(DefaultServerViews...); err != nil {
 			t.Fatal(err)
 		}
 
@@ -349,7 +349,7 @@ func TestServerDefaultCollections(t *testing.T) {
 		}
 
 		// Unregister views to cleanup.
-		view.Unsubscribe(DefaultServerViews...)
+		view.Unregister(DefaultServerViews...)
 	}
 }
 
