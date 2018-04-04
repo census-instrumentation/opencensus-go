@@ -41,7 +41,12 @@ type getViewByNameResp struct {
 }
 
 func (cmd *getViewByNameReq) handleCommand(w *worker) {
-	cmd.c <- &getViewByNameResp{w.views[cmd.name].view}
+	v := w.views[cmd.name]
+	if v == nil {
+		cmd.c <- &getViewByNameResp{nil}
+		return
+	}
+	cmd.c <- &getViewByNameResp{v.view}
 }
 
 // registerViewReq is the command to register a view.

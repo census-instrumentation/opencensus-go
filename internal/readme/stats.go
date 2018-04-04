@@ -40,7 +40,7 @@ func statsExamples() {
 	_, _, _ = distAgg, countAgg, sumAgg
 
 	// START view
-	if err := view.Subscribe(&view.View{
+	if err := view.Register(&view.View{
 		Name:        "my.org/video_size_distribution",
 		Description: "distribution of processed video size over time",
 		Measure:     videoSize,

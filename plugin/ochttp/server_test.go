@@ -34,8 +34,8 @@ func updateMean(mean float64, sample, count int) float64 {
 }
 
 func TestHandlerStatsCollection(t *testing.T) {
-	for _, v := range DefaultServerViews {
-		v.Subscribe()
+	if err := view.Register(DefaultServerViews...); err != nil {
+		t.Fatalf("Failed to register ochttp.DefaultServerViews error: %v", err)
 	}
 
 	views := []string{

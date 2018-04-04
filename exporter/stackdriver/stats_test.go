@@ -677,10 +677,10 @@ func TestExporter_makeReq_withCustomMonitoredResource(t *testing.T) {
 		Measure:     m,
 		Aggregation: view.Count(),
 	}
-	if err := view.Subscribe(v); err != nil {
+	if err := view.Register(v); err != nil {
 		t.Fatal(err)
 	}
-	defer view.Unsubscribe(v)
+	defer view.Unregister(v)
 
 	start := time.Now()
 	end := start.Add(time.Minute)

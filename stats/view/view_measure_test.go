@@ -28,7 +28,7 @@ func TestMeasureFloat64AndInt64(t *testing.T) {
 		Measure:     fm,
 		Aggregation: Sum(),
 	}
-	Subscribe(v1, v2)
+	Register(v1, v2)
 
 	stats.Record(context.Background(), im.M(5))
 	stats.Record(context.Background(), fm.M(2.2))

@@ -35,7 +35,7 @@ func Example() {
 	view.RegisterExporter(exporter)
 
 	// Subscribe views to see stats in Stackdriver Monitoring.
-	if err := view.Subscribe(
+	if err := view.Register(
 		ochttp.ClientLatencyView,
 		ochttp.ClientResponseBytesView,
 	); err != nil {
