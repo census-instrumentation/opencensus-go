@@ -22,18 +22,20 @@ import (
 
 // The following client HTTP measures are supported for use in custom views.
 var (
-	ClientRequestCount  = stats.Int64("opencensus.io/http/client/request_count", "Number of HTTP requests started", stats.UnitNone)
-	ClientRequestBytes  = stats.Int64("opencensus.io/http/client/request_bytes", "HTTP request body size if set as ContentLength (uncompressed)", stats.UnitBytes)
-	ClientResponseBytes = stats.Int64("opencensus.io/http/client/response_bytes", "HTTP response body size (uncompressed)", stats.UnitBytes)
-	ClientLatency       = stats.Float64("opencensus.io/http/client/latency", "End-to-end latency", stats.UnitMilliseconds)
+	ClientRequestCount       = stats.Int64("opencensus.io/http/client/request_count", "Number of HTTP requests started", stats.UnitNone)
+	ClientRequestBytes       = stats.Int64("opencensus.io/http/client/request_bytes", "HTTP request body size if set as ContentLength (uncompressed)", stats.UnitBytes)
+	ClientResponseBytes      = stats.Int64("opencensus.io/http/client/response_bytes", "HTTP response body size (uncompressed)", stats.UnitBytes)
+	ClientLatency            = stats.Float64("opencensus.io/http/client/latency", "End-to-end latency", stats.UnitMilliseconds)
+	ClientResponseStatusCode = stats.Int64("opencensus.io/http/client_response_status_code", "Number of HTTP response status codes for the client", stats.UnitNone)
 )
 
 // The following server HTTP measures are supported for use in custom views:
 var (
-	ServerRequestCount  = stats.Int64("opencensus.io/http/server/request_count", "Number of HTTP requests started", stats.UnitNone)
-	ServerRequestBytes  = stats.Int64("opencensus.io/http/server/request_bytes", "HTTP request body size if set as ContentLength (uncompressed)", stats.UnitBytes)
-	ServerResponseBytes = stats.Int64("opencensus.io/http/server/response_bytes", "HTTP response body size (uncompressed)", stats.UnitBytes)
-	ServerLatency       = stats.Float64("opencensus.io/http/server/latency", "End-to-end latency", stats.UnitMilliseconds)
+	ServerRequestCount       = stats.Int64("opencensus.io/http/server/request_count", "Number of HTTP requests started", stats.UnitNone)
+	ServerRequestBytes       = stats.Int64("opencensus.io/http/server/request_bytes", "HTTP request body size if set as ContentLength (uncompressed)", stats.UnitBytes)
+	ServerResponseBytes      = stats.Int64("opencensus.io/http/server/response_bytes", "HTTP response body size (uncompressed)", stats.UnitBytes)
+	ServerLatency            = stats.Float64("opencensus.io/http/server/latency", "End-to-end latency", stats.UnitMilliseconds)
+	ServerResponseStatusCode = stats.Int64("opencensus.io/http/server_response_status_code", "Number of HTTP response status codes for the server", stats.UnitNone)
 )
 
 // The following tags are applied to stats recorded by this package. Host, Path
@@ -58,6 +60,9 @@ var (
 var (
 	DefaultSizeDistribution    = view.Distribution(0, 1024, 2048, 4096, 16384, 65536, 262144, 1048576, 4194304, 16777216, 67108864, 268435456, 1073741824, 4294967296)
 	DefaultLatencyDistribution = view.Distribution(0, 1, 2, 3, 4, 5, 6, 8, 10, 13, 16, 20, 25, 30, 40, 50, 65, 80, 100, 130, 160, 200, 250, 300, 400, 500, 650, 800, 1000, 2000, 5000, 10000, 20000, 50000, 100000)
+
+	// Representing status code buckets:		 [0,  1XX, 2XX, 3XX, 4XX, 5XX, 6XX]
+	DefaultStatusCodeDistribution = view.Distribution(99, 199, 299, 399, 499, 599, 699)
 )
 
 // Package ochttp provides some convenience views.
@@ -102,9 +107,8 @@ var (
 	ClientResponseCountByStatusCode = &view.View{
 		Name:        "opencensus.io/http/client/response_count_by_status_code",
 		Description: "Client response count by status code",
-		TagKeys:     []tag.Key{StatusCode},
-		Measure:     ClientLatency,
-		Aggregation: view.Count(),
+		Measure:     ClientResponseStatusCode,
+		Aggregation: DefaultStatusCodeDistribution,
 	}
 
 	ServerRequestCountView = &view.View{
@@ -146,9 +150,8 @@ var (
 	ServerResponseCountByStatusCode = &view.View{
 		Name:        "opencensus.io/http/server/response_count_by_status_code",
 		Description: "Server response count by status code",
-		TagKeys:     []tag.Key{StatusCode},
-		Measure:     ServerLatency,
-		Aggregation: view.Count(),
+		Measure:     ServerResponseStatusCode,
+		Aggregation: DefaultStatusCodeDistribution,
 	}
 )
 
