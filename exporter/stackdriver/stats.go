@@ -316,17 +316,17 @@ func newTypedValue(vd *view.View, r *view.Row) *monitoringpb.TypedValue {
 	switch v := r.Data.(type) {
 	case *view.CountData:
 		return &monitoringpb.TypedValue{Value: &monitoringpb.TypedValue_Int64Value{
-			Int64Value: int64(*v),
+			Int64Value: v.Value,
 		}}
 	case *view.SumData:
 		switch vd.Measure.(type) {
 		case *stats.Int64Measure:
 			return &monitoringpb.TypedValue{Value: &monitoringpb.TypedValue_Int64Value{
-				Int64Value: int64(*v),
+				Int64Value: int64(v.Value),
 			}}
 		case *stats.Float64Measure:
 			return &monitoringpb.TypedValue{Value: &monitoringpb.TypedValue_DoubleValue{
-				DoubleValue: float64(*v),
+				DoubleValue: v.Value,
 			}}
 		}
 	case *view.DistributionData:

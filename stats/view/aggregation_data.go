@@ -35,21 +35,18 @@ const epsilon = 1e-9
 // A count aggregation processes data and counts the recordings.
 //
 // Most users won't directly access count data.
-type CountData int64
-
-func newCountData(v int64) *CountData {
-	tmp := CountData(v)
-	return &tmp
+type CountData struct {
+	Value int64
 }
 
 func (a *CountData) isAggregationData() bool { return true }
 
 func (a *CountData) addSample(v float64) {
-	*a = *a + 1
+	a.Value = a.Value + 1
 }
 
 func (a *CountData) clone() AggregationData {
-	return newCountData(int64(*a))
+	return &CountData{Value: a.Value}
 }
 
 func (a *CountData) equal(other AggregationData) bool {
@@ -58,28 +55,25 @@ func (a *CountData) equal(other AggregationData) bool {
 		return false
 	}
 
-	return int64(*a) == int64(*a2)
+	return a.Value == a2.Value
 }
 
 // SumData is the aggregated data for the Sum aggregation.
 // A sum aggregation processes data and sums up the recordings.
 //
 // Most users won't directly access sum data.
-type SumData float64
-
-func newSumData(v float64) *SumData {
-	tmp := SumData(v)
-	return &tmp
+type SumData struct {
+	Value float64
 }
 
 func (a *SumData) isAggregationData() bool { return true }
 
 func (a *SumData) addSample(f float64) {
-	*a += SumData(f)
+	a.Value += f
 }
 
 func (a *SumData) clone() AggregationData {
-	return newSumData(float64(*a))
+	return &SumData{Value: a.Value}
 }
 
 func (a *SumData) equal(other AggregationData) bool {
@@ -87,7 +81,7 @@ func (a *SumData) equal(other AggregationData) bool {
 	if !ok {
 		return false
 	}
-	return math.Pow(float64(*a)-float64(*a2), 2) < epsilon
+	return math.Pow(a.Value-a2.Value, 2) < epsilon
 }
 
 // DistributionData is the aggregated data for the

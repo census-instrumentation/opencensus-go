@@ -110,7 +110,7 @@ func TestClient(t *testing.T) {
 		var count int64
 		switch data := data.(type) {
 		case *view.CountData:
-			count = *(*int64)(data)
+			count = data.Value
 		case *view.DistributionData:
 			count = data.Count
 		default:

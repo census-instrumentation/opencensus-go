@@ -246,14 +246,14 @@ func (s snapExporter) ExportView(vd *view.Data) {
 		)
 		switch v := row.Data.(type) {
 		case *view.CountData:
-			sum = float64(*v)
-			count = float64(*v)
+			sum = float64(v.Value)
+			count = float64(v.Value)
 		case *view.DistributionData:
 			sum = v.Sum()
 			count = float64(v.Count)
 		case *view.SumData:
-			sum = float64(*v)
-			count = float64(*v)
+			sum = v.Value
+			count = v.Value
 		}
 
 		// Update field of s corresponding to the view.
