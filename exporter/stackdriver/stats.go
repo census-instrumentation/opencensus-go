@@ -241,7 +241,7 @@ func (e *statsExporter) createMeasure(ctx context.Context, vd *view.Data) error 
 	viewName := vd.View.Name
 
 	if md, ok := e.createdViews[viewName]; ok {
-		return equalAggTagKeys(md, agg, tagKeys)
+		return equalMeasureAggTagKeys(md, m, agg, tagKeys)
 	}
 
 	metricType := namespacedViewName(viewName)
@@ -264,7 +264,12 @@ func (e *statsExporter) createMeasure(ctx context.Context, vd *view.Data) error 
 	case view.AggTypeDistribution:
 		valueType = metricpb.MetricDescriptor_DISTRIBUTION
 	case view.AggTypeLastValue:
-		valueType = metricpb.MetricDescriptor_DOUBLE
+		switch m.(type) {
+		case *stats.Int64Measure:
+			valueType = metricpb.MetricDescriptor_INT64
+		case *stats.Float64Measure:
+			valueType = metricpb.MetricDescriptor_DOUBLE
+		}
 	default:
 		return fmt.Errorf("unsupported aggregation type: %s", agg.Type.String())
 	}
@@ -351,9 +356,16 @@ func newTypedValue(vd *view.View, r *view.Row) *monitoringpb.TypedValue {
 			},
 		}}
 	case *view.LastValueData:
-		return &monitoringpb.TypedValue{Value: &monitoringpb.TypedValue_DoubleValue{
-			DoubleValue: v.Value,
-		}}
+		switch vd.Measure.(type) {
+		case *stats.Int64Measure:
+			return &monitoringpb.TypedValue{Value: &monitoringpb.TypedValue_Int64Value{
+				Int64Value: int64(v.Value),
+			}}
+		case *stats.Float64Measure:
+			return &monitoringpb.TypedValue{Value: &monitoringpb.TypedValue_DoubleValue{
+				DoubleValue: v.Value,
+			}}
+		}
 	}
 	return nil
 }
@@ -388,12 +400,18 @@ func newLabelDescriptors(keys []tag.Key) []*labelpb.LabelDescriptor {
 	return labelDescriptors
 }
 
-func equalAggTagKeys(md *metricpb.MetricDescriptor, agg *view.Aggregation, keys []tag.Key) error {
+func equalMeasureAggTagKeys(md *metricpb.MetricDescriptor, m stats.Measure, agg *view.Aggregation, keys []tag.Key) error {
 	var aggTypeMatch bool
 	switch md.ValueType {
 	case metricpb.MetricDescriptor_INT64:
-		aggTypeMatch = agg.Type == view.AggTypeCount || agg.Type == view.AggTypeSum
+		if _, ok := m.(*stats.Int64Measure); !ok {
+			return fmt.Errorf("stackdriver metric descriptor was not created as int64")
+		}
+		aggTypeMatch = agg.Type == view.AggTypeCount || agg.Type == view.AggTypeSum || agg.Type == view.AggTypeLastValue
 	case metricpb.MetricDescriptor_DOUBLE:
+		if _, ok := m.(*stats.Float64Measure); !ok {
+			return fmt.Errorf("stackdriver metric descriptor was not created as double")
+		}
 		aggTypeMatch = agg.Type == view.AggTypeSum || agg.Type == view.AggTypeLastValue
 	case metricpb.MetricDescriptor_DISTRIBUTION:
 		aggTypeMatch = agg.Type == view.AggTypeDistribution

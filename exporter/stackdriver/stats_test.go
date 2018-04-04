@@ -418,6 +418,7 @@ func TestEqualAggWindowTagKeys(t *testing.T) {
 	tests := []struct {
 		name    string
 		md      *metricpb.MetricDescriptor
+		m       stats.Measure
 		agg     *view.Aggregation
 		keys    []tag.Key
 		wantErr bool
@@ -429,6 +430,7 @@ func TestEqualAggWindowTagKeys(t *testing.T) {
 				ValueType:  metricpb.MetricDescriptor_INT64,
 				Labels:     []*label.LabelDescriptor{{Key: opencensusTaskKey}},
 			},
+			m:       stats.Int64("name", "", ""),
 			agg:     view.Count(),
 			wantErr: false,
 		},
@@ -439,6 +441,7 @@ func TestEqualAggWindowTagKeys(t *testing.T) {
 				ValueType:  metricpb.MetricDescriptor_DOUBLE,
 				Labels:     []*label.LabelDescriptor{{Key: opencensusTaskKey}},
 			},
+			m:       stats.Float64("name", "", ""),
 			agg:     view.Sum(),
 			wantErr: false,
 		},
@@ -449,6 +452,7 @@ func TestEqualAggWindowTagKeys(t *testing.T) {
 				ValueType:  metricpb.MetricDescriptor_INT64,
 				Labels:     []*label.LabelDescriptor{{Key: opencensusTaskKey}},
 			},
+			m:       stats.Int64("name", "", ""),
 			agg:     view.Sum(),
 			wantErr: false,
 		},
@@ -459,17 +463,41 @@ func TestEqualAggWindowTagKeys(t *testing.T) {
 				ValueType:  metricpb.MetricDescriptor_DOUBLE,
 				Labels:     []*label.LabelDescriptor{{Key: opencensusTaskKey}},
 			},
+			m:       stats.Float64("name", "", ""),
 			agg:     view.LastValue(),
 			wantErr: false,
 		},
 		{
-			name: "distribution agg - mismatch",
+			name: "last value agg int64",
+			md: &metricpb.MetricDescriptor{
+				MetricKind: metricpb.MetricDescriptor_CUMULATIVE,
+				ValueType:  metricpb.MetricDescriptor_INT64,
+				Labels:     []*label.LabelDescriptor{{Key: opencensusTaskKey}},
+			},
+			m:       stats.Int64("name", "", ""),
+			agg:     view.LastValue(),
+			wantErr: false,
+		},
+		{
+			name: "distribution - mismatch",
 			md: &metricpb.MetricDescriptor{
 				MetricKind: metricpb.MetricDescriptor_CUMULATIVE,
 				ValueType:  metricpb.MetricDescriptor_DISTRIBUTION,
 				Labels:     []*label.LabelDescriptor{{Key: opencensusTaskKey}},
 			},
+			m:       stats.Int64("name", "", ""),
 			agg:     view.Count(),
+			wantErr: true,
+		},
+		{
+			name: "last value - measure mismatch",
+			md: &metricpb.MetricDescriptor{
+				MetricKind: metricpb.MetricDescriptor_CUMULATIVE,
+				ValueType:  metricpb.MetricDescriptor_INT64,
+				Labels:     []*label.LabelDescriptor{{Key: opencensusTaskKey}},
+			},
+			m:       stats.Float64("name", "", ""),
+			agg:     view.LastValue(),
 			wantErr: true,
 		},
 		{
@@ -483,6 +511,7 @@ func TestEqualAggWindowTagKeys(t *testing.T) {
 					{Key: opencensusTaskKey},
 				},
 			},
+			m:       stats.Int64("name", "", ""),
 			agg:     view.Distribution(),
 			keys:    []tag.Key{key1, key2},
 			wantErr: false,
@@ -493,6 +522,7 @@ func TestEqualAggWindowTagKeys(t *testing.T) {
 				MetricKind: metricpb.MetricDescriptor_CUMULATIVE,
 				ValueType:  metricpb.MetricDescriptor_DISTRIBUTION,
 			},
+			m:       stats.Int64("name", "", ""),
 			agg:     view.Distribution(),
 			keys:    []tag.Key{key1, key2},
 			wantErr: true,
@@ -504,13 +534,14 @@ func TestEqualAggWindowTagKeys(t *testing.T) {
 				ValueType:  metricpb.MetricDescriptor_INT64,
 				Labels:     []*label.LabelDescriptor{{Key: opencensusTaskKey}},
 			},
+			m:       stats.Int64("name", "", ""),
 			agg:     view.Count(),
 			wantErr: false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := equalAggTagKeys(tt.md, tt.agg, tt.keys)
+			err := equalMeasureAggTagKeys(tt.md, tt.m, tt.agg, tt.keys)
 			if err != nil && !tt.wantErr {
 				t.Errorf("equalAggTagKeys() = %q; want no error", err)
 			}
