@@ -67,7 +67,7 @@ func TestEncodeDecode(t *testing.T) {
 			[]keyValue{
 				{k1, "v1"},
 				{k2, "v2"},
-				{k3, "数据库着火了 🔥🔥🔥"},
+				{k3, "v3"},
 				{k4, "v4 is very weird <>.,?/'\";:`~!@#$%^&*()_-+={[}]|\\"},
 			},
 		},
@@ -107,7 +107,6 @@ func TestEncodeDecode(t *testing.T) {
 func TestDecode(t *testing.T) {
 	k1, _ := NewKey("k1")
 	ctx, _ := New(context.Background(), Insert(k1, "v1"))
-	ctx2, _ := New(context.Background(), Insert(k1, "数据库着火了 🔥🔥🔥"))
 
 	tests := []struct {
 		name    string
@@ -122,14 +121,14 @@ func TestDecode(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name:    "valid (non-ascii value)",
-			bytes:   []byte{0x0, 0x0, 0x2, 0x6b, 0x31, 0x1f, 0xe6, 0x95, 0xb0, 0xe6, 0x8d, 0xae, 0xe5, 0xba, 0x93, 0xe7, 0x9d, 0x80, 0xe7, 0x81, 0xab, 0xe4, 0xba, 0x86, 0x20, 0xf0, 0x9f, 0x94, 0xa5, 0xf0, 0x9f, 0x94, 0xa5, 0xf0, 0x9f, 0x94, 0xa5},
-			want:    FromContext(ctx2),
-			wantErr: false,
-		},
-		{
 			name:    "non-ascii key",
 			bytes:   []byte{0, 0, 2, 107, 49, 2, 118, 49, 0, 2, 107, 25, 2, 118, 49},
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name:    "non-ascii value",
+			bytes:   []byte{0, 0, 2, 107, 49, 2, 118, 49, 0, 2, 107, 50, 2, 118, 25},
 			want:    nil,
 			wantErr: true,
 		},
@@ -148,11 +147,7 @@ func TestDecode(t *testing.T) {
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
-				var encoded []byte
-				if tt.want != nil {
-					encoded = Encode(tt.want)
-				}
-				t.Errorf("Decode() = %v, want %v = Decode(%#v)", got, tt.want, encoded)
+				t.Errorf("Decode() = %v, want %v", got, tt.want)
 			}
 		})
 	}

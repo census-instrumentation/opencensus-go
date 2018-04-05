@@ -76,6 +76,16 @@ func TestCheckValue(t *testing.T) {
 			wantOK: true,
 		},
 		{
+			name:   "invalid i",
+			value:  "k\x19",
+			wantOK: false,
+		},
+		{
+			name:   "invalid ii",
+			value:  "k\x7f",
+			wantOK: false,
+		},
+		{
 			name:   "empty",
 			value:  "",
 			wantOK: true,
@@ -89,21 +99,6 @@ func TestCheckValue(t *testing.T) {
 			name:   "long",
 			value:  strings.Repeat("a", 256),
 			wantOK: false,
-		},
-		{
-			name:   "emoji",
-			value:  "🔥🔥🔥",
-			wantOK: true,
-		},
-		{
-			name:   "Simplified Chinese",
-			value:  "上海",
-			wantOK: true,
-		},
-		{
-			name:   "Bengali",
-			value:  "বাংলা/বঙ্গ",
-			wantOK: true,
 		},
 	}
 	for _, tt := range tests {

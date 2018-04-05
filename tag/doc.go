@@ -22,12 +22,5 @@ the OpenCensus instrumentation data.
 Tags can be propagated on the wire and in the same
 process via context.Context. Encode and Decode should be
 used to represent tags into their binary propagation form.
-
-This package supports a restrictive set of characters in tag keys which
-we believe are supported by most metrics backends. Tag values are not limited in
-this way, but specific exporters may have their own restrictions on tag
-values and if so, should provide a way to sanitize tag values for use
-with that backend.
-
 */
 package tag // import "go.opencensus.io/tag"
