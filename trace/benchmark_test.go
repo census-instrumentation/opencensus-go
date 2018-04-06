@@ -19,87 +19,304 @@ import (
 	"testing"
 )
 
-func BenchmarkStartEndSpan(b *testing.B) {
-	traceBenchmark(b, func(b *testing.B) {
-		ctx := context.Background()
-		b.ResetTimer()
-		for i := 0; i < b.N; i++ {
-			_, span := StartSpan(ctx, "/foo")
-			span.End()
-		}
-	})
+func BenchmarkStartEndSpan_noExporters_neverSample(b *testing.B) {
+	ApplyConfig(Config{DefaultSampler: NeverSample()})
+	ctx := context.Background()
+
+	b.ResetTimer()
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		_, span := StartSpan(ctx, "/foo")
+		span.End()
+	}
 }
 
-func BenchmarkSpanWithAnnotations_3(b *testing.B) {
-	traceBenchmark(b, func(b *testing.B) {
-		ctx := context.Background()
-		b.ResetTimer()
+func BenchmarkStartEndSpan_noExporters_alwaysSample(b *testing.B) {
+	ApplyConfig(Config{DefaultSampler: AlwaysSample()})
+	ctx := context.Background()
 
-		for i := 0; i < b.N; i++ {
-			_, span := StartSpan(ctx, "/foo")
-			span.AddAttributes(
-				BoolAttribute("key1", false),
-				StringAttribute("key2", "hello"),
-				Int64Attribute("key3", 123),
-			)
-			span.End()
-		}
-	})
+	b.ResetTimer()
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		_, span := StartSpan(ctx, "/foo")
+		span.End()
+	}
 }
 
-func BenchmarkSpanWithAnnotations_6(b *testing.B) {
-	traceBenchmark(b, func(b *testing.B) {
-		ctx := context.Background()
-		b.ResetTimer()
+type anExporter int
 
-		for i := 0; i < b.N; i++ {
-			_, span := StartSpan(ctx, "/foo")
-			span.AddAttributes(
-				BoolAttribute("key1", false),
-				BoolAttribute("key2", true),
-				StringAttribute("key3", "hello"),
-				StringAttribute("key4", "hello"),
-				Int64Attribute("key5", 123),
-				Int64Attribute("key6", 456),
-			)
-			span.End()
-		}
-	})
+func (ae *anExporter) ExportSpan(s *SpanData) {}
+
+var _ Exporter = (*anExporter)(nil)
+
+func BenchmarkStartEndSpan_withExporters_neverSample(b *testing.B) {
+	ae := new(anExporter)
+	RegisterExporter(ae)
+	defer UnregisterExporter(ae)
+
+	ApplyConfig(Config{DefaultSampler: NeverSample()})
+	ctx := context.Background()
+
+	b.ResetTimer()
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		_, span := StartSpan(ctx, "/foo")
+		span.End()
+	}
 }
 
-func BenchmarkTraceID_DotString(b *testing.B) {
-	traceBenchmark(b, func(b *testing.B) {
-		t := TraceID{0x0D, 0x0E, 0x0A, 0x0D, 0x0B, 0x0E, 0x0E, 0x0F, 0x0F, 0x0E, 0x0E, 0x0B, 0x0D, 0x0A, 0x0E, 0x0D}
-		want := "0d0e0a0d0b0e0e0f0f0e0e0b0d0a0e0d"
-		for i := 0; i < b.N; i++ {
-			if got := t.String(); got != want {
-				b.Fatalf("got = %q want = %q", got, want)
-			}
-		}
-	})
+func BenchmarkStartEndSpan_withExporters_alwaysSample(b *testing.B) {
+	ae := new(anExporter)
+	RegisterExporter(ae)
+	defer UnregisterExporter(ae)
+
+	ApplyConfig(Config{DefaultSampler: AlwaysSample()})
+	ctx := context.Background()
+
+	b.ResetTimer()
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		_, span := StartSpan(ctx, "/foo")
+		span.End()
+	}
 }
 
-func BenchmarkSpanID_DotString(b *testing.B) {
-	traceBenchmark(b, func(b *testing.B) {
-		s := SpanID{0x0D, 0x0E, 0x0A, 0x0D, 0x0B, 0x0E, 0x0E, 0x0F}
-		want := "0d0e0a0d0b0e0e0f"
-		for i := 0; i < b.N; i++ {
-			if got := s.String(); got != want {
-				b.Fatalf("got = %q want = %q", got, want)
-			}
-		}
-	})
+func BenchmarkSpanWithAnnotations_3_noExporters_neverSample(b *testing.B) {
+	ctx := context.Background()
+	ApplyConfig(Config{DefaultSampler: NeverSample()})
+
+	b.ResetTimer()
+	b.ReportAllocs()
+
+	for i := 0; i < b.N; i++ {
+		_, span := StartSpan(ctx, "/foo")
+		span.AddAttributes(
+			BoolAttribute("key2", true),
+			StringAttribute("key4", "hello"),
+			Int64Attribute("key5", 123),
+		)
+		span.End()
+	}
 }
 
-func traceBenchmark(b *testing.B, fn func(*testing.B)) {
-	b.Run("AlwaysSample", func(b *testing.B) {
-		b.ReportAllocs()
-		ApplyConfig(Config{DefaultSampler: AlwaysSample()})
-		fn(b)
-	})
-	b.Run("NeverSample", func(b *testing.B) {
-		b.ReportAllocs()
-		ApplyConfig(Config{DefaultSampler: NeverSample()})
-		fn(b)
-	})
+func BenchmarkSpanWithAnnotations_3_noExporters_alwaysSample(b *testing.B) {
+	ctx := context.Background()
+	ApplyConfig(Config{DefaultSampler: AlwaysSample()})
+
+	b.ResetTimer()
+	b.ReportAllocs()
+
+	for i := 0; i < b.N; i++ {
+		_, span := StartSpan(ctx, "/foo")
+		span.AddAttributes(
+			BoolAttribute("key2", true),
+			StringAttribute("key4", "hello"),
+			Int64Attribute("key5", 123),
+		)
+		span.End()
+	}
+}
+
+func BenchmarkSpanWithAnnotations_3_withExporters_neverSample(b *testing.B) {
+	ae := new(anExporter)
+	RegisterExporter(ae)
+	defer UnregisterExporter(ae)
+
+	ctx := context.Background()
+	ApplyConfig(Config{DefaultSampler: NeverSample()})
+
+	b.ResetTimer()
+	b.ReportAllocs()
+
+	for i := 0; i < b.N; i++ {
+		_, span := StartSpan(ctx, "/foo")
+		span.AddAttributes(
+			BoolAttribute("key2", true),
+			StringAttribute("key4", "hello"),
+			Int64Attribute("key5", 123),
+		)
+		span.End()
+	}
+}
+
+func BenchmarkSpanWithAnnotations_3_withExporters_alwaysSample(b *testing.B) {
+	ae := new(anExporter)
+	RegisterExporter(ae)
+	defer UnregisterExporter(ae)
+
+	ctx := context.Background()
+	ApplyConfig(Config{DefaultSampler: AlwaysSample()})
+
+	b.ResetTimer()
+	b.ReportAllocs()
+
+	for i := 0; i < b.N; i++ {
+		_, span := StartSpan(ctx, "/foo")
+		span.AddAttributes(
+			BoolAttribute("key2", true),
+			StringAttribute("key4", "hello"),
+			Int64Attribute("key5", 123),
+		)
+		span.End()
+	}
+}
+
+func BenchmarkSpanWithAnnotations_6_noExporters_neverSample(b *testing.B) {
+	ctx := context.Background()
+	ApplyConfig(Config{DefaultSampler: NeverSample()})
+
+	b.ResetTimer()
+	b.ReportAllocs()
+
+	for i := 0; i < b.N; i++ {
+		_, span := StartSpan(ctx, "/foo")
+		span.AddAttributes(
+			BoolAttribute("key1", false),
+			BoolAttribute("key2", true),
+			StringAttribute("key3", "hello"),
+			StringAttribute("key4", "hello"),
+			Int64Attribute("key5", 123),
+			Int64Attribute("key6", 456),
+		)
+		span.End()
+	}
+}
+
+func BenchmarkSpanWithAnnotations_6_noExporters_alwaysSample(b *testing.B) {
+	ctx := context.Background()
+	ApplyConfig(Config{DefaultSampler: AlwaysSample()})
+
+	b.ResetTimer()
+	b.ReportAllocs()
+
+	for i := 0; i < b.N; i++ {
+		_, span := StartSpan(ctx, "/foo")
+		span.AddAttributes(
+			BoolAttribute("key1", false),
+			BoolAttribute("key2", true),
+			StringAttribute("key3", "hello"),
+			StringAttribute("key4", "hello"),
+			Int64Attribute("key5", 123),
+			Int64Attribute("key6", 456),
+		)
+		span.End()
+	}
+}
+
+func BenchmarkSpanWithAnnotations_6_withExporters_neverSample(b *testing.B) {
+	ae := new(anExporter)
+	RegisterExporter(ae)
+	defer UnregisterExporter(ae)
+
+	ctx := context.Background()
+	ApplyConfig(Config{DefaultSampler: NeverSample()})
+
+	b.ResetTimer()
+	b.ReportAllocs()
+
+	for i := 0; i < b.N; i++ {
+		_, span := StartSpan(ctx, "/foo")
+		span.AddAttributes(
+			BoolAttribute("key1", false),
+			BoolAttribute("key2", true),
+			StringAttribute("key3", "hello"),
+			StringAttribute("key4", "hello"),
+			Int64Attribute("key5", 123),
+			Int64Attribute("key6", 456),
+		)
+		span.End()
+	}
+}
+
+func BenchmarkSpanWithAnnotations_6_withExporters_alwaysSample(b *testing.B) {
+	ae := new(anExporter)
+	RegisterExporter(ae)
+	defer UnregisterExporter(ae)
+
+	ctx := context.Background()
+	ApplyConfig(Config{DefaultSampler: AlwaysSample()})
+
+	b.ResetTimer()
+	b.ReportAllocs()
+
+	for i := 0; i < b.N; i++ {
+		_, span := StartSpan(ctx, "/foo")
+		span.AddAttributes(
+			BoolAttribute("key1", false),
+			BoolAttribute("key2", true),
+			StringAttribute("key3", "hello"),
+			StringAttribute("key4", "hello"),
+			Int64Attribute("key5", 123),
+			Int64Attribute("key6", 456),
+		)
+		span.End()
+	}
+}
+
+func BenchmarkSpanID_DotString_noExporters_neverSample(b *testing.B) {
+	ApplyConfig(Config{DefaultSampler: NeverSample()})
+	s := SpanID{0x0D, 0x0E, 0x0A, 0x0D, 0x0B, 0x0E, 0x0E, 0x0F}
+	want := "0d0e0a0d0b0e0e0f"
+
+	b.ResetTimer()
+	b.ReportAllocs()
+
+	for i := 0; i < b.N; i++ {
+		if got := s.String(); got != want {
+			b.Fatalf("got = %q want = %q", got, want)
+		}
+	}
+}
+
+func BenchmarkSpanID_DotString_withExporters_neverSample(b *testing.B) {
+	ae := new(anExporter)
+	RegisterExporter(ae)
+	defer UnregisterExporter(ae)
+
+	ApplyConfig(Config{DefaultSampler: NeverSample()})
+	s := SpanID{0x0D, 0x0E, 0x0A, 0x0D, 0x0B, 0x0E, 0x0E, 0x0F}
+	want := "0d0e0a0d0b0e0e0f"
+
+	b.ResetTimer()
+	b.ReportAllocs()
+
+	for i := 0; i < b.N; i++ {
+		if got := s.String(); got != want {
+			b.Fatalf("got = %q want = %q", got, want)
+		}
+	}
+}
+
+func BenchmarkSpanID_DotString_noExporters_alwaysSample(b *testing.B) {
+	ApplyConfig(Config{DefaultSampler: AlwaysSample()})
+	s := SpanID{0x0D, 0x0E, 0x0A, 0x0D, 0x0B, 0x0E, 0x0E, 0x0F}
+	want := "0d0e0a0d0b0e0e0f"
+
+	b.ResetTimer()
+	b.ReportAllocs()
+
+	for i := 0; i < b.N; i++ {
+		if got := s.String(); got != want {
+			b.Fatalf("got = %q want = %q", got, want)
+		}
+	}
+}
+
+func BenchmarkSpanID_DotString_withExporters_alwaysSample(b *testing.B) {
+	ae := new(anExporter)
+	RegisterExporter(ae)
+	defer UnregisterExporter(ae)
+
+	ApplyConfig(Config{DefaultSampler: AlwaysSample()})
+	s := SpanID{0x0D, 0x0E, 0x0A, 0x0D, 0x0B, 0x0E, 0x0E, 0x0F}
+	want := "0d0e0a0d0b0e0e0f"
+
+	b.ResetTimer()
+	b.ReportAllocs()
+
+	for i := 0; i < b.N; i++ {
+		if got := s.String(); got != want {
+			b.Fatalf("got = %q want = %q", got, want)
+		}
+	}
 }
