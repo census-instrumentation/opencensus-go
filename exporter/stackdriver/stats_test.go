@@ -424,13 +424,24 @@ func TestEqualAggWindowTagKeys(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "count agg",
+			name: "count agg with in64 measure",
 			md: &metricpb.MetricDescriptor{
 				MetricKind: metricpb.MetricDescriptor_CUMULATIVE,
 				ValueType:  metricpb.MetricDescriptor_INT64,
 				Labels:     []*label.LabelDescriptor{{Key: opencensusTaskKey}},
 			},
 			m:       stats.Int64("name", "", ""),
+			agg:     view.Count(),
+			wantErr: false,
+		},
+		{
+			name: "count agg with double measure",
+			md: &metricpb.MetricDescriptor{
+				MetricKind: metricpb.MetricDescriptor_CUMULATIVE,
+				ValueType:  metricpb.MetricDescriptor_INT64,
+				Labels:     []*label.LabelDescriptor{{Key: opencensusTaskKey}},
+			},
+			m:       stats.Float64("name", "", ""),
 			agg:     view.Count(),
 			wantErr: false,
 		},
