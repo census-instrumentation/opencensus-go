@@ -12,22 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package trace
+// Package internal provides trace internals.
+package internal
 
-import (
-	"reflect"
-	"testing"
-)
-
-func TestApplyZeroConfig(t *testing.T) {
-	cfg := config.Load().(*Config)
-	ApplyConfig(Config{})
-	currentCfg := config.Load().(*Config)
-
-	if got, want := reflect.ValueOf(currentCfg.DefaultSampler).Pointer(), reflect.ValueOf(cfg.DefaultSampler).Pointer(); got != want {
-		t.Fatalf("config.DefaultSampler = %#v; want %#v", got, want)
-	}
-	if got, want := currentCfg.IDGenerator, cfg.IDGenerator; got != want {
-		t.Fatalf("config.IDGenerator = %#v; want %#v", got, want)
-	}
+type IDGenerator interface {
+	NewTraceID() [16]byte
+	NewSpanID() [8]byte
 }
