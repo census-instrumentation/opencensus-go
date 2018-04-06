@@ -404,7 +404,7 @@ func equalMeasureAggTagKeys(md *metricpb.MetricDescriptor, m stats.Measure, agg 
 	var aggTypeMatch bool
 	switch md.ValueType {
 	case metricpb.MetricDescriptor_INT64:
-		if _, ok := m.(*stats.Int64Measure); !ok {
+		if _, ok := m.(*stats.Int64Measure); !(ok || agg.Type == view.AggTypeCount) {
 			return fmt.Errorf("stackdriver metric descriptor was not created as int64")
 		}
 		aggTypeMatch = agg.Type == view.AggTypeCount || agg.Type == view.AggTypeSum || agg.Type == view.AggTypeLastValue
