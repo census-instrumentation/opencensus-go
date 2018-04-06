@@ -30,6 +30,25 @@ import (
 	"go.opencensus.io/trace/propagation"
 )
 
+// IgnoreFunc can be passed to Handler to ignore certain requests.
+// Return true to ignore the request.
+//
+// Example:
+// ```
+// h := &Handler{
+//     IgnoreFunc: func (r *http.Request) bool {
+//         if r.Method == "OPTIONS" {
+//             return true
+//         }
+//         if r.URL.Path == "/healthz" {
+//             return true
+//         }
+//         return false
+//     },
+// }
+// ```
+type IgnoreFunc func(*http.Request) bool
+
 // Handler is a http.Handler that is aware of the incoming request's span.
 //
 // The extracted span can be accessed from the incoming request's
@@ -44,6 +63,9 @@ type Handler struct {
 	// Propagation defines how traces are propagated. If unspecified,
 	// B3 propagation will be used.
 	Propagation propagation.HTTPFormat
+
+	// Ignore determines if the request should be ignored or not.
+	Ignore IgnoreFunc
 
 	// Handler is the handler used to handle the incoming request.
 	Handler http.Handler
@@ -63,15 +85,21 @@ type Handler struct {
 }
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	handler := h.Handler
+	if handler == nil {
+		handler = http.DefaultServeMux
+	}
+
+	if h.Ignore != nil && h.Ignore(r) {
+		handler.ServeHTTP(w, r)
+		return
+	}
+
 	var traceEnd, statsEnd func()
 	r, traceEnd = h.startTrace(w, r)
 	defer traceEnd()
 	w, statsEnd = h.startStats(w, r)
 	defer statsEnd()
-	handler := h.Handler
-	if handler == nil {
-		handler = http.DefaultServeMux
-	}
 	handler.ServeHTTP(w, r)
 }
 
