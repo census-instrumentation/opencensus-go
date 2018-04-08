@@ -17,12 +17,17 @@ package stats
 
 import (
 	"context"
+	"log"
+	"os"
 
 	"go.opencensus.io/stats/internal"
 	"go.opencensus.io/tag"
 )
 
+var debug bool
+
 func init() {
+	debug = os.Getenv("OC_STATS_DEBUG") != ""
 	internal.SubscriptionReporter = func(measure string) {
 		mu.Lock()
 		measures[measure].subscribe()
@@ -47,6 +52,12 @@ func Record(ctx context.Context, ms ...Measurement) {
 		return
 	}
 	if internal.DefaultRecorder != nil {
-		internal.DefaultRecorder(tag.FromContext(ctx), ms)
+		tags := tag.FromContext(ctx)
+		if debug {
+			for _, m := range ms {
+				log.Printf("opencensus: Record %q = %v; tags=%v\n", m.m.Name(), m.v, tags)
+			}
+		}
+		internal.DefaultRecorder(tags, ms)
 	}
 }
