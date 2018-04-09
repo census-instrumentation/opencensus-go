@@ -11,8 +11,8 @@ func TestMeasureFloat64AndInt64(t *testing.T) {
 	// Recording through both a Float64Measure and Int64Measure with the
 	// same name should work.
 
-	im := stats.Int64("TestMeasureFloat64AndInt64", "", stats.UnitNone)
-	fm := stats.Float64("TestMeasureFloat64AndInt64", "", stats.UnitNone)
+	im := stats.Int64("TestMeasureFloat64AndInt64", "", stats.UnitDimensionless)
+	fm := stats.Float64("TestMeasureFloat64AndInt64", "", stats.UnitDimensionless)
 
 	if im == nil || fm == nil {
 		t.Fatal("Error creating Measures")

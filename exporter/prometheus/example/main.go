@@ -31,7 +31,7 @@ import (
 // Create measures. The program will record measures for the size of
 // processed videos and the number of videos marked as spam.
 var (
-	videoCount = stats.Int64("my.org/measures/video_count", "number of processed videos", stats.UnitNone)
+	videoCount = stats.Int64("my.org/measures/video_count", "number of processed videos", stats.UnitDimensionless)
 	videoSize  = stats.Int64("my.org/measures/video_size", "size of processed video", stats.UnitBytes)
 )
 

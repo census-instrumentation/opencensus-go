@@ -274,7 +274,7 @@ func TestCumulativenessFromHistograms(t *testing.T) {
 	reportPeriod := time.Millisecond
 	view.SetReportingPeriod(reportPeriod)
 
-	m := stats.Float64("tests/bills", "payments by denomination", stats.UnitNone)
+	m := stats.Float64("tests/bills", "payments by denomination", stats.UnitDimensionless)
 	v := &view.View{
 		Name:        "cash/register",
 		Description: "this is a test",
