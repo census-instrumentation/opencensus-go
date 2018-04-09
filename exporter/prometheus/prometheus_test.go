@@ -227,7 +227,8 @@ func TestMetricsEndpointOutput(t *testing.T) {
 	var i int
 	var output string
 	for {
-		if i == 10000 {
+		time.Sleep(10 * time.Millisecond)
+		if i == 1000 {
 			t.Fatal("no output at /metrics (10s wait)")
 		}
 		i++
@@ -247,7 +248,6 @@ func TestMetricsEndpointOutput(t *testing.T) {
 		if output != "" {
 			break
 		}
-		time.Sleep(time.Millisecond)
 	}
 
 	if strings.Contains(output, "collected before with the same name and label values") {
@@ -291,7 +291,7 @@ func TestCumulativenessFromHistograms(t *testing.T) {
 	defer view.Unregister(v)
 
 	// Give the reporter ample time to process registration
-	<-time.After(2 * reportPeriod)
+	<-time.After(10 * reportPeriod)
 
 	values := []float64{0.25, 245.67, 12, 1.45, 199.9, 7.69, 187.12}
 	// We want the results that look like this:
@@ -324,7 +324,7 @@ func TestCumulativenessFromHistograms(t *testing.T) {
 	stats.Record(ctx, ms...)
 
 	// Give the recorder ample time to process recording
-	<-time.After(3 * reportPeriod)
+	<-time.After(10 * reportPeriod)
 
 	cst := httptest.NewServer(exporter)
 	defer cst.Close()
