@@ -31,6 +31,7 @@ import (
 // Stackdriver.
 //
 type traceExporter struct {
+	o         Options
 	projectID string
 	bundler   *bundler.Bundler
 	// uploadFn defaults to uploadSpans; it can be replaced for tests.
@@ -53,6 +54,7 @@ func newTraceExporterWithClient(o Options, c *tracingclient.Client) *traceExport
 	e := &traceExporter{
 		projectID: o.ProjectID,
 		client:    c,
+		o:         o,
 	}
 	bundler := bundler.NewBundler((*trace.SpanData)(nil), func(bundle interface{}) {
 		e.uploadFn(bundle.([]*trace.SpanData))
@@ -93,7 +95,7 @@ func (e *traceExporter) ExportSpan(s *trace.SpanData) {
 	case bundler.ErrOverflow:
 		e.overflowLogger.log()
 	default:
-		log.Println("OpenCensus Stackdriver exporter: failed to upload span:", err)
+		e.o.handleError(err)
 	}
 }
 
@@ -123,8 +125,7 @@ func (e *traceExporter) uploadSpans(spans []*trace.SpanData) {
 	err := e.client.BatchWriteSpans(ctx, &req)
 	if err != nil {
 		span.SetStatus(trace.Status{Code: 2, Message: err.Error()})
-		// TODO: Allow configuring a logger for exporters.
-		log.Printf("OpenCensus Stackdriver exporter: failed to upload %d spans: %v", len(spans), err)
+		e.o.handleError(err)
 	}
 }
 

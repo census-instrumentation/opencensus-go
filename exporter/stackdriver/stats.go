@@ -18,7 +18,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"os"
 	"path"
 	"strconv"
@@ -123,9 +122,9 @@ func (e *statsExporter) ExportView(vd *view.Data) {
 	case bundler.ErrOversizedItem:
 		go e.handleUpload(vd)
 	case bundler.ErrOverflow:
-		e.onError(errors.New("failed to upload: buffer full"))
+		e.o.handleError(errors.New("failed to upload: buffer full"))
 	default:
-		e.onError(err)
+		e.o.handleError(err)
 	}
 }
 
@@ -143,7 +142,7 @@ func getTaskValue() string {
 // of Data, as well as error handling.
 func (e *statsExporter) handleUpload(vds ...*view.Data) {
 	if err := e.uploadStats(vds); err != nil {
-		e.onError(err)
+		e.o.handleError(err)
 	}
 }
 
@@ -153,14 +152,6 @@ func (e *statsExporter) handleUpload(vds ...*view.Data) {
 // want to lose recent spans.
 func (e *statsExporter) Flush() {
 	e.bundler.Flush()
-}
-
-func (e *statsExporter) onError(err error) {
-	if e.o.OnError != nil {
-		e.o.OnError(err)
-		return
-	}
-	log.Printf("Failed to export to Stackdriver Monitoring: %v", err)
 }
 
 func (e *statsExporter) uploadStats(vds []*view.Data) error {
