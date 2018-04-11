@@ -52,9 +52,10 @@ func (c *ClientHandler) traceTagRPC(ctx context.Context, rti *stats.RPCTagInfo) 
 //
 // It returns ctx, with the new trace span added.
 func (s *ServerHandler) traceTagRPC(ctx context.Context, rti *stats.RPCTagInfo) context.Context {
-	opts := trace.StartOptions{
-		Sampler:  s.StartOptions.Sampler,
-		SpanKind: trace.SpanKindServer,
+	opts := []trace.StartSpanOption{
+		trace.WithSampler(s.StartOptions.Sampler),
+		trace.WithSpanKind(trace.SpanKindServer),
+		trace.WithParent(nil),
 	}
 
 	md, _ := metadata.FromIncomingContext(ctx)
@@ -62,25 +63,24 @@ func (s *ServerHandler) traceTagRPC(ctx context.Context, rti *stats.RPCTagInfo) 
 	name = strings.Replace(name, "/", ".", -1)
 	traceContext := md[traceContextKey]
 	var (
-		parent     trace.SpanContext
-		haveParent bool
+		parent         trace.SpanContext
+		havePropagated bool
 	)
 	if len(traceContext) > 0 {
 		// Metadata with keys ending in -bin are actually binary. They are base64
 		// encoded before being put on the wire, see:
 		// https://github.com/grpc/grpc-go/blob/08d6261/Documentation/grpc-metadata.md#storing-binary-data-in-metadata
 		traceContextBinary := []byte(traceContext[0])
-		parent, haveParent = propagation.FromBinary(traceContextBinary)
-		if haveParent && !s.IsPublicEndpoint {
-			span := trace.NewSpanWithRemoteParent(name, parent, opts)
-			return trace.WithSpan(ctx, span)
+		parent, havePropagated = propagation.FromBinary(traceContextBinary)
+		if havePropagated && !s.IsPublicEndpoint {
+			opts = append(opts, trace.WithRemoteParent(parent))
 		}
 	}
-	span := trace.NewSpan(name, nil, opts)
-	if haveParent {
+	ctx, span := trace.StartSpan(ctx, name, opts...)
+	if havePropagated && s.IsPublicEndpoint {
 		span.AddLink(trace.Link{TraceID: parent.TraceID, SpanID: parent.SpanID, Type: trace.LinkTypeChild})
 	}
-	return trace.WithSpan(ctx, span)
+	return ctx
 }
 
 func traceHandleRPC(ctx context.Context, rs stats.RPCStats) {
