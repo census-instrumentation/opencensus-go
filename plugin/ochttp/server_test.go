@@ -3,13 +3,16 @@ package ochttp
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"crypto/tls"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net"
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync"
 	"testing"
 
 	"golang.org/x/net/http2"
@@ -272,4 +275,79 @@ func TestHandlerProxiesHijack_HTTP2(t *testing.T) {
 	if g, w := string(blob), "0\n1\n2\n3\n4\n"; g != w {
 		t.Errorf("got = %q; want = %q", g, w)
 	}
+}
+
+func TestEnsureTrackingResponseWriterSetsStatusCode(t *testing.T) {
+	// Ensure that the trackingResponseWriter always sets the spanStatus on ending the span.
+	// Because we can only examine the Status after exporting, this test roundtrips a
+	// couple of requests and then later examines the exported spans.
+	// See Issue #700.
+	exporter := &spanExporter{cur: make(chan *trace.SpanData, 1)}
+	trace.RegisterExporter(exporter)
+	defer trace.UnregisterExporter(exporter)
+
+	tests := []struct {
+		res  *http.Response
+		want trace.Status
+	}{
+		{res: &http.Response{StatusCode: 200}, want: trace.Status{Code: 0, Message: `"OK"`}},
+		{res: &http.Response{StatusCode: 500}, want: trace.Status{Code: 2, Message: `"UNKNOWN"`}},
+		{res: &http.Response{StatusCode: 403}, want: trace.Status{Code: 7, Message: `"PERMISSION_DENIED"`}},
+		{res: &http.Response{StatusCode: 401}, want: trace.Status{Code: 16, Message: `"UNAUTHENTICATED"`}},
+		{res: &http.Response{StatusCode: 429}, want: trace.Status{Code: 8, Message: `"RESOURCE_EXHAUSTED"`}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.want.Message, func(t *testing.T) {
+			span := trace.NewSpan("testing", nil, trace.StartOptions{Sampler: trace.AlwaysSample()})
+			ctx := trace.WithSpan(context.Background(), span)
+			prc, pwc := io.Pipe()
+			go func() {
+				pwc.Write([]byte("Foo"))
+				pwc.Close()
+			}()
+			inRes := tt.res
+			inRes.Body = prc
+			tr := &traceTransport{base: &testResponseTransport{res: inRes}}
+			req, err := http.NewRequest("POST", "https://example.org", bytes.NewReader([]byte("testing")))
+			if err != nil {
+				t.Fatalf("NewRequest error: %v", err)
+			}
+			req = req.WithContext(ctx)
+			res, err := tr.RoundTrip(req)
+			if err != nil {
+				t.Fatalf("RoundTrip error: %v", err)
+			}
+			_, _ = ioutil.ReadAll(res.Body)
+			res.Body.Close()
+
+			cur := <-exporter.cur
+			if got, want := cur.Status, tt.want; got != want {
+				t.Fatalf("SpanData:\ngot =  (%#v)\nwant = (%#v)", got, want)
+			}
+		})
+	}
+}
+
+type spanExporter struct {
+	sync.Mutex
+	cur chan *trace.SpanData
+}
+
+var _ trace.Exporter = (*spanExporter)(nil)
+
+func (se *spanExporter) ExportSpan(sd *trace.SpanData) {
+	se.Lock()
+	se.cur <- sd
+	se.Unlock()
+}
+
+type testResponseTransport struct {
+	res *http.Response
+}
+
+var _ http.RoundTripper = (*testResponseTransport)(nil)
+
+func (rb *testResponseTransport) RoundTrip(*http.Request) (*http.Response, error) {
+	return rb.res, nil
 }
