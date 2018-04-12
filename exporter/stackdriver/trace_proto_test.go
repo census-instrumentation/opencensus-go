@@ -289,7 +289,7 @@ func TestExportTrace(t *testing.T) {
 			Links: &tracepb.Span_Links{
 				Link: []*tracepb.Span_Link{
 					{
-						TraceId: "projects/testproject/traces/01020000000000000000000000000000",
+						TraceId: "01020000000000000000000000000000",
 						SpanId:  "0300000000000000",
 						Type:    tracepb.Span_Link_PARENT_LINKED_SPAN,
 						Attributes: &tracepb.Span_Attributes{
