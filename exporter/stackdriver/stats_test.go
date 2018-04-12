@@ -39,7 +39,7 @@ var authOptions = []option.ClientOption{option.WithGRPCConn(&grpc.ClientConn{})}
 func TestRejectBlankProjectID(t *testing.T) {
 	ids := []string{"", "     ", " "}
 	for _, projectID := range ids {
-		opts := Options{ProjectID: projectID, ClientOptions: authOptions}
+		opts := Options{ProjectID: projectID, MonitoringClientOptions: authOptions}
 		exp, err := newStatsExporter(opts)
 		if err == nil || exp != nil {
 			t.Errorf("%q ProjectID must be rejected: NewExporter() = %v err = %q", projectID, exp, err)
@@ -52,7 +52,7 @@ func TestRejectBlankProjectID(t *testing.T) {
 func TestNewExporterSingletonPerProcess(t *testing.T) {
 	ids := []string{"open-census.io", "x", "fakeProjectID"}
 	for _, projectID := range ids {
-		opts := Options{ProjectID: projectID, ClientOptions: authOptions}
+		opts := Options{ProjectID: projectID, MonitoringClientOptions: authOptions}
 		exp, err := newStatsExporter(opts)
 		if err != nil {
 			t.Errorf("NewExporter() projectID = %q err = %q", projectID, err)

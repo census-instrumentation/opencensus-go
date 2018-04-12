@@ -42,7 +42,7 @@ type traceExporter struct {
 var _ trace.Exporter = (*traceExporter)(nil)
 
 func newTraceExporter(o Options) (*traceExporter, error) {
-	client, err := tracingclient.NewClient(context.Background(), o.ClientOptions...)
+	client, err := tracingclient.NewClient(context.Background(), o.TraceClientOptions...)
 	if err != nil {
 		return nil, fmt.Errorf("stackdriver: couldn't initialize trace client: %v", err)
 	}
