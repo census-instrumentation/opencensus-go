@@ -49,10 +49,15 @@ type Options struct {
 	// Optional.
 	OnError func(err error)
 
-	// ClientOptions are additional options to be passed
+	// TraceClientOptions are additional options to be passed
 	// to the underlying Stackdriver Monitoring API client.
 	// Optional.
-	ClientOptions []option.ClientOption
+	MonitoringClientOptions []option.ClientOption
+
+	// TraceClientOptions are additional options to be passed
+	// to the underlying Stackdriver Trace API client.
+	// Optional.
+	TraceClientOptions []option.ClientOption
 
 	// BundleDelayThreshold determines the max amount of time
 	// the exporter can wait before uploading view data to
