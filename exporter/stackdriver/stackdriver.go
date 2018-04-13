@@ -25,6 +25,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"time"
 
 	traceapi "cloud.google.com/go/trace/apiv2"
@@ -134,4 +135,12 @@ func (e *Exporter) ExportSpan(sd *trace.SpanData) {
 func (e *Exporter) Flush() {
 	e.statsExporter.Flush()
 	e.traceExporter.Flush()
+}
+
+func (o Options) handleError(err error) {
+	if o.OnError != nil {
+		o.OnError(err)
+		return
+	}
+	log.Printf("Error exporting to Stackdriver: %v", err)
 }
