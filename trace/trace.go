@@ -56,6 +56,14 @@ func (s *Span) IsRecordingEvents() bool {
 	return s.data != nil
 }
 
+func (s *Span) ensureNotRecordingEvents() {
+	if s != nil {
+		s.mu.Lock()
+		s.data = nil
+		s.mu.Unlock()
+	}
+}
+
 // TraceOptions contains options associated with a trace span.
 type TraceOptions uint32
 
@@ -157,13 +165,15 @@ func NewSpanWithRemoteParent(name string, parent SpanContext, o StartOptions) *S
 
 func startSpanInternal(name string, hasParent bool, parent SpanContext, remoteParent bool, o StartOptions) *Span {
 	span := &Span{}
-	span.spanContext = parent
 
 	cfg := config.Load().(*Config)
 
 	if !hasParent {
 		span.spanContext.TraceID = cfg.IDGenerator.NewTraceID()
+	} else {
+		span.spanContext = parent
 	}
+
 	span.spanContext.SpanID = cfg.IDGenerator.NewSpanID()
 	sampler := cfg.DefaultSampler
 
@@ -215,21 +225,33 @@ func (s *Span) End() {
 	if !s.IsRecordingEvents() {
 		return
 	}
+
+	// If there are no exporters, no need to create spanData
+	// nor invoke all the code below this check, just return.
+	// See Issue 681.
+	if atomic.LoadInt64(&nExporters) <= 0 {
+		return
+	}
+
 	s.exportOnce.Do(func() {
-		// TODO: optimize to avoid this call if sd won't be used.
+		if !s.spanContext.IsSampled() {
+			return
+		}
 		sd := s.makeSpanData()
 		sd.EndTime = internal.MonotonicEndTime(sd.StartTime)
 		if s.spanStore != nil {
 			s.spanStore.finished(s, sd)
 		}
-		if s.spanContext.IsSampled() {
-			// TODO: consider holding exportersMu for less time.
-			exportersMu.Lock()
-			for e := range exporters {
-				e.ExportSpan(sd)
-			}
-			exportersMu.Unlock()
+
+		// TODO: consider holding exportersMu for less time.
+		exportersMu.Lock()
+		for e := range exporters {
+			e.ExportSpan(sd)
 		}
+		exportersMu.Unlock()
+
+		// Discard any data
+		s.ensureNotRecordingEvents()
 	})
 }
 

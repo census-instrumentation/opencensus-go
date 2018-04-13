@@ -16,6 +16,7 @@ package trace
 
 import (
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -33,6 +34,7 @@ type Exporter interface {
 var (
 	exportersMu sync.Mutex
 	exporters   map[Exporter]struct{}
+	nExporters  int64
 )
 
 // RegisterExporter adds to the list of Exporters that will receive sampled
@@ -44,13 +46,21 @@ func RegisterExporter(e Exporter) {
 	}
 	exporters[e] = struct{}{}
 	exportersMu.Unlock()
+
+	// Increment the count of exporters
+	atomic.AddInt64(&nExporters, 1)
 }
 
 // UnregisterExporter removes from the list of Exporters the Exporter that was
 // registered with the given name.
 func UnregisterExporter(e Exporter) {
 	exportersMu.Lock()
-	delete(exporters, e)
+	if _, ok := exporters[e]; ok {
+		delete(exporters, e)
+
+		// Decrement the exporter count.
+		atomic.AddInt64(&nExporters, -1)
+	}
 	exportersMu.Unlock()
 }
 
