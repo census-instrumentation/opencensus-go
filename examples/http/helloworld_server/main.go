@@ -50,7 +50,7 @@ func main() {
 		r, _ := http.NewRequest("GET", "https://example.com", nil)
 
 		// Propagate the trace header info in the outgoing requests.
-		r.WithContext(req.Context())
+		r = r.WithContext(req.Context())
 		resp, err := client.Do(r)
 		if err != nil {
 			log.Println(err)
