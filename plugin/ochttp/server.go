@@ -159,6 +159,10 @@ func (t *trackingResponseWriter) end() {
 		if t.statusCode == 0 {
 			t.statusCode = 200
 		}
+
+		span := trace.FromContext(t.ctx)
+		span.SetStatus(status(t.statusCode))
+
 		m := []stats.Measurement{
 			ServerLatency.M(float64(time.Since(t.start)) / float64(time.Millisecond)),
 			ServerResponseBytes.M(t.respSize),

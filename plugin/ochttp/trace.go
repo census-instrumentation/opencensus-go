@@ -169,6 +169,8 @@ func status(statusCode int) trace.Status {
 		code = codeUnimplemented
 	case http.StatusServiceUnavailable:
 		code = codeUnavailable
+	case http.StatusOK:
+		code = codeOK
 	}
 	return trace.Status{Code: code, Message: codeToStr[code]}
 }
