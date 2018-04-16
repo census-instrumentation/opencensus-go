@@ -371,3 +371,31 @@ func containsRow(rows []*Row, r *Row) bool {
 	}
 	return false
 }
+
+func TestRegisterUnregisterParity(t *testing.T) {
+	measures := []stats.Measure{
+		stats.Int64("ifoo", "iFOO", "iBar"),
+		stats.Float64("ffoo", "fFOO", "fBar"),
+	}
+	aggregations := []*Aggregation{
+		Count(),
+		Sum(),
+		Distribution(1, 2.0, 4.0, 8.0, 16.0),
+	}
+
+	for i := 0; i < 10; i++ {
+		for _, m := range measures {
+			for _, agg := range aggregations {
+				v := &View{
+					Aggregation: agg,
+					Name:        "Lookup here",
+					Measure:     m,
+				}
+				if err := Register(v); err != nil {
+					t.Errorf("Iteration #%d:\nMeasure: (%#v)\nAggregation (%#v)\nError: %v", i, m, agg, err)
+				}
+				Unregister(v)
+			}
+		}
+	}
+}
