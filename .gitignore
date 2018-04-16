@@ -3,3 +3,5 @@
 # go.opencensus.io/exporter/aws
 /exporter/aws/
 
+# Ignore Go vendor directory
+/.vendor/
