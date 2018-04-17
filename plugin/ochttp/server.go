@@ -81,8 +81,7 @@ func (h *Handler) startTrace(w http.ResponseWriter, r *http.Request) (*http.Requ
 	var span *trace.Span
 	sc, ok := h.extractSpanContext(r)
 	if ok && !h.IsPublicEndpoint {
-		ctx, span = trace.StartSpan(ctx, name,
-			trace.WithRemoteParent(sc),
+		ctx, span = trace.StartSpanWithRemoteParent(ctx, name, sc,
 			trace.WithSampler(h.StartOptions.Sampler),
 			trace.WithSpanKind(trace.SpanKindServer))
 	} else {

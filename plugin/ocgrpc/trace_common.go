@@ -65,8 +65,7 @@ func (s *ServerHandler) traceTagRPC(ctx context.Context, rti *stats.RPCTagInfo) 
 		traceContextBinary := []byte(traceContext[0])
 		parent, haveParent = propagation.FromBinary(traceContextBinary)
 		if haveParent && !s.IsPublicEndpoint {
-			ctx, _ := trace.StartSpan(ctx, name,
-				trace.WithRemoteParent(parent),
+			ctx, _ := trace.StartSpanWithRemoteParent(ctx, name, parent,
 				trace.WithSpanKind(trace.SpanKindServer),
 				trace.WithSampler(s.StartOptions.Sampler),
 			)

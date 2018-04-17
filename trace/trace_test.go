@@ -109,7 +109,7 @@ func TestSampling(t *testing.T) {
 				SpanID:       sid,
 				TraceOptions: test.parentTraceOptions,
 			}
-			ctx, _ = StartSpan(context.Background(), "foo", WithRemoteParent(sc), WithSampler(test.sampler))
+			ctx, _ = StartSpanWithRemoteParent(context.Background(), "foo", sc, WithSampler(test.sampler))
 		} else if test.localParent {
 			sampler := NeverSample()
 			if test.parentTraceOptions == 1 {
@@ -190,12 +190,12 @@ func TestStartSpanWithRemoteParent(t *testing.T) {
 		SpanID:       sid,
 		TraceOptions: 0x0,
 	}
-	ctx, _ := StartSpan(context.Background(), "startSpanWithRemoteParent", WithRemoteParent(sc))
+	ctx, _ := StartSpanWithRemoteParent(context.Background(), "startSpanWithRemoteParent", sc)
 	if err := checkChild(sc, FromContext(ctx)); err != nil {
 		t.Error(err)
 	}
 
-	ctx, _ = StartSpan(context.Background(), "startSpanWithRemoteParent", WithRemoteParent(sc))
+	ctx, _ = StartSpanWithRemoteParent(context.Background(), "startSpanWithRemoteParent", sc)
 	if err := checkChild(sc, FromContext(ctx)); err != nil {
 		t.Error(err)
 	}
@@ -205,12 +205,12 @@ func TestStartSpanWithRemoteParent(t *testing.T) {
 		SpanID:       sid,
 		TraceOptions: 0x1,
 	}
-	ctx, _ = StartSpan(context.Background(), "startSpanWithRemoteParent", WithRemoteParent(sc))
+	ctx, _ = StartSpanWithRemoteParent(context.Background(), "startSpanWithRemoteParent", sc)
 	if err := checkChild(sc, FromContext(ctx)); err != nil {
 		t.Error(err)
 	}
 
-	ctx, _ = StartSpan(context.Background(), "startSpanWithRemoteParent", WithRemoteParent(sc))
+	ctx, _ = StartSpanWithRemoteParent(context.Background(), "startSpanWithRemoteParent", sc)
 	if err := checkChild(sc, FromContext(ctx)); err != nil {
 		t.Error(err)
 	}
@@ -224,16 +224,14 @@ func TestStartSpanWithRemoteParent(t *testing.T) {
 
 // startSpan returns a context with a new Span that is recording events and will be exported.
 func startSpan(o StartOptions) *Span {
-	_, span := StartSpan(context.Background(), "span0",
+	_, span := StartSpanWithRemoteParent(context.Background(), "span0",
+		SpanContext{
+			TraceID:      tid,
+			SpanID:       sid,
+			TraceOptions: 1,
+		},
 		WithSampler(o.Sampler),
 		WithSpanKind(o.SpanKind),
-		WithRemoteParent(
-			SpanContext{
-				TraceID:      tid,
-				SpanID:       sid,
-				TraceOptions: 1,
-			},
-		),
 	)
 	return span
 }

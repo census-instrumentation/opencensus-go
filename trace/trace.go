@@ -130,8 +130,6 @@ type StartOptions struct {
 	// SpanKind represents the kind of a span. If none is set,
 	// SpanKindUnspecified is used.
 	SpanKind int
-
-	remoteParent SpanContext
 }
 
 // StartOption apply changes to StartOptions.
@@ -152,27 +150,10 @@ func WithSampler(sampler Sampler) StartOption {
 	}
 }
 
-// WithRemoteParent makes new spans to be the child of the given part.
-//
-// WithRemoteParent is used to set a parent that has been
-// propagated in an incoming request or RPC.
-//
-// If there is already a parent in the incoming context.Context,
-// this option replaces it with the given parent.
-func WithRemoteParent(parent SpanContext) StartOption {
-	return func(o *StartOptions) {
-		o.remoteParent = parent
-	}
-}
-
 // StartSpan starts a new child span of the current span in the context. If
 // there is no span in the context, creates a new trace and span.
-//
-// If WithRemoteParent option is provided, started span will be a child
-// of the given remote parent.
 func StartSpan(ctx context.Context, name string, o ...StartOption) (context.Context, *Span) {
 	var opts StartOptions
-
 	var parent SpanContext
 	if p := FromContext(ctx); p != nil {
 		parent = p.spanContext
@@ -180,14 +161,21 @@ func StartSpan(ctx context.Context, name string, o ...StartOption) (context.Cont
 	for _, op := range o {
 		op(&opts)
 	}
+	span := startSpanInternal(name, parent != SpanContext{}, parent, false, opts)
+	return NewContext(ctx, span), span
+}
 
-	var span *Span
-	if opts.remoteParent != (SpanContext{}) {
-		span = startSpanInternal(name, true, opts.remoteParent, true, opts)
-	} else {
-		span = startSpanInternal(name, parent != SpanContext{}, parent, false, opts)
+// StartSpanWithRemoteParent starts a new child span of the span from the given parent.
+//
+// If the incoming context contains a parent, it ignores. StartSpanWithRemoteParent is
+// preferred for cases where the parent is propagated via an incoming request.
+func StartSpanWithRemoteParent(ctx context.Context, name string, parent SpanContext, o ...StartOption) (context.Context, *Span) {
+	var opts StartOptions
+	for _, op := range o {
+		op(&opts)
 	}
-	return WithSpan(ctx, span), span
+	span := startSpanInternal(name, parent != SpanContext{}, parent, true, opts)
+	return NewContext(ctx, span), span
 }
 
 // NewSpan returns a new span.
@@ -205,7 +193,7 @@ func NewSpan(name string, parent *Span, o StartOptions) *Span {
 
 // NewSpanWithRemoteParent returns a new span with the given parent SpanContext.
 //
-// Deprecated: Use StartSpan with WithRemoteParent.
+// Deprecated: Use StartSpanWithRemoteParent.
 func NewSpanWithRemoteParent(name string, parent SpanContext, o StartOptions) *Span {
 	return startSpanInternal(name, true, parent, true, o)
 }
