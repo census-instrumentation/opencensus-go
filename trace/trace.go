@@ -97,7 +97,14 @@ func FromContext(ctx context.Context) *Span {
 }
 
 // WithSpan returns a new context with the given Span attached.
+//
+// Deprecated: Use NewContext.
 func WithSpan(parent context.Context, s *Span) context.Context {
+	return NewContext(parent, s)
+}
+
+// NewContext returns a new context with the given Span attached.
+func NewContext(parent context.Context, s *Span) context.Context {
 	return context.WithValue(parent, contextKey{}, s)
 }
 
@@ -146,6 +153,12 @@ func WithSampler(sampler Sampler) StartOption {
 }
 
 // WithRemoteParent makes new spans to be the child of the given part.
+//
+// WithRemoteParent is used to set a parent that has been
+// propagated in an incoming request or RPC.
+//
+// If there is already a parent in the incoming context.Context,
+// this option replaces it with the given parent.
 func WithRemoteParent(parent SpanContext) StartOption {
 	return func(o *StartOptions) {
 		o.remoteParent = parent
