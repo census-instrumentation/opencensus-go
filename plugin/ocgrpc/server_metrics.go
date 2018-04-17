@@ -79,7 +79,7 @@ var (
 		Description: "Count of request messages per server RPC",
 		TagKeys:     []tag.Key{KeyMethod},
 		Measure:     ServerRequestCount,
-		Aggregation: DefaultMessageCountDistribution,
+		Aggregation: view.Count(),
 	}
 
 	ServerResponseCountView = &view.View{
@@ -87,7 +87,7 @@ var (
 		Description: "Count of response messages per server RPC",
 		TagKeys:     []tag.Key{KeyMethod},
 		Measure:     ServerResponseCount,
-		Aggregation: DefaultMessageCountDistribution,
+		Aggregation: view.Count(),
 	}
 )
 

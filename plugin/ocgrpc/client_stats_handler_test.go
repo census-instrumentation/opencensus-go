@@ -80,7 +80,7 @@ func TestClientDefaultCollections(t *testing.T) {
 							Tags: []tag.Tag{
 								{Key: KeyMethod, Value: "package.service/method"},
 							},
-							Data: newDistributionData([]int64{0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 1, 1, 1, 1, 0),
+							Data: newCountData(1),
 						},
 					},
 				},
@@ -91,7 +91,7 @@ func TestClientDefaultCollections(t *testing.T) {
 							Tags: []tag.Tag{
 								{Key: KeyMethod, Value: "package.service/method"},
 							},
-							Data: newDistributionData([]int64{0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 1, 1, 1, 1, 0),
+							Data: newCountData(1),
 						},
 					},
 				},
@@ -169,7 +169,7 @@ func TestClientDefaultCollections(t *testing.T) {
 							Tags: []tag.Tag{
 								{Key: KeyMethod, Value: "package.service/method"},
 							},
-							Data: newDistributionData([]int64{0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 2, 2, 3, 2.5, 0.5),
+							Data: newCountData(2),
 						},
 					},
 				},
@@ -180,7 +180,7 @@ func TestClientDefaultCollections(t *testing.T) {
 							Tags: []tag.Tag{
 								{Key: KeyMethod, Value: "package.service/method"},
 							},
-							Data: newDistributionData([]int64{0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 2, 1, 2, 1.5, 0.5),
+							Data: newCountData(2),
 						},
 					},
 				},
@@ -256,7 +256,7 @@ func TestClientDefaultCollections(t *testing.T) {
 							Tags: []tag.Tag{
 								{Key: KeyMethod, Value: "package.service/method"},
 							},
-							Data: newDistributionData([]int64{0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 3, 2, 3, 2.666666666, 0.333333333*2),
+							Data: newCountData(3),
 						},
 					},
 				},
@@ -267,7 +267,7 @@ func TestClientDefaultCollections(t *testing.T) {
 							Tags: []tag.Tag{
 								{Key: KeyMethod, Value: "package.service/method"},
 							},
-							Data: newDistributionData([]int64{0, 0, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 3, 1, 2, 1.333333333, 0.333333333*2),
+							Data: newCountData(3),
 						},
 					},
 				},
