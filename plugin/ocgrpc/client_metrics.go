@@ -75,7 +75,7 @@ var (
 		Description: "Count of request messages per client RPC",
 		TagKeys:     []tag.Key{KeyMethod},
 		Measure:     ClientRequestCount,
-		Aggregation: DefaultMessageCountDistribution,
+		Aggregation: view.Count(),
 	}
 
 	ClientResponseCountView = &view.View{
@@ -83,7 +83,7 @@ var (
 		Description: "Count of response messages per client RPC",
 		TagKeys:     []tag.Key{KeyMethod},
 		Measure:     ClientResponseCount,
-		Aggregation: DefaultMessageCountDistribution,
+		Aggregation: view.Count(),
 	}
 )
 
