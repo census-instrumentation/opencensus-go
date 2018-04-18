@@ -73,7 +73,8 @@ func (t testPropagator) SpanContextToRequest(sc trace.SpanContext, req *http.Req
 }
 
 func TestTransport_RoundTrip(t *testing.T) {
-	parent := trace.NewSpan("parent", nil, trace.StartOptions{})
+	ctx := context.Background()
+	ctx, parent := trace.StartSpan(ctx, "parent")
 	tests := []struct {
 		name   string
 		parent *trace.Span
@@ -221,12 +222,9 @@ func TestEndToEnd(t *testing.T) {
 			url := serveHTTP(tt.handler, serverDone, serverReturn)
 
 			// Start a root Span in the client.
-			root := trace.NewSpan(
-				"top-level",
-				nil,
-				trace.StartOptions{})
-			ctx := trace.WithSpan(context.Background(), root)
-
+			ctx, root := trace.StartSpan(
+				context.Background(),
+				"top-level")
 			// Make the request.
 			req, err := http.NewRequest(
 				http.MethodPost,
@@ -278,7 +276,7 @@ func TestEndToEnd(t *testing.T) {
 						t.Errorf("Span name: %q; want %q", got, want)
 					}
 				default:
-					t.Fatalf("server or client span missing")
+					t.Fatalf("server or client span missing; kind = %v", sp.SpanKind)
 				}
 			}
 

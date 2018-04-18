@@ -53,14 +53,13 @@ func TestExport(t *testing.T) {
 
 	trace.ApplyConfig(trace.Config{DefaultSampler: trace.AlwaysSample()})
 
-	span := trace.NewSpan("custom-span", nil, trace.StartOptions{})
+	_, span := trace.StartSpan(context.Background(), "custom-span")
 	time.Sleep(10 * time.Millisecond)
 	span.End()
 
 	// Test HTTP spans
 
 	handler := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-
 		_, backgroundSpan := trace.StartSpan(context.Background(), "BackgroundWork")
 		spanContext := backgroundSpan.SpanContext()
 		time.Sleep(10 * time.Millisecond)

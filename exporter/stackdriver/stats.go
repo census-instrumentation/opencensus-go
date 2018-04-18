@@ -155,12 +155,11 @@ func (e *statsExporter) Flush() {
 }
 
 func (e *statsExporter) uploadStats(vds []*view.Data) error {
-	span := trace.NewSpan(
+	ctx, span := trace.StartSpan(
+		context.Background(),
 		"go.opencensus.io/exporter/stackdriver.uploadStats",
-		nil,
-		trace.StartOptions{Sampler: trace.NeverSample()},
+		trace.WithSampler(trace.NeverSample()),
 	)
-	ctx := trace.WithSpan(context.Background(), span)
 	defer span.End()
 
 	for _, vd := range vds {

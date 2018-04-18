@@ -35,10 +35,7 @@ func TestClientHandler(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	span := trace.NewSpan("/foo", nil, trace.StartOptions{
-		Sampler: trace.AlwaysSample(),
-	})
-	ctx = trace.WithSpan(ctx, span)
+	ctx, _ = trace.StartSpan(ctx, "/foo", trace.WithSampler(trace.AlwaysSample()))
 
 	var handler ClientHandler
 	ctx = handler.TagRPC(ctx, &stats.RPCTagInfo{
