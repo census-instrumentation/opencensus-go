@@ -53,15 +53,12 @@ then add additional custom instrumentation if needed.
 
 ## Tags
 
-Tags represent propagated key-value pairs. They are propagated using context.Context
-in the same process or can be encoded to be transmitted on the wire and decoded back
-to a tag.Map at the destination.
+Tags represent propagated key-value pairs. They are propagated using `context.Context`
+in the same process or can be encoded to be transmitted on the wire. Usually, this will
+be handled by an integration plugin, e.g. `ocgrpc.ServerHandler` and `ocgrpc.ClientHandler`
+for gRPC.
 
-Package tag provides a builder to create tag maps and put it
-into the current context.
-To propagate a tag map to downstream methods and RPCs, New
-will add the produced tag map to the current context.
-If there is already a tag map in the current context, it will be replaced.
+Package tag allows adding or modifying tags in the current context.
 
 [embedmd]:# (tags.go new)
 ```go
@@ -119,7 +116,7 @@ Here we create a view with the DistributionAggregation over our measure.
 
 [embedmd]:# (stats.go view)
 ```go
-if err := view.Subscribe(&view.View{
+if err := view.Register(&view.View{
 	Name:        "my.org/video_size_distribution",
 	Description: "distribution of processed video size over time",
 	Measure:     videoSize,
