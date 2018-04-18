@@ -60,7 +60,7 @@ for gRPC.
 
 Package tag allows adding or modifying tags in the current context.
 
-[embedmd]:# (tags.go new)
+[embedmd]:# (internal/readme/tags.go new)
 ```go
 ctx, err = tag.New(ctx,
 	tag.Insert(osKey, "macOS-10.12.5"),
@@ -88,7 +88,7 @@ Measurements are data points associated with a measure.
 Recording implicitly tags the set of Measurements with the tags from the
 provided context:
 
-[embedmd]:# (stats.go record)
+[embedmd]:# (internal/readme/stats.go record)
 ```go
 stats.Record(ctx, videoSize.M(102478))
 ```
@@ -105,7 +105,7 @@ Currently three types of aggregations are supported:
 * DistributionAggregation is used to provide a histogram of the values of the samples.
 * SumAggregation is used to sum up all sample values.
 
-[embedmd]:# (stats.go aggs)
+[embedmd]:# (internal/readme/stats.go aggs)
 ```go
 distAgg := view.Distribution(0, 1<<32, 2<<32, 3<<32)
 countAgg := view.Count()
@@ -114,7 +114,7 @@ sumAgg := view.Sum()
 
 Here we create a view with the DistributionAggregation over our measure.
 
-[embedmd]:# (stats.go view)
+[embedmd]:# (internal/readme/stats.go view)
 ```go
 if err := view.Register(&view.View{
 	Name:        "my.org/video_size_distribution",
@@ -131,7 +131,7 @@ exported via the registered exporters.
 
 ## Traces
 
-[embedmd]:# (trace.go startend)
+[embedmd]:# (internal/readme/trace.go startend)
 ```go
 ctx, span := trace.StartSpan(ctx, "your choice of name")
 defer span.End()
@@ -142,7 +142,7 @@ defer span.End()
 OpenCensus tags can be applied as profiler labels
 for users who are on Go 1.9 and above.
 
-[embedmd]:# (tags.go profiler)
+[embedmd]:# (internal/readme/tags.go profiler)
 ```go
 ctx, err = tag.New(ctx,
 	tag.Insert(osKey, "macOS-10.12.5"),
