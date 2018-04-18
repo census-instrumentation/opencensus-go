@@ -14,8 +14,10 @@ before_script:
   - GO_FILES=$(find . -iname '*.go' | grep -v /vendor/)  # All the .go files, excluding vendor/ if any
   - PKGS=$(go list ./... | grep -v /vendor/)             # All the import paths, excluding vendor/ if any
   - curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh # Install latest dep release
+  - go get github.com/rakyll/embedmd
 
 script:
+  - embedmd -d README.md              # Ensure embedded code is up-to-date
   - dep ensure -v
   - go build ./...                    # Ensure dependency updates don't break build
   - if [ -n "$(gofmt -s -l $GO_FILES)" ]; then echo "gofmt the following files:"; gofmt -s -l $GO_FILES; exit 1; fi
