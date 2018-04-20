@@ -21,6 +21,6 @@ import (
 	t "runtime/trace"
 )
 
-func startExecutionTracerSpan(ctx context.Context, name string) (context.Context, func()) {
+func startExecutionTracerTask(ctx context.Context, name string) (context.Context, func()) {
 	return t.NewContext(ctx, name)
 }
