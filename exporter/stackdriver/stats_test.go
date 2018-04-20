@@ -685,13 +685,13 @@ func TestExporter_createMeasure_CountAggregation(t *testing.T) {
 		if got, want := mdr.MetricDescriptor.DisplayName, "OpenCensus/test_view_count"; got != want {
 			t.Errorf("MetricDescriptor.DisplayName = %q; want %q", got, want)
 		}
-		if got, want := mdr.MetricDescriptor.Unit, stats.UnitNone; got != want {
+		if got, want := mdr.MetricDescriptor.Unit, stats.UnitDimensionless; got != want {
 			t.Errorf("MetricDescriptor.Unit = %q; want %q", got, want)
 		}
 		return &metric.MetricDescriptor{
 			DisplayName: "OpenCensus/test_view_sum",
 			Description: "view_description",
-			Unit:        stats.UnitNone,
+			Unit:        stats.UnitDimensionless,
 			Type:        "custom.googleapis.com/opencensus/test_view_count",
 			MetricKind:  metricpb.MetricDescriptor_CUMULATIVE,
 			ValueType:   metricpb.MetricDescriptor_INT64,

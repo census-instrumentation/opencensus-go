@@ -243,7 +243,7 @@ func (e *statsExporter) createMeasure(ctx context.Context, vd *view.Data) error 
 		valueType = metricpb.MetricDescriptor_INT64
 		// If the aggregation type is count, which counts the number of recorded measurements, the unit must be "1",
 		// because this view does not apply to the recorded values.
-		unit = stats.UnitNone
+		unit = stats.UnitDimensionless
 	case view.AggTypeSum:
 		switch m.(type) {
 		case *stats.Int64Measure:
