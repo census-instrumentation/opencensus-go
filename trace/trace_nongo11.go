@@ -20,6 +20,6 @@ import (
 	"context"
 )
 
-func startExecutionTracerSpan(ctx context.Context, name string) (context.Context, func()) {
+func startExecutionTracerTask(ctx context.Context, name string) (context.Context, func()) {
 	return ctx, func() {}
 }

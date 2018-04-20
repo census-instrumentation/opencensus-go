@@ -45,7 +45,7 @@ type Span struct {
 	*spanStore
 	endOnce sync.Once
 
-	executionTracerSpanEnd func() // ends the execution tracer span
+	executionTracerTaskEnd func() // ends the execution tracer span
 }
 
 // IsRecordingEvents returns true if events are being recorded for this span.
@@ -165,8 +165,8 @@ func StartSpan(ctx context.Context, name string, o ...StartOption) (context.Cont
 	}
 	span := startSpanInternal(name, parent != SpanContext{}, parent, false, opts)
 
-	ctx, end := startExecutionTracerSpan(ctx, name)
-	span.executionTracerSpanEnd = end
+	ctx, end := startExecutionTracerTask(ctx, name)
+	span.executionTracerTaskEnd = end
 	return NewContext(ctx, span), span
 }
 
@@ -180,8 +180,8 @@ func StartSpanWithRemoteParent(ctx context.Context, name string, parent SpanCont
 		op(&opts)
 	}
 	span := startSpanInternal(name, parent != SpanContext{}, parent, true, opts)
-	ctx, end := startExecutionTracerSpan(ctx, name)
-	span.executionTracerSpanEnd = end
+	ctx, end := startExecutionTracerTask(ctx, name)
+	span.executionTracerTaskEnd = end
 	return NewContext(ctx, span), span
 }
 
@@ -266,7 +266,9 @@ func (s *Span) End() {
 		return
 	}
 	s.endOnce.Do(func() {
-		s.executionTracerSpanEnd()
+		if s.executionTracerTaskEnd != nil {
+			s.executionTracerTaskEnd()
+		}
 		// TODO: optimize to avoid this call if sd won't be used.
 		sd := s.makeSpanData()
 		sd.EndTime = internal.MonotonicEndTime(sd.StartTime)
