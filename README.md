@@ -30,7 +30,7 @@ Currently, OpenCensus supports:
 
 * [Prometheus][exporter-prom] for stats
 * [OpenZipkin][exporter-zipkin] for traces
-* Stackdriver [Monitoring][exporter-stackdriver] and [Trace][exporter-stackdriver]
+* [Stackdriver][exporter-stackdriver] for stats and traces
 * [Jaeger][exporter-jaeger] for traces
 * [AWS X-Ray][exporter-xray] for traces
 
@@ -176,7 +176,7 @@ A screenshot of the CPU profile from the program above:
 [new-replace-ex]: https://godoc.org/go.opencensus.io/tag#example-NewMap--Replace
 
 [exporter-prom]: https://godoc.org/go.opencensus.io/exporter/prometheus
-[exporter-stackdriver]: https://godoc.org/go.opencensus.io/exporter/stackdriver
+[exporter-stackdriver]: https://godoc.org/contrib.go.opencensus.io/exporter/stackdriver
 [exporter-zipkin]: https://godoc.org/go.opencensus.io/exporter/zipkin
 [exporter-jaeger]: https://godoc.org/go.opencensus.io/exporter/jaeger
 [exporter-xray]: https://github.com/census-instrumentation/opencensus-go-exporter-aws
