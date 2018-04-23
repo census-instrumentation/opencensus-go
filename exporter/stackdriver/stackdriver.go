@@ -12,13 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package stackdriver contains the OpenCensus exporters for
-// Stackdriver Monitoring and Stackdriver Tracing.
+// Package stackdriver has moved.
 //
-// Please note that the Stackdriver exporter is currently experimental.
-//
-// The package uses Application Default Credentials to authenticate.  See
-// https://developers.google.com/identity/protocols/application-default-credentials
+// Deprecated: Use contrib.go.opencensus.io/exporter/stackdriver instead.
 package stackdriver // import "go.opencensus.io/exporter/stackdriver"
 
 import (

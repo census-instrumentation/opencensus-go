@@ -176,7 +176,7 @@ A screenshot of the CPU profile from the program above:
 [new-replace-ex]: https://godoc.org/go.opencensus.io/tag#example-NewMap--Replace
 
 [exporter-prom]: https://godoc.org/go.opencensus.io/exporter/prometheus
-[exporter-stackdriver]: https://godoc.org/go.opencensus.io/exporter/stackdriver
+[exporter-stackdriver]: https://godoc.org/contrib.go.opencensus.io/exporter/stackdriver
 [exporter-zipkin]: https://godoc.org/go.opencensus.io/exporter/zipkin
 [exporter-jaeger]: https://godoc.org/go.opencensus.io/exporter/jaeger
 [exporter-xray]: https://github.com/census-instrumentation/opencensus-go-exporter-aws
