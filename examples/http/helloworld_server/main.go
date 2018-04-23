@@ -54,8 +54,10 @@ func main() {
 		resp, err := client.Do(r)
 		if err != nil {
 			log.Println(err)
+		} else {
+			// TODO: handle response
+			resp.Body.Close()
 		}
-		_ = resp // handle response
 	})
 	log.Fatal(http.ListenAndServe(":50030", &ochttp.Handler{}))
 }
