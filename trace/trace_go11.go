@@ -22,5 +22,10 @@ import (
 )
 
 func startExecutionTracerTask(ctx context.Context, name string) (context.Context, func()) {
+	if !t.IsEnabled() {
+		// Avoid additional overhead if
+		// runtime/trace is not enabled.
+		return ctx, func() {}
+	}
 	return t.NewContext(ctx, name)
 }
