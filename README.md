@@ -9,15 +9,14 @@ OpenCensus Go is a Go implementation of OpenCensus, a toolkit for
 collecting application performance and behavior monitoring data.
 Currently it consists of three major components: tags, stats, and tracing.
 
-This project is still at a very early stage of development. The API is changing
-rapidly, vendoring is recommended.
-
-
 ## Installation
 
 ```
 $ go get -u go.opencensus.io
 ```
+
+The API of this project is still evolving, see: [Deprecation Policy](#deprecation-policy).
+The use of vendoring or a dependency management tool is recommended.
 
 ## Prerequisites
 
@@ -161,6 +160,15 @@ tag.Do(ctx, func(ctx context.Context) {
 A screenshot of the CPU profile from the program above:
 
 ![CPU profile](https://i.imgur.com/jBKjlkw.png)
+
+## Deprecation Policy
+
+Before version 1.0.0, the following deprecation policy will be observed:
+
+No backwards-incompatible changes will be made except for the removal of symbols that have
+been marked as *Deprecated* for at least one minor release (e.g. 0.9.0 to 0.10.0). A release
+removing the *Deprecated* functionality will be made no sooner than 28 days after the first 
+release in which the functionality was marked *Deprecated*.
 
 [travis-image]: https://travis-ci.org/census-instrumentation/opencensus-go.svg?branch=master
 [travis-url]: https://travis-ci.org/census-instrumentation/opencensus-go
