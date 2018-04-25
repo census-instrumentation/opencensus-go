@@ -31,7 +31,7 @@ func (h *ServerHandler) statsTagRPC(ctx context.Context, info *stats.RPCTagInfo)
 	startTime := time.Now()
 	if info == nil {
 		if grpclog.V(2) {
-			grpclog.Infof("opencensus: TagRPC called with nil info.", info.FullMethodName)
+			grpclog.Infof("opencensus: TagRPC called with nil info.")
 		}
 		return ctx
 	}
