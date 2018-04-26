@@ -127,7 +127,7 @@ func (e *traceExporter) uploadSpans(spans []*trace.SpanData) {
 
 	err := e.client.BatchWriteSpans(ctx, &req)
 	if err != nil {
-		span.SetStatus(trace.Status{Code: 2, Message: err.Error()})
+		span.SetStatus(trace.Status{Code: trace.StatusCodeUnknown, Message: err.Error()})
 		e.o.handleError(err)
 	}
 }
