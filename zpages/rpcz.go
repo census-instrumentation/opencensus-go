@@ -19,9 +19,9 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"math"
 	"net/http"
 	"sort"
+	"strings"
 	"sync"
 	"text/tabwriter"
 	"time"
@@ -30,29 +30,22 @@ import (
 	"go.opencensus.io/stats/view"
 )
 
-const bytesPerKb = 1024
-
 var (
-	programStartTime = time.Now()
-	mu               sync.Mutex // protects snaps
-	snaps            = make(map[methodKey]*statSnapshot)
+	mu    sync.Mutex // protects snaps
+	snaps = make(map[methodKey]*statSnapshot)
 
 	// viewType lists the views we are interested in for RPC stats.
 	// A view's map value indicates whether that view contains data for received
 	// RPCs.
 	viewType = map[*view.View]bool{
-		ocgrpc.ClientCompletedRPCsView:          false,
-		ocgrpc.ClientSentBytesPerRPCView:        false,
-		ocgrpc.ClientSentMessagesPerRPCView:     false,
-		ocgrpc.ClientReceivedBytesPerRPCView:    false,
-		ocgrpc.ClientReceivedMessagesPerRPCView: false,
-		ocgrpc.ClientRoundtripLatencyView:       false,
-		ocgrpc.ServerCompletedRPCsView:          true,
-		ocgrpc.ServerReceivedBytesPerRPCView:    true,
-		ocgrpc.ServerReceivedMessagesPerRPCView: true,
-		ocgrpc.ServerSentBytesPerRPCView:        true,
-		ocgrpc.ServerSentMessagesPerRPCView:     true,
-		ocgrpc.ServerLatencyView:                true,
+		ocgrpc.ClientCompletedRPCsView:       false,
+		ocgrpc.ClientSentBytesPerRPCView:     false,
+		ocgrpc.ClientReceivedBytesPerRPCView: false,
+		ocgrpc.ClientRoundtripLatencyView:    false,
+		ocgrpc.ServerCompletedRPCsView:       true,
+		ocgrpc.ServerReceivedBytesPerRPCView: true,
+		ocgrpc.ServerSentBytesPerRPCView:     true,
+		ocgrpc.ServerLatencyView:             true,
 	}
 )
 
@@ -62,7 +55,7 @@ func init() {
 		views = append(views, v)
 	}
 	if err := view.Register(views...); err != nil {
-		log.Printf("error subscribing to views: %v", err)
+		log.Printf("Error registering views: %v", err)
 	}
 	view.RegisterExporter(snapExporter{})
 }
@@ -108,29 +101,31 @@ func WriteTextRpczPage(w io.Writer) {
 			fmt.Fprint(w, "\nReceived:\n")
 		}
 		tw := tabwriter.NewWriter(w, 6, 8, 1, ' ', 0)
-		fmt.Fprint(tw, "Method\tCount\t\t\tAvgLat\t\t\tMaxLat\t\t\tRate\t\t\tIn (MiB/s)\t\t\tOut (MiB/s)\t\t\tErrors\t\t\n")
-		fmt.Fprint(tw, "\tMin\tHr\tTot\tMin\tHr\tTot\tMin\tHr\tTot\tMin\tHr\tTot\tMin\tHr\tTot\tMin\tHr\tTot\tMin\tHr\tTot\n")
+		fmt.Fprint(tw, "Method\tCount\t\t\tAvgLat\t\t\tRate\t\t\tIn (KiB/s)\t\t\tOut (KiB/s)\t\t\tErrors\t\t\n")
+		fmt.Fprint(tw, "\tMin\tHr\tTot\tMin\tHr\tTot\tMin\tHr\tTot\tMin\tHr\tTot\tMin\tHr\tTot\tMin\tHr\tTot\n")
 		for _, s := range sg.Snapshots {
-			fmt.Fprintf(tw, "%s\t%d\t%d\t%d\t%v\t%v\t%v\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%d\t%d\t%d\n",
-				s.Method,
-				s.CountMinute,
-				s.CountHour,
-				s.CountTotal,
-				s.AvgLatencyMinute,
-				s.AvgLatencyHour,
-				s.AvgLatencyTotal,
-				s.RPCRateMinute,
-				s.RPCRateHour,
-				s.RPCRateTotal,
-				s.InputRateMinute/bytesPerKb,
-				s.InputRateHour/bytesPerKb,
-				s.InputRateTotal/bytesPerKb,
-				s.OutputRateMinute/bytesPerKb,
-				s.OutputRateHour/bytesPerKb,
-				s.OutputRateTotal/bytesPerKb,
-				s.ErrorsMinute,
-				s.ErrorsHour,
-				s.ErrorsTotal)
+			fmt.Fprintln(tw,
+				strings.Join([]string{
+					s.Method,
+					count(&s.LatencyMinute),
+					count(&s.LatencyHour),
+					totalCount(&s.LatencyHour),
+					latency(&s.LatencyMinute),
+					latency(&s.LatencyHour),
+					totalLatency(&s.LatencyHour),
+					velocity(&s.LatencyMinute),
+					velocity(&s.LatencyHour),
+					totalVelocity(&s.LatencyHour),
+					dataRate(&s.InputMinute),
+					dataRate(&s.InputHour),
+					totalDataRate(&s.InputHour),
+					dataRate(&s.OutputMinute),
+					dataRate(&s.OutputHour),
+					totalDataRate(&s.OutputHour),
+					velocity(&s.ErrorsMinute),
+					velocity(&s.ErrorsHour),
+					totalVelocity(&s.ErrorsHour),
+				}, "\t"))
 		}
 		tw.Flush()
 	}
@@ -167,27 +162,16 @@ func (s *statGroup) Less(i, j int) bool {
 // statSnapshot holds the data items that are presented in a single row of RPC
 // stat information.
 type statSnapshot struct {
-	// TODO: compute hour/minute values from cumulative
-	Method           string
-	Received         bool
-	CountMinute      int
-	CountHour        int
-	CountTotal       int
-	AvgLatencyMinute time.Duration
-	AvgLatencyHour   time.Duration
-	AvgLatencyTotal  time.Duration
-	RPCRateMinute    float64
-	RPCRateHour      float64
-	RPCRateTotal     float64
-	InputRateMinute  float64
-	InputRateHour    float64
-	InputRateTotal   float64
-	OutputRateMinute float64
-	OutputRateHour   float64
-	OutputRateTotal  float64
-	ErrorsMinute     int
-	ErrorsHour       int
-	ErrorsTotal      int
+	Method        string
+	Received      bool
+	LatencyMinute windowStat
+	LatencyHour   windowStat
+	InputMinute   windowStat
+	InputHour     windowStat
+	OutputMinute  windowStat
+	OutputHour    windowStat
+	ErrorsMinute  windowStat
+	ErrorsHour    windowStat
 }
 
 type methodKey struct {
@@ -205,113 +189,112 @@ func (s snapExporter) ExportView(vd *view.Data) {
 	if len(vd.Rows) == 0 {
 		return
 	}
-	ageSec := float64(time.Now().Sub(programStartTime)) / float64(time.Second)
-
-	computeRate := func(maxSec, x float64) float64 {
-		dur := ageSec
-		if maxSec > 0 && dur > maxSec {
-			dur = maxSec
-		}
-		return x / dur
-	}
-
-	convertTime := func(ms float64) time.Duration {
-		if math.IsInf(ms, 0) || math.IsNaN(ms) {
-			return 0
-		}
-		return time.Duration(float64(time.Millisecond) * ms)
-	}
-
-	haveResetErrors := make(map[string]struct{})
 
 	mu.Lock()
 	defer mu.Unlock()
-	for _, row := range vd.Rows {
-		var method string
-		for _, tag := range row.Tags {
-			if tag.Key == ocgrpc.KeyClientMethod || tag.Key == ocgrpc.KeyServerMethod {
-				method = tag.Value
-				break
+
+	if vd.View == ocgrpc.ServerCompletedRPCsView || vd.View == ocgrpc.ClientCompletedRPCsView {
+		errors := make(map[string]int64)
+		for _, row := range vd.Rows {
+			method := getMethod(row)
+			if method == "" {
+				continue
+			}
+			status := getStatus(row)
+			if status != "" && status != "OK" {
+				errors[method]++
 			}
 		}
-
-		key := methodKey{method: method, received: received}
-		s := snaps[key]
-		if s == nil {
-			s = &statSnapshot{Method: method, Received: received}
-			snaps[key] = s
+		for method, errorCount := range errors {
+			s := snapshot(method, received)
+			dist := &view.DistributionData{
+				Mean:  1.0,
+				Count: errorCount,
+			}
+			s.ErrorsHour.update(vd.End, dist)
+			s.ErrorsMinute.update(vd.End, dist)
 		}
+		return
+	}
+
+	for _, row := range vd.Rows {
+		method := getMethod(row)
+		if method == "" {
+			continue
+		}
+
+		s := snapshot(method, received)
 
 		var (
-			sum   float64
-			count float64
+			dist *view.DistributionData
+			ok   bool
 		)
-		switch v := row.Data.(type) {
-		case *view.CountData:
-			sum = float64(v.Value)
-			count = float64(v.Value)
-		case *view.DistributionData:
-			sum = v.Sum()
-			count = float64(v.Count)
-		case *view.SumData:
-			sum = v.Value
-			count = v.Value
+		if dist, ok = row.Data.(*view.DistributionData); !ok {
+			continue
 		}
 
-		// Update field of s corresponding to the view.
+		var hour, minute *windowStat
 		switch vd.View {
-		case ocgrpc.ClientCompletedRPCsView:
-			if _, ok := haveResetErrors[method]; ok {
-				haveResetErrors[method] = struct{}{}
-				s.ErrorsTotal = 0
-			}
-			for _, tag := range row.Tags {
-				if tag.Key == ocgrpc.KeyClientStatus && tag.Value != "OK" {
-					s.ErrorsTotal += int(count)
-				}
-			}
-
 		case ocgrpc.ClientRoundtripLatencyView:
-			s.AvgLatencyTotal = convertTime(sum / count)
-
+			hour = &s.LatencyHour
+			minute = &s.LatencyMinute
 		case ocgrpc.ClientSentBytesPerRPCView:
-			s.OutputRateTotal = computeRate(0, sum)
-
+			hour = &s.OutputHour
+			minute = &s.OutputMinute
 		case ocgrpc.ClientReceivedBytesPerRPCView:
-			s.InputRateTotal = computeRate(0, sum)
-
-		case ocgrpc.ClientSentMessagesPerRPCView:
-			s.CountTotal = int(count)
-			s.RPCRateTotal = computeRate(0, count)
-
-		case ocgrpc.ClientReceivedMessagesPerRPCView:
-			// currently unused
-
-		case ocgrpc.ServerCompletedRPCsView:
-			if _, ok := haveResetErrors[method]; ok {
-				haveResetErrors[method] = struct{}{}
-				s.ErrorsTotal = 0
-			}
-			for _, tag := range row.Tags {
-				if tag.Key == ocgrpc.KeyServerStatus && tag.Value != "OK" {
-					s.ErrorsTotal += int(count)
-				}
-			}
-
+			hour = &s.InputHour
+			minute = &s.InputMinute
 		case ocgrpc.ServerLatencyView:
-			s.AvgLatencyTotal = convertTime(sum / count)
-
+			hour = &s.LatencyHour
+			minute = &s.LatencyMinute
 		case ocgrpc.ServerSentBytesPerRPCView:
-			s.OutputRateTotal = computeRate(0, sum)
+			hour = &s.OutputHour
+			minute = &s.OutputMinute
+		case ocgrpc.ServerReceivedBytesPerRPCView:
+			hour = &s.InputHour
+			minute = &s.InputMinute
+		}
+		if hour == nil || minute == nil {
+			continue
+		}
+		hour.update(vd.End, dist)
+		minute.update(vd.End, dist)
+	}
 
-		case ocgrpc.ServerReceivedMessagesPerRPCView:
-			s.CountTotal = int(count)
-			s.RPCRateTotal = computeRate(0, count)
+}
 
-		case ocgrpc.ServerSentMessagesPerRPCView:
-			// currently unused
+func getStatus(row *view.Row) string {
+	for _, tag := range row.Tags {
+		if tag.Key == ocgrpc.KeyServerStatus || tag.Key == ocgrpc.KeyClientStatus {
+			return tag.Value
 		}
 	}
+	return ""
+}
+
+func getMethod(row *view.Row) string {
+	for _, tag := range row.Tags {
+		if tag.Key == ocgrpc.KeyClientMethod || tag.Key == ocgrpc.KeyServerMethod {
+			return tag.Value
+		}
+	}
+	return ""
+}
+
+func snapshot(method string, received bool) *statSnapshot {
+	key := methodKey{method: method, received: received}
+	if s := snaps[key]; s != nil {
+		return s
+	}
+	s := &statSnapshot{Method: method, Received: received}
+	for _, hourWindow := range []*windowStat{&s.OutputHour, &s.LatencyHour, &s.ErrorsHour, &s.InputHour} {
+		hourWindow.init(time.Hour)
+	}
+	for _, minuteWindow := range []*windowStat{&s.OutputMinute, &s.LatencyMinute, &s.ErrorsMinute, &s.InputMinute} {
+		minuteWindow.init(time.Minute)
+	}
+	snaps[key] = s
+	return s
 }
 
 func getStatsPage() *statsPage {

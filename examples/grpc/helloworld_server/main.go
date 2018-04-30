@@ -42,7 +42,7 @@ type server struct{}
 // SayHello implements helloworld.GreeterServer
 func (s *server) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloReply, error) {
 	ctx, span := trace.StartSpan(ctx, "sleep")
-	time.Sleep(time.Duration(rand.Float64() * float64(time.Second)))
+	time.Sleep(time.Duration(rand.Float64() * 100 * float64(time.Millisecond)))
 	span.End()
 	return &pb.HelloReply{Message: "Hello " + in.Name}, nil
 }

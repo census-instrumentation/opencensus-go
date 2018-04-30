@@ -30,12 +30,16 @@ import (
 var (
 	fs                = internal.FS(false)
 	templateFunctions = template.FuncMap{
-		"count":    countFormatter,
-		"ms":       msFormatter,
-		"rate":     rateFormatter,
-		"datarate": dataRateFormatter,
-		"even":     even,
-		"traceid":  traceIDFormatter,
+		"count":         count,
+		"totalCount":    totalCount,
+		"ms":            latency,
+		"totalMs":       totalLatency,
+		"velocity":      velocity,
+		"totalVelocity": totalVelocity,
+		"dataRate":      dataRate,
+		"totalDataRate": totalDataRate,
+		"even":          even,
+		"traceid":       traceIDFormatter,
 	}
 	headerTemplate       = parseTemplate("header")
 	summaryTableTemplate = parseTemplate("summary")
@@ -57,10 +61,7 @@ func parseTemplate(name string) *template.Template {
 	return template.Must(template.New(name).Funcs(templateFunctions).Parse(string(text)))
 }
 
-func countFormatter(num int) string {
-	if num == 0 {
-		return " "
-	}
+func countFormatter(num int64) string {
 	var floatVal float64
 	var suffix string
 	if num >= 1e12 {
@@ -80,14 +81,11 @@ func countFormatter(num int) string {
 	return fmt.Sprint(num)
 }
 
-func msFormatter(d time.Duration) string {
-	if d == 0 {
-		return "0"
+func msFormatter(latency float64) string {
+	if latency < 10.0 {
+		return fmt.Sprintf("%.2f", latency)
 	}
-	if d < 10*time.Millisecond {
-		return fmt.Sprintf("%.3f", float64(d)*1e-6)
-	}
-	return strconv.Itoa(int(d / time.Millisecond))
+	return strconv.Itoa(int(latency))
 }
 
 func rateFormatter(r float64) string {
@@ -95,7 +93,7 @@ func rateFormatter(r float64) string {
 }
 
 func dataRateFormatter(b float64) string {
-	return fmt.Sprintf("%.3f", b/1e6)
+	return fmt.Sprintf("%.3f", b/1e3)
 }
 
 func traceIDFormatter(r traceRow) template.HTML {
@@ -115,4 +113,84 @@ func traceIDFormatter(r traceRow) template.HTML {
 
 func even(x int) bool {
 	return x%2 == 0
+}
+
+func latency(ws *windowStat) string {
+	_, _, diff := ws.read()
+	if diff == nil {
+		return "-"
+	}
+	return msFormatter(diff.Mean)
+}
+
+func totalLatency(ws *windowStat) string {
+	if ws.lastUpdate == -1 {
+		return "-"
+	}
+	return msFormatter(ws.intervals[ws.lastUpdate].distribution.Mean)
+}
+
+func count(ws *windowStat) string {
+	_, _, diff := ws.read()
+	if diff == nil {
+		return countFormatter(0)
+	}
+	return countFormatter(diff.Count)
+}
+
+func totalCount(ws *windowStat) string {
+	if ws.lastUpdate == -1 {
+		return countFormatter(0)
+	}
+	return countFormatter(ws.intervals[ws.lastUpdate].distribution.Count)
+}
+
+func dataRate(ws *windowStat) string {
+	start, end, diff := ws.read()
+	if diff == nil {
+		return dataRateFormatter(0)
+	}
+	seconds := float64(end.Sub(start) / time.Second)
+	if seconds == 0 {
+		return dataRateFormatter(0)
+	}
+	return dataRateFormatter(float64(diff.Sum()) / seconds)
+}
+
+func totalDataRate(ws *windowStat) string {
+	if ws.lastUpdate == -1 {
+		return dataRateFormatter(0)
+	}
+	last := ws.intervals[ws.lastUpdate]
+	seconds := float64(last.updateTime.Sub(ws.startTime) * time.Second)
+	if seconds == 0 {
+		return dataRateFormatter(0)
+	}
+	return dataRateFormatter(float64(last.distribution.Sum()) / seconds)
+}
+
+func velocity(ws *windowStat) string {
+	start, end, diff := ws.read()
+	if diff == nil {
+		return "-"
+	}
+	seconds := float64(end.Sub(start)) / float64(time.Second)
+	if seconds == 0 {
+		return rateFormatter(0)
+	}
+	rate := float64(diff.Count) / seconds
+	return rateFormatter(rate)
+}
+
+func totalVelocity(ws *windowStat) string {
+	if ws.lastUpdate == -1 {
+		return "-"
+	}
+	last := ws.intervals[ws.lastUpdate]
+	seconds := float64(last.updateTime.Sub(ws.startTime)) / float64(time.Second)
+	if seconds == 0 {
+		return rateFormatter(0)
+	}
+	rate := float64(last.distribution.Count) / seconds
+	return dataRateFormatter(rate)
 }

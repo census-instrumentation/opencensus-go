@@ -27,6 +27,8 @@ import (
 	"google.golang.org/grpc"
 )
 
+//go:generate ./generate.sh
+
 type testServer struct{}
 
 var _ FooServer = (*testServer)(nil)
@@ -41,7 +43,7 @@ func (s *testServer) Single(ctx context.Context, in *FooRequest) (*FooResponse, 
 	if in.Fail {
 		return nil, fmt.Errorf("request failed")
 	}
-	return &FooResponse{}, nil
+	return &FooResponse{Echo: in.Echo}, nil
 }
 
 func (s *testServer) Multiple(stream Foo_MultipleServer) error {
@@ -56,7 +58,7 @@ func (s *testServer) Multiple(stream Foo_MultipleServer) error {
 		if in.Fail {
 			return fmt.Errorf("request failed")
 		}
-		if err := stream.Send(&FooResponse{}); err != nil {
+		if err := stream.Send(&FooResponse{Echo: in.Echo}); err != nil {
 			return err
 		}
 	}

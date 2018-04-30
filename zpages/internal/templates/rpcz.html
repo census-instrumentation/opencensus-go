@@ -28,24 +28,24 @@
     <tr>
         <td><b>{{.Method}}</b></td>
         <td></td>
-        <td align="right">{{.CountMinute|count}}</td>
-        <td align="right">{{.CountHour|count}}</td>
-        <td align="right">{{.CountTotal|count}}</td><td></td>
-        <td align="right">{{.AvgLatencyMinute|ms}}</td>
-        <td align="right">{{.AvgLatencyHour|ms}}</td>
-        <td align="right">{{.AvgLatencyTotal|ms}}</td><td></td>
-        <td align="right">{{.RPCRateMinute|rate}}</td>
-        <td align="right">{{.RPCRateHour|rate}}</td>
-        <td align="right">{{.RPCRateTotal|rate}}</td><td></td>
-        <td align="right">{{.InputRateMinute|datarate}}</td>
-        <td align="right">{{.InputRateHour|datarate}}</td>
-        <td align="right">{{.InputRateTotal|datarate}}</td><td></td>
-        <td align="right">{{.OutputRateMinute|datarate}}</td>
-        <td align="right">{{.OutputRateHour|datarate}}</td>
-        <td align="right">{{.OutputRateTotal|datarate}}</td><td></td>
+        <td align="right">{{.LatencyMinute|count}}</td>
+        <td align="right">{{.LatencyHour|count}}</td>
+        <td align="right">{{.LatencyHour|totalCount}}</td><td></td>
+        <td align="right">{{.LatencyMinute|ms}}</td>
+        <td align="right">{{.LatencyHour|ms}}</td>
+        <td align="right">{{.LatencyHour|totalMs}}</td><td></td>
+        <td align="right">{{.LatencyMinute|velocity}}</td>
+        <td align="right">{{.LatencyHour|velocity}}</td>
+        <td align="right">{{.LatencyHour|totalVelocity}}</td><td></td>
+        <td align="right">{{.InputMinute|dataRate}}</td>
+        <td align="right">{{.InputHour|dataRate}}</td>
+        <td align="right">{{.InputHour|totalDataRate}}</td><td></td>
+        <td align="right">{{.OutputMinute|dataRate}}</td>
+        <td align="right">{{.OutputHour|dataRate}}</td>
+        <td align="right">{{.OutputHour|totalDataRate}}</td><td></td>
         <td align="right">{{.ErrorsMinute|count}}</td>
         <td align="right">{{.ErrorsHour|count}}</td>
-        <td align="right">{{.ErrorsTotal|count}}</td><td></td>
+        <td align="right">{{.ErrorsHour|totalCount}}</td><td></td>
     </tr>
 {{end}}
 </table>

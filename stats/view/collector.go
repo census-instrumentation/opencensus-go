@@ -44,7 +44,7 @@ func (c *collector) collectedRows(keys []tag.Key) []*Row {
 	var rows []*Row
 	for sig, aggregator := range c.signatures {
 		tags := decodeTags([]byte(sig), keys)
-		row := &Row{tags, aggregator}
+		row := &Row{tags, aggregator.clone()}
 		rows = append(rows, row)
 	}
 	return rows
