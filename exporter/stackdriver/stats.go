@@ -164,13 +164,13 @@ func (e *statsExporter) uploadStats(vds []*view.Data) error {
 
 	for _, vd := range vds {
 		if err := e.createMeasure(ctx, vd); err != nil {
-			span.SetStatus(trace.Status{Code: 2, Message: err.Error()})
+			span.SetStatus(trace.Status{Code: trace.StatusCodeUnknown, Message: err.Error()})
 			return err
 		}
 	}
 	for _, req := range e.makeReq(vds, maxTimeSeriesPerUpload) {
 		if err := e.c.CreateTimeSeries(ctx, req); err != nil {
-			span.SetStatus(trace.Status{Code: 2, Message: err.Error()})
+			span.SetStatus(trace.Status{Code: trace.StatusCodeUnknown, Message: err.Error()})
 			// TODO(jbd): Don't fail fast here, batch errors?
 			return err
 		}

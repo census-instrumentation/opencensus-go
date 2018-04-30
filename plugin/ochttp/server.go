@@ -135,6 +135,7 @@ type trackingResponseWriter struct {
 	respSize   int64
 	start      time.Time
 	statusCode int
+	statusLine string
 	endOnce    sync.Once
 	writer     http.ResponseWriter
 }
@@ -159,7 +160,7 @@ func (t *trackingResponseWriter) end() {
 		}
 
 		span := trace.FromContext(t.ctx)
-		span.SetStatus(status(t.statusCode))
+		span.SetStatus(TraceStatus(t.statusCode, t.statusLine))
 
 		m := []stats.Measurement{
 			ServerLatency.M(float64(time.Since(t.start)) / float64(time.Millisecond)),
@@ -186,6 +187,7 @@ func (t *trackingResponseWriter) Write(data []byte) (int, error) {
 func (t *trackingResponseWriter) WriteHeader(statusCode int) {
 	t.writer.WriteHeader(statusCode)
 	t.statusCode = statusCode
+	t.statusLine = http.StatusText(t.statusCode)
 }
 
 func (t *trackingResponseWriter) Flush() {
