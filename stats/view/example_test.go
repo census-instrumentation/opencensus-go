@@ -35,5 +35,5 @@ func Example() {
 		log.Fatal(err)
 	}
 
-	// Use stats.RegisterExporter to export collected data.
+	// Use view.RegisterExporter to export collected data.
 }
