@@ -15,8 +15,11 @@
 package ochttp
 
 import (
+	"context"
+	"crypto/tls"
 	"io"
 	"net/http"
+	"net/http/httptrace"
 	"net/url"
 
 	"go.opencensus.io/plugin/ochttp/propagation/b3"
@@ -53,11 +56,80 @@ func (t *traceTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	name := spanNameFromURL(req.URL)
 	// TODO(jbd): Discuss whether we want to prefix
 	// outgoing requests with Sent.
-	_, span := trace.StartSpan(req.Context(), name,
+	ctx, span := trace.StartSpan(req.Context(), name,
 		trace.WithSampler(t.startOptions.Sampler),
 		trace.WithSpanKind(trace.SpanKindClient))
 
-	req = req.WithContext(trace.WithSpan(req.Context(), span))
+	tracer := &httptrace.ClientTrace{
+		GetConn: func(hostPort string) {
+			gctx, span := trace.StartSpan(ctx, "GetConn")
+			ctx = context.WithValue(gctx, "getConnSpan", span)
+		},
+		GotConn: func(_ httptrace.GotConnInfo) {
+			span := ctx.Value("getConnSpan").(*trace.Span)
+			span.End()
+		},
+		DNSStart: func(_ httptrace.DNSStartInfo) {
+			dctx, span := trace.StartSpan(ctx, "DNSLookup")
+			ctx = context.WithValue(dctx, "dnsSpan", span)
+		},
+		DNSDone: func(di httptrace.DNSDoneInfo) {
+			span := ctx.Value("dnsSpan").(*trace.Span)
+			if di.Err != nil {
+				span.SetStatus(trace.Status{
+					Code:    trace.StatusCodeInternal,
+					Message: di.Err.Error(),
+				})
+			}
+			span.End()
+		},
+		WroteHeaders: func() {
+			span := trace.FromContext(ctx)
+			span.Annotate(nil, "Wrote request")
+		},
+		ConnectStart: func(net, addr string) {
+			cctx, span := trace.StartSpan(ctx, "Connect")
+			span.Annotate([]trace.Attribute{
+				trace.StringAttribute("network", net),
+				trace.StringAttribute("address", addr),
+			}, "Starting connection")
+			ctx = context.WithValue(cctx, "connectSpan", span)
+		},
+		ConnectDone: func(net, addr string, err error) {
+			span := ctx.Value("connectSpan").(*trace.Span)
+			span.Annotate([]trace.Attribute{
+				trace.StringAttribute("network", net),
+				trace.StringAttribute("address", addr),
+			}, "Established Connection")
+			if err != nil {
+				span.SetStatus(trace.Status{
+					Code:    trace.StatusCodeInternal,
+					Message: err.Error(),
+				})
+			}
+			span.End()
+		},
+		TLSHandshakeStart: func() {
+			tctx, span := trace.StartSpan(ctx, "TLSHandshake")
+			ctx = context.WithValue(tctx, "tlshandshakeSpan", span)
+		},
+		TLSHandshakeDone: func(cs tls.ConnectionState, err error) {
+			span := ctx.Value("tlshandshakeSpan").(*trace.Span)
+			span.Annotate([]trace.Attribute{
+				trace.Int64Attribute("tls_version", int64(cs.Version)),
+			}, "TLS Info")
+			if err != nil {
+				span.SetStatus(trace.Status{
+					Code:    trace.StatusCodeInternal,
+					Message: err.Error(),
+				})
+			}
+			span.End()
+		},
+	}
+	ctx = httptrace.WithClientTrace(ctx, tracer)
+
+	req = req.WithContext(ctx)
 	if t.format != nil {
 		t.format.SpanContextToRequest(span.SpanContext(), req)
 	}
