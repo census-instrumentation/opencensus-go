@@ -41,17 +41,17 @@ var (
 // ClientRequestCount or ServerRequestCount, since it is recorded before the status is known.
 var (
 	// Host is the value of the HTTP Host header.
-	Host, _ = tag.NewKey("http.host")
+	Host, _ = tag.NewLocalKey("http.host")
 
 	// StatusCode is the numeric HTTP response status code,
 	// or "error" if a transport error occurred and no status code was read.
-	StatusCode, _ = tag.NewKey("http.status")
+	StatusCode, _ = tag.NewLocalKey("http.status")
 
 	// Path is the URL path (not including query string) in the request.
-	Path, _ = tag.NewKey("http.path")
+	Path, _ = tag.NewLocalKey("http.path")
 
 	// Method is the HTTP method of the request, capitalized (GET, POST, etc.).
-	Method, _ = tag.NewKey("http.method")
+	Method, _ = tag.NewLocalKey("http.method")
 )
 
 // Default distributions used by views in this package.

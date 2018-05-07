@@ -57,10 +57,10 @@ var (
 )
 
 var (
-	KeyServerMethod, _ = tag.NewKey("grpc_server_method")
-	KeyClientMethod, _ = tag.NewKey("grpc_client_method")
-	KeyServerStatus, _ = tag.NewKey("grpc_server_status")
-	KeyClientStatus, _ = tag.NewKey("grpc_client_status")
+	KeyServerMethod, _ = tag.NewLocalKey("grpc_server_method")
+	KeyClientMethod, _ = tag.NewLocalKey("grpc_client_method")
+	KeyServerStatus, _ = tag.NewLocalKey("grpc_server_status")
+	KeyClientStatus, _ = tag.NewLocalKey("grpc_client_status")
 )
 
 var (

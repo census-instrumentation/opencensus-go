@@ -160,13 +160,18 @@ func (eg *encoderGRPC) bytes() []byte {
 }
 
 // Encode encodes the tag map into a []byte. It is useful to propagate
-// the tag maps on wire in binary format.
+// the tag maps on wire in binary format. Only propagated tags (tags with
+// keys that were created with the NewKey method rather than NewLocalKey) will
+// be serialized into the resulting buffer.
 func Encode(m *Map) []byte {
 	eg := &encoderGRPC{
 		buf: make([]byte, len(m.m)),
 	}
 	eg.writeByte(byte(tagsVersionID))
 	for k, v := range m.m {
+		if !k.propagated {
+			continue
+		}
 		eg.writeByte(byte(keyTypeString))
 		eg.writeStringWithVarintLen(k.name)
 		eg.writeBytesWithVarintLen([]byte(v))
@@ -174,7 +179,9 @@ func Encode(m *Map) []byte {
 	return eg.bytes()
 }
 
-// Decode decodes the given []byte into a tag map.
+// Decode decodes the given []byte into a tag map. All the tag keys deserialized
+// are assumed to be propagating tags: they behave as if they were created by
+// NewKey, rather than NewLocalKey.
 func Decode(bytes []byte) (*Map, error) {
 	ts := newMap(0)
 

@@ -15,18 +15,30 @@
 
 package tag
 
-// Key represents a tag key.
+// Key represents a tag key. Tags are propagated along RPC boundaries,
+// unless created by NewLocalKey.
 type Key struct {
-	name string
+	name       string
+	propagated bool
 }
 
-// NewKey creates or retrieves a string key identified by name.
-// Calling NewKey consequently with the same name returns the same key.
+// NewKey creates a Key with the given name. The returned Key will be propagated
+// on RPC boundaries by default. Use NewLocalKey if you only need the tags with
+// this Key to be available in the current process.
 func NewKey(name string) (Key, error) {
 	if !checkKeyName(name) {
 		return Key{}, errInvalidKeyName
 	}
-	return Key{name: name}, nil
+	return Key{name: name, propagated: true}, nil
+}
+
+// NewLocalKey creates a new Key local to the current process. Tags with local
+// keys will not be propagated in outbound RPCs.
+func NewLocalKey(name string) (Key, error) {
+	if !checkKeyName(name) {
+		return Key{}, errInvalidKeyName
+	}
+	return Key{name: name, propagated: false}, nil
 }
 
 // Name returns the name of the key.
