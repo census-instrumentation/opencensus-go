@@ -158,7 +158,7 @@ func New(ctx context.Context, mutator ...Mutator) (context.Context, error) {
 	if orig != nil {
 		for k, v := range orig.m {
 			if !checkKeyName(k.Name()) {
-				return ctx, fmt.Errorf("key:%q: %v", k, errInvalidKeyName)
+				return ctx, fmt.Errorf("key:%q: %v", k.name, errInvalidKeyName)
 			}
 			if !checkValue(v) {
 				return ctx, fmt.Errorf("key:%q value:%q: %v", k.Name(), v, errInvalidValue)

@@ -104,6 +104,26 @@ func TestEncodeDecode(t *testing.T) {
 	}
 }
 
+func TestEncode_Local(t *testing.T) {
+	k1, _ := NewKey("k1")
+	k2, _ := NewLocalKey("k2")
+
+	ctx, _ := New(context.Background(), Upsert(k1, "v1"), Upsert(k2, "v2"))
+
+	encoded := Encode(FromContext(ctx))
+	decoded, _ := Decode(encoded)
+
+	value1, _ := decoded.Value(k1)
+	if got, want := value1, "v1"; got != want {
+		t.Errorf("decoded.Value(k1) = %q; want %q", got, want)
+	}
+
+	_, haveValue2 := decoded.Value(k2)
+	if haveValue2 {
+		t.Errorf("expected local key not to be encoded")
+	}
+}
+
 func TestDecode(t *testing.T) {
 	k1, _ := NewKey("k1")
 	ctx, _ := New(context.Background(), Insert(k1, "v1"))

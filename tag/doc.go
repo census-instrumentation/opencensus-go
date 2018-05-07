@@ -16,11 +16,11 @@
 /*
 Package tag contains OpenCensus tags.
 
-Tags are key-value pairs. Tags provide additional cardinality to
+Tags are key-value pairs. Tags provide additional dimensions to
 the OpenCensus instrumentation data.
 
-Tags can be propagated on the wire and in the same
+Tags can be propagated on the wire across RPC boundaries as well as in the same
 process via context.Context. Encode and Decode should be
-used to represent tags into their binary propagation form.
+used to represent tags into their binary propagation form for propagation.
 */
 package tag // import "go.opencensus.io/tag"
