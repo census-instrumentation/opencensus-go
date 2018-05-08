@@ -33,6 +33,18 @@ type Map struct {
 	m map[Key]string
 }
 
+// GetTags reads the tags contained in the map. It shouldn't usually be
+// necessary to read the tags directly (normally views are used to aggregate
+// measures by tags), but this can be useful for debugging or transmitting tags
+// to a separate metrics system.
+func (m *Map) GetTags() map[string]string {
+	tags := make(map[string]string)
+	for k, v := range m.m {
+		tags[k.name] = v
+	}
+	return tags
+}
+
 // Value returns the value for the key if a value
 // for the key exists.
 func (m *Map) Value(k Key) (string, bool) {
