@@ -152,3 +152,14 @@ func TestDecode(t *testing.T) {
 		})
 	}
 }
+
+func TestGetTags(t *testing.T) {
+	m, err := Decode([]byte{0, 0, 2, 107, 49, 2, 118, 49})
+	if err != nil {
+		t.Fatalf("Decode() error = %v", err)
+	}
+	tags := m.GetTags()
+	if got, want := tags["k1"], "v1"; got != want {
+		t.Errorf("tags[k1] = %v, want %v", got, want)
+	}
+}
