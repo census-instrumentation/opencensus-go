@@ -140,8 +140,12 @@ type trackingResponseWriter struct {
 	writer     http.ResponseWriter
 }
 
-var _ http.ResponseWriter = (*trackingResponseWriter)(nil)
+// Compile time assertions for widely used net/http interfaces
+var _ http.CloseNotifier = (*trackingResponseWriter)(nil)
+var _ http.Flusher = (*trackingResponseWriter)(nil)
 var _ http.Hijacker = (*trackingResponseWriter)(nil)
+var _ http.Pusher = (*trackingResponseWriter)(nil)
+var _ http.ResponseWriter = (*trackingResponseWriter)(nil)
 
 var errHijackerUnimplemented = errors.New("ResponseWriter does not implement http.Hijacker")
 
@@ -151,6 +155,22 @@ func (t *trackingResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 		return nil, nil, errHijackerUnimplemented
 	}
 	return hj.Hijack()
+}
+
+func (t *trackingResponseWriter) CloseNotify() <-chan bool {
+	cn, ok := t.writer.(http.CloseNotifier)
+	if !ok {
+		return nil
+	}
+	return cn.CloseNotify()
+}
+
+func (t *trackingResponseWriter) Push(target string, opts *http.PushOptions) error {
+	pusher, ok := t.writer.(http.Pusher)
+	if !ok {
+		return http.ErrNotSupported
+	}
+	return pusher.Push(target, opts)
 }
 
 func (t *trackingResponseWriter) end() {
