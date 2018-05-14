@@ -278,7 +278,13 @@ func (s *Span) End() {
 		if s.spanContext.IsSampled() {
 			// TODO: consider holding exportersMu for less time.
 			exportersMu.Lock()
-			for e := range exporters {
+			for e, defaultAttrs := range exporters {
+				if len(defaultAttrs) > 0 && sd.Attributes == nil {
+					sd.Attributes = make(map[string]interface{})
+				}
+				for _, attr := range defaultAttrs {
+					sd.Attributes[attr.key] = attr.value
+				}
 				e.ExportSpan(sd)
 			}
 			exportersMu.Unlock()

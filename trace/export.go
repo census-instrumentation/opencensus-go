@@ -32,19 +32,20 @@ type Exporter interface {
 
 var (
 	exportersMu sync.Mutex
-	exporters   map[Exporter]struct{}
+	exporters   map[Exporter][]Attribute
 )
 
 // RegisterExporter adds to the list of Exporters that will receive sampled
-// trace spans.
+// trace spans. Passed attributes will be appended to every span that is
+// exported by this exporter.
 //
 // Binaries can register exporters, libraries shouldn't register exporters.
-func RegisterExporter(e Exporter) {
+func RegisterExporter(e Exporter, a ...Attribute) {
 	exportersMu.Lock()
 	if exporters == nil {
-		exporters = make(map[Exporter]struct{})
+		exporters = make(map[Exporter][]Attribute)
 	}
-	exporters[e] = struct{}{}
+	exporters[e] = a
 	exportersMu.Unlock()
 }
 
