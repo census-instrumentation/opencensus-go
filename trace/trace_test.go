@@ -617,3 +617,59 @@ func TestStartSpanAfterEnd(t *testing.T) {
 		t.Errorf("span-2.ParentSpanID=%q; want %q (span1.SpanID)", got, want)
 	}
 }
+
+func TestExporterDefaultAttributes(t *testing.T) {
+	tt := []struct {
+		desc  string
+		attrs []Attribute
+	}{
+		{
+			desc:  "no default attrs",
+			attrs: nil,
+		},
+		{
+			desc:  "empty default attrs",
+			attrs: []Attribute{},
+		},
+		{
+			desc: "two default attrs",
+			attrs: []Attribute{
+				StringAttribute("key1", "val1"),
+				StringAttribute("key2", "val2"),
+			},
+		},
+	}
+
+	for _, tc := range tt {
+		// test cases cannot run with t.Parallel()
+		t.Run(tc.desc, func(t *testing.T) {
+			spans := make(exporter)
+			if tc.attrs == nil {
+				RegisterExporter(&spans)
+			} else {
+				RegisterExporter(&spans, tc.attrs...)
+			}
+			ctx, span0 := StartSpan(context.Background(), "parent", WithSampler(AlwaysSample()))
+			_, span1 := StartSpan(ctx, "span-1", WithSampler(AlwaysSample()))
+			span1.End()
+			span0.End()
+			UnregisterExporter(&spans)
+
+			if got, want := len(spans), 2; got != want {
+				t.Errorf("missing exported spans: got %d, want %d", got, want)
+			}
+			for _, sd := range spans {
+				for _, tAttr := range tc.attrs {
+					gotVal, ok := sd.Attributes[tAttr.key]
+					if !ok {
+						t.Errorf("missing attribute on span %q: want key %q", sd.Name, tAttr.key)
+						continue
+					}
+					if gotVal != tAttr.value {
+						t.Errorf("wrong attribute value on span %q: got %q, want %q", sd.Name, gotVal, tAttr.value)
+					}
+				}
+			}
+		})
+	}
+}
