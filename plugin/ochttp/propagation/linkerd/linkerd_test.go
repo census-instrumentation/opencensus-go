@@ -1,4 +1,4 @@
-package linkin
+package linkerd
 
 import (
 	"net/http"

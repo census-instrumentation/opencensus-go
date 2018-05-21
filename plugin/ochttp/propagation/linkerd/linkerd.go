@@ -1,23 +1,14 @@
-// Package linkin provides linkerd trace propagation for Opencensus.
-//
-// Opencensus is a single distribution of libraries that automatically collects
-// traces and metrics from your app, displays them locally, and sends them to
-// any analysis tool. Opencensus supports the Zipkin request tracing system.
-//
-// Zipkin is a popular distributed tracing system, allowing requests to be
-// traced through a distributed system. A request is broken into 'spans', each
-// representing one part of the greater request path. Software that wishes to
-// leverage Zipkin must be instrumented to do so (for example via Opencensus).
+// Package linkerd provides linkerd-flavoured Zipkin trace propagation.
 //
 // linkerd is a popular service mesh. One of linkerd's selling points is that it
 // provides Zipkin request tracing 'for free'. Software need not be 'fully'
 // instrumented, and instead need only copy linkerd's l5d-ctx-* HTTP headers
 // from incoming HTTP requests to any outgoing HTTP requests they spawn.
 //
-// Unfortunately while linkerd emits traces to Zipkin, it propagates trace data
-// via a non-standard header. This package may be used as a drop-in replacement
-// for https://godoc.org/go.opencensus.io/plugin/ochttp/propagation/b3 in
-// environments that use linkerd for part or all of their request tracing needs.
+// linkerd propagates trace data via the l5d-ctx-trace HTTP header rather than
+// the standard Zipkin X-B3-* headers. This package may be used as a drop-in
+// replacement for go.opencensus.io/plugin/ochttp/propagation/b3 in environments
+// that use linkerd for part or all of their request tracing needs.
 //
 // linkerd trace headers are base64 encoded 32 or 40 byte arrays (depending on
 // whether the trace ID is 64 or 128bit) with the following Finagle
@@ -25,9 +16,10 @@
 //
 //  spanID:8 parentID:8 traceIDLow:8 flags:8 traceIDHigh:8
 //
+// The serialization format is defined in the following code:
 // https://github.com/twitter/finagle/blob/345d7a2/finagle-core/src/main/scala/com/twitter/finagle/tracing/Id.scala#L113
 // https://github.com/twitter/finagle/blob/345d7a2/finagle-core/src/main/scala/com/twitter/finagle/tracing/Flags.scala
-package linkin
+package linkerd
 
 import (
 	"encoding/base64"
