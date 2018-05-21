@@ -19,7 +19,7 @@
 // The serialization format is defined in the following code:
 // https://github.com/twitter/finagle/blob/345d7a2/finagle-core/src/main/scala/com/twitter/finagle/tracing/Id.scala#L113
 // https://github.com/twitter/finagle/blob/345d7a2/finagle-core/src/main/scala/com/twitter/finagle/tracing/Flags.scala
-package linkerd
+package linkerd // import "go.opencensus.io/plugin/ochttp/propagation/linkerd"
 
 import (
 	"encoding/base64"
