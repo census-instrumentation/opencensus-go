@@ -9,8 +9,8 @@
     "monitoring/apiv3",
     "trace/apiv2"
   ]
-  revision = "29f476ffa9c4cd4fd14336b6043090ac1ad76733"
-  version = "v0.21.0"
+  revision = "056a55f54a6cc77b440b31a56a5e7c3982d32811"
+  version = "v0.22.0"
 
 [[projects]]
   branch = "master"
@@ -226,8 +226,6 @@
     "metadata",
     "naming",
     "peer",
-    "reflection",
-    "reflection/grpc_reflection_v1alpha",
     "resolver",
     "resolver/dns",
     "resolver/passthrough",
@@ -242,6 +240,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "1be7e5255452682d433fe616bb0987e00cb73c1172fe797b9b7a6fd2c1f53d37"
+  inputs-digest = "099e791acf9531cbb058b668139ef993c2eb6846b708caf44802e35f59bc2cee"
   solver-name = "gps-cdcl"
   solver-version = 1
