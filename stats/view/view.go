@@ -67,7 +67,7 @@ func (v *View) same(other *View) bool {
 		v.Measure.Name() == other.Measure.Name()
 }
 
-// canonicalized returns a validated View canonicalized by setting explicit
+// canonicalize canonicalizes v by setting explicit
 // defaults for Name and Description and sorting the TagKeys
 func (v *View) canonicalize() error {
 	if v.Measure == nil {
