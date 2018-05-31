@@ -58,13 +58,14 @@ func main() {
 	// Create view to see the processed video size
 	// distribution broken down by frontend.
 	// Register will allow view data to be exported.
-	if err := view.Register(&view.View{
+	newView := &view.View{
 		Name:        "my.org/views/video_size",
 		Description: "processed video size over time",
 		TagKeys:     []tag.Key{frontendKey},
 		Measure:     videoSize,
 		Aggregation: view.Distribution(0, 1<<16, 1<<32),
-	}); err != nil {
+	}
+	if err := view.Register(newView); err != nil {
 		log.Fatalf("Cannot subscribe to the view: %v", err)
 	}
 
@@ -75,6 +76,8 @@ func main() {
 	// library reports the collected data.
 	fmt.Println("Wait longer than the reporting duration...")
 	time.Sleep(2 * time.Second)
+	retrievedData, _ := view.RetrieveData(newView.Name)
+	fmt.Printf("Collected Data: %v\n", retrievedData[0].Data)
 }
 
 // process processes the video and instruments the processing

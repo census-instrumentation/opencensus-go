@@ -29,3 +29,7 @@ to upload collected data to the backend of your choice.
 You can also see the z-pages provided from the server:
 * Traces: http://localhost:8081/tracez
 * RPCs: http://localhost:8081/rpcz
+
+You can also see the z-pages provided from the client:
+* Traces: http://localhost:8082/tracez
+* RPCs: http://localhost:8082/rpcz

@@ -25,6 +25,8 @@ import (
 	"go.opencensus.io/stats/view"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
+	"net/http"
+	"go.opencensus.io/zpages"
 )
 
 const (
@@ -33,6 +35,10 @@ const (
 )
 
 func main() {
+	go func() {
+		http.Handle("/debug/", http.StripPrefix("/debug", zpages.Handler))
+		log.Fatal(http.ListenAndServe(":8082", nil))
+	}()
 	// Register stats and trace exporters to export
 	// the collected data.
 	view.RegisterExporter(&exporter.PrintExporter{})
