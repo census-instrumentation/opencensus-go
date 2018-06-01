@@ -24,13 +24,11 @@ import (
 
 	"go.opencensus.io/examples/exporter"
 	"go.opencensus.io/stats/view"
-	"go.opencensus.io/zpages"
 )
 
 const server = "http://localhost:50030"
 
 func main() {
-	go func() { log.Fatal(http.ListenAndServe(":8082", zpages.Handler)) }()
 	// Register stats and trace exporters to export the collected data.
 	exporter := &exporter.PrintExporter{}
 	view.RegisterExporter(exporter)
