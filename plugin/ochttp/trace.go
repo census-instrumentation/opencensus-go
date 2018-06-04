@@ -146,7 +146,7 @@ func responseAttrs(resp *http.Response) []trace.Attribute {
 	}
 }
 
-// HTTPStatusToTraceStatus converts the HTTP status code to a trace.Status that
+// TraceStatus converts the HTTP status code to a trace.Status that
 // represents the outcome as closely as possible.
 func TraceStatus(httpStatusCode int, statusLine string) trace.Status {
 	var code int32
