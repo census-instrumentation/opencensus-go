@@ -17,4 +17,4 @@ package exporterutil
 
 // Version is the current release version of OpenCensus in use. It is made
 // available for exporters to include in User-Agent-like metadata.
-var Version = "0.12.0"
+var Version = "0.13.0"
