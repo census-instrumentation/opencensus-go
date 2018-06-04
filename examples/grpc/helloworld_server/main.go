@@ -47,10 +47,11 @@ func (s *server) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloRe
 }
 
 func main() {
+	// Start z-Pages server.
 	go func() {
-		http.Handle("/debug/", http.StripPrefix("/debug", zpages.Handler))
-		log.Fatal(http.ListenAndServe(":8081", nil))
+		log.Fatal(http.ListenAndServe("127.0.0.1:8081", zpages.NewHandler("/debug")))
 	}()
+
 	// Register stats and trace exporters to export
 	// the collected data.
 	view.RegisterExporter(&exporter.PrintExporter{})

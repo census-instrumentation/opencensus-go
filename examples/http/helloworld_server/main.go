@@ -29,7 +29,10 @@ import (
 )
 
 func main() {
-	go func() { log.Fatal(http.ListenAndServe(":8081", zpages.Handler)) }()
+	// Start z-Pages server.
+	go func() {
+		log.Fatal(http.ListenAndServe("127.0.0.1:8081", zpages.NewHandler("/debug")))
+	}()
 
 	// Register stats and trace exporters to export the collected data.
 	exporter := &exporter.PrintExporter{}
