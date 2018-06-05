@@ -74,7 +74,7 @@ func main() {
 	// Wait for a duration longer than reporting duration to ensure the stats
 	// library reports the collected data.
 	fmt.Println("Wait longer than the reporting duration...")
-	time.Sleep(2 * time.Second)
+	time.Sleep(10 * time.Second)
 }
 
 // process processes the video and instruments the processing
