@@ -58,14 +58,13 @@ func main() {
 	// Create view to see the processed video size
 	// distribution broken down by frontend.
 	// Register will allow view data to be exported.
-	newView := &view.View{
+	if err := view.Register(&view.View{
 		Name:        "my.org/views/video_size",
 		Description: "processed video size over time",
 		TagKeys:     []tag.Key{frontendKey},
 		Measure:     videoSize,
 		Aggregation: view.Distribution(0, 1<<16, 1<<32),
-	}
-	if err := view.Register(newView); err != nil {
+	}); err != nil {
 		log.Fatalf("Cannot subscribe to the view: %v", err)
 	}
 
