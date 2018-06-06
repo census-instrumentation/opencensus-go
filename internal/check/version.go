@@ -26,7 +26,7 @@ import (
 	"strconv"
 	"strings"
 
-	"go.opencensus.io/exporterutil"
+	opencensus "go.opencensus.io"
 )
 
 func main() {
@@ -48,12 +48,12 @@ func main() {
 		return versionLess(versions[i], versions[j])
 	})
 	latest := versions[len(versions)-1]
-	codeVersion := parseVersion("v" + exporterutil.Version)
+	codeVersion := parseVersion("v" + opencensus.Version())
 	if !versionLess(latest, codeVersion) {
-		fmt.Printf("exporterutil.Version is out of date with Git tags. Got %s; want %s\n", latest, exporterutil.Version)
+		fmt.Printf("exporter.Version is out of date with Git tags. Got %s; want %s\n", latest, opencensus.Version())
 		os.Exit(1)
 	}
-	fmt.Printf("exporterutil.Version is up-to-date: %s\n", exporterutil.Version)
+	fmt.Printf("exporter.Version is up-to-date: %s\n", opencensus.Version())
 }
 
 type version [3]int
