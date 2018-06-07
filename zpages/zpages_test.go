@@ -22,6 +22,9 @@ import (
 	"time"
 
 	"go.opencensus.io/trace"
+	"net/http"
+	"net/http/httptest"
+	"fmt"
 )
 
 var (
@@ -83,5 +86,25 @@ func TestTraceRows(t *testing.T) {
 2006/01/02-15:04:05.123456      .500000 sent message [200 bytes, 100 compressed bytes]
 `; buf.String() != want {
 		t.Errorf("writeTextTraces: got %q want %q\n", buf.String(), want)
+	}
+}
+
+func TestGetZPages(t *testing.T) {
+	mux := http.NewServeMux()
+	AppendHandlers("/debug", mux)
+	server := httptest.NewServer(mux)
+	defer server.Close()
+	tests := []string{"/debug/rpcz", "/debug/tracez"}
+	for _, tt := range tests {
+		t.Run(fmt.Sprintf("GET %s", tt), func(t *testing.T) {
+			res, err := http.Get(server.URL + tt)
+			if err != nil {
+				t.Error(err)
+				return
+			}
+			if got, want := res.StatusCode, http.StatusOK; got != want {
+				t.Errorf("res.StatusCode = %d; want %d", got, want)
+			}
+		})
 	}
 }

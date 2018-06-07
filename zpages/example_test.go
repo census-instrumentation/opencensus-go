@@ -23,6 +23,6 @@ import (
 
 func Example() {
 	// Both /debug/tracez and /debug/rpcz will be served.
-	http.Handle("/debug/", http.StripPrefix("/debug", zpages.Handler))
+	zpages.AppendHandlers("/debug", http.DefaultServeMux)
 	log.Fatal(http.ListenAndServe(":9999", nil))
 }
