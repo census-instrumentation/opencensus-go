@@ -56,7 +56,7 @@ var (
 	}
 )
 
-func init() {
+func registerRPCViews() {
 	views := make([]*view.View, 0, len(viewType))
 	for v := range viewType {
 		views = append(views, v)
