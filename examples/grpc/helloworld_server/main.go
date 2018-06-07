@@ -49,7 +49,8 @@ func (s *server) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloRe
 func main() {
 	// Start z-Pages server.
 	go func() {
-		mux := zpages.AppendHandlers("/debug", http.NewServeMux())
+		mux := http.NewServeMux()
+		zpages.Handle(mux, "/debug")
 		log.Fatal(http.ListenAndServe("127.0.0.1:8081", mux))
 	}()
 

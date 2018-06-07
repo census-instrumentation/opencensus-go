@@ -21,10 +21,11 @@ import (
 	"testing"
 	"time"
 
-	"go.opencensus.io/trace"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"fmt"
+
+	"go.opencensus.io/trace"
 )
 
 var (
@@ -91,7 +92,7 @@ func TestTraceRows(t *testing.T) {
 
 func TestGetZPages(t *testing.T) {
 	mux := http.NewServeMux()
-	AppendHandlers("/debug", mux)
+	Handle(mux, "/debug")
 	server := httptest.NewServer(mux)
 	defer server.Close()
 	tests := []string{"/debug/rpcz", "/debug/tracez"}
