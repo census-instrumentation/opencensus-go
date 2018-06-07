@@ -32,9 +32,8 @@ package zpages // import "go.opencensus.io/zpages"
 
 import (
 	"net/http"
-	"sync"
-
 	"path"
+	"sync"
 
 	"go.opencensus.io/internal"
 )

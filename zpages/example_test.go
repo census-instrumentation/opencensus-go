@@ -22,7 +22,7 @@ import (
 )
 
 func Example() {
-	// Both /debug/tracez and /debug/rpcz will be served.
+	// Both /debug/tracez and /debug/rpcz will be served on the default mux.
 	zpages.Handle(nil, "/debug")
 	log.Fatal(http.ListenAndServe("127.0.0.1:9999", nil))
 }
