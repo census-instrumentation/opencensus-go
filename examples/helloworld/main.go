@@ -54,6 +54,7 @@ func main() {
 		log.Fatal(err)
 	}
 	videoSize = stats.Int64("my.org/measure/video_size", "size of processed videos", stats.UnitBytes)
+	view.SetReportingPeriod(2 * time.Second)
 
 	// Create view to see the processed video size
 	// distribution broken down by frontend.
