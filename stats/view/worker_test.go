@@ -42,7 +42,7 @@ func Test_Worker_ViewRegistration(t *testing.T) {
 	}
 	tcs := []testCase{
 		{
-			"register and subscribe to v1ID",
+			"register v1ID",
 			[]registration{
 				{
 					sc1,
@@ -52,7 +52,7 @@ func Test_Worker_ViewRegistration(t *testing.T) {
 			},
 		},
 		{
-			"register v1ID+v2ID, susbsribe to v1ID",
+			"register v1ID+v2ID",
 			[]registration{
 				{
 					sc1,
@@ -62,7 +62,7 @@ func Test_Worker_ViewRegistration(t *testing.T) {
 			},
 		},
 		{
-			"register to v1ID; subscribe to v1ID and view with same ID",
+			"register to v1ID; ??? to v1ID and view with same ID",
 			[]registration{
 				{
 					sc1,
@@ -263,7 +263,7 @@ func TestReportUsage(t *testing.T) {
 		SetReportingPeriod(25 * time.Millisecond)
 
 		if err := Register(tt.view); err != nil {
-			t.Fatalf("%v: cannot subscribe: %v", tt.name, err)
+			t.Fatalf("%v: cannot register: %v", tt.name, err)
 		}
 
 		e := &countExporter{}
