@@ -50,7 +50,7 @@ func main() {
 	latest := versions[len(versions)-1]
 	codeVersion := parseVersion("v" + opencensus.Version())
 	if !versionLess(latest, codeVersion) {
-		fmt.Printf("exporter.Version is out of date with Git tags. Got %s; want %s\n", latest, opencensus.Version())
+		fmt.Printf("exporter.Version is out of date with Git tags. Got %s; want something greater than %s\n", opencensus.Version(), latest)
 		os.Exit(1)
 	}
 	fmt.Printf("exporter.Version is up-to-date: %s\n", opencensus.Version())
