@@ -33,6 +33,8 @@ import (
 )
 
 // Options contains options for configuring the exporter.
+//
+// Deprecated: This package has been moved to: contrib.go.opencensus.io/exporter/stackdriver.
 type Options struct {
 	// ProjectID is the identifier of the Stackdriver
 	// project the user is uploading the stats data to.
@@ -81,6 +83,8 @@ type Options struct {
 
 // Exporter is a stats.Exporter and trace.Exporter
 // implementation that uploads data to Stackdriver.
+//
+// Deprecated: This package has been moved to: contrib.go.opencensus.io/exporter/stackdriver.
 type Exporter struct {
 	traceExporter *traceExporter
 	statsExporter *statsExporter
@@ -88,6 +92,8 @@ type Exporter struct {
 
 // NewExporter creates a new Exporter that implements both stats.Exporter and
 // trace.Exporter.
+//
+// Deprecated: This package has been moved to: contrib.go.opencensus.io/exporter/stackdriver.
 func NewExporter(o Options) (*Exporter, error) {
 	if o.ProjectID == "" {
 		creds, err := google.FindDefaultCredentials(context.Background(), traceapi.DefaultAuthScopes()...)
