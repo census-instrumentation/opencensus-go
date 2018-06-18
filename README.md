@@ -32,8 +32,7 @@ Currently, OpenCensus supports:
 * Stackdriver [Monitoring][exporter-stackdriver] and [Trace][exporter-stackdriver]
 * [Jaeger][exporter-jaeger] for traces
 * [AWS X-Ray][exporter-xray] for traces
-
-
+* [Datadog][exporter-datadog] for stats and traces
 ## Overview
 
 ![OpenCensus Overview](https://i.imgur.com/cf4ElHE.jpg)
@@ -188,3 +187,4 @@ release in which the functionality was marked *Deprecated*.
 [exporter-zipkin]: https://godoc.org/go.opencensus.io/exporter/zipkin
 [exporter-jaeger]: https://godoc.org/go.opencensus.io/exporter/jaeger
 [exporter-xray]: https://github.com/census-instrumentation/opencensus-go-exporter-aws
+[exporter-datadog]: https://github.com/DataDog/opencensus-go-exporter-datadog
