@@ -446,6 +446,30 @@ func TestMessageEvents(t *testing.T) {
 	}
 }
 
+func TestSetSpanName(t *testing.T) {
+	span := startSpan(StartOptions{})
+	span.SetName("NewName")
+	got, err := endSpan(span)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	want := &SpanData{
+		SpanContext: SpanContext{
+			TraceID:      tid,
+			SpanID:       SpanID{},
+			TraceOptions: 0x1,
+		},
+		ParentSpanID:    sid,
+		Name:            "NewName",
+		Status:          Status{},
+		HasRemoteParent: true,
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("exporting span: got %#v want %#v", got, want)
+	}
+}
+
 func TestSetSpanStatus(t *testing.T) {
 	span := startSpan(StartOptions{})
 	span.SetStatus(Status{Code: int32(1), Message: "request failed"})
