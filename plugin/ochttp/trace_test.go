@@ -25,7 +25,6 @@ import (
 	"log"
 	"net/http"
 	"net/http/httptest"
-	"net/url"
 	"reflect"
 	"strings"
 	"testing"
@@ -357,11 +356,11 @@ func TestSpanNameFromURL(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.u, func(t *testing.T) {
-			u, err := url.Parse(tt.u)
+			req, err := http.NewRequest("GET", tt.u, nil)
 			if err != nil {
-				t.Errorf("url.Parse() = %v", err)
+				t.Errorf("url issue = %v", err)
 			}
-			if got := spanNameFromURL(u); got != tt.want {
+			if got := spanNameFromURL(req); got != tt.want {
 				t.Errorf("spanNameFromURL() = %v, want %v", got, tt.want)
 			}
 		})
