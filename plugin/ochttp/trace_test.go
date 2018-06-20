@@ -35,6 +35,14 @@ import (
 	"go.opencensus.io/trace"
 )
 
+type testExporter struct {
+	spans []*trace.SpanData
+}
+
+func (t *testExporter) ExportSpan(s *trace.SpanData) {
+	t.spans = append(t.spans, s)
+}
+
 type testTransport struct {
 	ch chan *http.Request
 }
@@ -361,6 +369,62 @@ func TestSpanNameFromURL(t *testing.T) {
 				t.Errorf("url issue = %v", err)
 			}
 			if got := spanNameFromURL(req); got != tt.want {
+				t.Errorf("spanNameFromURL() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestSpanNameFromRequest(t *testing.T) {
+	spanNameFromURLAndMethod := func(r *http.Request) string {
+		return r.Method + " " + r.URL.Path
+	}
+
+	handler := &Handler{
+		Handler: http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
+			resp.Write([]byte("Hello, world!"))
+		}),
+		NameFromRequest: spanNameFromURLAndMethod,
+	}
+
+	server := httptest.NewServer(handler)
+	defer server.Close()
+
+	client := &http.Client{
+		Transport: &Transport{NameFromRequest: spanNameFromURLAndMethod},
+	}
+
+	tests := []struct {
+		u    string
+		want string
+	}{
+		{
+			u:    "/hello?q=a",
+			want: "GET /hello",
+		},
+		{
+			u:    "/a/b?q=c",
+			want: "GET /a/b",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.u, func(t *testing.T) {
+			var te testExporter
+			trace.RegisterExporter(&te)
+			res, err := client.Get(server.URL + tt.u)
+			if err != nil {
+				t.Fatalf("error creating request: %v", err)
+			}
+			res.Body.Close()
+			trace.UnregisterExporter(&te)
+			if want, got := 2, len(te.spans); want != got {
+				t.Fatalf("got exported spans %#v, wanted two spans", te.spans)
+			}
+			if got := te.spans[0].Name; got != tt.want {
+				t.Errorf("spanNameFromURL() = %v, want %v", got, tt.want)
+			}
+			if got := te.spans[1].Name; got != tt.want {
 				t.Errorf("spanNameFromURL() = %v, want %v", got, tt.want)
 			}
 		})

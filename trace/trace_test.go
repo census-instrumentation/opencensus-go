@@ -447,26 +447,53 @@ func TestMessageEvents(t *testing.T) {
 }
 
 func TestSetSpanName(t *testing.T) {
+	want := "SpanName-1"
 	span := startSpan(StartOptions{})
-	span.SetName("NewName")
+	span.SetName(want)
 	got, err := endSpan(span)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	want := &SpanData{
-		SpanContext: SpanContext{
-			TraceID:      tid,
-			SpanID:       SpanID{},
-			TraceOptions: 0x1,
-		},
-		ParentSpanID:    sid,
-		Name:            "NewName",
-		Status:          Status{},
-		HasRemoteParent: true,
+	if got.Name != want {
+		t.Errorf("span.Name=%q; want %q", got.Name, want)
 	}
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("exporting span: got %#v want %#v", got, want)
+}
+
+func TestSetSpanNameUnsampledSpan(t *testing.T) {
+	var nilSpanData *SpanData
+	span := startSpan(StartOptions{Sampler: NeverSample()})
+	span.SetName("NoopName")
+
+	if want, got := nilSpanData, span.data; want != got {
+		t.Errorf("span.data=%+v; want %+v", got, want)
+	}
+}
+
+func TestSetSpanNameAfterSpanEnd(t *testing.T) {
+	want := "SpanName-2"
+	span := startSpan(StartOptions{})
+	span.SetName(want)
+	got, err := endSpan(span)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// updating name after span.End
+	span.SetName("NoopName")
+
+	// exported span should not be updated by previous call to SetName
+	if got.Name != want {
+		t.Errorf("span.Name=%q; want %q", got.Name, want)
+	}
+
+	// span should not be exported again
+	var te testExporter
+	RegisterExporter(&te)
+	span.End()
+	UnregisterExporter(&te)
+	if len(te.spans) != 0 {
+		t.Errorf("got exported spans %#v, wanted no spans", te.spans)
 	}
 }
 
