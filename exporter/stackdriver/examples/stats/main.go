@@ -30,7 +30,7 @@ import (
 
 // Create measures. The program will record measures for the size of
 // processed videos and the nubmer of videos marked as spam.
-var videoSize = stats.Int64("my.org/measure/video_size", "size of processed videos", stats.UnitBytes)
+var videoSize = stats.Int64("example.com/measure/video_size", "size of processed videos", stats.UnitBytes)
 
 func main() {
 	ctx := context.Background()
@@ -60,12 +60,12 @@ func main() {
 	// Subscribe will allow view data to be exported.
 	// Once no longer need, you can unsubscribe from the view.
 	if err := view.Register(&view.View{
-		Name:        "my.org/views/video_size_cum",
+		Name:        "example.com/views/video_size_cum",
 		Description: "processed video size over time",
 		Measure:     videoSize,
 		Aggregation: view.Distribution(0, 1<<16, 1<<32),
 	}); err != nil {
-		log.Fatalf("Cannot subscribe to the view: %v", err)
+		log.Fatalf("Cannot register the view: %v", err)
 	}
 
 	processVideo(ctx)

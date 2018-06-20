@@ -49,8 +49,8 @@ var defaultWorker *worker
 
 var defaultReportingDuration = 10 * time.Second
 
-// Find returns a subscribed view associated with this name.
-// If no subscribed view is found, nil is returned.
+// Find returns a registered view associated with this name.
+// If no registered view is found, nil is returned.
 func Find(name string) (v *View) {
 	req := &getViewByNameReq{
 		name: name,
@@ -62,7 +62,7 @@ func Find(name string) (v *View) {
 }
 
 // Register begins collecting data for the given views.
-// Once a view is subscribed, it reports data to the registered exporters.
+// Once a view is registered, it reports data to the registered exporters.
 func Register(views ...*View) error {
 	for _, v := range views {
 		if err := v.canonicalize(); err != nil {
@@ -181,7 +181,7 @@ func (w *worker) tryRegisterView(v *View) (*viewInternal, error) {
 	}
 	if x, ok := w.views[vi.view.Name]; ok {
 		if !x.view.same(vi.view) {
-			return nil, fmt.Errorf("cannot subscribe view %q; a different view with the same name is already subscribed", v.Name)
+			return nil, fmt.Errorf("cannot register view %q; a different view with the same name is already registered", v.Name)
 		}
 
 		// the view is already registered so there is nothing to do and the

@@ -71,10 +71,10 @@ func (v *View) same(other *View) bool {
 // defaults for Name and Description and sorting the TagKeys
 func (v *View) canonicalize() error {
 	if v.Measure == nil {
-		return fmt.Errorf("cannot subscribe view %q: measure not set", v.Name)
+		return fmt.Errorf("cannot register view %q: measure not set", v.Name)
 	}
 	if v.Aggregation == nil {
-		return fmt.Errorf("cannot subscribe view %q: aggregation not set", v.Name)
+		return fmt.Errorf("cannot register view %q: aggregation not set", v.Name)
 	}
 	if v.Name == "" {
 		v.Name = v.Measure.Name()

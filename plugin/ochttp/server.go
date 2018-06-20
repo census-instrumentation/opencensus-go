@@ -30,16 +30,19 @@ import (
 	"go.opencensus.io/trace/propagation"
 )
 
-// Handler is a http.Handler that is aware of the incoming request's span.
+// Handler is an http.Handler wrapper to instrument your HTTP server with
+// OpenCensus. It supports both stats and tracing.
 //
+// Tracing
+//
+// This handler is aware of the incoming request's span, reading it from request
+// headers as configured using the Propagation field.
 // The extracted span can be accessed from the incoming request's
 // context.
 //
 //    span := trace.FromContext(r.Context())
 //
 // The server span will be automatically ended at the end of ServeHTTP.
-//
-// Incoming propagation mechanism is determined by the given HTTP propagators.
 type Handler struct {
 	// Propagation defines how traces are propagated. If unspecified,
 	// B3 propagation will be used.

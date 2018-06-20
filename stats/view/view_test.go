@@ -346,7 +346,7 @@ func TestViewSortedKeys(t *testing.T) {
 		Measure:     m,
 		Aggregation: Sum(),
 	})
-	// Subscribe normalizes the view by sorting the tag keys, retrieve the normalized view
+	// Register normalizes the view by sorting the tag keys, retrieve the normalized view
 	v := Find("sort_keys")
 
 	want := []string{"a", "b", "c"}
