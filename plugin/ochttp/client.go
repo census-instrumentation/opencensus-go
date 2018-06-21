@@ -46,6 +46,11 @@ type Transport struct {
 	// for spans started by this transport.
 	StartOptions trace.StartOptions
 
+	// NameFromRequest holds the function to use for generating the span name
+	// from the information found in the outgoing HTTP Request. By default the
+	// name equals the URL Path.
+	FormatSpanName func(*http.Request) string
+
 	// TODO: Implement tag propagation for HTTP.
 }
 
@@ -57,6 +62,10 @@ func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	if format == nil {
 		format = defaultFormat
 	}
+	spanNameFormatter := t.FormatSpanName
+	if spanNameFormatter == nil {
+		spanNameFormatter = spanNameFromURL
+	}
 	rt = &traceTransport{
 		base:   rt,
 		format: format,
@@ -64,6 +73,7 @@ func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 			Sampler:  t.StartOptions.Sampler,
 			SpanKind: trace.SpanKindClient,
 		},
+		formatSpanName: spanNameFormatter,
 	}
 	rt = statsTransport{base: rt}
 	return rt.RoundTrip(req)
