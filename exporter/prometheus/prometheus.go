@@ -12,14 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package prometheus contains a Prometheus exporter.
-//
-// Please note that this exporter is currently work in progress and not complete.
+// Package prometheus contains a Prometheus exporter that supports exporting
+// OpenCensus views as Prometheus metrics.
 package prometheus // import "go.opencensus.io/exporter/prometheus"
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -51,23 +49,8 @@ type Options struct {
 	OnError   func(err error)
 }
 
-var (
-	newExporterOnce      sync.Once
-	errSingletonExporter = errors.New("expecting only one exporter per instance")
-)
-
 // NewExporter returns an exporter that exports stats to Prometheus.
-// Only one exporter should exist per instance
 func NewExporter(o Options) (*Exporter, error) {
-	var err = errSingletonExporter
-	var exporter *Exporter
-	newExporterOnce.Do(func() {
-		exporter, err = newExporter(o)
-	})
-	return exporter, err
-}
-
-func newExporter(o Options) (*Exporter, error) {
 	if o.Registry == nil {
 		o.Registry = prometheus.NewRegistry()
 	}
