@@ -29,7 +29,7 @@ import (
 )
 
 // View allows users to aggregate the recorded stats.Measurements.
-// Views need to be passed to the Subscribe function to be before data will be
+// Views need to be passed to the Register function to be before data will be
 // collected and sent to Exporters.
 type View struct {
 	Name        string // Name of View. Must be unique. If unset, will default to the name of the Measure.
