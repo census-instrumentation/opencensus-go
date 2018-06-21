@@ -109,3 +109,21 @@ func TestGetZPages(t *testing.T) {
 		})
 	}
 }
+
+func TestGetZPages_default(t *testing.T) {
+	server := httptest.NewServer(Handler)
+	defer server.Close()
+	tests := []string{"/rpcz", "/tracez"}
+	for _, tt := range tests {
+		t.Run(fmt.Sprintf("GET %s", tt), func(t *testing.T) {
+			res, err := http.Get(server.URL + tt)
+			if err != nil {
+				t.Error(err)
+				return
+			}
+			if got, want := res.StatusCode, http.StatusOK; got != want {
+				t.Errorf("res.StatusCode = %d; want %d", got, want)
+			}
+		})
+	}
+}

@@ -45,7 +45,7 @@ var Handler http.Handler
 
 func init() {
 	mux := http.NewServeMux()
-	Handle(mux, "")
+	Handle(mux, "/")
 	Handler = mux
 }
 
