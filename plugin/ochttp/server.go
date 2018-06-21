@@ -61,10 +61,10 @@ type Handler struct {
 	// current trace.
 	IsPublicEndpoint bool
 
-	// NameFromRequest holds the function to use for generating the span name
+	// FormatSpanName holds the function to use for generating the span name
 	// from the information found in the incoming HTTP Request. By default the
 	// name equals the URL Path.
-	NameFromRequest func(*http.Request) string
+	FormatSpanName func(*http.Request) string
 }
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -82,10 +82,10 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) startTrace(w http.ResponseWriter, r *http.Request) (*http.Request, func()) {
 	var name string
-	if h.NameFromRequest == nil {
+	if h.FormatSpanName == nil {
 		name = spanNameFromURL(r)
 	} else {
-		name = h.NameFromRequest(r)
+		name = h.FormatSpanName(r)
 	}
 	ctx := r.Context()
 	var span *trace.Span

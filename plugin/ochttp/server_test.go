@@ -309,7 +309,7 @@ func TestEnsureTrackingResponseWriterSetsStatusCode(t *testing.T) {
 			}()
 			inRes := tt.res
 			inRes.Body = prc
-			tr := &traceTransport{base: &testResponseTransport{res: inRes}, nameFromRequest: spanNameFromURL}
+			tr := &traceTransport{base: &testResponseTransport{res: inRes}, formatSpanName: spanNameFromURL}
 			req, err := http.NewRequest("POST", "https://example.org", bytes.NewReader([]byte("testing")))
 			if err != nil {
 				t.Fatalf("NewRequest error: %v", err)

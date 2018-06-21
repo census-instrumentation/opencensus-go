@@ -38,10 +38,10 @@ const (
 )
 
 type traceTransport struct {
-	base            http.RoundTripper
-	startOptions    trace.StartOptions
-	format          propagation.HTTPFormat
-	nameFromRequest func(*http.Request) string
+	base           http.RoundTripper
+	startOptions   trace.StartOptions
+	format         propagation.HTTPFormat
+	formatSpanName func(*http.Request) string
 }
 
 // TODO(jbd): Add message events for request and response size.
@@ -50,7 +50,7 @@ type traceTransport struct {
 // The created span can follow a parent span, if a parent is presented in
 // the request's context.
 func (t *traceTransport) RoundTrip(req *http.Request) (*http.Response, error) {
-	name := t.nameFromRequest(req)
+	name := t.formatSpanName(req)
 	// TODO(jbd): Discuss whether we want to prefix
 	// outgoing requests with Sent.
 	_, span := trace.StartSpan(req.Context(), name,

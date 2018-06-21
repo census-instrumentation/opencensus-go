@@ -375,8 +375,8 @@ func TestSpanNameFromURL(t *testing.T) {
 	}
 }
 
-func TestSpanNameFromRequest(t *testing.T) {
-	spanNameFromURLAndMethod := func(r *http.Request) string {
+func TestFormatSpanName(t *testing.T) {
+	formatSpanName := func(r *http.Request) string {
 		return r.Method + " " + r.URL.Path
 	}
 
@@ -384,14 +384,14 @@ func TestSpanNameFromRequest(t *testing.T) {
 		Handler: http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
 			resp.Write([]byte("Hello, world!"))
 		}),
-		NameFromRequest: spanNameFromURLAndMethod,
+		FormatSpanName: formatSpanName,
 	}
 
 	server := httptest.NewServer(handler)
 	defer server.Close()
 
 	client := &http.Client{
-		Transport: &Transport{NameFromRequest: spanNameFromURLAndMethod},
+		Transport: &Transport{FormatSpanName: formatSpanName},
 	}
 
 	tests := []struct {
