@@ -238,6 +238,90 @@ func TestExport(t *testing.T) {
 			},
 		},
 		{
+			name: "no endpoint",
+			span: &trace.SpanData{
+				SpanContext: trace.SpanContext{
+					TraceID:      trace.TraceID{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+					SpanID:       trace.SpanID{17, 18, 19, 20, 21, 22, 23, 24},
+					TraceOptions: 1,
+				},
+				Name:      "name",
+				SpanKind:  trace.SpanKindClient,
+				StartTime: now,
+				EndTime:   now.Add(24 * time.Hour),
+				Attributes: map[string]interface{}{
+					"stringkey":               "value",
+					"intkey":                  int64(42),
+					"boolkey1":                true,
+					"boolkey2":                false,
+					"opencensus.service_name": "myservice",
+				},
+				MessageEvents: []trace.MessageEvent{
+					{
+						Time:                 now,
+						EventType:            trace.MessageEventTypeSent,
+						MessageID:            12,
+						UncompressedByteSize: 99,
+						CompressedByteSize:   98,
+					},
+				},
+				Annotations: []trace.Annotation{
+					{
+						Time:    now,
+						Message: "Annotation",
+						Attributes: map[string]interface{}{
+							"stringkey": "value",
+							"intkey":    int64(42),
+							"boolkey1":  true,
+							"boolkey2":  false,
+						},
+					},
+				},
+				Status: trace.Status{
+					Code:    3,
+					Message: "error",
+				},
+			},
+			want: model.SpanModel{
+				LocalEndpoint: &model.Endpoint{
+					ServiceName: "myservice",
+					IPv4:        net.ParseIP("0.0.0.0"),
+					Port:        0,
+				},
+				SpanContext: model.SpanContext{
+					TraceID: model.TraceID{
+						High: 0x0102030405060708,
+						Low:  0x090a0b0c0d0e0f10,
+					},
+					ID:      0x1112131415161718,
+					Sampled: &sampledTrue,
+				},
+				Name:      "name",
+				Kind:      model.Client,
+				Timestamp: now,
+				Duration:  24 * time.Hour,
+				Shared:    false,
+				Annotations: []model.Annotation{
+					{
+						Timestamp: now,
+						Value:     "Annotation",
+					},
+					{
+						Timestamp: now,
+						Value:     "SENT",
+					},
+				},
+				Tags: map[string]string{
+					"stringkey": "value",
+					"intkey":    "42",
+					"boolkey1":  "true",
+					"boolkey2":  "false",
+					"error":     "INVALID_ARGUMENT",
+					"opencensus.status_description": "error",
+				},
+			},
+		},
+		{
 			name: "zero endpoint",
 			span: &trace.SpanData{
 				SpanContext: trace.SpanContext{

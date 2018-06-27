@@ -68,13 +68,13 @@ func (e *Exporter) ExportSpan(s *trace.SpanData) {
 }
 
 func (e *Exporter) spanLocalEndpoint(s *trace.SpanData) *model.Endpoint {
-	hostPoint, ok := s.Attributes[serviceEndpointKey].(string)
-	if !ok {
-		return e.localEndpoint
-	}
 	serviceName, ok := s.Attributes[serviceNameKey].(string)
 	if !ok {
 		return e.localEndpoint
+	}
+	hostPoint, ok := s.Attributes[serviceEndpointKey].(string)
+	if !ok {
+		hostPoint = defaultHostPort
 	}
 	ep, err := zipkin.NewEndpoint(serviceName, hostPoint)
 	if err != nil {
@@ -89,6 +89,8 @@ const (
 	statusDescriptionTagKey = "opencensus.status_description"
 	serviceNameKey          = "opencensus.service_name"
 	serviceEndpointKey      = "opencensus.service_endpoint"
+
+	defaultHostPort = "0.0.0.0:0"
 )
 
 var (
