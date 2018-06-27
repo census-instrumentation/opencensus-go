@@ -18,11 +18,15 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
-	"reflect"
 	"strings"
 	"testing"
 	"time"
 
+	"fmt"
+	"net"
+
+	"github.com/google/go-cmp/cmp"
+	"github.com/openzipkin/zipkin-go"
 	"github.com/openzipkin/zipkin-go/model"
 	httpreporter "github.com/openzipkin/zipkin-go/reporter/http"
 	"go.opencensus.io/trace"
@@ -54,10 +58,12 @@ func TestExport(t *testing.T) {
 				StartTime: now,
 				EndTime:   now.Add(24 * time.Hour),
 				Attributes: map[string]interface{}{
-					"stringkey": "value",
-					"intkey":    int64(42),
-					"boolkey1":  true,
-					"boolkey2":  false,
+					"stringkey":                   "value",
+					"intkey":                      int64(42),
+					"boolkey1":                    true,
+					"boolkey2":                    false,
+					"opencensus.service_name":     "myservice",
+					"opencensus.service_endpoint": "10.0.0.1:80",
 				},
 				MessageEvents: []trace.MessageEvent{
 					{
@@ -86,6 +92,11 @@ func TestExport(t *testing.T) {
 				},
 			},
 			want: model.SpanModel{
+				LocalEndpoint: &model.Endpoint{
+					ServiceName: "myservice",
+					IPv4:        net.ParseIP("10.0.0.1"),
+					Port:        80,
+				},
 				SpanContext: model.SpanContext{
 					TraceID: model.TraceID{
 						High: 0x0102030405060708,
@@ -131,6 +142,11 @@ func TestExport(t *testing.T) {
 				EndTime:   now.Add(24 * time.Hour),
 			},
 			want: model.SpanModel{
+				LocalEndpoint: &model.Endpoint{
+					ServiceName: "test",
+					IPv4:        net.ParseIP("10.0.0.2"),
+					Port:        80,
+				},
 				SpanContext: model.SpanContext{
 					TraceID: model.TraceID{
 						High: 0x0102030405060708,
@@ -161,6 +177,11 @@ func TestExport(t *testing.T) {
 				},
 			},
 			want: model.SpanModel{
+				LocalEndpoint: &model.Endpoint{
+					ServiceName: "test",
+					IPv4:        net.ParseIP("10.0.0.2"),
+					Port:        80,
+				},
 				SpanContext: model.SpanContext{
 					TraceID: model.TraceID{
 						High: 0x0102030405060708,
@@ -193,6 +214,11 @@ func TestExport(t *testing.T) {
 				},
 			},
 			want: model.SpanModel{
+				LocalEndpoint: &model.Endpoint{
+					ServiceName: "test",
+					IPv4:        net.ParseIP("10.0.0.2"),
+					Port:        80,
+				},
 				SpanContext: model.SpanContext{
 					TraceID: model.TraceID{
 						High: 0x0102030405060708,
@@ -211,45 +237,42 @@ func TestExport(t *testing.T) {
 			},
 		},
 	}
-	for _, tt := range tests {
-		got := zipkinSpan(tt.span, nil)
-		if len(got.Annotations) != len(tt.want.Annotations) {
-			t.Fatalf("zipkinSpan: got %d annotations in span, want %d", len(got.Annotations), len(tt.want.Annotations))
-		}
-		if !reflect.DeepEqual(got, tt.want) {
-			t.Errorf("zipkinSpan:\n\tgot  %#v\n\twant %#v", got, tt.want)
-		}
-	}
-	for _, tt := range tests {
-		ch := make(chan []byte)
-		client := http.Client{
-			Transport: roundTripper(func(req *http.Request) (*http.Response, error) {
-				body, _ := ioutil.ReadAll(req.Body)
-				ch <- body
-				return &http.Response{StatusCode: 200, Body: ioutil.NopCloser(strings.NewReader(""))}, nil
-			}),
-		}
-		reporter := httpreporter.NewReporter("foo", httpreporter.Client(&client), httpreporter.BatchInterval(time.Millisecond))
-		exporter := NewExporter(reporter, nil)
-		exporter.ExportSpan(tt.span)
-		var data []byte
-		select {
-		case data = <-ch:
-		case <-time.After(2 * time.Second):
-			t.Fatalf("span was not exported")
-		}
-		var spans []model.SpanModel
-		json.Unmarshal(data, &spans)
-		if len(spans) != 1 {
-			t.Fatalf("Export: got %d spans, want 1", len(spans))
-		}
-		got := spans[0]
-		got.SpanContext.Sampled = &sampledTrue // Sampled is not set when the span is reported.
-		if len(got.Annotations) != len(tt.want.Annotations) {
-			t.Fatalf("Export: got %d annotations in span, want %d", len(got.Annotations), len(tt.want.Annotations))
-		}
-		if !reflect.DeepEqual(got, tt.want) {
-			t.Errorf("Export:\n\tgot  %#v\n\twant %#v", got, tt.want)
-		}
+	for idx, tt := range tests {
+		t.Run(fmt.Sprintf("[%d]", idx), func(t *testing.T) {
+			ch := make(chan []byte)
+			client := http.Client{
+				Transport: roundTripper(func(req *http.Request) (*http.Response, error) {
+					body, _ := ioutil.ReadAll(req.Body)
+					ch <- body
+					return &http.Response{StatusCode: 200, Body: ioutil.NopCloser(strings.NewReader(""))}, nil
+				}),
+			}
+			reporter := httpreporter.NewReporter("foo", httpreporter.Client(&client), httpreporter.BatchInterval(time.Millisecond))
+			ep, err := zipkin.NewEndpoint("test", "10.0.0.2:80")
+			if err != nil {
+				t.Fatal(err)
+			}
+			exporter := NewExporter(reporter, ep)
+			exporter.ExportSpan(tt.span)
+			var data []byte
+			select {
+			case data = <-ch:
+			case <-time.After(2 * time.Second):
+				t.Fatalf("span was not exported")
+			}
+			var spans []model.SpanModel
+			json.Unmarshal(data, &spans)
+			if len(spans) != 1 {
+				t.Fatalf("Export: got %d spans, want 1", len(spans))
+			}
+			got := spans[0]
+			got.SpanContext.Sampled = &sampledTrue // Sampled is not set when the span is reported.
+			if len(got.Annotations) != len(tt.want.Annotations) {
+				t.Fatalf("Export: got %d annotations in span, want %d", len(got.Annotations), len(tt.want.Annotations))
+			}
+			if diff := cmp.Diff(got, tt.want); diff != "" {
+				t.Errorf("Export -got +want: %s", diff)
+			}
+		})
 	}
 }
