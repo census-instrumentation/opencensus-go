@@ -19,6 +19,10 @@ import (
 	"encoding/binary"
 	"strconv"
 
+	"log"
+	"os"
+
+	"github.com/openzipkin/zipkin-go"
 	"github.com/openzipkin/zipkin-go/model"
 	"github.com/openzipkin/zipkin-go/reporter"
 	"go.opencensus.io/trace"
@@ -29,6 +33,11 @@ import (
 type Exporter struct {
 	reporter      reporter.Reporter
 	localEndpoint *model.Endpoint
+
+	// Logger will be used to report errors from this exporter.
+	Logger interface {
+		Printf(string, ...interface{})
+	}
 }
 
 // NewExporter returns an implementation of trace.Exporter that uploads spans
@@ -38,25 +47,50 @@ type Exporter struct {
 // can be created with the openzipkin library, using one of the packages under
 // github.com/openzipkin/zipkin-go/reporter.
 //
-// localEndpoint sets the local endpoint of exported spans.  It can be
+// localEndpoint sets the default local endpoint of exported spans.  It can be
 // constructed with github.com/openzipkin/zipkin-go.NewEndpoint, e.g.:
 // 	localEndpoint, err := NewEndpoint("my server", listener.Addr().String())
 // localEndpoint can be nil.
+//
+// localEndpoint can be overridden on a per-span basis by setting Span attributes
+// "zipkin.local_endpoint.service_name" and "zipkin.local_endpoint.host_port".
 func NewExporter(reporter reporter.Reporter, localEndpoint *model.Endpoint) *Exporter {
 	return &Exporter{
 		reporter:      reporter,
 		localEndpoint: localEndpoint,
+		Logger:        log.New(os.Stderr, "zipkin", log.LstdFlags),
 	}
 }
 
 // ExportSpan exports a span to a Zipkin server.
 func (e *Exporter) ExportSpan(s *trace.SpanData) {
-	e.reporter.Send(zipkinSpan(s, e.localEndpoint))
+	e.reporter.Send(e.zipkinSpan(s))
+}
+
+func (e *Exporter) spanLocalEndpoint(s *trace.SpanData) *model.Endpoint {
+	serviceName, ok := s.Attributes[serviceNameKey].(string)
+	if !ok {
+		return e.localEndpoint
+	}
+	hostPoint, ok := s.Attributes[serviceEndpointKey].(string)
+	if !ok {
+		hostPoint = defaultHostPort
+	}
+	ep, err := zipkin.NewEndpoint(serviceName, hostPoint)
+	if err != nil {
+		e.Logger.Printf("Invalid values %s=%q, %s=%q: %s", serviceEndpointKey, hostPoint, serviceNameKey, serviceName, err)
+		return e.localEndpoint
+	}
+	return ep
 }
 
 const (
 	statusCodeTagKey        = "error"
 	statusDescriptionTagKey = "opencensus.status_description"
+	serviceNameKey          = "opencensus.service_name"
+	serviceEndpointKey      = "opencensus.service_endpoint"
+
+	defaultHostPort = "0.0.0.0:0"
 )
 
 var (
@@ -110,7 +144,13 @@ func spanKind(s *trace.SpanData) model.Kind {
 	return model.Undetermined
 }
 
-func zipkinSpan(s *trace.SpanData, localEndpoint *model.Endpoint) model.SpanModel {
+var ignoredAttributeKeys = map[string]struct{}{
+	serviceEndpointKey: {},
+	serviceNameKey:     {},
+}
+
+func (e *Exporter) zipkinSpan(s *trace.SpanData) model.SpanModel {
+	localEndpoint := e.spanLocalEndpoint(s)
 	sc := s.SpanContext
 	z := model.SpanModel{
 		SpanContext: model.SpanContext{
@@ -138,6 +178,9 @@ func zipkinSpan(s *trace.SpanData, localEndpoint *model.Endpoint) model.SpanMode
 	if len(s.Attributes) != 0 {
 		m := make(map[string]string, len(s.Attributes)+2)
 		for key, value := range s.Attributes {
+			if _, ok := ignoredAttributeKeys[key]; ok {
+				continue
+			}
 			switch v := value.(type) {
 			case string:
 				m[key] = v

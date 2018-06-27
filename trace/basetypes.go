@@ -50,16 +50,19 @@ type Attribute struct {
 }
 
 // BoolAttribute returns a bool-valued attribute.
+// Attribute keys starting with "opencensus" are reserved for internal use.
 func BoolAttribute(key string, value bool) Attribute {
 	return Attribute{key: key, value: value}
 }
 
 // Int64Attribute returns an int64-valued attribute.
+// Attribute keys starting with "opencensus" are reserved for internal use.
 func Int64Attribute(key string, value int64) Attribute {
 	return Attribute{key: key, value: value}
 }
 
 // StringAttribute returns a string-valued attribute.
+// Attribute keys starting with "opencensus" are reserved for internal use.
 func StringAttribute(key string, value string) Attribute {
 	return Attribute{key: key, value: value}
 }
