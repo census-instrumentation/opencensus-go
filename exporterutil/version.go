@@ -17,10 +17,11 @@
 // Deprecated: Don't use this package.
 package exporterutil
 
-import opencensus "go.opencensus.io"
+import "go.opencensus.io"
 
 // Version is the current release version of OpenCensus in use. It is made
 // available for exporters to include in User-Agent-like metadata.
+// Deprecated: Use opencensus.Version().
 var Version = opencensus.Version()
 
 // TODO(jbd): Remove this package at the next release.
