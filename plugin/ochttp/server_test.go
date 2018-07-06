@@ -300,8 +300,7 @@ func TestEnsureTrackingResponseWriterSetsStatusCode(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.want.Message, func(t *testing.T) {
-			span := trace.NewSpan("testing", nil, trace.StartOptions{Sampler: trace.AlwaysSample()})
-			ctx := trace.WithSpan(context.Background(), span)
+			ctx := context.Background()
 			prc, pwc := io.Pipe()
 			go func() {
 				pwc.Write([]byte("Foo"))
@@ -309,7 +308,13 @@ func TestEnsureTrackingResponseWriterSetsStatusCode(t *testing.T) {
 			}()
 			inRes := tt.res
 			inRes.Body = prc
-			tr := &traceTransport{base: &testResponseTransport{res: inRes}, formatSpanName: spanNameFromURL}
+			tr := &traceTransport{
+				base:           &testResponseTransport{res: inRes},
+				formatSpanName: spanNameFromURL,
+				startOptions: trace.StartOptions{
+					Sampler: trace.AlwaysSample(),
+				},
+			}
 			req, err := http.NewRequest("POST", "https://example.org", bytes.NewReader([]byte("testing")))
 			if err != nil {
 				t.Fatalf("NewRequest error: %v", err)

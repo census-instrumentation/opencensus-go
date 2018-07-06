@@ -107,7 +107,7 @@ func TestTransport_RoundTrip(t *testing.T) {
 
 			req, _ := http.NewRequest("GET", "http://foo.com", nil)
 			if tt.parent != nil {
-				req = req.WithContext(trace.WithSpan(req.Context(), tt.parent))
+				req = req.WithContext(trace.NewContext(req.Context(), tt.parent))
 			}
 			rt.RoundTrip(req)
 
