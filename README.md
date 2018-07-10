@@ -141,13 +141,18 @@ Below you see a trace and several spans underneath it.
 
 ### Spans
 
-Span is the unit step in a trace. Each span has name, latency, status and
+Span is the unit step in a trace. Each span has a name, latency, status and
 additional metadata.
+
+Below we are starting a span for a cache read and ending it
+when we are done:
 
 [embedmd]:# (internal/readme/trace.go startend)
 ```go
 ctx, span := trace.StartSpan(ctx, "cache.Get")
 defer span.End()
+
+// Do work to get from cache.
 ```
 
 ### Propagation
@@ -166,6 +171,8 @@ propagating the newly created span in the current context.
 ```go
 ctx, span := trace.StartSpan(ctx, "cache.Get")
 defer span.End()
+
+// Do work to get from cache.
 ```
 
 Across the network, OpenCensus provides different propagation
