@@ -147,6 +147,9 @@ func WithSampler(sampler Sampler) StartOption {
 
 // StartSpan starts a new child span of the current span in the context. If
 // there is no span in the context, creates a new trace and span.
+//
+// Returned context contains the newly created span. You can use it to
+// propagate the returned span in process.
 func StartSpan(ctx context.Context, name string, o ...StartOption) (context.Context, *Span) {
 	var opts StartOptions
 	var parent SpanContext
@@ -167,6 +170,9 @@ func StartSpan(ctx context.Context, name string, o ...StartOption) (context.Cont
 //
 // If the incoming context contains a parent, it ignores. StartSpanWithRemoteParent is
 // preferred for cases where the parent is propagated via an incoming request.
+//
+// Returned context contains the newly created span. You can use it to
+// propagate the returned span in process.
 func StartSpanWithRemoteParent(ctx context.Context, name string, parent SpanContext, o ...StartOption) (context.Context, *Span) {
 	var opts StartOptions
 	for _, op := range o {
