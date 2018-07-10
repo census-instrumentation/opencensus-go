@@ -141,7 +141,7 @@ Below you see a trace and several spans underneath it.
 
 ### Spans
 
-Span is the unit step in a trace. Each span has name, duration, status and
+Span is the unit step in a trace. Each span has name, latency, status and
 additional metadata.
 
 [embedmd]:# (internal/readme/trace.go startend)
@@ -153,13 +153,13 @@ defer span.End()
 ### Propagation
 
 Spans can have parents or can be root spans if they don't have any parents.
-The current span is propagated in-process and on wire to allow associating
+The current span is propagated in-process and across the network to allow associating
 new child spans with the parent.
 
 In the same process, context.Context is used to propagate spans.
 trace.StartSpan creates a new span as a root if the current context
 doesn't contain a span. Or, it creates a child of the span that is
-already in current context. Returned context can be used to keep
+already in current context. The returned context can be used to keep
 propagating the newly created span in the current context.
 
 [embedmd]:# (internal/readme/trace.go startend)
@@ -168,19 +168,19 @@ ctx, span := trace.StartSpan(ctx, "cache.Get")
 defer span.End()
 ```
 
-On wire, OpenCensus provides different propagation methods for
-different protocols.
+Across the network, OpenCensus provides different propagation
+methods for different protocols.
 
-* gRPC integrations uses the binary propagation format.
-* HTTP integrations uses B3 by default but can be configured
-  to use a custom propagation method by setting another
+* gRPC integrations uses the OpenCensus' [binary propagation format](https://godoc.org/go.opencensus.io/trace/propagation).
+* HTTP integrations uses Zipkin's [B3](https://github.com/openzipkin/b3-propagation)
+  by default but can be configured to use a custom propagation method by setting another
   [propagation.HTTPFormat](https://godoc.org/go.opencensus.io/trace/propagation#HTTPFormat).
 
 ## Execution Tracer
 
-With Go 1.11, OpenCensus Go will be able to work mutually 
-with the Go execution tracer. See [Debugging Latency in Go](https://medium.com/observability/debugging-latency-in-go-1-11-9f97a7910d68)
-to see an example of their mutual use.
+With Go 1.11, OpenCensus Go will support integration with the Go execution tracer.
+See [Debugging Latency in Go](https://medium.com/observability/debugging-latency-in-go-1-11-9f97a7910d68)
+for an example of their mutual use.
 
 ## Profiles
 
