@@ -24,7 +24,7 @@ func traceExamples() {
 	ctx := context.Background()
 
 	// START startend
-	ctx, span := trace.StartSpan(ctx, "your choice of name")
+	ctx, span := trace.StartSpan(ctx, "cache.Get")
 	defer span.End()
 	// END startend
 }

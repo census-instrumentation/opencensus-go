@@ -29,10 +29,11 @@ Currently, OpenCensus supports:
 
 * [Prometheus][exporter-prom] for stats
 * [OpenZipkin][exporter-zipkin] for traces
-* Stackdriver [Monitoring][exporter-stackdriver] and [Trace][exporter-stackdriver]
+* [Stackdriver][exporter-stackdriver] Monitoring for stats and Trace for traces
 * [Jaeger][exporter-jaeger] for traces
 * [AWS X-Ray][exporter-xray] for traces
 * [Datadog][exporter-datadog] for stats and traces
+
 ## Overview
 
 ![OpenCensus Overview](https://i.imgur.com/cf4ElHE.jpg)
@@ -129,11 +130,57 @@ exported via the registered exporters.
 
 ## Traces
 
+A distributed trace tracks the progression of a single user request as
+it is handled by the services and processes that make up an application.
+Each step is called a span in the trace. Spans include metadata about the step,
+including especially the time spent in the step, called the span’s latency.
+
+Below you see a trace and several spans underneath it.
+
+![Traces and spans](https://i.imgur.com/7hZwRVj.png)
+
+### Spans
+
+Span is the unit step in a trace. Each span has name, duration, status and
+additional metadata.
+
 [embedmd]:# (internal/readme/trace.go startend)
 ```go
-ctx, span := trace.StartSpan(ctx, "your choice of name")
+ctx, span := trace.StartSpan(ctx, "cache.Get")
 defer span.End()
 ```
+
+### Propagation
+
+Spans can have parents or can be root spans if they don't have any parents.
+The current span is propagated in-process and on wire to allow associating
+new child spans with the parent.
+
+In the same process, context.Context is used to propagate spans.
+trace.StartSpan creates a new span as a root if the current context
+doesn't contain a span. Or, it creates a child of the span that is
+already in current context. Returned context can be used to keep
+propagating the newly created span in the current context.
+
+[embedmd]:# (internal/readme/trace.go startend)
+```go
+ctx, span := trace.StartSpan(ctx, "cache.Get")
+defer span.End()
+```
+
+On wire, OpenCensus provides different propagation methods for
+different protocols.
+
+* gRPC integrations uses the binary propagation format.
+* HTTP integrations uses B3 by default but can be configured
+  to use a custom propagation method by setting another
+  [propagation.HTTPFormat](https://godoc.org/go.opencensus.io/trace/propagation#HTTPFormat).
+
+## Execution Tracer
+
+With Go 1.11, OpenCensus Go will be able to work mutually 
+with the Go execution tracer. See [Debugging Latency in Go](https://medium.com/observability/debugging-latency-in-go-1-11-9f97a7910d68)
+to see an example of their mutual use.
 
 ## Profiles
 
