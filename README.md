@@ -25,7 +25,10 @@ OpenCensus Go libraries require Go 1.8 or later.
 ## Exporters
 
 OpenCensus can export instrumentation data to various backends. 
-Currently, OpenCensus supports:
+OpenCensus has exporter implementations for the following, users
+can implement their own exporters by implementing the exporter interfaces
+([stats](https://godoc.org/go.opencensus.io/stats/view#Exporter),
+[trace](https://godoc.org/go.opencensus.io/trace#Exporter)):
 
 * [Prometheus][exporter-prom] for stats
 * [OpenZipkin][exporter-zipkin] for traces
