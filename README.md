@@ -22,6 +22,18 @@ The use of vendoring or a dependency management tool is recommended.
 
 OpenCensus Go libraries require Go 1.8 or later.
 
+## Getting Started
+
+The easiest way to get started using OpenCensus in your application is to use an existing
+integration with your RPC framework:
+
+* [net/http](https://godoc.org/go.opencensus.io/plugin/ochttp)
+* [gRPC](https://godoc.org/go.opencensus.io/plugin/ocgrpc)
+* [database/sql](https://godoc.org/github.com/basvanbeek/ocsql)
+
+If you're a framework not listed here, you could either implement your own middleware for your
+framework or use [custom stats](#stats) and [spans](#spans) directly in your application.
+
 ## Exporters
 
 OpenCensus can export instrumentation data to various backends. 
@@ -45,13 +57,6 @@ In a microservices environment, a user request may go through
 multiple services until there is a response. OpenCensus allows
 you to instrument your services and collect diagnostics data all
 through your services end-to-end.
-
-Start with instrumenting HTTP and gRPC clients and servers,
-then add additional custom instrumentation if needed.
-
-* [HTTP guide](https://github.com/census-instrumentation/opencensus-go/tree/master/examples/http)
-* [gRPC guide](https://github.com/census-instrumentation/opencensus-go/tree/master/examples/grpc)
-
 
 ## Tags
 
@@ -223,7 +228,7 @@ Before version 1.0.0, the following deprecation policy will be observed:
 
 No backwards-incompatible changes will be made except for the removal of symbols that have
 been marked as *Deprecated* for at least one minor release (e.g. 0.9.0 to 0.10.0). A release
-removing the *Deprecated* functionality will be made no sooner than 28 days after the first 
+removing the *Deprecated* functionality will be made no sooner than 28 days after the first
 release in which the functionality was marked *Deprecated*.
 
 [travis-image]: https://travis-ci.org/census-instrumentation/opencensus-go.svg?branch=master
