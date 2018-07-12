@@ -224,6 +224,10 @@ func TestStartSpanWithRemoteParent(t *testing.T) {
 
 // startSpan returns a context with a new Span that is recording events and will be exported.
 func startSpan(o StartOptions) *Span {
+	bufferLimit := DefaultBufferLimit
+	if o.BufferLimit != 0 {
+		bufferLimit = o.BufferLimit
+	}
 	_, span := StartSpanWithRemoteParent(context.Background(), "span0",
 		SpanContext{
 			TraceID:      tid,
@@ -232,6 +236,7 @@ func startSpan(o StartOptions) *Span {
 		},
 		WithSampler(o.Sampler),
 		WithSpanKind(o.SpanKind),
+		WithBufferLimit(bufferLimit),
 	)
 	return span
 }
@@ -379,7 +384,9 @@ func TestSetSpanAttributes(t *testing.T) {
 }
 
 func TestAnnotations(t *testing.T) {
-	span := startSpan(StartOptions{})
+	span := startSpan(StartOptions{BufferLimit: 2})
+	span.Annotatef([]Attribute{StringAttribute("dropped1", "dropped1")}, "%f", 123.123)
+	span.Annotate([]Attribute{StringAttribute("dropped2", "dropped2")}, "dropped2")
 	span.Annotatef([]Attribute{StringAttribute("key1", "value1")}, "%f", 1.5)
 	span.Annotate([]Attribute{StringAttribute("key2", "value2")}, "Annotate")
 	got, err := endSpan(span)
@@ -405,7 +412,8 @@ func TestAnnotations(t *testing.T) {
 			{Message: "1.500000", Attributes: map[string]interface{}{"key1": "value1"}},
 			{Message: "Annotate", Attributes: map[string]interface{}{"key2": "value2"}},
 		},
-		HasRemoteParent: true,
+		HasRemoteParent:    true,
+		DroppedAnnotations: 2,
 	}
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("exporting span: got %#v want %#v", got, want)
@@ -413,7 +421,10 @@ func TestAnnotations(t *testing.T) {
 }
 
 func TestMessageEvents(t *testing.T) {
-	span := startSpan(StartOptions{})
+	span := startSpan(StartOptions{BufferLimit: 2})
+	const dropped1, dropped2 = 123, 456
+	span.AddMessageReceiveEvent(dropped1, dropped1, dropped1)
+	span.AddMessageSendEvent(dropped2, dropped2, dropped2)
 	span.AddMessageReceiveEvent(3, 400, 300)
 	span.AddMessageSendEvent(1, 200, 100)
 	got, err := endSpan(span)
@@ -439,7 +450,8 @@ func TestMessageEvents(t *testing.T) {
 			{EventType: 2, MessageID: 0x3, UncompressedByteSize: 0x190, CompressedByteSize: 0x12c},
 			{EventType: 1, MessageID: 0x1, UncompressedByteSize: 0xc8, CompressedByteSize: 0x64},
 		},
-		HasRemoteParent: true,
+		HasRemoteParent:      true,
+		DroppedMessageEvents: 2,
 	}
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("exporting span: got %#v want %#v", got, want)
@@ -522,12 +534,30 @@ func TestSetSpanStatus(t *testing.T) {
 }
 
 func TestAddLink(t *testing.T) {
-	span := startSpan(StartOptions{})
+	span := startSpan(StartOptions{BufferLimit: 2})
+	span.AddLink(Link{
+		TraceID:    tid,
+		SpanID:     sid,
+		Type:       LinkTypeParent,
+		Attributes: map[string]interface{}{"dropped1": "dropped1"},
+	})
+	span.AddLink(Link{
+		TraceID:    tid,
+		SpanID:     sid,
+		Type:       LinkTypeParent,
+		Attributes: map[string]interface{}{"dropped2": "dropped2"},
+	})
 	span.AddLink(Link{
 		TraceID:    tid,
 		SpanID:     sid,
 		Type:       LinkTypeParent,
 		Attributes: map[string]interface{}{"key5": "value5"},
+	})
+	span.AddLink(Link{
+		TraceID:    tid,
+		SpanID:     sid,
+		Type:       LinkTypeParent,
+		Attributes: map[string]interface{}{"key6": "value6"},
 	})
 	got, err := endSpan(span)
 	if err != nil {
@@ -542,13 +572,22 @@ func TestAddLink(t *testing.T) {
 		},
 		ParentSpanID: sid,
 		Name:         "span0",
-		Links: []Link{{
-			TraceID:    tid,
-			SpanID:     sid,
-			Type:       2,
-			Attributes: map[string]interface{}{"key5": "value5"},
-		}},
+		Links: []Link{
+			{
+				TraceID:    tid,
+				SpanID:     sid,
+				Type:       2,
+				Attributes: map[string]interface{}{"key5": "value5"},
+			},
+			{
+				TraceID:    tid,
+				SpanID:     sid,
+				Type:       2,
+				Attributes: map[string]interface{}{"key6": "value6"},
+			},
+		},
 		HasRemoteParent: true,
+		DroppedLinks:    2,
 	}
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("exporting span: got %#v want %#v", got, want)

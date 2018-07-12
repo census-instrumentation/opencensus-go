@@ -73,4 +73,11 @@ type SpanData struct {
 	Status
 	Links           []Link
 	HasRemoteParent bool
+
+	// The count of all span.bufferLimit overflows.
+	// See trace.WithBufferLimit for more info.
+	// TODO: This is not currently exported anywhere (e.g. tracez page).
+	DroppedAnnotations   int
+	DroppedMessageEvents int
+	DroppedLinks         int
 }
