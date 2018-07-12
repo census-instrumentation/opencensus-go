@@ -62,13 +62,13 @@ func (s *testServer) Multiple(stream Foo_MultipleServer) error {
 	}
 }
 
-func NewTestClient(l *testing.T) (client FooClient, cleanup func()) {
+func NewTestClient(t *testing.T, clientHandler *ocgrpc.ClientHandler, serverHandler *ocgrpc.ServerHandler) (client FooClient, cleanup func()) {
 	// initialize server
 	listener, err := net.Listen("tcp", "localhost:0")
 	if err != nil {
-		l.Fatal(err)
+		t.Fatal(err)
 	}
-	server := grpc.NewServer(grpc.StatsHandler(&ocgrpc.ServerHandler{}))
+	server := grpc.NewServer(grpc.StatsHandler(serverHandler))
 	RegisterFooServer(server, &testServer{})
 	go server.Serve(listener)
 
@@ -76,11 +76,11 @@ func NewTestClient(l *testing.T) (client FooClient, cleanup func()) {
 	clientConn, err := grpc.Dial(
 		listener.Addr().String(),
 		grpc.WithInsecure(),
-		grpc.WithStatsHandler(&ocgrpc.ClientHandler{}),
+		grpc.WithStatsHandler(clientHandler),
 		grpc.WithBlock())
 
 	if err != nil {
-		l.Fatal(err)
+		t.Fatal(err)
 	}
 	client = NewFooClient(clientConn)
 

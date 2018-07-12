@@ -22,14 +22,14 @@ import (
 	. "go.opencensus.io/trace"
 )
 
-func TestBinary(t *testing.T) {
+func TestToBinary(t *testing.T) {
 	tid := TraceID{0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48, 0x49, 0x4a, 0x4b, 0x4c, 0x4d, 0x4e, 0x4f}
 	sid := SpanID{0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68}
 	b := []byte{
 		0, 0, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 1, 97, 98, 99, 100,
 		101, 102, 103, 104, 2, 1,
 	}
-	if b2 := Binary(SpanContext{
+	if b2 := toBinary(SpanContext{
 		TraceID:      tid,
 		SpanID:       sid,
 		TraceOptions: 1,
@@ -37,31 +37,31 @@ func TestBinary(t *testing.T) {
 		t.Errorf("Binary: got serialization %02x want %02x", b2, b)
 	}
 
-	sc, ok := FromBinary(b)
+	sc, ok := fromBinary(b)
 	if !ok {
-		t.Errorf("FromBinary: got ok==%t, want true", ok)
+		t.Errorf("fromBinary: got ok==%t, want true", ok)
 	}
 	if got := sc.TraceID; got != tid {
-		t.Errorf("FromBinary: got trace ID %s want %s", got, tid)
+		t.Errorf("fromBinary: got trace ID %s want %s", got, tid)
 	}
 	if got := sc.SpanID; got != sid {
-		t.Errorf("FromBinary: got span ID %s want %s", got, sid)
+		t.Errorf("fromBinary: got span ID %s want %s", got, sid)
 	}
 
 	b[0] = 1
-	sc, ok = FromBinary(b)
+	sc, ok = fromBinary(b)
 	if ok {
-		t.Errorf("FromBinary: decoding bytes containing an unsupported version: got ok==%t want false", ok)
+		t.Errorf("fromBinary: decoding bytes containing an unsupported version: got ok==%t want false", ok)
 	}
 
 	b = []byte{0, 1, 97, 98, 99, 100, 101, 102, 103, 104, 2, 1}
-	sc, ok = FromBinary(b)
+	sc, ok = fromBinary(b)
 	if ok {
-		t.Errorf("FromBinary: decoding bytes without a TraceID: got ok==%t want false", ok)
+		t.Errorf("fromBinary: decoding bytes without a TraceID: got ok==%t want false", ok)
 	}
 
-	if b := Binary(SpanContext{}); b != nil {
-		t.Errorf("Binary(SpanContext{}): got serialization %02x want nil", b)
+	if b := toBinary(SpanContext{}); b != nil {
+		t.Errorf("toBinary(SpanContext{}): got serialization %02x want nil", b)
 	}
 }
 
@@ -100,7 +100,7 @@ func TestFromBinary(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		sc, gotOk := FromBinary(tt.data)
+		sc, gotOk := fromBinary(tt.data)
 		gotTraceID, gotSpanID, gotOpts := sc.TraceID, sc.SpanID, sc.TraceOptions
 		if gotTraceID != tt.wantTraceID {
 			t.Errorf("%s: Decode() gotTraceID = %v, want %v", tt.name, gotTraceID, tt.wantTraceID)
@@ -117,7 +117,7 @@ func TestFromBinary(t *testing.T) {
 	}
 }
 
-func BenchmarkBinary(b *testing.B) {
+func BenchmarkToBinary(b *testing.B) {
 	tid := TraceID{0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48, 0x49, 0x4a, 0x4b, 0x4c, 0x4d, 0x4e, 0x4f}
 	sid := SpanID{0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68}
 	sc := SpanContext{
@@ -126,7 +126,7 @@ func BenchmarkBinary(b *testing.B) {
 	}
 	var x byte
 	for i := 0; i < b.N; i++ {
-		bin := Binary(sc)
+		bin := toBinary(sc)
 		x += bin[0]
 	}
 	if x == 1 {
@@ -141,7 +141,7 @@ func BenchmarkFromBinary(b *testing.B) {
 	}
 	var x byte
 	for i := 0; i < b.N; i++ {
-		sc, _ := FromBinary(bin)
+		sc, _ := fromBinary(bin)
 		x += sc.TraceID[0]
 	}
 	if x == 1 {

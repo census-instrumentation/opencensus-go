@@ -19,7 +19,11 @@ import (
 	"testing"
 	"time"
 
+	"encoding/hex"
+	"encoding/json"
+
 	"go.opencensus.io/internal/testpb"
+	"go.opencensus.io/plugin/ocgrpc"
 	"go.opencensus.io/trace"
 	"golang.org/x/net/context"
 )
@@ -38,7 +42,7 @@ func TestStreaming(t *testing.T) {
 	trace.RegisterExporter(&te)
 	defer trace.UnregisterExporter(&te)
 
-	client, cleanup := testpb.NewTestClient(t)
+	client, cleanup := testpb.NewTestClient(t, &ocgrpc.ClientHandler{}, &ocgrpc.ServerHandler{})
 
 	stream, err := client.Multiple(context.Background())
 	if err != nil {
@@ -81,7 +85,7 @@ func TestStreamingFail(t *testing.T) {
 	trace.RegisterExporter(&te)
 	defer trace.UnregisterExporter(&te)
 
-	client, cleanup := testpb.NewTestClient(t)
+	client, cleanup := testpb.NewTestClient(t, &ocgrpc.ClientHandler{}, &ocgrpc.ServerHandler{})
 
 	stream, err := client.Multiple(context.Background())
 	if err != nil {
@@ -122,7 +126,7 @@ func TestSingle(t *testing.T) {
 	trace.RegisterExporter(&te)
 	defer trace.UnregisterExporter(&te)
 
-	client, cleanup := testpb.NewTestClient(t)
+	client, cleanup := testpb.NewTestClient(t, &ocgrpc.ClientHandler{}, &ocgrpc.ServerHandler{})
 
 	_, err := client.Single(context.Background(), &testpb.FooRequest{})
 	if err != nil {
@@ -143,7 +147,7 @@ func TestSingle(t *testing.T) {
 }
 
 func TestServerSpanDuration(t *testing.T) {
-	client, cleanup := testpb.NewTestClient(t)
+	client, cleanup := testpb.NewTestClient(t, &ocgrpc.ClientHandler{}, &ocgrpc.ServerHandler{})
 	defer cleanup()
 
 	te := testExporter{make(chan *trace.SpanData, 100)}
@@ -179,7 +183,7 @@ func TestSingleFail(t *testing.T) {
 	trace.RegisterExporter(&te)
 	defer trace.UnregisterExporter(&te)
 
-	client, cleanup := testpb.NewTestClient(t)
+	client, cleanup := testpb.NewTestClient(t, &ocgrpc.ClientHandler{}, &ocgrpc.ServerHandler{})
 
 	_, err := client.Single(context.Background(), &testpb.FooRequest{Fail: true})
 	if err == nil {
@@ -229,5 +233,73 @@ func checkSpanData(t *testing.T, s1, s2 *trace.SpanData, methodName string, succ
 	}
 	if !s2.HasRemoteParent {
 		t.Errorf("Got HasRemoteParent=%t, want true", s2.HasRemoteParent)
+	}
+}
+
+type testProp struct {
+	t *testing.T
+}
+
+func (p *testProp) InjectSpanContext(sc trace.SpanContext, appendHeader func(string, string)) {
+	traceHdr, err := json.Marshal(sc)
+	if err != nil {
+		p.t.Fatal(err)
+	}
+	appendHeader("x-json-trace", hex.EncodeToString(traceHdr))
+}
+
+func (p *testProp) ExtractSpanContext(readHeader func(string) []string) (trace.SpanContext, bool) {
+	hdr := readHeader("x-json-trace")
+	if len(hdr) == 0 {
+		return trace.SpanContext{}, false
+	}
+	b, err := hex.DecodeString(hdr[0])
+	if err != nil {
+		p.t.Fatal(err)
+	}
+	var sc trace.SpanContext
+	err = json.Unmarshal(b, &sc)
+	if err != nil {
+		p.t.Fatal(err)
+	}
+	return sc, true
+}
+
+func TestCustomPropagation(t *testing.T) {
+	te := &testExporter{ch: make(chan *trace.SpanData, 1000)}
+	trace.RegisterExporter(te)
+	trace.ApplyConfig(trace.Config{DefaultSampler: trace.AlwaysSample()})
+	p := &testProp{t: t}
+	clientHandler := &ocgrpc.ClientHandler{
+		Propagation: p,
+	}
+	serverHandler := &ocgrpc.ServerHandler{
+		Propagation: p,
+	}
+	client, done := testpb.NewTestClient(t, clientHandler, serverHandler)
+	defer done()
+	ctx := context.Background()
+	_, err := client.Single(ctx, &testpb.FooRequest{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	spans := 0
+	var serverSpan, clientSpan *trace.SpanData
+	for sd := range te.ch {
+		spans++
+		if sd.SpanKind == trace.SpanKindServer {
+			serverSpan = sd
+		} else if sd.SpanKind == trace.SpanKindClient {
+			clientSpan = sd
+		}
+		if spans == 2 {
+			break
+		}
+	}
+	if clientSpan.TraceID != serverSpan.TraceID {
+		t.Errorf("client and server spans don't have the same TraceID")
+	}
+	if got, want := serverSpan.ParentSpanID, clientSpan.SpanID; got != want {
+		t.Errorf("serverSpan.ParentSpanID = %x, want %x", got, want)
 	}
 }

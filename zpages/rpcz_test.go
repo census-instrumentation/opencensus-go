@@ -21,11 +21,12 @@ import (
 	"time"
 
 	"go.opencensus.io/internal/testpb"
+	"go.opencensus.io/plugin/ocgrpc"
 	"go.opencensus.io/stats/view"
 )
 
 func TestRpcz(t *testing.T) {
-	client, cleanup := testpb.NewTestClient(t)
+	client, cleanup := testpb.NewTestClient(t, &ocgrpc.ClientHandler{}, &ocgrpc.ServerHandler{})
 	defer cleanup()
 
 	_, err := client.Single(context.Background(), &testpb.FooRequest{})

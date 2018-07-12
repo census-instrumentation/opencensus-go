@@ -24,6 +24,7 @@ import (
 	"time"
 
 	"go.opencensus.io/internal/testpb"
+	"go.opencensus.io/plugin/ocgrpc"
 	"go.opencensus.io/plugin/ochttp"
 	"go.opencensus.io/stats/view"
 	"go.opencensus.io/trace"
@@ -118,7 +119,7 @@ func TestGRPC(t *testing.T) {
 
 	trace.ApplyConfig(trace.Config{DefaultSampler: trace.AlwaysSample()})
 
-	client, done := testpb.NewTestClient(t)
+	client, done := testpb.NewTestClient(t, &ocgrpc.ClientHandler{}, &ocgrpc.ServerHandler{})
 	defer done()
 
 	client.Single(context.Background(), &testpb.FooRequest{SleepNanos: int64(42 * time.Millisecond)})

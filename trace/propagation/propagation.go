@@ -53,7 +53,7 @@ import (
 
 // Binary returns the binary format representation of a SpanContext.
 //
-// If sc is the zero value, Binary returns nil.
+// Deprecated: Use go.opencensus.io/plugin/ocgrpc/propagation package instead.
 func Binary(sc trace.SpanContext) []byte {
 	if sc == (trace.SpanContext{}) {
 		return nil
@@ -71,6 +71,8 @@ func Binary(sc trace.SpanContext) []byte {
 //
 // If b has an unsupported version ID or contains no TraceID, FromBinary
 // returns with ok==false.
+//
+// Deprecated: Use go.opencensus.io/plugin/ocgrpc/propagation package instead.
 func FromBinary(b []byte) (sc trace.SpanContext, ok bool) {
 	if len(b) == 0 || b[0] != 0 {
 		return trace.SpanContext{}, false

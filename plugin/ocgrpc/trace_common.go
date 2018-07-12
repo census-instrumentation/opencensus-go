@@ -19,8 +19,8 @@ import (
 
 	"google.golang.org/grpc/codes"
 
+	"go.opencensus.io/plugin/ocgrpc/propagation"
 	"go.opencensus.io/trace"
-	"go.opencensus.io/trace/propagation"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/stats"
@@ -38,9 +38,16 @@ func (c *ClientHandler) traceTagRPC(ctx context.Context, rti *stats.RPCTagInfo) 
 	name = strings.Replace(name, "/", ".", -1)
 	ctx, span := trace.StartSpan(ctx, name,
 		trace.WithSampler(c.StartOptions.Sampler),
-		trace.WithSpanKind(trace.SpanKindClient)) // span is ended by traceHandleRPC
-	traceContextBinary := propagation.Binary(span.SpanContext())
-	return metadata.AppendToOutgoingContext(ctx, traceContextKey, string(traceContextBinary))
+		trace.WithSpanKind(trace.SpanKindClient))
+	// span is ended by traceHandleRPC
+	p := c.Propagation
+	if p == nil {
+		p = propagation.Default()
+	}
+	p.InjectSpanContext(span.SpanContext(), func(name string, val string) {
+		ctx = metadata.AppendToOutgoingContext(ctx, name, string(val))
+	})
+	return ctx
 }
 
 // TagRPC creates a new trace span for the server side of the RPC.
@@ -53,24 +60,22 @@ func (s *ServerHandler) traceTagRPC(ctx context.Context, rti *stats.RPCTagInfo) 
 	md, _ := metadata.FromIncomingContext(ctx)
 	name := strings.TrimPrefix(rti.FullMethodName, "/")
 	name = strings.Replace(name, "/", ".", -1)
-	traceContext := md[traceContextKey]
-	var (
-		parent     trace.SpanContext
-		haveParent bool
-	)
-	if len(traceContext) > 0 {
+	p := s.Propagation
+	if p == nil {
+		p = propagation.Default()
+	}
+	parent, haveParent := p.ExtractSpanContext(func(k string) []string {
 		// Metadata with keys ending in -bin are actually binary. They are base64
 		// encoded before being put on the wire, see:
 		// https://github.com/grpc/grpc-go/blob/08d6261/Documentation/grpc-metadata.md#storing-binary-data-in-metadata
-		traceContextBinary := []byte(traceContext[0])
-		parent, haveParent = propagation.FromBinary(traceContextBinary)
-		if haveParent && !s.IsPublicEndpoint {
-			ctx, _ := trace.StartSpanWithRemoteParent(ctx, name, parent,
-				trace.WithSpanKind(trace.SpanKindServer),
-				trace.WithSampler(s.StartOptions.Sampler),
-			)
-			return ctx
-		}
+		return md[k]
+	})
+	if haveParent && !s.IsPublicEndpoint {
+		ctx, _ := trace.StartSpanWithRemoteParent(ctx, name, parent,
+			trace.WithSpanKind(trace.SpanKindServer),
+			trace.WithSampler(s.StartOptions.Sampler),
+		)
+		return ctx
 	}
 	ctx, span := trace.StartSpan(ctx, name,
 		trace.WithSpanKind(trace.SpanKindServer),

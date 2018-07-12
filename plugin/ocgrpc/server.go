@@ -18,6 +18,7 @@ import (
 	"go.opencensus.io/trace"
 	"golang.org/x/net/context"
 
+	"go.opencensus.io/plugin/ocgrpc/propagation"
 	"google.golang.org/grpc/stats"
 )
 
@@ -51,6 +52,12 @@ type ServerHandler struct {
 	// StartOptions.SpanKind will always be set to trace.SpanKindServer
 	// for spans started by this handler.
 	StartOptions trace.StartOptions
+
+	// Propagation describes how tracing metadata is decoded from incoming
+	// request metadata.
+	// It is not usually necessary to set this, unless your environment uses
+	// different header conventions to propagate gRPC tracing metadata.
+	Propagation propagation.Format
 }
 
 var _ stats.Handler = (*ServerHandler)(nil)

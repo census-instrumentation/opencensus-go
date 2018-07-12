@@ -44,7 +44,7 @@ func TestEndToEnd_Single(t *testing.T) {
 	view.Register(extraViews...)
 	defer view.Unregister(extraViews...)
 
-	client, done := testpb.NewTestClient(t)
+	client, done := testpb.NewTestClient(t, &ocgrpc.ClientHandler{}, &ocgrpc.ServerHandler{})
 	defer done()
 
 	ctx := context.Background()
@@ -113,7 +113,7 @@ func TestEndToEnd_Stream(t *testing.T) {
 	view.Register(extraViews...)
 	defer view.Unregister(extraViews...)
 
-	client, done := testpb.NewTestClient(t)
+	client, done := testpb.NewTestClient(t, &ocgrpc.ClientHandler{}, &ocgrpc.ServerHandler{})
 	defer done()
 
 	ctx := context.Background()
