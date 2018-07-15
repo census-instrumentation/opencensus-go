@@ -132,7 +132,7 @@ func TestFactories(t *testing.T) {
 		"error - nil": {
 			Value: error(nil),
 			Want: Field{
-				Type:      NoOpType,
+				Type: NoOpType,
 			},
 		},
 		"float32": {
@@ -205,13 +205,6 @@ func TestFactories(t *testing.T) {
 				Interface: []string(nil),
 			},
 		},
-		//"stringer": {
-		//	Value: Stringer{value: "value"},
-		//	Want: Field{
-		//		Type: BoolType,
-		//		Int:  1,
-		//	},
-		//},
 		"time": {
 			Value: time.Date(2018, time.July, 13, 5, 6, 7, 0, time.UTC),
 			Want: Field{

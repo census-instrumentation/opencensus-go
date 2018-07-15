@@ -139,7 +139,7 @@ func TestEncode(t *testing.T) {
 				t.Fatalf("%v: got %v, want nil", label, err)
 			}
 
-			if got := buf.String(); got != tc.Want  {
+			if got := buf.String(); got != tc.Want {
 				t.Errorf("%v: got %v, want %v", label, got, tc.Want)
 			}
 		})
