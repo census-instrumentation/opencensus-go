@@ -32,6 +32,8 @@ type Exporter interface {
 
 // Data contains a single log record
 type Data struct {
+	TraceID   string            // TraceID associated with current trace.Span (if present)
+	SpanID    string            // SpanID associated with current trace.Span (if present)
 	LogLevel  Level             // LogLevel is the level of the message; either InfoLevel or DebugLevel
 	Timestamp time.Time         // Timestamp when the log record was received
 	Message   string            // Message recorded

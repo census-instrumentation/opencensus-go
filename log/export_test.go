@@ -59,6 +59,9 @@ func TestGlobalInfo(t *testing.T) {
 func TestGlobalDebug(t *testing.T) {
 	ctx := context.Background()
 	e := &Capturer{}
+	log.ApplyConfig(log.Config{
+		LogLevel: log.DebugLevel,
+	})
 	log.RegisterExporter(e)
 
 	log.Debug(ctx, "message")

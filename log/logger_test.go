@@ -22,6 +22,7 @@ import (
 
 	"go.opencensus.io/log"
 	"go.opencensus.io/tag"
+	"go.opencensus.io/trace"
 )
 
 type Capturer struct {
@@ -62,6 +63,9 @@ func TestLoggerDebug(t *testing.T) {
 	exporter := &Capturer{}
 	logger := &log.Logger{}
 	logger.RegisterExporter(exporter)
+	logger.ApplyConfig(log.Config{
+		LogLevel: log.DebugLevel,
+	})
 
 	// When
 	message := "hello world"
@@ -75,6 +79,20 @@ func TestLoggerDebug(t *testing.T) {
 	data := exporter.Records[0]
 	if want := log.DebugLevel; data.LogLevel != want {
 		t.Errorf("got %v; want %v", data.LogLevel, want)
+	}
+}
+
+func TestLoggerDebugRespectsLogLevel(t *testing.T) {
+	exporter := &Capturer{}
+	logger := &log.Logger{}
+	logger.RegisterExporter(exporter)
+
+	// When
+	logger.Debug(context.Background(), "message")
+
+	// Then
+	if got := len(exporter.Records); got != 0 {
+		t.Fatalf("got %v; want 0 records", got)
 	}
 }
 
@@ -180,5 +198,27 @@ func TestLoggerUnregisterExporter(t *testing.T) {
 	// Then
 	if len(exporter.Records) != 0 {
 		t.Fatalf("expected 0 records to be captured when no exporter registered")
+	}
+}
+
+func TestLoggerCapturesTrace(t *testing.T) {
+	exporter := &Capturer{}
+	logger := &log.Logger{}
+	logger.RegisterExporter(exporter)
+
+	ctx, _ := trace.StartSpan(context.Background(), "span")
+	logger.Info(ctx, "message")
+
+	// Then
+	if got := len(exporter.Records); got != 1 {
+		t.Fatalf("got %v, want 1", got)
+	}
+
+	data := exporter.Records[0]
+	if data.TraceID == "" {
+		t.Error(`got "", want non-zero`)
+	}
+	if data.SpanID == "" {
+		t.Error(`got "", want non-zero`)
 	}
 }

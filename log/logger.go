@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"go.opencensus.io/tag"
+	"go.opencensus.io/trace"
 )
 
 // Logger defines the standard opencensus logger.
@@ -124,6 +125,11 @@ func (l *Logger) log(ctx context.Context, level Level, message string, fields ..
 		Message:   message,
 		Tags:      tags,
 		Fields:    mergedFields,
+	}
+
+	if span := trace.FromContext(ctx); span != nil {
+		data.TraceID = span.SpanContext().TraceID.String()
+		data.SpanID = span.SpanContext().SpanID.String()
 	}
 
 	for exporter := range exporters {
