@@ -31,6 +31,18 @@ func (s Stringer) String() string {
 	return s.value
 }
 
+func TestEncodeArray(t *testing.T) {
+	buf := bytes.NewBuffer(nil)
+	err := Encode(buf, []log.Field{log.String("string", "abc"), log.Int("int", 123)})
+	if err != nil {
+		t.Fatalf("got %v, want nil", err)
+	}
+
+	if want := `{"string":"abc","int":123}`; buf.String() != want {
+		t.Errorf("got %v, want %v", buf.String(), want)
+	}
+}
+
 func TestEncode(t *testing.T) {
 	testCases := map[string]struct {
 		Value interface{}
