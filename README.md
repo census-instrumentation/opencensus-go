@@ -7,7 +7,7 @@
 
 OpenCensus Go is a Go implementation of OpenCensus, a toolkit for
 collecting application performance and behavior monitoring data.
-Currently it consists of three major components: tags, stats, and tracing.
+Currently it consists of three major components: tags, stats, tracing, and logging.
 
 ## Installation
 
@@ -190,6 +190,21 @@ methods for different protocols.
 * HTTP integrations uses Zipkin's [B3](https://github.com/openzipkin/b3-propagation)
   by default but can be configured to use a custom propagation method by setting another
   [propagation.HTTPFormat](https://godoc.org/go.opencensus.io/trace/propagation#HTTPFormat).
+  
+## Logs
+
+OpenCensus provides a structured logger that is both tag aware and trace aware.  `log` can be configured to 
+look for tags within the current `context.Context` and capture them as part of the log record.  In addition,
+if the log is associated with a `trace.Span`, the `TraceID` and `SpanID` will be captured as well.
+
+Structured fields can be associated with the message. For example:
+
+```go
+log.Info(ctx, "message",
+	log.String("userID", "abc"),
+	log.Int("count", 123),
+)
+```
 
 ## Execution Tracer
 
