@@ -30,13 +30,14 @@ integration with your RPC framework:
 * [net/http](https://godoc.org/go.opencensus.io/plugin/ochttp)
 * [gRPC](https://godoc.org/go.opencensus.io/plugin/ocgrpc)
 * [database/sql](https://godoc.org/github.com/basvanbeek/ocsql)
+* [Go kit](https://godoc.org/github.com/go-kit/kit/tracing/opencensus)
 
 If you're a framework not listed here, you could either implement your own middleware for your
 framework or use [custom stats](#stats) and [spans](#spans) directly in your application.
 
 ## Exporters
 
-OpenCensus can export instrumentation data to various backends. 
+OpenCensus can export instrumentation data to various backends.
 OpenCensus has exporter implementations for the following, users
 can implement their own exporters by implementing the exporter interfaces
 ([stats](https://godoc.org/go.opencensus.io/stats/view#Exporter),
