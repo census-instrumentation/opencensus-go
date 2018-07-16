@@ -139,32 +139,20 @@ func (trw *testResponseWriterHijacker) Hijack() (net.Conn, *bufio.ReadWriter, er
 
 func TestUnitTestHandlerProxiesHijack(t *testing.T) {
 	tests := []struct {
-		w       http.ResponseWriter
-		wantErr string
+		w         http.ResponseWriter
+		hasHijack bool
 	}{
-		{httptest.NewRecorder(), "ResponseWriter does not implement http.Hijacker"},
-		{nil, "ResponseWriter does not implement http.Hijacker"},
-		{new(testResponseWriterHijacker), ""},
+		{httptest.NewRecorder(), false},
+		{nil, false},
+		{new(testResponseWriterHijacker), true},
 	}
 
 	for i, tt := range tests {
 		tw := &trackingResponseWriter{writer: tt.w}
-		conn, buf, err := tw.Hijack()
-		if tt.wantErr != "" {
-			if err == nil || !strings.Contains(err.Error(), tt.wantErr) {
-				t.Errorf("#%d got error (%v) want error substring (%q)", i, err, tt.wantErr)
-			}
-			if conn != nil {
-				t.Errorf("#%d inconsistent state got non-nil conn (%v)", i, conn)
-			}
-			if buf != nil {
-				t.Errorf("#%d inconsistent state got non-nil buf (%v)", i, buf)
-			}
-			continue
-		}
-
-		if err != nil {
-			t.Errorf("#%d got unexpected error %v", i, err)
+		w := tw.wrappedResponseWriter()
+		_, ttHijacker := w.(http.Hijacker)
+		if want, have := tt.hasHijack, ttHijacker; want != have {
+			t.Errorf("#%d Hijack got %t, want %t", i, have, want)
 		}
 	}
 }
@@ -234,20 +222,28 @@ func TestHandlerProxiesHijack_HTTP1(t *testing.T) {
 func TestHandlerProxiesHijack_HTTP2(t *testing.T) {
 	cst := httptest.NewUnstartedServer(&Handler{
 		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			conn, _, err := w.(http.Hijacker).Hijack()
-			if conn != nil {
-				data := fmt.Sprintf("Surprisingly got the Hijacker() Proto: %s", r.Proto)
-				fmt.Fprintf(conn, "%s 200\nContent-Length:%d\r\n\r\n%s", r.Proto, len(data), data)
-				conn.Close()
-				return
-			}
+			if _, ok := w.(http.Hijacker); ok {
+				conn, _, err := w.(http.Hijacker).Hijack()
+				if conn != nil {
+					data := fmt.Sprintf("Surprisingly got the Hijacker() Proto: %s", r.Proto)
+					fmt.Fprintf(conn, "%s 200\nContent-Length:%d\r\n\r\n%s", r.Proto, len(data), data)
+					conn.Close()
+					return
+				}
 
-			switch {
-			case err == nil:
-				fmt.Fprintf(w, "Unexpectedly did not encounter an error!")
-			default:
-				fmt.Fprintf(w, "Unexpected error: %v", err)
-			case strings.Contains(err.(error).Error(), "Hijack"):
+				switch {
+				case err == nil:
+					fmt.Fprintf(w, "Unexpectedly did not encounter an error!")
+				default:
+					fmt.Fprintf(w, "Unexpected error: %v", err)
+				case strings.Contains(err.(error).Error(), "Hijack"):
+					// Confirmed HTTP/2.0, let's stream to it
+					for i := 0; i < 5; i++ {
+						fmt.Fprintf(w, "%d\n", i)
+						w.(http.Flusher).Flush()
+					}
+				}
+			} else {
 				// Confirmed HTTP/2.0, let's stream to it
 				for i := 0; i < 5; i++ {
 					fmt.Fprintf(w, "%d\n", i)
@@ -386,7 +382,7 @@ func TestHandlerImplementsHTTPPusher(t *testing.T) {
 	}{
 		{
 			rt:       h1Transport(),
-			wantBody: "true",
+			wantBody: "false",
 		},
 		{
 			rt:       h2Transport(),
@@ -394,7 +390,7 @@ func TestHandlerImplementsHTTPPusher(t *testing.T) {
 		},
 		{
 			rt:       &Transport{Base: h1Transport()},
-			wantBody: "true",
+			wantBody: "false",
 		},
 		{
 			rt:       &Transport{Base: h2Transport()},
