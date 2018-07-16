@@ -49,4 +49,18 @@ func Record(ctx context.Context, ms ...Measurement) {
 	if internal.DefaultRecorder != nil {
 		internal.DefaultRecorder(tag.FromContext(ctx), ms)
 	}
+
+	mu.Lock()
+	exporters := registry
+	mu.Unlock()
+
+	if len(exporters) > 0 {
+		data := Data{
+			Tags:         tag.FromContext(ctx),
+			Measurements: ms,
+		}
+		for exporter := range exporters {
+			exporter.ExportStats(data)
+		}
+	}
 }
