@@ -31,6 +31,12 @@ integration with your RPC framework:
 * [gRPC](https://godoc.org/go.opencensus.io/plugin/ocgrpc)
 * [database/sql](https://godoc.org/github.com/basvanbeek/ocsql)
 * [Go kit](https://godoc.org/github.com/go-kit/kit/tracing/opencensus)
+* [Groupcache](https://godoc.org/github.com/orijtech/groupcache)
+* [Caddy webserver](https://godoc.org/github.com/orijtech/caddy)
+* [MongoDB](https://godoc.org/github.com/orijtech/mongo-go-driver)
+* [Redis gomodule/redigo](https://godoc.org/github.com/orijtech/redigo)
+* [Redis goredis/redis](https://godoc.org/github.com/orijtech/redis)
+* [Memcache](https://godoc.org/github.com/orijtech/gomemcache)
 
 If you're a framework not listed here, you could either implement your own middleware for your
 framework or use [custom stats](#stats) and [spans](#spans) directly in your application.
