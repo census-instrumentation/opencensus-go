@@ -16,6 +16,7 @@ package trace
 
 import (
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -31,8 +32,9 @@ type Exporter interface {
 }
 
 var (
-	exportersMu sync.Mutex
-	exporters   map[Exporter]struct{}
+	exportersMu  sync.Mutex
+	exportersCnt int32
+	exporters    map[Exporter]struct{}
 )
 
 // RegisterExporter adds to the list of Exporters that will receive sampled
@@ -45,6 +47,7 @@ func RegisterExporter(e Exporter) {
 		exporters = make(map[Exporter]struct{})
 	}
 	exporters[e] = struct{}{}
+	atomic.StoreInt32(&exportersCnt, int32(len(exporters)))
 	exportersMu.Unlock()
 }
 
@@ -53,6 +56,7 @@ func RegisterExporter(e Exporter) {
 func UnregisterExporter(e Exporter) {
 	exportersMu.Lock()
 	delete(exporters, e)
+	atomic.StoreInt32(&exportersCnt, int32(len(exporters)))
 	exportersMu.Unlock()
 }
 
