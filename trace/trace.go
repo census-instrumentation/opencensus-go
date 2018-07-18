@@ -248,7 +248,8 @@ func (s *Span) End() {
 		if s.executionTracerTaskEnd != nil {
 			s.executionTracerTaskEnd()
 		}
-		mustExport := s.spanContext.IsSampled() && atomic.LoadInt32(&exportersCnt) > 0
+		exp, _ := exporters.Load().(exportersMap)
+		mustExport := s.spanContext.IsSampled() && len(exp) > 0
 		if s.spanStore != nil || mustExport {
 			sd := s.makeSpanData()
 			sd.EndTime = internal.MonotonicEndTime(sd.StartTime)
@@ -256,11 +257,9 @@ func (s *Span) End() {
 				s.spanStore.finished(s, sd)
 			}
 			if mustExport {
-				exportersMu.Lock()
-				for e := range exporters {
+				for e := range exp {
 					e.ExportSpan(sd)
 				}
-				exportersMu.Unlock()
 			}
 		}
 	})
