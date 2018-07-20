@@ -27,9 +27,18 @@ var (
 	sid = SpanID{1, 2, 4, 8, 16, 32, 64, 128}
 )
 
-func init() {
+func resetDefaultTestConfig() {
 	// no random sampling, but sample children of sampled spans.
-	ApplyConfig(Config{DefaultSampler: ProbabilitySampler(0)})
+	ApplyConfig(
+		Config{DefaultSampler: ProbabilitySampler(0)},
+		WithDefaultMaxAttributes(DefaultMaxAttributes),
+		WithDefaultMaxLinks(DefaultMaxLinks),
+		WithDefaultMaxMessageEvents(DefaultMaxMessageEvents),
+	)
+}
+
+func init() {
+	resetDefaultTestConfig()
 }
 
 func TestStrings(t *testing.T) {
@@ -77,6 +86,69 @@ func TestStartSpan(t *testing.T) {
 	ctx, _ := StartSpan(context.Background(), "StartSpan")
 	if FromContext(ctx).data != nil {
 		t.Error("StartSpan: new span is recording events")
+	}
+}
+
+func TestSpanStartOptionOverrides(t *testing.T) {
+	for _, test := range []struct {
+		name                 string
+		globalOpts           []GlobalOption
+		startOpts            []StartOption
+		wantMaxAttributes    int
+		wantMaxMessageEvents int
+		wantMaxLinks         int
+	}{
+		{
+			name:                 "all defaults",
+			globalOpts:           nil,
+			startOpts:            nil,
+			wantMaxAttributes:    DefaultMaxAttributes,
+			wantMaxMessageEvents: DefaultMaxMessageEvents,
+			wantMaxLinks:         DefaultMaxLinks,
+		},
+		{
+			name:                 "all global opts",
+			globalOpts:           []GlobalOption{WithDefaultMaxAttributes(1), WithDefaultMaxMessageEvents(2), WithDefaultMaxLinks(3)},
+			startOpts:            nil,
+			wantMaxAttributes:    1,
+			wantMaxMessageEvents: 2,
+			wantMaxLinks:         3,
+		},
+		{
+			name:                 "all start/span override opts",
+			globalOpts:           nil,
+			startOpts:            []StartOption{WithMaxAttributes(4), WithMaxMessageEvents(5), WithMaxLinks(6)},
+			wantMaxAttributes:    4,
+			wantMaxMessageEvents: 5,
+			wantMaxLinks:         6,
+		},
+		{
+			name:                 "mixed (1 default, 1 global, 1 start/span override)",
+			globalOpts:           []GlobalOption{WithDefaultMaxMessageEvents(7)},
+			startOpts:            []StartOption{WithMaxLinks(8)},
+			wantMaxAttributes:    DefaultMaxAttributes,
+			wantMaxMessageEvents: 7,
+			wantMaxLinks:         8,
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			ApplyConfig(Config{DefaultSampler: ProbabilitySampler(0)}, test.globalOpts...)
+			defer resetDefaultTestConfig()
+
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+
+			_, span := StartSpan(ctx, "foo", test.startOpts...)
+			if span.maxAttributes != test.wantMaxAttributes {
+				t.Errorf("got %d attributes, want %d", span.maxAttributes, test.wantMaxAttributes)
+			}
+			if span.maxMessageEvents != test.wantMaxMessageEvents {
+				t.Errorf("got %d message events, want %d", span.maxMessageEvents, test.wantMaxMessageEvents)
+			}
+			if span.maxLinks != test.wantMaxLinks {
+				t.Errorf("got %d links, want %d", span.maxLinks, test.wantMaxLinks)
+			}
+		})
 	}
 }
 
@@ -168,7 +240,7 @@ func TestSampling(t *testing.T) {
 			}
 		}
 	}
-	ApplyConfig(Config{DefaultSampler: ProbabilitySampler(0)}) // reset the default sampler.
+	resetDefaultTestConfig()
 }
 
 func TestProbabilitySampler(t *testing.T) {
@@ -355,8 +427,16 @@ func TestSpanKind(t *testing.T) {
 }
 
 func TestSetSpanAttributes(t *testing.T) {
+	ApplyConfig(Config{DefaultSampler: ProbabilitySampler(0)}, WithDefaultMaxAttributes(2))
+	defer resetDefaultTestConfig()
+
 	span := startSpan(StartOptions{})
 	span.AddAttributes(StringAttribute("key1", "value1"))
+	span.AddAttributes(StringAttribute("key2", "value2"))
+	span.AddAttributes(StringAttribute("dropped1", "dropped1"))
+	span.AddAttributes(StringAttribute("dropped2", "dropped2"))
+	span.AddAttributes(StringAttribute("key1", "updated_value1"))
+	span.AddAttributes(StringAttribute("key2", "updated_value2"))
 	got, err := endSpan(span)
 	if err != nil {
 		t.Fatal(err)
@@ -368,10 +448,11 @@ func TestSetSpanAttributes(t *testing.T) {
 			SpanID:       SpanID{},
 			TraceOptions: 0x1,
 		},
-		ParentSpanID:    sid,
-		Name:            "span0",
-		Attributes:      map[string]interface{}{"key1": "value1"},
-		HasRemoteParent: true,
+		ParentSpanID:      sid,
+		Name:              "span0",
+		Attributes:        map[string]interface{}{"key1": "updated_value1", "key2": "updated_value2"},
+		HasRemoteParent:   true,
+		DroppedAttributes: 2,
 	}
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("exporting span: got %#v want %#v", got, want)
@@ -413,7 +494,13 @@ func TestAnnotations(t *testing.T) {
 }
 
 func TestMessageEvents(t *testing.T) {
+	ApplyConfig(Config{DefaultSampler: ProbabilitySampler(0)}, WithDefaultMaxMessageEvents(2))
+	defer resetDefaultTestConfig()
+
 	span := startSpan(StartOptions{})
+	const dropped1, dropped2 = 123, 456
+	span.AddMessageReceiveEvent(dropped1, dropped1, dropped1)
+	span.AddMessageSendEvent(dropped2, dropped2, dropped2)
 	span.AddMessageReceiveEvent(3, 400, 300)
 	span.AddMessageSendEvent(1, 200, 100)
 	got, err := endSpan(span)
@@ -439,7 +526,8 @@ func TestMessageEvents(t *testing.T) {
 			{EventType: 2, MessageID: 0x3, UncompressedByteSize: 0x190, CompressedByteSize: 0x12c},
 			{EventType: 1, MessageID: 0x1, UncompressedByteSize: 0xc8, CompressedByteSize: 0x64},
 		},
-		HasRemoteParent: true,
+		HasRemoteParent:      true,
+		DroppedMessageEvents: 2,
 	}
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("exporting span: got %#v want %#v", got, want)
@@ -522,12 +610,33 @@ func TestSetSpanStatus(t *testing.T) {
 }
 
 func TestAddLink(t *testing.T) {
+	ApplyConfig(Config{DefaultSampler: ProbabilitySampler(0)}, WithDefaultMaxLinks(2))
+	defer resetDefaultTestConfig()
+
 	span := startSpan(StartOptions{})
 	span.AddLink(Link{
 		TraceID:    tid,
 		SpanID:     sid,
 		Type:       LinkTypeParent,
+		Attributes: map[string]interface{}{"dropped1": "dropped1"},
+	})
+	span.AddLink(Link{
+		TraceID:    tid,
+		SpanID:     sid,
+		Type:       LinkTypeParent,
+		Attributes: map[string]interface{}{"dropped2": "dropped2"},
+	})
+	span.AddLink(Link{
+		TraceID:    tid,
+		SpanID:     sid,
+		Type:       LinkTypeParent,
 		Attributes: map[string]interface{}{"key5": "value5"},
+	})
+	span.AddLink(Link{
+		TraceID:    tid,
+		SpanID:     sid,
+		Type:       LinkTypeParent,
+		Attributes: map[string]interface{}{"key6": "value6"},
 	})
 	got, err := endSpan(span)
 	if err != nil {
@@ -542,13 +651,22 @@ func TestAddLink(t *testing.T) {
 		},
 		ParentSpanID: sid,
 		Name:         "span0",
-		Links: []Link{{
-			TraceID:    tid,
-			SpanID:     sid,
-			Type:       2,
-			Attributes: map[string]interface{}{"key5": "value5"},
-		}},
+		Links: []Link{
+			{
+				TraceID:    tid,
+				SpanID:     sid,
+				Type:       2,
+				Attributes: map[string]interface{}{"key5": "value5"},
+			},
+			{
+				TraceID:    tid,
+				SpanID:     sid,
+				Type:       2,
+				Attributes: map[string]interface{}{"key6": "value6"},
+			},
+		},
 		HasRemoteParent: true,
+		DroppedLinks:    2,
 	}
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("exporting span: got %#v want %#v", got, want)

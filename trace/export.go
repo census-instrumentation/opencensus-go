@@ -87,4 +87,13 @@ type SpanData struct {
 	Status
 	Links           []Link
 	HasRemoteParent bool
+
+	// TODO: Record these drops with stats.Record / stats.Int64.
+
+	// DroppedAttributes contains the number of dropped attributes in this span.
+	DroppedAttributes int
+	// DroppedMessageEvents contains the number of dropped message events in this span.
+	DroppedMessageEvents int
+	// DroppedLinks contains the number of dropped links in this span.
+	DroppedLinks int
 }

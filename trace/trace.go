@@ -46,6 +46,12 @@ type Span struct {
 	endOnce sync.Once
 
 	executionTracerTaskEnd func() // ends the execution tracer span
+
+	// The maximum limits for internal span data.
+	// These are set with trace.ApplyConfig and can be overriden by trace.StartOptions.
+	maxAttributes    int
+	maxMessageEvents int
+	maxLinks         int
 }
 
 // IsRecordingEvents returns true if events are being recorded for this span.
@@ -125,6 +131,16 @@ type StartOptions struct {
 	// SpanKind represents the kind of a span. If none is set,
 	// SpanKindUnspecified is used.
 	SpanKind int
+
+	// MaxAttributes sets a span limit on the number of attributes (overrides
+	// global trace config).
+	MaxAttributes int
+	// WithMaxMessageEvents sets a span limit on the number of message events
+	// (overrides global trace config).
+	MaxMessageEvents int
+	// WithMaxLinks sets a span limit on the number of links (overrides
+	// global trace config).
+	MaxLinks int
 }
 
 // StartOption apply changes to StartOptions.
@@ -145,19 +161,36 @@ func WithSampler(sampler Sampler) StartOption {
 	}
 }
 
+// WithMaxAttributes sets a span limit on the number of attributes (overrides global trace config).
+func WithMaxAttributes(max int) StartOption {
+	return func(o *StartOptions) {
+		o.MaxAttributes = max
+	}
+}
+
+// WithMaxMessageEvents sets a span limit on the number of message events (overrides global trace config).
+func WithMaxMessageEvents(max int) StartOption {
+	return func(o *StartOptions) {
+		o.MaxMessageEvents = max
+	}
+}
+
+// WithMaxLinks sets a span limit on the number of links (overrides global trace config).
+func WithMaxLinks(max int) StartOption {
+	return func(o *StartOptions) {
+		o.MaxLinks = max
+	}
+}
+
 // StartSpan starts a new child span of the current span in the context. If
 // there is no span in the context, creates a new trace and span.
 //
 // Returned context contains the newly created span. You can use it to
 // propagate the returned span in process.
-func StartSpan(ctx context.Context, name string, o ...StartOption) (context.Context, *Span) {
-	var opts StartOptions
+func StartSpan(ctx context.Context, name string, opts ...StartOption) (context.Context, *Span) {
 	var parent SpanContext
 	if p := FromContext(ctx); p != nil {
 		parent = p.spanContext
-	}
-	for _, op := range o {
-		op(&opts)
 	}
 	span := startSpanInternal(name, parent != SpanContext{}, parent, false, opts)
 
@@ -173,22 +206,33 @@ func StartSpan(ctx context.Context, name string, o ...StartOption) (context.Cont
 //
 // Returned context contains the newly created span. You can use it to
 // propagate the returned span in process.
-func StartSpanWithRemoteParent(ctx context.Context, name string, parent SpanContext, o ...StartOption) (context.Context, *Span) {
-	var opts StartOptions
-	for _, op := range o {
-		op(&opts)
-	}
+func StartSpanWithRemoteParent(ctx context.Context, name string, parent SpanContext, opts ...StartOption) (context.Context, *Span) {
 	span := startSpanInternal(name, parent != SpanContext{}, parent, true, opts)
 	ctx, end := startExecutionTracerTask(ctx, name)
 	span.executionTracerTaskEnd = end
 	return NewContext(ctx, span), span
 }
 
-func startSpanInternal(name string, hasParent bool, parent SpanContext, remoteParent bool, o StartOptions) *Span {
-	span := &Span{}
-	span.spanContext = parent
-
+func startSpanInternal(name string, hasParent bool, parent SpanContext, remoteParent bool, opts []StartOption) *Span {
 	cfg := config.Load().(*Config)
+
+	// Load the global config default limits, which can be modified with trace.ApplyConfig.
+	o := StartOptions{
+		MaxAttributes:    cfg.maxAttributes,
+		MaxMessageEvents: cfg.maxMessageEvents,
+		MaxLinks:         cfg.maxLinks,
+	}
+	// Now overlay any StartOption overrides (e.g. per-span limits).
+	for _, op := range opts {
+		op(&o)
+	}
+
+	span := &Span{
+		spanContext:      parent,
+		maxAttributes:    o.MaxAttributes,
+		maxLinks:         o.MaxLinks,
+		maxMessageEvents: o.MaxMessageEvents,
+	}
 
 	if !hasParent {
 		span.spanContext.TraceID = cfg.IDGenerator.NewTraceID()
@@ -313,22 +357,34 @@ func (s *Span) SetStatus(status Status) {
 //
 // Existing attributes whose keys appear in the attributes parameter are overwritten.
 func (s *Span) AddAttributes(attributes ...Attribute) {
-	if !s.IsRecordingEvents() {
+	if !s.IsRecordingEvents() || s.maxAttributes <= 0 {
 		return
 	}
 	s.mu.Lock()
 	if s.data.Attributes == nil {
 		s.data.Attributes = make(map[string]interface{})
 	}
-	copyAttributes(s.data.Attributes, attributes)
+	if drops := copyAttributes(s.data.Attributes, attributes, s.maxAttributes); drops > 0 {
+		s.data.DroppedAttributes += drops
+	}
 	s.mu.Unlock()
 }
 
 // copyAttributes copies a slice of Attributes into a map.
-func copyAttributes(m map[string]interface{}, attributes []Attribute) {
+// It returns how many were dropped (after hitting the given max limit).
+func copyAttributes(m map[string]interface{}, attributes []Attribute, max int) int {
+	var drops int
 	for _, a := range attributes {
+		if len(m) >= max {
+			if _, ok := m[a.key]; !ok {
+				// If the attribute map hit max capacity, only allow existing key updates.
+				drops++
+				continue
+			}
+		}
 		m[a.key] = a.value
 	}
+	return drops
 }
 
 func (s *Span) lazyPrintfInternal(attributes []Attribute, format string, a ...interface{}) {
@@ -336,9 +392,9 @@ func (s *Span) lazyPrintfInternal(attributes []Attribute, format string, a ...in
 	msg := fmt.Sprintf(format, a...)
 	var m map[string]interface{}
 	s.mu.Lock()
-	if len(attributes) != 0 {
+	if len(attributes) != 0 && s.maxAttributes > 0 {
 		m = make(map[string]interface{})
-		copyAttributes(m, attributes)
+		copyAttributes(m, attributes, s.maxAttributes)
 	}
 	s.data.Annotations = append(s.data.Annotations, Annotation{
 		Time:       now,
@@ -352,9 +408,9 @@ func (s *Span) printStringInternal(attributes []Attribute, str string) {
 	now := time.Now()
 	var a map[string]interface{}
 	s.mu.Lock()
-	if len(attributes) != 0 {
+	if len(attributes) != 0 && s.maxAttributes > 0 {
 		a = make(map[string]interface{})
-		copyAttributes(a, attributes)
+		copyAttributes(a, attributes, s.maxAttributes)
 	}
 	s.data.Annotations = append(s.data.Annotations, Annotation{
 		Time:       now,
@@ -388,11 +444,15 @@ func (s *Span) Annotatef(attributes []Attribute, format string, a ...interface{}
 // event (this allows to identify a message between the sender and receiver).
 // For example, this could be a sequence id.
 func (s *Span) AddMessageSendEvent(messageID, uncompressedByteSize, compressedByteSize int64) {
-	if !s.IsRecordingEvents() {
+	if !s.IsRecordingEvents() || s.maxMessageEvents <= 0 {
 		return
 	}
 	now := time.Now()
 	s.mu.Lock()
+	if l := len(s.data.MessageEvents); l > 0 && l >= s.maxMessageEvents {
+		s.data.MessageEvents = s.data.MessageEvents[1:]
+		s.data.DroppedMessageEvents++
+	}
 	s.data.MessageEvents = append(s.data.MessageEvents, MessageEvent{
 		Time:                 now,
 		EventType:            MessageEventTypeSent,
@@ -410,11 +470,15 @@ func (s *Span) AddMessageSendEvent(messageID, uncompressedByteSize, compressedBy
 // event (this allows to identify a message between the sender and receiver).
 // For example, this could be a sequence id.
 func (s *Span) AddMessageReceiveEvent(messageID, uncompressedByteSize, compressedByteSize int64) {
-	if !s.IsRecordingEvents() {
+	if !s.IsRecordingEvents() || s.maxMessageEvents <= 0 {
 		return
 	}
 	now := time.Now()
 	s.mu.Lock()
+	if l := len(s.data.MessageEvents); l > 0 && l >= s.maxMessageEvents {
+		s.data.MessageEvents = s.data.MessageEvents[1:]
+		s.data.DroppedMessageEvents++
+	}
 	s.data.MessageEvents = append(s.data.MessageEvents, MessageEvent{
 		Time:                 now,
 		EventType:            MessageEventTypeRecv,
@@ -427,10 +491,14 @@ func (s *Span) AddMessageReceiveEvent(messageID, uncompressedByteSize, compresse
 
 // AddLink adds a link to the span.
 func (s *Span) AddLink(l Link) {
-	if !s.IsRecordingEvents() {
+	if !s.IsRecordingEvents() || s.maxLinks <= 0 {
 		return
 	}
 	s.mu.Lock()
+	if l := len(s.data.Links); l > 0 && l >= s.maxLinks {
+		s.data.Links = s.data.Links[1:]
+		s.data.DroppedLinks++
+	}
 	s.data.Links = append(s.data.Links, l)
 	s.mu.Unlock()
 }
@@ -463,8 +531,11 @@ func init() {
 	gen.spanIDInc |= 1
 
 	config.Store(&Config{
-		DefaultSampler: ProbabilitySampler(defaultSamplingProbability),
-		IDGenerator:    gen,
+		DefaultSampler:   ProbabilitySampler(defaultSamplingProbability),
+		IDGenerator:      gen,
+		maxAttributes:    DefaultMaxAttributes,
+		maxMessageEvents: DefaultMaxMessageEvents,
+		maxLinks:         DefaultMaxLinks,
 	})
 }
 
