@@ -74,10 +74,12 @@ type SpanData struct {
 	Links           []Link
 	HasRemoteParent bool
 
-	// The count of all span.bufferLimit overflows.
-	// See trace.WithBufferLimit for more info.
-	// TODO: This is not currently exported anywhere (e.g. tracez page).
-	DroppedAnnotations   int
+	// TODO: Record these drops with stats.Record / stats.Int64.
+
+	// DroppedAttributes contains the number of dropped attributes in this span.
+	DroppedAttributes int
+	// DroppedMessageEvents contains the number of dropped message events in this span.
 	DroppedMessageEvents int
-	DroppedLinks         int
+	// DroppedLinks contains the number of dropped links in this span.
+	DroppedLinks int
 }

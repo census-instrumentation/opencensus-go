@@ -16,6 +16,18 @@ package trace
 
 import "go.opencensus.io/trace/internal"
 
+// Default limits for the number of attributes, message events and links on each span
+// in order to prevent unbounded memory increase for long-running spans.
+// These defaults can be overriden with trace.ApplyConfig.
+// These defaults can also be overriden per-span by using trace.StartOptions
+// when creating a new span.
+// TODO: Add an annnoation limit when priorities are implemented.
+const (
+	DefaultMaxAttributes    = 32
+	DefaultMaxMessageEvents = 128
+	DefaultMaxLinks         = 32
+)
+
 // Config represents the global tracing configuration.
 type Config struct {
 	// DefaultSampler is the default sampler used when creating new spans.
@@ -23,18 +35,53 @@ type Config struct {
 
 	// IDGenerator is for internal use only.
 	IDGenerator internal.IDGenerator
+
+	// The below config options must be set with a GlobalOption.
+	// maxAttributes sets a global limit on the number of attributes.
+	maxAttributes int
+	// maxMessageEvents sets a global limit on the number of message events.
+	maxMessageEvents int
+	// maxLinks sets a global limit on the number of links.
+	maxLinks int
+}
+
+// GlobalOption apply changes to global tracing configuration.
+type GlobalOption func(*Config)
+
+// WithDefaultMaxAttributes sets the default limit on the number of attributes.
+func WithDefaultMaxAttributes(limit int) GlobalOption {
+	return func(c *Config) {
+		c.maxAttributes = limit
+	}
+}
+
+// WithDefaultMaxMessageEvents sets the default limit on the number of message events.
+func WithDefaultMaxMessageEvents(limit int) GlobalOption {
+	return func(c *Config) {
+		c.maxMessageEvents = limit
+	}
+}
+
+// WithDefaultMaxLinks sets the default limit on the number of links.
+func WithDefaultMaxLinks(limit int) GlobalOption {
+	return func(c *Config) {
+		c.maxLinks = limit
+	}
 }
 
 // ApplyConfig applies changes to the global tracing configuration.
 //
 // Fields not provided in the given config are going to be preserved.
-func ApplyConfig(cfg Config) {
+func ApplyConfig(cfg Config, o ...GlobalOption) {
 	c := *config.Load().(*Config)
 	if cfg.DefaultSampler != nil {
 		c.DefaultSampler = cfg.DefaultSampler
 	}
 	if cfg.IDGenerator != nil {
 		c.IDGenerator = cfg.IDGenerator
+	}
+	for _, op := range o {
+		op(&c)
 	}
 	config.Store(&c)
 }
