@@ -163,6 +163,11 @@ func spanDataToThrift(data *trace.SpanData) *gen.Span {
 			SpanId:      bytesToInt64(link.SpanID[:]),
 		})
 	}
+
+	startTimeInMS := data.StartTime.UnixNano() / 1000
+	endTimeInMS := data.EndTime.UnixNano() / 1000
+	durationInMS := endTimeInMS - startTimeInMS
+
 	return &gen.Span{
 		TraceIdHigh:   bytesToInt64(data.TraceID[0:8]),
 		TraceIdLow:    bytesToInt64(data.TraceID[8:16]),
@@ -170,8 +175,8 @@ func spanDataToThrift(data *trace.SpanData) *gen.Span {
 		ParentSpanId:  bytesToInt64(data.ParentSpanID[:]),
 		OperationName: name(data),
 		Flags:         int32(data.TraceOptions),
-		StartTime:     data.StartTime.UnixNano() / 1000,
-		Duration:      data.EndTime.Sub(data.StartTime).Nanoseconds() / 1000,
+		StartTime:     startTimeInMS,
+		Duration:      durationInMS,
 		Tags:          tags,
 		Logs:          logs,
 		References:    refs,
