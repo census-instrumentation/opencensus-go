@@ -24,6 +24,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"time"
 
 	"git.apache.org/thrift.git/lib/go/thrift"
 	gen "go.opencensus.io/exporter/jaeger/internal/gen-go/jaeger"
@@ -163,6 +164,7 @@ func spanDataToThrift(data *trace.SpanData) *gen.Span {
 			SpanId:      bytesToInt64(link.SpanID[:]),
 		})
 	}
+	startTime, duration := convertTime(data.StartTime, data.EndTime)
 	return &gen.Span{
 		TraceIdHigh:   bytesToInt64(data.TraceID[0:8]),
 		TraceIdLow:    bytesToInt64(data.TraceID[8:16]),
@@ -170,8 +172,8 @@ func spanDataToThrift(data *trace.SpanData) *gen.Span {
 		ParentSpanId:  bytesToInt64(data.ParentSpanID[:]),
 		OperationName: name(data),
 		Flags:         int32(data.TraceOptions),
-		StartTime:     data.StartTime.UnixNano() / 1000,
-		Duration:      data.EndTime.Sub(data.StartTime).Nanoseconds() / 1000,
+		StartTime:     startTime,
+		Duration:      duration,
 		Tags:          tags,
 		Logs:          logs,
 		References:    refs,
@@ -219,6 +221,14 @@ func attributeToTag(key string, a interface{}) *gen.Tag {
 		}
 	}
 	return tag
+}
+
+// convertTime returns startTime/duration in microseconds.
+func convertTime(st, et time.Time) (startTime, duration int64) {
+	startTime = st.UnixNano() / 1000
+	endTime := et.UnixNano() / 1000
+	duration = endTime - startTime
+	return
 }
 
 // Flush waits for exported trace spans to be uploaded.
