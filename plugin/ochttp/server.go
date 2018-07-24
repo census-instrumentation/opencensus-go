@@ -82,6 +82,9 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) startTrace(w http.ResponseWriter, r *http.Request) (*http.Request, func()) {
+	if isHealthEndpoint(r.URL.Path) {
+		return r, func() {}
+	}
 	var name string
 	if h.FormatSpanName == nil {
 		name = spanNameFromURL(r)

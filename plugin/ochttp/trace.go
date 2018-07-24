@@ -197,3 +197,15 @@ var codeToStr = map[int32]string{
 	trace.StatusCodeDataLoss:           `"DATA_LOSS"`,
 	trace.StatusCodeUnauthenticated:    `"UNAUTHENTICATED"`,
 }
+
+func isHealthEndpoint(path string) bool {
+	// Health checking is pretty frequent and
+	// traces collected for health endpoints
+	// can be extremely noisy and expensive.
+	// Disable canonical health checking endpoints
+	// like /healthz and /_ah/health for now.
+	if path == "/healthz" || path == "/_ah/health" {
+		return true
+	}
+	return false
+}

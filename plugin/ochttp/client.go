@@ -57,6 +57,9 @@ type Transport struct {
 // RoundTrip implements http.RoundTripper, delegating to Base and recording stats and traces for the request.
 func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	rt := t.base()
+	if isHealthEndpoint(req.URL.Path) {
+		return rt.RoundTrip(req)
+	}
 	// TODO: remove excessive nesting of http.RoundTrippers here.
 	format := t.Propagation
 	if format == nil {
