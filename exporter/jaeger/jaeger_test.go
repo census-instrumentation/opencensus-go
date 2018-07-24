@@ -55,6 +55,30 @@ func Test_bytesToInt64(t *testing.T) {
 	}
 }
 
+func Test_convertTime(t *testing.T) {
+	sec := int64(time.Second)
+	parentStartTime := time.Unix(1532163129411176800/sec, 1532163129411176800%sec)
+	parentEndTime := time.Unix(1532163129455178700/sec, 1532163129455178700%sec)
+	childStartTime := time.Unix(1532163129426177700/sec, 1532163129426177700%sec)
+	childEndTime := time.Unix(1532163129455178700/sec, 1532163129455178700%sec)
+
+	startTime, duration := convertTime(parentStartTime, parentEndTime)
+	if startTime != 1532163129411176 {
+		t.Errorf("startTime = %v, want %v", startTime, 1532163129411176)
+	}
+	if duration != 44002 {
+		t.Errorf("duration = %v, want %v", duration, 44002)
+	}
+
+	startTime, duration = convertTime(childStartTime, childEndTime)
+	if startTime != 1532163129426177 {
+		t.Errorf("startTime = %v, want %v", startTime, 1532163129426177)
+	}
+	if duration != 29001 {
+		t.Errorf("duration = %v, want %v", duration, 29001)
+	}
+}
+
 func Test_spanDataToThrift(t *testing.T) {
 	now := time.Now()
 
