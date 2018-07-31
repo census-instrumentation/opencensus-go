@@ -80,6 +80,21 @@ func TestStartSpan(t *testing.T) {
 	}
 }
 
+func TestRootSpanIdentifiers(t *testing.T) {
+	_, span := StartSpan(context.Background(), "StartSpan")
+	if span == nil {
+		t.Error("StartSpan: expected valid Span")
+	}
+	var (
+		spanContext = span.SpanContext()
+		got         = spanContext.SpanID.String()
+		want        = fmt.Sprintf("%02x", spanContext.TraceID[8:])
+	)
+	if got != want {
+		t.Errorf("got Span ID %s, want %s", got, want)
+	}
+}
+
 func TestSampling(t *testing.T) {
 	for _, test := range []struct {
 		remoteParent       bool

@@ -192,8 +192,10 @@ func startSpanInternal(name string, hasParent bool, parent SpanContext, remotePa
 
 	if !hasParent {
 		span.spanContext.TraceID = cfg.IDGenerator.NewTraceID()
+		copy(span.spanContext.SpanID[:], span.spanContext.TraceID[8:])
+	} else {
+		span.spanContext.SpanID = cfg.IDGenerator.NewSpanID()
 	}
-	span.spanContext.SpanID = cfg.IDGenerator.NewSpanID()
 	sampler := cfg.DefaultSampler
 
 	if !hasParent || remoteParent || o.Sampler != nil {
