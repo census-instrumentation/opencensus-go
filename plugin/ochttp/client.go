@@ -16,6 +16,7 @@ package ochttp
 
 import (
 	"net/http"
+	"net/http/httptrace"
 
 	"go.opencensus.io/trace"
 	"go.opencensus.io/trace/propagation"
@@ -51,6 +52,11 @@ type Transport struct {
 	// name equals the URL Path.
 	FormatSpanName func(*http.Request) string
 
+	// ClientTracer may be set to a function allowing OpenCensus to annotate the
+	// current span with HTTP request event information emitted by the httptrace
+	// package.
+	ClientTracer func(*trace.Span) *httptrace.ClientTrace
+
 	// TODO: Implement tag propagation for HTTP.
 }
 
@@ -77,6 +83,7 @@ func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 			SpanKind: trace.SpanKindClient,
 		},
 		formatSpanName: spanNameFormatter,
+		clientTracer:   t.ClientTracer,
 	}
 	rt = statsTransport{base: rt}
 	return rt.RoundTrip(req)
