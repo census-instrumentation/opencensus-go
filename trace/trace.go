@@ -479,13 +479,10 @@ type defaultIDGenerator struct {
 // NewSpanID returns a non-zero span ID from a randomly-chosen sequence.
 // mu should be held while this function is called.
 func (gen *defaultIDGenerator) NewSpanID() [8]byte {
-	gen.Lock()
-	id := gen.nextSpanID
-	gen.nextSpanID += gen.spanIDInc
-	if gen.nextSpanID == 0 {
-		gen.nextSpanID += gen.spanIDInc
+	var id uint64
+	for id == 0 {
+		id = atomic.AddUint64(&gen.nextSpanID, gen.spanIDInc)
 	}
-	gen.Unlock()
 	var sid [8]byte
 	binary.LittleEndian.PutUint64(sid[:], id)
 	return sid
