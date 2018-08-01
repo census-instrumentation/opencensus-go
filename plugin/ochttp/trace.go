@@ -43,7 +43,7 @@ type traceTransport struct {
 	startOptions   trace.StartOptions
 	format         propagation.HTTPFormat
 	formatSpanName func(*http.Request) string
-	clientTracer   func(*trace.Span) *httptrace.ClientTrace
+	clientTracer   func(*http.Request, *trace.Span) *httptrace.ClientTrace
 }
 
 // TODO(jbd): Add message events for request and response size.
@@ -60,7 +60,7 @@ func (t *traceTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 		trace.WithSpanKind(trace.SpanKindClient))
 
 	if t.clientTracer != nil {
-		req = req.WithContext(httptrace.WithClientTrace(ctx, t.clientTracer(span)))
+		req = req.WithContext(httptrace.WithClientTrace(ctx, t.clientTracer(req, span)))
 	} else {
 		req = req.WithContext(ctx)
 	}

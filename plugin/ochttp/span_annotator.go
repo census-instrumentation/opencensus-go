@@ -16,51 +16,52 @@ package ochttp
 
 import (
 	"crypto/tls"
+	"net/http"
 	"net/http/httptrace"
 	"strings"
 
 	"go.opencensus.io/trace"
 )
 
-// ClientTrace implements the annotation of all available hooks for
+// SpanAnnotator implements the annotation of all available hooks for
 // httptrace.ClientTrace.
-type ClientTrace struct {
-	*trace.Span
+type SpanAnnotator struct {
+	sp *trace.Span
 }
 
-// ClientTracer returns a httptrace.ClientTrace instance which instruments all
-// emitted httptrace events on the provided Span.
-func ClientTracer(s *trace.Span) *httptrace.ClientTrace {
-	clientTrace := ClientTrace{s}
+// NewSpanAnnotator returns a httptrace.ClientTrace which annotates all emitted
+// httptrace events on the provided Span.
+func NewSpanAnnotator(req *http.Request, s *trace.Span) *httptrace.ClientTrace {
+	spanAnnotator := SpanAnnotator{s}
 
 	return &httptrace.ClientTrace{
-		GetConn:              clientTrace.GetConn,
-		GotConn:              clientTrace.GotConn,
-		PutIdleConn:          clientTrace.PutIdleConn,
-		GotFirstResponseByte: clientTrace.GotFirstResponseByte,
-		Got100Continue:       clientTrace.Got100Continue,
-		DNSStart:             clientTrace.DNSStart,
-		DNSDone:              clientTrace.DNSDone,
-		ConnectStart:         clientTrace.ConnectStart,
-		ConnectDone:          clientTrace.ConnectDone,
-		TLSHandshakeStart:    clientTrace.TLSHandshakeStart,
-		TLSHandshakeDone:     clientTrace.TLSHandshakeDone,
-		WroteHeaders:         clientTrace.WroteHeaders,
-		Wait100Continue:      clientTrace.Wait100Continue,
-		WroteRequest:         clientTrace.WroteRequest,
+		GetConn:              spanAnnotator.GetConn,
+		GotConn:              spanAnnotator.GotConn,
+		PutIdleConn:          spanAnnotator.PutIdleConn,
+		GotFirstResponseByte: spanAnnotator.GotFirstResponseByte,
+		Got100Continue:       spanAnnotator.Got100Continue,
+		DNSStart:             spanAnnotator.DNSStart,
+		DNSDone:              spanAnnotator.DNSDone,
+		ConnectStart:         spanAnnotator.ConnectStart,
+		ConnectDone:          spanAnnotator.ConnectDone,
+		TLSHandshakeStart:    spanAnnotator.TLSHandshakeStart,
+		TLSHandshakeDone:     spanAnnotator.TLSHandshakeDone,
+		WroteHeaders:         spanAnnotator.WroteHeaders,
+		Wait100Continue:      spanAnnotator.Wait100Continue,
+		WroteRequest:         spanAnnotator.WroteRequest,
 	}
 }
 
 // GetConn implements a httptrace.ClientTrace hook
-func (c ClientTrace) GetConn(hostPort string) {
+func (s SpanAnnotator) GetConn(hostPort string) {
 	attrs := []trace.Attribute{
 		trace.StringAttribute("httptrace.get_connection.host_port", hostPort),
 	}
-	c.Annotate(attrs, "GetConn")
+	s.sp.Annotate(attrs, "GetConn")
 }
 
 // GotConn implements a httptrace.ClientTrace hook
-func (c ClientTrace) GotConn(info httptrace.GotConnInfo) {
+func (s SpanAnnotator) GotConn(info httptrace.GotConnInfo) {
 	attrs := []trace.Attribute{
 		trace.BoolAttribute("httptrace.got_connection.reused", info.Reused),
 		trace.BoolAttribute("httptrace.got_connection.was_idle", info.WasIdle),
@@ -69,39 +70,39 @@ func (c ClientTrace) GotConn(info httptrace.GotConnInfo) {
 		attrs = append(attrs,
 			trace.StringAttribute("httptrace.got_connection.idle_time", info.IdleTime.String()))
 	}
-	c.Annotate(attrs, "GotConn")
+	s.sp.Annotate(attrs, "GotConn")
 }
 
 // PutIdleConn implements a httptrace.ClientTrace hook
-func (c ClientTrace) PutIdleConn(err error) {
+func (s SpanAnnotator) PutIdleConn(err error) {
 	var attrs []trace.Attribute
 	if err != nil {
 		attrs = append(attrs,
 			trace.StringAttribute("httptrace.put_idle_connection.error", err.Error()))
 	}
-	c.Annotate(attrs, "PutIdleConn")
+	s.sp.Annotate(attrs, "PutIdleConn")
 }
 
 // GotFirstResponseByte implements a httptrace.ClientTrace hook
-func (c ClientTrace) GotFirstResponseByte() {
-	c.Annotate(nil, "GotFirstResponseByte")
+func (s SpanAnnotator) GotFirstResponseByte() {
+	s.sp.Annotate(nil, "GotFirstResponseByte")
 }
 
 // Got100Continue implements a httptrace.ClientTrace hook
-func (c ClientTrace) Got100Continue() {
-	c.Annotate(nil, "Got100Continue")
+func (s SpanAnnotator) Got100Continue() {
+	s.sp.Annotate(nil, "Got100Continue")
 }
 
 // DNSStart implements a httptrace.ClientTrace hook
-func (c ClientTrace) DNSStart(info httptrace.DNSStartInfo) {
+func (s SpanAnnotator) DNSStart(info httptrace.DNSStartInfo) {
 	attrs := []trace.Attribute{
 		trace.StringAttribute("httptrace.dns_start.host", info.Host),
 	}
-	c.Annotate(attrs, "DNSStart")
+	s.sp.Annotate(attrs, "DNSStart")
 }
 
 // DNSDone implements a httptrace.ClientTrace hook
-func (c ClientTrace) DNSDone(info httptrace.DNSDoneInfo) {
+func (s SpanAnnotator) DNSDone(info httptrace.DNSDoneInfo) {
 	var addrs []string
 	for _, addr := range info.Addrs {
 		addrs = append(addrs, addr.String())
@@ -113,20 +114,20 @@ func (c ClientTrace) DNSDone(info httptrace.DNSDoneInfo) {
 		attrs = append(attrs,
 			trace.StringAttribute("httptrace.dns_done.error", info.Err.Error()))
 	}
-	c.Annotate(attrs, "DNSDone")
+	s.sp.Annotate(attrs, "DNSDone")
 }
 
 // ConnectStart implements a httptrace.ClientTrace hook
-func (c ClientTrace) ConnectStart(network, addr string) {
+func (s SpanAnnotator) ConnectStart(network, addr string) {
 	attrs := []trace.Attribute{
 		trace.StringAttribute("httptrace.connect_start.network", network),
 		trace.StringAttribute("httptrace.connect_start.addr", addr),
 	}
-	c.Annotate(attrs, "ConnectStart")
+	s.sp.Annotate(attrs, "ConnectStart")
 }
 
 // ConnectDone implements a httptrace.ClientTrace hook
-func (c ClientTrace) ConnectDone(network, addr string, err error) {
+func (s SpanAnnotator) ConnectDone(network, addr string, err error) {
 	attrs := []trace.Attribute{
 		trace.StringAttribute("httptrace.connect_done.network", network),
 		trace.StringAttribute("httptrace.connect_done.addr", addr),
@@ -135,40 +136,40 @@ func (c ClientTrace) ConnectDone(network, addr string, err error) {
 		attrs = append(attrs,
 			trace.StringAttribute("httptrace.connect_done.error", err.Error()))
 	}
-	c.Annotate(attrs, "ConnectDone")
+	s.sp.Annotate(attrs, "ConnectDone")
 }
 
 // TLSHandshakeStart implements a httptrace.ClientTrace hook
-func (c ClientTrace) TLSHandshakeStart() {
-	c.Annotate(nil, "TLSHandshakeStart")
+func (s SpanAnnotator) TLSHandshakeStart() {
+	s.sp.Annotate(nil, "TLSHandshakeStart")
 }
 
 // TLSHandshakeDone implements a httptrace.ClientTrace hook
-func (c ClientTrace) TLSHandshakeDone(_ tls.ConnectionState, err error) {
+func (s SpanAnnotator) TLSHandshakeDone(_ tls.ConnectionState, err error) {
 	var attrs []trace.Attribute
 	if err != nil {
 		attrs = append(attrs,
 			trace.StringAttribute("httptrace.tls_handshake_done.error", err.Error()))
 	}
-	c.Annotate(attrs, "TLSHandshakeDone")
+	s.sp.Annotate(attrs, "TLSHandshakeDone")
 }
 
 // WroteHeaders implements a httptrace.ClientTrace hook
-func (c ClientTrace) WroteHeaders() {
-	c.Annotate(nil, "WroteHeaders")
+func (s SpanAnnotator) WroteHeaders() {
+	s.sp.Annotate(nil, "WroteHeaders")
 }
 
 // Wait100Continue implements a httptrace.ClientTrace hook
-func (c ClientTrace) Wait100Continue() {
-	c.Annotate(nil, "Wait100Continue")
+func (s SpanAnnotator) Wait100Continue() {
+	s.sp.Annotate(nil, "Wait100Continue")
 }
 
 // WroteRequest implements a httptrace.ClientTrace hook
-func (c ClientTrace) WroteRequest(info httptrace.WroteRequestInfo) {
+func (s SpanAnnotator) WroteRequest(info httptrace.WroteRequestInfo) {
 	var attrs []trace.Attribute
 	if info.Err != nil {
 		attrs = append(attrs,
 			trace.StringAttribute("httptrace.wrote_request.error", info.Err.Error()))
 	}
-	c.Annotate(attrs, "WroteRequest")
+	s.sp.Annotate(attrs, "WroteRequest")
 }

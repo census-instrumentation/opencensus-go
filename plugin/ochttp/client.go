@@ -55,7 +55,7 @@ type Transport struct {
 	// ClientTracer may be set to a function allowing OpenCensus to annotate the
 	// current span with HTTP request event information emitted by the httptrace
 	// package.
-	ClientTracer func(*trace.Span) *httptrace.ClientTrace
+	ClientTracer func(*http.Request, *trace.Span) *httptrace.ClientTrace
 
 	// TODO: Implement tag propagation for HTTP.
 }
