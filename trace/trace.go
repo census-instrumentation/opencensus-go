@@ -477,7 +477,6 @@ type defaultIDGenerator struct {
 }
 
 // NewSpanID returns a non-zero span ID from a randomly-chosen sequence.
-// mu should be held while this function is called.
 func (gen *defaultIDGenerator) NewSpanID() [8]byte {
 	var id uint64
 	for id == 0 {
