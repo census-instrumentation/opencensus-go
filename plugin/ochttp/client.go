@@ -52,10 +52,10 @@ type Transport struct {
 	// name equals the URL Path.
 	FormatSpanName func(*http.Request) string
 
-	// ClientTracer may be set to a function allowing OpenCensus to annotate the
-	// current span with HTTP request event information emitted by the httptrace
-	// package.
-	ClientTracer func(*http.Request, *trace.Span) *httptrace.ClientTrace
+	// NewClientTrace may be set to a function allowing the current *trace.Span
+	// to be annotated with HTTP request event information emitted by the
+	// httptrace package.
+	NewClientTrace func(*http.Request, *trace.Span) *httptrace.ClientTrace
 
 	// TODO: Implement tag propagation for HTTP.
 }
@@ -83,7 +83,7 @@ func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 			SpanKind: trace.SpanKindClient,
 		},
 		formatSpanName: spanNameFormatter,
-		clientTracer:   t.ClientTracer,
+		newClientTrace: t.NewClientTrace,
 	}
 	rt = statsTransport{base: rt}
 	return rt.RoundTrip(req)

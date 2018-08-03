@@ -23,45 +23,41 @@ import (
 	"go.opencensus.io/trace"
 )
 
-// SpanAnnotator implements the annotation of all available hooks for
-// httptrace.ClientTrace.
-type SpanAnnotator struct {
+type spanAnnotator struct {
 	sp *trace.Span
 }
 
 // NewSpanAnnotator returns a httptrace.ClientTrace which annotates all emitted
 // httptrace events on the provided Span.
-func NewSpanAnnotator(req *http.Request, s *trace.Span) *httptrace.ClientTrace {
-	spanAnnotator := SpanAnnotator{s}
+func NewSpanAnnotator(_ *http.Request, s *trace.Span) *httptrace.ClientTrace {
+	sa := spanAnnotator{sp: s}
 
 	return &httptrace.ClientTrace{
-		GetConn:              spanAnnotator.GetConn,
-		GotConn:              spanAnnotator.GotConn,
-		PutIdleConn:          spanAnnotator.PutIdleConn,
-		GotFirstResponseByte: spanAnnotator.GotFirstResponseByte,
-		Got100Continue:       spanAnnotator.Got100Continue,
-		DNSStart:             spanAnnotator.DNSStart,
-		DNSDone:              spanAnnotator.DNSDone,
-		ConnectStart:         spanAnnotator.ConnectStart,
-		ConnectDone:          spanAnnotator.ConnectDone,
-		TLSHandshakeStart:    spanAnnotator.TLSHandshakeStart,
-		TLSHandshakeDone:     spanAnnotator.TLSHandshakeDone,
-		WroteHeaders:         spanAnnotator.WroteHeaders,
-		Wait100Continue:      spanAnnotator.Wait100Continue,
-		WroteRequest:         spanAnnotator.WroteRequest,
+		GetConn:              sa.getConn,
+		GotConn:              sa.gotConn,
+		PutIdleConn:          sa.putIdleConn,
+		GotFirstResponseByte: sa.gotFirstResponseByte,
+		Got100Continue:       sa.got100Continue,
+		DNSStart:             sa.dnsStart,
+		DNSDone:              sa.dnsDone,
+		ConnectStart:         sa.connectStart,
+		ConnectDone:          sa.connectDone,
+		TLSHandshakeStart:    sa.tlsHandshakeStart,
+		TLSHandshakeDone:     sa.tlsHandshakeDone,
+		WroteHeaders:         sa.wroteHeaders,
+		Wait100Continue:      sa.wait100Continue,
+		WroteRequest:         sa.wroteRequest,
 	}
 }
 
-// GetConn implements a httptrace.ClientTrace hook
-func (s SpanAnnotator) GetConn(hostPort string) {
+func (s spanAnnotator) getConn(hostPort string) {
 	attrs := []trace.Attribute{
 		trace.StringAttribute("httptrace.get_connection.host_port", hostPort),
 	}
 	s.sp.Annotate(attrs, "GetConn")
 }
 
-// GotConn implements a httptrace.ClientTrace hook
-func (s SpanAnnotator) GotConn(info httptrace.GotConnInfo) {
+func (s spanAnnotator) gotConn(info httptrace.GotConnInfo) {
 	attrs := []trace.Attribute{
 		trace.BoolAttribute("httptrace.got_connection.reused", info.Reused),
 		trace.BoolAttribute("httptrace.got_connection.was_idle", info.WasIdle),
@@ -74,7 +70,7 @@ func (s SpanAnnotator) GotConn(info httptrace.GotConnInfo) {
 }
 
 // PutIdleConn implements a httptrace.ClientTrace hook
-func (s SpanAnnotator) PutIdleConn(err error) {
+func (s spanAnnotator) putIdleConn(err error) {
 	var attrs []trace.Attribute
 	if err != nil {
 		attrs = append(attrs,
@@ -83,26 +79,22 @@ func (s SpanAnnotator) PutIdleConn(err error) {
 	s.sp.Annotate(attrs, "PutIdleConn")
 }
 
-// GotFirstResponseByte implements a httptrace.ClientTrace hook
-func (s SpanAnnotator) GotFirstResponseByte() {
+func (s spanAnnotator) gotFirstResponseByte() {
 	s.sp.Annotate(nil, "GotFirstResponseByte")
 }
 
-// Got100Continue implements a httptrace.ClientTrace hook
-func (s SpanAnnotator) Got100Continue() {
+func (s spanAnnotator) got100Continue() {
 	s.sp.Annotate(nil, "Got100Continue")
 }
 
-// DNSStart implements a httptrace.ClientTrace hook
-func (s SpanAnnotator) DNSStart(info httptrace.DNSStartInfo) {
+func (s spanAnnotator) dnsStart(info httptrace.DNSStartInfo) {
 	attrs := []trace.Attribute{
 		trace.StringAttribute("httptrace.dns_start.host", info.Host),
 	}
 	s.sp.Annotate(attrs, "DNSStart")
 }
 
-// DNSDone implements a httptrace.ClientTrace hook
-func (s SpanAnnotator) DNSDone(info httptrace.DNSDoneInfo) {
+func (s spanAnnotator) dnsDone(info httptrace.DNSDoneInfo) {
 	var addrs []string
 	for _, addr := range info.Addrs {
 		addrs = append(addrs, addr.String())
@@ -117,8 +109,7 @@ func (s SpanAnnotator) DNSDone(info httptrace.DNSDoneInfo) {
 	s.sp.Annotate(attrs, "DNSDone")
 }
 
-// ConnectStart implements a httptrace.ClientTrace hook
-func (s SpanAnnotator) ConnectStart(network, addr string) {
+func (s spanAnnotator) connectStart(network, addr string) {
 	attrs := []trace.Attribute{
 		trace.StringAttribute("httptrace.connect_start.network", network),
 		trace.StringAttribute("httptrace.connect_start.addr", addr),
@@ -126,8 +117,7 @@ func (s SpanAnnotator) ConnectStart(network, addr string) {
 	s.sp.Annotate(attrs, "ConnectStart")
 }
 
-// ConnectDone implements a httptrace.ClientTrace hook
-func (s SpanAnnotator) ConnectDone(network, addr string, err error) {
+func (s spanAnnotator) connectDone(network, addr string, err error) {
 	attrs := []trace.Attribute{
 		trace.StringAttribute("httptrace.connect_done.network", network),
 		trace.StringAttribute("httptrace.connect_done.addr", addr),
@@ -139,13 +129,11 @@ func (s SpanAnnotator) ConnectDone(network, addr string, err error) {
 	s.sp.Annotate(attrs, "ConnectDone")
 }
 
-// TLSHandshakeStart implements a httptrace.ClientTrace hook
-func (s SpanAnnotator) TLSHandshakeStart() {
+func (s spanAnnotator) tlsHandshakeStart() {
 	s.sp.Annotate(nil, "TLSHandshakeStart")
 }
 
-// TLSHandshakeDone implements a httptrace.ClientTrace hook
-func (s SpanAnnotator) TLSHandshakeDone(_ tls.ConnectionState, err error) {
+func (s spanAnnotator) tlsHandshakeDone(_ tls.ConnectionState, err error) {
 	var attrs []trace.Attribute
 	if err != nil {
 		attrs = append(attrs,
@@ -154,18 +142,15 @@ func (s SpanAnnotator) TLSHandshakeDone(_ tls.ConnectionState, err error) {
 	s.sp.Annotate(attrs, "TLSHandshakeDone")
 }
 
-// WroteHeaders implements a httptrace.ClientTrace hook
-func (s SpanAnnotator) WroteHeaders() {
+func (s spanAnnotator) wroteHeaders() {
 	s.sp.Annotate(nil, "WroteHeaders")
 }
 
-// Wait100Continue implements a httptrace.ClientTrace hook
-func (s SpanAnnotator) Wait100Continue() {
+func (s spanAnnotator) wait100Continue() {
 	s.sp.Annotate(nil, "Wait100Continue")
 }
 
-// WroteRequest implements a httptrace.ClientTrace hook
-func (s SpanAnnotator) WroteRequest(info httptrace.WroteRequestInfo) {
+func (s spanAnnotator) wroteRequest(info httptrace.WroteRequestInfo) {
 	var attrs []trace.Attribute
 	if info.Err != nil {
 		attrs = append(attrs,

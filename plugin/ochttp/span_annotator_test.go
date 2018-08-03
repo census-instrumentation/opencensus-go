@@ -36,7 +36,7 @@ func TestSpanAnnotator(t *testing.T) {
 
 	trace.RegisterExporter(recorder)
 
-	tr := ochttp.Transport{ClientTracer: ochttp.NewSpanAnnotator}
+	tr := ochttp.Transport{NewClientTrace: ochttp.NewSpanAnnotator}
 
 	req, err := http.NewRequest("POST", server.URL, strings.NewReader("req-body"))
 	if err != nil {
