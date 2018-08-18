@@ -59,6 +59,9 @@ type Options struct {
 
 	// ServiceName is the Jaeger service name.
 	ServiceName string
+
+	// Tags are added to Jaeger Process exports
+	Tags []Tag
 }
 
 // NewExporter returns a trace.Exporter implementation that exports
@@ -90,6 +93,10 @@ func NewExporter(o Options) (*Exporter, error) {
 	if service == "" {
 		service = defaultServiceName
 	}
+	tags := make([]*gen.Tag, len(o.Tags))
+	for i, tag := range o.Tags {
+		tags[i] = attributeToTag(tag.key, tag.value)
+	}
 	e := &Exporter{
 		endpoint:      endpoint,
 		agentEndpoint: o.AgentEndpoint,
@@ -97,6 +104,7 @@ func NewExporter(o Options) (*Exporter, error) {
 		username:      o.Username,
 		password:      o.Password,
 		service:       service,
+		tags:          tags,
 	}
 	bundler := bundler.NewBundler((*gen.Span)(nil), func(bundle interface{}) {
 		if err := e.upload(bundle.([]*gen.Span)); err != nil {
@@ -107,6 +115,33 @@ func NewExporter(o Options) (*Exporter, error) {
 	return e, nil
 }
 
+// Tag defines a key-value pair
+// It is limited to the possible conversions to *jaeger.Tag by attributeToTag
+type Tag struct {
+	key   string
+	value interface{}
+}
+
+// BoolTag creates a new tag of type bool, exported as jaeger.TagType_BOOL
+func BoolTag(key string, value bool) Tag {
+	return Tag{key, value}
+}
+
+// StringTag creates a new tag of type string, exported as jaeger.TagType_STRING
+func StringTag(key string, value string) Tag {
+	return Tag{key, value}
+}
+
+// Int64Tag creates a new tag of type int64, exported as jaeger.TagType_LONG
+func Int64Tag(key string, value int64) Tag {
+	return Tag{key, value}
+}
+
+// Int32Tag creates a new tag of type int32, exported as jaeger.TagType_LONG
+func Int32Tag(key string, value int32) Tag {
+	return Tag{key, value}
+}
+
 // Exporter is an implementation of trace.Exporter that uploads spans to Jaeger.
 type Exporter struct {
 	endpoint      string
@@ -114,6 +149,7 @@ type Exporter struct {
 	service       string
 	bundler       *bundler.Bundler
 	client        *agentClientUDP
+	tags          []*gen.Tag
 
 	username, password string
 }
@@ -233,6 +269,7 @@ func (e *Exporter) upload(spans []*gen.Span) error {
 		Spans: spans,
 		Process: &gen.Process{
 			ServiceName: e.service,
+			Tags:        e.tags,
 		},
 	}
 	if e.endpoint != "" {
