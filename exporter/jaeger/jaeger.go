@@ -58,10 +58,10 @@ type Options struct {
 	Password string
 
 	// ServiceName is the Jaeger service name.
-	// deprecated: specify Process instead
+	// Deprecated: Specify Process instead.
 	ServiceName string
 
-	// Process contains the information about the exporting process
+	// Process contains the information about the exporting process.
 	Process Process
 }
 
@@ -97,8 +97,8 @@ func NewExporter(o Options) (*Exporter, error) {
 	} else if service == "" {
 		service = defaultServiceName
 	}
-	tags := make([]*gen.Tag, len(o.Process.ProcessTags))
-	for i, tag := range o.Process.ProcessTags {
+	tags := make([]*gen.Tag, len(o.Process.Tags))
+	for i, tag := range o.Process.Tags {
 		tags[i] = attributeToTag(tag.key, tag.value)
 	}
 	e := &Exporter{
@@ -127,8 +127,8 @@ type Process struct {
 	// ServiceName is the Jaeger service name.
 	ServiceName string
 
-	// ProcessTags are added to Jaeger Process exports
-	ProcessTags []Tag
+	// Tags are added to Jaeger Process exports
+	Tags []Tag
 }
 
 // Tag defines a key-value pair

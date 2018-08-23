@@ -61,7 +61,7 @@ func ExampleNewExporter_processTags() {
 		AgentEndpoint: "localhost:6831",
 		Process: jaeger.Process{
 			ServiceName: "trace-demo",
-			ProcessTags: []jaeger.Tag{
+			Tags: []jaeger.Tag{
 				jaeger.StringTag("ip", "127.0.0.1"),
 				jaeger.BoolTag("demo", true),
 			},
