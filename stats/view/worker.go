@@ -19,6 +19,11 @@ import (
 	"fmt"
 	"time"
 
+	"log"
+	"os"
+	"strconv"
+	"sync"
+
 	"go.opencensus.io/stats"
 	"go.opencensus.io/stats/internal"
 	"go.opencensus.io/tag"
@@ -107,12 +112,20 @@ func RetrieveData(viewName string) ([]*Row, error) {
 	return resp.rows, resp.err
 }
 
+var logErrorOnce sync.Once
+
 func record(tags *tag.Map, ms interface{}) {
 	req := &recordReq{
 		tm: tags,
 		ms: ms.([]stats.Measurement),
 	}
-	defaultWorker.c <- req
+	select {
+	case defaultWorker.c <- req:
+	default:
+		logErrorOnce.Do(func() {
+			log.Printf("OpenCensus stats: internal work queue full, dropping data")
+		})
+	}
 }
 
 // SetReportingPeriod sets the interval between reporting aggregated views in
@@ -129,13 +142,27 @@ func SetReportingPeriod(d time.Duration) {
 	<-req.c // don't return until the timer is set to the new duration.
 }
 
+var internalWorkQueueSize = 1024
+
+func init() {
+	v := os.Getenv("OPENCENSUS_STATS_INTERNAL_QUEUE_SIZE")
+	if v != "" {
+		n, err := strconv.Atoi(v)
+		if err != nil {
+			log.Println("Invalid value of OPENCENSUS_INTERNAL_QUEUE_SIZE:", err)
+		} else {
+			internalWorkQueueSize = n
+		}
+	}
+}
+
 func newWorker() *worker {
 	return &worker{
 		measures:   make(map[string]*measureRef),
 		views:      make(map[string]*viewInternal),
 		startTimes: make(map[*viewInternal]time.Time),
 		timer:      time.NewTicker(defaultReportingDuration),
-		c:          make(chan command, 1024),
+		c:          make(chan command, internalWorkQueueSize),
 		quit:       make(chan bool),
 		done:       make(chan bool),
 	}
