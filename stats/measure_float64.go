@@ -15,6 +15,8 @@
 
 package stats
 
+import "sync/atomic"
+
 // Float64Measure is a measure for float64 values.
 type Float64Measure struct {
 	md *measureDescriptor
@@ -38,7 +40,7 @@ func (m *Float64Measure) Unit() string {
 // M creates a new float64 measurement.
 // Use Record to record measurements.
 func (m *Float64Measure) M(v float64) Measurement {
-	if !m.md.subscribed() {
+	if n := atomic.LoadInt32(&registrySize); !m.md.subscribed() && n == 0 {
 		return Measurement{}
 	}
 	return Measurement{m: m, v: v}
