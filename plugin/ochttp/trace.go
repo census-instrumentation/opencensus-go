@@ -28,6 +28,13 @@ import (
 
 var defaultFormat propagation.HTTPFormat = &b3.HTTPFormat{}
 
+// Disable canonical health checking endpoints
+// like /healthz and /_ah/health for now.
+var untraceableEndpoints = map[string]bool{
+	"/healthz":    true,
+	"/_ah/health": true,
+}
+
 // Attributes recorded on the span for the requests.
 // Only trace exporters will need them.
 const (
@@ -205,13 +212,18 @@ var codeToStr = map[int32]string{
 	trace.StatusCodeUnauthenticated:    `"UNAUTHENTICATED"`,
 }
 
-func isHealthEndpoint(path string) bool {
-	// Health checking is pretty frequent and
-	// traces collected for health endpoints
-	// can be extremely noisy and expensive.
-	// Disable canonical health checking endpoints
-	// like /healthz and /_ah/health for now.
-	if path == "/healthz" || path == "/_ah/health" {
+// Set Untraceable Endpoints like Health checking
+// is pretty frequent and traces collected
+// for health endpoints can be extremely noisy and expensive.
+func SetUntraceableEndpoints(newUntraceableEndpoints []string) {
+	untraceableEndpoints = map[string]bool{}
+	for _, endpoint := range newUntraceableEndpoints {
+		untraceableEndpoints[endpoint] = true
+	}
+}
+
+func isUntraceableEndpoints(path string) bool {
+	if _, exist := untraceableEndpoints[path]; exist {
 		return true
 	}
 	return false
