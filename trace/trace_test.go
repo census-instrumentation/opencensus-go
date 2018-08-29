@@ -23,8 +23,10 @@ import (
 )
 
 var (
-	tid = TraceID{1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 4, 8, 16, 32, 64, 128}
-	sid = SpanID{1, 2, 4, 8, 16, 32, 64, 128}
+	tid               = TraceID{1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 4, 8, 16, 32, 64, 128}
+	sid               = SpanID{1, 2, 4, 8, 16, 32, 64, 128}
+	defaultTracestate = Tracestate{}
+	tracestate, _     = CreateTracestate(nil, "foo", "bar")
 )
 
 func init() {
@@ -68,6 +70,9 @@ func checkChild(p SpanContext, c *Span) error {
 		return fmt.Errorf("got child span ID %s, parent span ID %s; want unequal IDs", childID, parentID)
 	}
 	if got, want := c.spanContext.TraceOptions, p.TraceOptions; got != want {
+		return fmt.Errorf("got child trace options %d, want %d", got, want)
+	}
+	if got, want := c.spanContext.Tracestate, p.Tracestate; got != want {
 		return fmt.Errorf("got child trace options %d, want %d", got, want)
 	}
 	return nil
@@ -189,6 +194,7 @@ func TestStartSpanWithRemoteParent(t *testing.T) {
 		TraceID:      tid,
 		SpanID:       sid,
 		TraceOptions: 0x0,
+		Tracestate:   defaultTracestate,
 	}
 	ctx, _ := StartSpanWithRemoteParent(context.Background(), "startSpanWithRemoteParent", sc)
 	if err := checkChild(sc, FromContext(ctx)); err != nil {
@@ -204,6 +210,7 @@ func TestStartSpanWithRemoteParent(t *testing.T) {
 		TraceID:      tid,
 		SpanID:       sid,
 		TraceOptions: 0x1,
+		Tracestate:   *tracestate,
 	}
 	ctx, _ = StartSpanWithRemoteParent(context.Background(), "startSpanWithRemoteParent", sc)
 	if err := checkChild(sc, FromContext(ctx)); err != nil {
@@ -229,6 +236,7 @@ func startSpan(o StartOptions) *Span {
 			TraceID:      tid,
 			SpanID:       sid,
 			TraceOptions: 1,
+			Tracestate:   defaultTracestate,
 		},
 		WithSampler(o.Sampler),
 		WithSpanKind(o.SpanKind),

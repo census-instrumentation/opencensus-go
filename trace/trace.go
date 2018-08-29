@@ -88,6 +88,7 @@ type SpanContext struct {
 	TraceID      TraceID
 	SpanID       SpanID
 	TraceOptions TraceOptions
+	Tracestate   Tracestate
 }
 
 type contextKey struct{}
