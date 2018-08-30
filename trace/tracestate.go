@@ -21,16 +21,16 @@ import (
 
 const (
 	KEY_WITHOUT_VENDOR_FORMAT = `[a-z][_0-9a-z\-\*\/]{0,255}`
-	KEY_WITH_VENDOR_FORMAT = `[a-z][_0-9a-z\-\*\/]{0,240}@[a-z][_0-9a-z\-\*\/]{0,13}`
-	KEY_FORMAT = `(` + KEY_WITHOUT_VENDOR_FORMAT + `)|(` + KEY_WITH_VENDOR_FORMAT + `)`
-	VALUE_FORMAT = `[\x20-\x2b\x2d-\x3c\x3e-\x7e]{0,255}[\x21-\x2b\x2d-\x3c\x3e-\x7e]`
+	KEY_WITH_VENDOR_FORMAT    = `[a-z][_0-9a-z\-\*\/]{0,240}@[a-z][_0-9a-z\-\*\/]{0,13}`
+	KEY_FORMAT                = `(` + KEY_WITHOUT_VENDOR_FORMAT + `)|(` + KEY_WITH_VENDOR_FORMAT + `)`
+	VALUE_FORMAT              = `[\x20-\x2b\x2d-\x3c\x3e-\x7e]{0,255}[\x21-\x2b\x2d-\x3c\x3e-\x7e]`
 )
 
 var KEY_VALIDATION_RE = regexp.MustCompile(`^(` + KEY_FORMAT + `)$`)
 var VALUE_VALIDATION_RE = regexp.MustCompile(`^(` + VALUE_FORMAT + `)$`)
 
 type TracestateEntry struct {
-	key string
+	key   string
 	value string
 }
 
@@ -84,7 +84,7 @@ func (ts *Tracestate) Set(key string, value string) string {
 	}
 	for index, entry := range ts.entries {
 		if entry.key == key {
-			ts.entries = append(ts.entries[:index], ts.entries[index + 1:]...)
+			ts.entries = append(ts.entries[:index], ts.entries[index+1:]...)
 			retval = entry.value
 			break
 		}
