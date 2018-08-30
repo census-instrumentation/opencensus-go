@@ -191,10 +191,12 @@ func startSpanInternal(name string, hasParent bool, parent SpanContext, remotePa
 
 	cfg := config.Load().(*Config)
 
-	if hasParent {
+	if !hasParent {
+		span.spanContext.TraceID = cfg.IDGenerator.NewTraceID()
+	}
+	if hasParent && parent.Tracestate != nil {
 		span.spanContext.Tracestate = parent.Tracestate.Fork()
 	} else {
-		span.spanContext.TraceID = cfg.IDGenerator.NewTraceID()
 		span.spanContext.Tracestate = &Tracestate{}
 	}
 	span.spanContext.SpanID = cfg.IDGenerator.NewSpanID()
