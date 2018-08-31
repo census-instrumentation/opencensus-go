@@ -24,12 +24,15 @@ import (
 
 	"go.opencensus.io/trace"
 	"go.opencensus.io/trace/propagation"
+	"go.opencensus.io/trace/tracestate"
 )
 
 const (
-	supportedVersion = 0
-	maxVersion       = 254
-	header           = "traceparent"
+	supportedVersion  = 0
+	maxVersion        = 254
+	maxTracestateLen  = 512
+	traceparentHeader = "traceparent"
+	tracestateHeader  = "tracestate"
 )
 
 var _ propagation.HTTPFormat = (*HTTPFormat)(nil)
@@ -39,7 +42,7 @@ type HTTPFormat struct{}
 
 // SpanContextFromRequest extracts a span context from incoming requests.
 func (f *HTTPFormat) SpanContextFromRequest(req *http.Request) (sc trace.SpanContext, ok bool) {
-	h := req.Header.Get(header)
+	h := req.Header.Get(traceparentHeader)
 	if h == "" {
 		return trace.SpanContext{}, false
 	}
@@ -87,15 +90,71 @@ func (f *HTTPFormat) SpanContextFromRequest(req *http.Request) (sc trace.SpanCon
 		return trace.SpanContext{}, false
 	}
 
+	// Extract Tracestate
+	tracestate, ok := tracestateFromRequest(req)
+	if ok == false {
+		return trace.SpanContext{}, false
+	}
+	sc.Tracestate = tracestate
 	return sc, true
 }
 
-// SpanContextToRequest modifies the given request to include a header.
+func tracestateFromRequest(req *http.Request) (*tracestate.Tracestate, bool) {
+	h := req.Header.Get(tracestateHeader)
+	if h == "" {
+		return nil, true
+	}
+
+	var entries []tracestate.Entry
+	pairs := strings.Split(h, ",")
+	headerLenWithoutTrailingSpaces := len(pairs) - 1 // Number of commas
+	for _, pair := range pairs {
+		trimmedPair := strings.TrimSpace(pair)
+		headerLenWithoutTrailingSpaces += len(trimmedPair)
+		if headerLenWithoutTrailingSpaces > maxTracestateLen {
+			// Drop the entire Tracestate
+			return nil, true
+		}
+		kv := strings.Split(strings.TrimSpace(pair), "=")
+		if len(kv) != 2 {
+			return nil, false
+		}
+		entries = append(entries, tracestate.Entry{Key: kv[0], Value: kv[1]})
+	}
+	ts, err := tracestate.New(nil, entries...)
+	if err != nil {
+		return nil, false
+	}
+
+	return ts, true
+}
+
+func tracestateToRequest(sc trace.SpanContext, req *http.Request) {
+	pairs := []string{}
+	if sc.Tracestate != nil {
+		entries := sc.Tracestate.Entries()
+
+		for _, entry := range entries {
+			pairs = append(pairs, strings.Join([]string{entry.Key, entry.Value}, "="))
+		}
+		h := strings.Join(pairs, ",")
+
+		// According to the spec https://github.com/w3c/distributed-tracing/blob/master/trace_context/HTTP_HEADER_FORMAT.md
+		// tracer can decide to forward tracestate if the header len exceeds maxTracestateLen.
+		// The choice here is to not forward under such circumstances.
+		if h != "" && len(h) <= maxTracestateLen {
+			req.Header.Set(tracestateHeader, h)
+		}
+	}
+}
+
+// SpanContextToRequest modifies the given request to include traceparent and tracestate headers.
 func (f *HTTPFormat) SpanContextToRequest(sc trace.SpanContext, req *http.Request) {
 	h := fmt.Sprintf("%x-%x-%x-%x",
 		[]byte{supportedVersion},
 		sc.TraceID[:],
 		sc.SpanID[:],
 		[]byte{byte(sc.TraceOptions)})
-	req.Header.Set(header, h)
+	req.Header.Set(traceparentHeader, h)
+	tracestateToRequest(sc, req)
 }
