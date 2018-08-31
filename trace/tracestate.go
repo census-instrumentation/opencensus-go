@@ -20,14 +20,14 @@ import (
 )
 
 const (
-	KEY_WITHOUT_VENDOR_FORMAT = `[a-z][_0-9a-z\-\*\/]{0,255}`
-	KEY_WITH_VENDOR_FORMAT    = `[a-z][_0-9a-z\-\*\/]{0,240}@[a-z][_0-9a-z\-\*\/]{0,13}`
-	KEY_FORMAT                = `(` + KEY_WITHOUT_VENDOR_FORMAT + `)|(` + KEY_WITH_VENDOR_FORMAT + `)`
-	VALUE_FORMAT              = `[\x20-\x2b\x2d-\x3c\x3e-\x7e]{0,255}[\x21-\x2b\x2d-\x3c\x3e-\x7e]`
+	keyWithoutVendorFormat = `[a-z][_0-9a-z\-\*\/]{0,255}`
+	keyWithVendorFormat    = `[a-z][_0-9a-z\-\*\/]{0,240}@[a-z][_0-9a-z\-\*\/]{0,13}`
+	keyFormat                = `(` + keyWithoutVendorFormat + `)|(` + keyWithVendorFormat + `)`
+	valueFormat              = `[\x20-\x2b\x2d-\x3c\x3e-\x7e]{0,255}[\x21-\x2b\x2d-\x3c\x3e-\x7e]`
 )
 
-var KEY_VALIDATION_RE = regexp.MustCompile(`^(` + KEY_FORMAT + `)$`)
-var VALUE_VALIDATION_RE = regexp.MustCompile(`^(` + VALUE_FORMAT + `)$`)
+var keyValidationRegExp = regexp.MustCompile(`^(` + keyFormat + `)$`)
+var valueValidationRegExp = regexp.MustCompile(`^(` + valueFormat + `)$`)
 
 type TracestateEntry struct {
 	key   string
@@ -35,12 +35,12 @@ type TracestateEntry struct {
 }
 
 func (ts *TracestateEntry) IsValid() bool {
-	return KEY_VALIDATION_RE.MatchString(ts.key) &&
-		VALUE_VALIDATION_RE.MatchString(ts.value)
+	return keyValidationRegExp.MatchString(ts.key) &&
+		valueValidationRegExp.MatchString(ts.value)
 }
 
-// TraceState is a tracing-system specific context in a list of key-value pairs.
-// TraceState allows different vendors propagate additional information and
+// Tracestate is a tracing-system specific context in a list of key-value pairs.
+// Tracestate allows different vendors propagate additional information and
 // inter-operate with their legacy Id formats.
 type Tracestate struct {
 	entries []TracestateEntry
