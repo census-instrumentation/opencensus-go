@@ -15,13 +15,14 @@
 package resource
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 )
 
 func TestMerge(t *testing.T) {
 	cases := []struct {
-		a, b, expect *Resource
+		a, b, want *Resource
 	}{
 		{
 			a: &Resource{
@@ -32,7 +33,7 @@ func TestMerge(t *testing.T) {
 				Type: "t2",
 				Tags: map[string]string{"a": "1", "b": "3", "c": "4"},
 			},
-			expect: &Resource{
+			want: &Resource{
 				Type: "t1",
 				Tags: map[string]string{"a": "1", "b": "2", "c": "4"},
 			},
@@ -43,7 +44,7 @@ func TestMerge(t *testing.T) {
 				Type: "t1",
 				Tags: map[string]string{"a": "1"},
 			},
-			expect: &Resource{
+			want: &Resource{
 				Type: "t1",
 				Tags: map[string]string{"a": "1"},
 			},
@@ -54,63 +55,65 @@ func TestMerge(t *testing.T) {
 				Tags: map[string]string{"a": "1"},
 			},
 			b: nil,
-			expect: &Resource{
+			want: &Resource{
 				Type: "t1",
 				Tags: map[string]string{"a": "1"},
 			},
 		},
 	}
-	for _, c := range cases {
-		res := Merge(c.a, c.b)
-		if !reflect.DeepEqual(res, c.expect) {
-			t.Fatalf("unexpected result: want %+v, got %+v", c.expect, res)
-		}
+	for i, c := range cases {
+		t.Run(fmt.Sprintf("case-%d", i), func(t *testing.T) {
+			res := Merge(c.a, c.b)
+			if !reflect.DeepEqual(res, c.want) {
+				t.Fatalf("unwanted result: want %+v, got %+v", c.want, res)
+			}
+		})
 	}
 }
 
 func TestDecodeTags(t *testing.T) {
 	cases := []struct {
-		s      string
-		expect map[string]string
-		fail   bool
+		encoded  string
+		wantTags map[string]string
+		wantFail bool
 	}{
 		{
-			s:      `example.org/test-1="test ¥ \"" ,un=quøted,  Abc=Def`,
-			expect: map[string]string{"example.org/test-1": "test ¥ \"", "un": "quøted", "Abc": "Def"},
+			encoded:  `example.org/test-1="test ¥ \"" ,un=quøted,  Abc=Def`,
+			wantTags: map[string]string{"example.org/test-1": "test ¥ \"", "un": "quøted", "Abc": "Def"},
 		}, {
-			s:      `single=key`,
-			expect: map[string]string{"single": "key"},
+			encoded:  `single=key`,
+			wantTags: map[string]string{"single": "key"},
 		},
-		{s: `invalid-char-ü=test`, fail: true},
-		{s: `missing="trailing-quote`, fail: true},
-		{s: `missing=leading-quote"`, fail: true},
-		{s: `extra=chars, a`, fail: true},
-		{s: `a, extra=chars`, fail: true},
-		{s: `a, extra=chars`, fail: true},
+		{encoded: `invalid-char-ü=test`, wantFail: true},
+		{encoded: `missing="trailing-quote`, wantFail: true},
+		{encoded: `missing=leading-quote"`, wantFail: true},
+		{encoded: `extra=chars, a`, wantFail: true},
+		{encoded: `a, extra=chars`, wantFail: true},
+		{encoded: `a, extra=chars`, wantFail: true},
 	}
 	for i, c := range cases {
-		t.Logf("test %d: %s", i, c.s)
-
-		res, err := DecodeTags(c.s)
-		if err != nil && !c.fail {
-			t.Fatalf("unexpected error: %s", err)
-		}
-		if c.fail && err == nil {
-			t.Fatalf("expected failure but got none, result: %v", res)
-		}
-		if !reflect.DeepEqual(res, c.expect) {
-			t.Fatalf("expected result %v, got %v", c.expect, res)
-		}
+		t.Run(fmt.Sprintf("case-%d", i), func(t *testing.T) {
+			res, err := DecodeTags(c.encoded)
+			if err != nil && !c.wantFail {
+				t.Fatalf("unwanted error: %s", err)
+			}
+			if c.wantFail && err == nil {
+				t.Fatalf("wanted failure but got none, result: %v", res)
+			}
+			if !reflect.DeepEqual(res, c.wantTags) {
+				t.Fatalf("wanted result %v, got %v", c.wantTags, res)
+			}
+		})
 	}
 }
 
 func TestEncodeTags(t *testing.T) {
-	s := EncodeTags(map[string]string{
+	got := EncodeTags(map[string]string{
 		"example.org/test-1": "test ¥ \"",
 		"un":                 "quøted",
 		"Abc":                "Def",
 	})
-	if exp := `example.org/test-1="test ¥ \"",un="quøted",Abc="Def"`; s != exp {
-		t.Fatalf("expected %q, got %q", exp, s)
+	if want := `example.org/test-1="test ¥ \"",un="quøted",Abc="Def"`; got != want {
+		t.Fatalf("got %q, want %q", got, want)
 	}
 }

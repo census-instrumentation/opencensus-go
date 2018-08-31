@@ -37,7 +37,8 @@ type Resource struct {
 }
 
 // EncodeTags encodes a tags to a string as provided via the OC_RESOURCE_TAGS environment variable.
-func EncodeTags(tags map[string]string) (s string) {
+func EncodeTags(tags map[string]string) string {
+	s := ""
 	i := 0
 	for k, v := range tags {
 		if i > 0 {
@@ -49,10 +50,12 @@ func EncodeTags(tags map[string]string) (s string) {
 	return s
 }
 
-// We accept domain names and paths as tag keys. Values may be quoted or unquoted in general.
-// If a value contains whitespaces, =, or " characters, it must always be quoted.
 var tagRegex = regexp.MustCompile(`\s*([a-zA-Z0-9-_./]+)=(?:(".*?")|([^\s="]+))\s*,`)
 
+// DecodeTags decodes serialized a tag map as used in the OC_RESOURCE_TAGS variable.
+// A list of tags of the form `<key1>=<value1>,<key2>=<value2>,...` is accepted.
+// Domain names and paths are accepted as tag keys. Values may be quoted or unquoted in general.
+// If a value contains whitespaces, =, or " characters, it must always be quoted.
 func DecodeTags(s string) (map[string]string, error) {
 	m := map[string]string{}
 	// Ensure a trailing comma, which allows us to keep the regex simpler
@@ -79,8 +82,8 @@ func DecodeTags(s string) (map[string]string, error) {
 	return m, nil
 }
 
-// FromEnvVars loads resource information from the OC_TYPE and OC_RESOURCE_TAGS environment variables.
-func FromEnvVars(context.Context) (*Resource, error) {
+// FromEnv loads resource information from the OC_TYPE and OC_RESOURCE_TAGS environment variables.
+func FromEnv(context.Context) (*Resource, error) {
 	res := &Resource{
 		Type: strings.TrimSpace(os.Getenv(envVarType)),
 	}
