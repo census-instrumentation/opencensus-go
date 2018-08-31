@@ -108,6 +108,7 @@ func TestSampling(t *testing.T) {
 				TraceID:      tid,
 				SpanID:       sid,
 				TraceOptions: test.parentTraceOptions,
+				Tracestate:   &Tracestate{},
 			}
 			ctx, _ = StartSpanWithRemoteParent(context.Background(), "foo", sc, WithSampler(test.sampler))
 		} else if test.localParent {
@@ -189,6 +190,7 @@ func TestStartSpanWithRemoteParent(t *testing.T) {
 		TraceID:      tid,
 		SpanID:       sid,
 		TraceOptions: 0x0,
+		Tracestate:   &Tracestate{},
 	}
 	ctx, _ := StartSpanWithRemoteParent(context.Background(), "startSpanWithRemoteParent", sc)
 	if err := checkChild(sc, FromContext(ctx)); err != nil {
@@ -204,6 +206,7 @@ func TestStartSpanWithRemoteParent(t *testing.T) {
 		TraceID:      tid,
 		SpanID:       sid,
 		TraceOptions: 0x1,
+		Tracestate:   &Tracestate{},
 	}
 	ctx, _ = StartSpanWithRemoteParent(context.Background(), "startSpanWithRemoteParent", sc)
 	if err := checkChild(sc, FromContext(ctx)); err != nil {
@@ -229,6 +232,7 @@ func startSpan(o StartOptions) *Span {
 			TraceID:      tid,
 			SpanID:       sid,
 			TraceOptions: 1,
+			Tracestate:   &Tracestate{},
 		},
 		WithSampler(o.Sampler),
 		WithSpanKind(o.SpanKind),
@@ -299,6 +303,7 @@ func TestSpanKind(t *testing.T) {
 					TraceID:      tid,
 					SpanID:       SpanID{},
 					TraceOptions: 0x1,
+					Tracestate:   &Tracestate{},
 				},
 				ParentSpanID:    sid,
 				Name:            "span0",
@@ -316,6 +321,7 @@ func TestSpanKind(t *testing.T) {
 					TraceID:      tid,
 					SpanID:       SpanID{},
 					TraceOptions: 0x1,
+					Tracestate:   &Tracestate{},
 				},
 				ParentSpanID:    sid,
 				Name:            "span0",
@@ -333,6 +339,7 @@ func TestSpanKind(t *testing.T) {
 					TraceID:      tid,
 					SpanID:       SpanID{},
 					TraceOptions: 0x1,
+					Tracestate:   &Tracestate{},
 				},
 				ParentSpanID:    sid,
 				Name:            "span0",
@@ -367,6 +374,7 @@ func TestSetSpanAttributes(t *testing.T) {
 			TraceID:      tid,
 			SpanID:       SpanID{},
 			TraceOptions: 0x1,
+			Tracestate:   &Tracestate{},
 		},
 		ParentSpanID:    sid,
 		Name:            "span0",
@@ -398,6 +406,7 @@ func TestAnnotations(t *testing.T) {
 			TraceID:      tid,
 			SpanID:       SpanID{},
 			TraceOptions: 0x1,
+			Tracestate:   &Tracestate{},
 		},
 		ParentSpanID: sid,
 		Name:         "span0",
@@ -432,6 +441,7 @@ func TestMessageEvents(t *testing.T) {
 			TraceID:      tid,
 			SpanID:       SpanID{},
 			TraceOptions: 0x1,
+			Tracestate:   &Tracestate{},
 		},
 		ParentSpanID: sid,
 		Name:         "span0",
@@ -510,6 +520,7 @@ func TestSetSpanStatus(t *testing.T) {
 			TraceID:      tid,
 			SpanID:       SpanID{},
 			TraceOptions: 0x1,
+			Tracestate:   &Tracestate{},
 		},
 		ParentSpanID:    sid,
 		Name:            "span0",
@@ -539,6 +550,7 @@ func TestAddLink(t *testing.T) {
 			TraceID:      tid,
 			SpanID:       SpanID{},
 			TraceOptions: 0x1,
+			Tracestate:   &Tracestate{},
 		},
 		ParentSpanID: sid,
 		Name:         "span0",

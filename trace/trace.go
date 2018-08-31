@@ -88,6 +88,7 @@ type SpanContext struct {
 	TraceID      TraceID
 	SpanID       SpanID
 	TraceOptions TraceOptions
+	Tracestate   *Tracestate
 }
 
 type contextKey struct{}
@@ -192,6 +193,11 @@ func startSpanInternal(name string, hasParent bool, parent SpanContext, remotePa
 
 	if !hasParent {
 		span.spanContext.TraceID = cfg.IDGenerator.NewTraceID()
+	}
+	if hasParent && parent.Tracestate != nil {
+		span.spanContext.Tracestate = parent.Tracestate.Fork()
+	} else {
+		span.spanContext.Tracestate = &Tracestate{}
 	}
 	span.spanContext.SpanID = cfg.IDGenerator.NewSpanID()
 	sampler := cfg.DefaultSampler
