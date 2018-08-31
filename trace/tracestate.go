@@ -63,11 +63,6 @@ func (ts *Tracestate) Fork() *Tracestate {
 	return &retval
 }
 
-/*
-TODO: we're making Tracestate immutable for now, ramonza and reyang to figure
-      out how to change it.
-      https://github.com/census-instrumentation/opencensus-go/pull/887
-
 func (ts *Tracestate) Get(key string) string {
 	for _, entry := range ts.entries {
 		if entry.key == key {
@@ -76,6 +71,11 @@ func (ts *Tracestate) Get(key string) string {
 	}
 	return ""
 }
+
+/*
+TODO: we're making Tracestate immutable for now, ramonza and reyang to figure
+      out how to change it.
+      https://github.com/census-instrumentation/opencensus-go/pull/887
 
 func (ts *Tracestate) Remove(key string) string {
 	return ts.Set(key, "")
