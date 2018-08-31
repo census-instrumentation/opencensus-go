@@ -22,8 +22,8 @@ import (
 const (
 	keyWithoutVendorFormat = `[a-z][_0-9a-z\-\*\/]{0,255}`
 	keyWithVendorFormat    = `[a-z][_0-9a-z\-\*\/]{0,240}@[a-z][_0-9a-z\-\*\/]{0,13}`
-	keyFormat                = `(` + keyWithoutVendorFormat + `)|(` + keyWithVendorFormat + `)`
-	valueFormat              = `[\x20-\x2b\x2d-\x3c\x3e-\x7e]{0,255}[\x21-\x2b\x2d-\x3c\x3e-\x7e]`
+	keyFormat              = `(` + keyWithoutVendorFormat + `)|(` + keyWithVendorFormat + `)`
+	valueFormat            = `[\x20-\x2b\x2d-\x3c\x3e-\x7e]{0,255}[\x21-\x2b\x2d-\x3c\x3e-\x7e]`
 )
 
 var keyValidationRegExp = regexp.MustCompile(`^(` + keyFormat + `)$`)
