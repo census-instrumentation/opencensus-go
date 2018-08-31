@@ -295,14 +295,6 @@ func (s *Span) SpanContext() SpanContext {
 	return s.spanContext
 }
 
-// Tracestate returns the Tracestate of the span context.
-func (s *Span) Tracestate() *Tracestate {
-	if s == nil {
-		return nil
-	}
-	return s.spanContext.Tracestate
-}
-
 // SetName sets the name of the span, if it is recording events.
 func (s *Span) SetName(name string) {
 	if !s.IsRecordingEvents() {
