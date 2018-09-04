@@ -58,20 +58,24 @@ func parseTemplate(name string) *template.Template {
 }
 
 func countFormatter(num int) string {
-	if num == 0 {
+	if num <= 0 {
 		return " "
 	}
 	var floatVal float64
 	var suffix string
-	if num >= 1e12 {
-		floatVal = float64(num) / 1e9
-		suffix = " T "
-	} else if num >= 1e9 {
-		floatVal = float64(num) / 1e9
-		suffix = " G "
-	} else if num >= 1e6 {
-		floatVal = float64(num) / 1e6
+
+	num64 := int64(num)
+
+	switch {
+	case num64 <= 1e6:
+		floatVal = float64(num64) / 1e3
 		suffix = " M "
+	case num64 <= 1e9:
+		floatVal = float64(num64) / 1e6
+		suffix = " G "
+	default:
+		floatVal = float64(num64) / 1e9
+		suffix = " T "
 	}
 
 	if floatVal != 0 {
