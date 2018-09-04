@@ -17,17 +17,17 @@ package trace
 import (
 	"context"
 	"fmt"
+	"go.opencensus.io/trace/tracestate"
 	"reflect"
 	"testing"
 	"time"
-	"go.opencensus.io/trace/tracestate"
 )
 
 var (
 	tid               = TraceID{1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 4, 8, 16, 32, 64, 128}
 	sid               = SpanID{1, 2, 4, 8, 16, 32, 64, 128}
 	defaultTracestate = tracestate.Tracestate{}
-	tracestate1, _     = tracestate.NewTracestateFronParent(nil, "foo", "bar")
+	tracestate1, _    = tracestate.NewFromParent(nil, "foo", "bar")
 )
 
 func init() {

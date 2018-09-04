@@ -130,11 +130,11 @@ func containsDuplicateKey(entries []*TracestateEntry) (string, bool) {
 	return "", false
 }
 
-// NewTracestateFromEntryArray creates a Tracestate object from an array of key-value pair.
+// NewFromEntryArray creates a Tracestate object from an array of key-value pair.
 // nil is returned with with an error if
 //  1. If the len of the entries  > maxKeyValuePairs
 //  2. If the entries contain duplicate keys
-func NewTracestateFromEntryArray(entries []*TracestateEntry) (*Tracestate, error) {
+func NewFromEntryArray(entries []*TracestateEntry) (*Tracestate, error) {
 
 	if entries == nil {
 		return nil, errors.New("Invalid parameter")
@@ -155,13 +155,13 @@ func NewTracestateFromEntryArray(entries []*TracestateEntry) (*Tracestate, error
 	return &tracestate, nil
 }
 
-// NewTracestateFronParent creates a Tracestate object and adds a key-value pair to the list.
+// NewFromParent creates a Tracestate object and adds a key-value pair to the list.
 // If a non-empty parent is passed then key/value pair from the parent is copied
 // to a newly created Tracestate object.
 // If the key already exists in the parent then its value is replaced with the
 // value passed to this function. The key is also moved to the front of
 // the list. See add func.
-func NewTracestateFronParent(parent *Tracestate, key, value string) (*Tracestate, error) {
+func NewFromParent(parent *Tracestate, key, value string) (*Tracestate, error) {
 
 	tracestate := Tracestate{}
 
