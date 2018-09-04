@@ -66,16 +66,15 @@ func countFormatter(num int) string {
 
 	num64 := int64(num)
 
-	switch {
-	case num64 <= 1e6:
-		floatVal = float64(num64) / 1e3
-		suffix = " M "
-	case num64 <= 1e9:
-		floatVal = float64(num64) / 1e6
-		suffix = " G "
-	default:
-		floatVal = float64(num64) / 1e9
+	if num64 >= 1e12 {
+		floatVal = float64(num64) / 1e12
 		suffix = " T "
+	} else if num64 >= 1e9 {
+		floatVal = float64(num64) / 1e9
+		suffix = " G "
+	} else if num64 >= 1e6 {
+		floatVal = float64(num64) / 1e6
+		suffix = " M "
 	}
 
 	if floatVal != 0 {
