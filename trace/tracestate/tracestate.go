@@ -132,7 +132,7 @@ func containsDuplicateKey(entries []*TracestateEntry) (string, bool) {
 
 // NewFromEntryArray creates a Tracestate object from an array of key-value pair.
 // nil is returned with with an error if
-//  1. If the len of the entries  > maxKeyValuePairs
+//  1. If the len of the entries > maxKeyValuePairs
 //  2. If the entries contain duplicate keys
 func NewFromEntryArray(entries []*TracestateEntry) (*Tracestate, error) {
 
