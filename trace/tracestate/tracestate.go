@@ -15,7 +15,6 @@
 package tracestate
 
 import (
-	"errors"
 	"fmt"
 	"regexp"
 )
@@ -36,145 +35,132 @@ const (
 var keyValidationRegExp = regexp.MustCompile(`^(` + keyFormat + `)$`)
 var valueValidationRegExp = regexp.MustCompile(`^(` + valueFormat + `)$`)
 
-// Tracestate represent tracing-system specific context in a list of key-value pairs. Tracestate allows different
+// Tracestate represents tracing-system specific context in a list of key-value pairs. Tracestate allows different
 // vendors propagate additional information and inter-operate with their legacy Id formats.
 type Tracestate struct {
-	tracestateEntries []*TracestateEntry
+	entries []Entry
 }
 
-// TracestateEntry represent one key-value pair in a list of key-value pair of Tracestate.
+// Entry represents one key-value pair in a list of key-value pair of Tracestate.
 // Key is an opaque string up to 256 characters printable. It MUST begin with a lowercase letter,
 // and can only contain lowercase letters a-z, digits 0-9, underscores _, dashes -, asterisks *, and
 // forward slashes /.
 //
 // Value is an opaque string up to 256 characters printable ASCII RFC0020 characters (i.e., the
 // range 0x20 to 0x7E) except comma , and =.
-type TracestateEntry struct {
-	key   string
-	value string
-}
-
-// Key returns the key of TracestateEntry
-func (te *TracestateEntry) Key() string {
-	return te.key
-}
-
-// Value returns the value of TracestateEntry
-func (te *TracestateEntry) Value() string {
-	return te.value
+type Entry struct {
+	Key   string
+	Value string
 }
 
 // Get retrieves value for a given key from Tracestate ts.
-// If the key is not found then false is returned with the value "" is returned.
+// If the key is not found then false is returned with the value "".
 // If the key is found then true is returned with its value.
 func (ts *Tracestate) Get(key string) (string, bool) {
-	if len(ts.tracestateEntries) == 0 {
+	if len(ts.entries) == 0 {
 		return "", false
 	}
-	for _, entry := range ts.tracestateEntries {
-		if entry.key == key {
-			return entry.value, true
+	for _, entry := range ts.entries {
+		if entry.Key == key {
+			return entry.Value, true
 		}
 	}
 	return "", false
 }
 
-// TraceEntries returns a slice of TracestateEntry.
-func (ts *Tracestate) TraceEntries() []*TracestateEntry {
-	return ts.tracestateEntries
+// Entries returns a slice of Entry.
+func (ts *Tracestate) Entries() []Entry {
+	return ts.entries
 }
 
-func (ts *Tracestate) remove(key string) {
-	for index, entry := range ts.tracestateEntries {
-		if entry.key == key {
-			ts.tracestateEntries = append(ts.tracestateEntries[:index], ts.tracestateEntries[index+1:]...)
-			break
+func (ts *Tracestate) remove(key string) *Entry {
+	for index, entry := range ts.entries {
+		if entry.Key == key {
+			ts.entries = append(ts.entries[:index], ts.entries[index+1:]...)
+			return &entry
 		}
 	}
-}
-
-func (ts *Tracestate) add(entry *TracestateEntry) error {
-	ts.remove(entry.Key())
-	if len(ts.tracestateEntries) >= maxKeyValuePairs {
-		return fmt.Errorf("Set failed: reached maximum key/value pairs limit of %d", maxKeyValuePairs)
-	}
-	ts.tracestateEntries = append([]*TracestateEntry{entry}, ts.tracestateEntries...)
 	return nil
 }
 
-func isValid(key, value string) bool {
-	return keyValidationRegExp.MatchString(key) &&
-		valueValidationRegExp.MatchString(value)
-}
-
-// NewTracestateEntry creates a TracestateEntry object with given key and value.
-// It returns error if either key or value is invalid.
-func NewTracestateEntry(key, value string) (*TracestateEntry, error) {
-	if isValid(key, value) {
-		return &TracestateEntry{
-			key:   key,
-			value: value,
-		}, nil
+func (ts *Tracestate) add(entry Entry) error {
+	ts.remove(entry.Key)
+	if len(ts.entries) >= maxKeyValuePairs {
+		return fmt.Errorf("reached maximum key/value pairs limit of %d", maxKeyValuePairs)
 	}
-	return nil, errors.New("invalid parameters")
+	ts.entries = append([]Entry{entry}, ts.entries...)
+	return nil
 }
 
-func containsDuplicateKey(entries []*TracestateEntry) (string, bool) {
+func isValid(entry Entry) bool {
+	return keyValidationRegExp.MatchString(entry.Key) &&
+		valueValidationRegExp.MatchString(entry.Value)
+}
+
+func containsDuplicateKey(entries []Entry) (string, bool) {
 	keyMap := make(map[string]int)
 	for _, entry := range entries {
-		if _, ok := keyMap[entry.Key()]; ok {
-			return entry.Key(), true
+		if _, ok := keyMap[entry.Key]; ok {
+			return entry.Key, true
 		}
-		keyMap[entry.Key()] = 1
+		keyMap[entry.Key] = 1
 	}
 	return "", false
 }
 
-// NewFromEntryArray creates a Tracestate object from an array of key-value pair.
-// nil is returned with with an error if
-//  1. If the len of the entries > maxKeyValuePairs
-//  2. If the entries contain duplicate keys
-func NewFromEntryArray(entries []*TracestateEntry) (*Tracestate, error) {
-
-	if entries == nil {
-		return nil, errors.New("Invalid parameter")
+func areEntriesValid(entries []Entry) (*Entry, bool) {
+	for _, entry := range entries {
+		if !isValid(entry) {
+			return &entry, false
+		}
 	}
+	return nil, true
+}
+
+// NewFromEntries creates a Tracestate object from an array of key-value pair.
+// nil is returned with an error if
+//  1. the len of the entries > maxKeyValuePairs
+//  2. the entries contain duplicate keys
+//  3. one or more entries are invalid.
+func NewFromEntries(entries []Entry) (*Tracestate, error) {
 	if len(entries) == 0 || len(entries) > maxKeyValuePairs {
-		return nil, fmt.Errorf("Invalid number of tracestateEntry (%d)", len(entries))
+		return nil, fmt.Errorf("number of entries(%d) is larger than max (%d)", len(entries), maxKeyValuePairs)
 	}
 	if key, duplicate := containsDuplicateKey(entries); duplicate {
-		return nil, fmt.Errorf("Contains duplicate keys (%s)", key)
+		return nil, fmt.Errorf("contains duplicate keys (%s)", key)
 	}
 
+	if entry, ok := areEntriesValid(entries); !ok {
+		return nil, fmt.Errorf("key-value pair {%s, %s} is invalid", entry.Key, entry.Value)
+	}
 	tracestate := Tracestate{}
 
 	if entries != nil {
-		tracestate.tracestateEntries = append([]*TracestateEntry{}, entries...)
+		tracestate.entries = append([]Entry{}, entries...)
 	}
 
 	return &tracestate, nil
 }
 
-// NewFromParent creates a Tracestate object and adds a key-value pair to the list.
-// If a non-empty parent is passed then key/value pair from the parent is copied
-// to a newly created Tracestate object.
-// If the key already exists in the parent then its value is replaced with the
-// value passed to this function. The key is also moved to the front of
-// the list. See add func.
-func NewFromParent(parent *Tracestate, key, value string) (*Tracestate, error) {
+// NewFromParent creates a Tracestate object from a parent and an entry (key-value pair).
+// Entries from the parent are copied if present and the entry passed to this function
+// is inserted in front of the list. If there exists any entry with the same key it is
+// removed. See add func.
+// An error is returned with nil Tracestate if
+//  1. the entry is invalid.
+//  2. the number of entries exceeds maxKeyValuePairs.
+func NewFromParent(parent *Tracestate, entry Entry) (*Tracestate, error) {
+	if !isValid(entry) {
+		return nil, fmt.Errorf("key-value pair {%s, %s} is invalid", entry.Key, entry.Value)
+	}
 
 	tracestate := Tracestate{}
 
-	if parent != nil && len(parent.tracestateEntries) > 0 {
-		tracestate.tracestateEntries = append([]*TracestateEntry{}, parent.tracestateEntries...)
+	if parent != nil && len(parent.entries) > 0 {
+		tracestate.entries = append([]Entry{}, parent.entries...)
 	}
 
-	entry, err := NewTracestateEntry(key, value)
-	if err != nil {
-		return nil, err
-	}
-
-	err = tracestate.add(entry)
+	err := tracestate.add(entry)
 	if err != nil {
 		return nil, err
 	}

@@ -17,17 +17,18 @@ package trace
 import (
 	"context"
 	"fmt"
-	"go.opencensus.io/trace/tracestate"
 	"reflect"
 	"testing"
 	"time"
+
+	"go.opencensus.io/trace/tracestate"
 )
 
 var (
 	tid               = TraceID{1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 4, 8, 16, 32, 64, 128}
 	sid               = SpanID{1, 2, 4, 8, 16, 32, 64, 128}
 	defaultTracestate = tracestate.Tracestate{}
-	tracestate1, _    = tracestate.NewFromParent(nil, "foo", "bar")
+	testTracestate, _ = tracestate.NewFromParent(nil, tracestate.Entry{"foo", "bar"})
 )
 
 func init() {
@@ -74,7 +75,7 @@ func checkChild(p SpanContext, c *Span) error {
 		return fmt.Errorf("got child trace options %d, want %d", got, want)
 	}
 	if got, want := c.spanContext.Tracestate, p.Tracestate; got != want {
-		return fmt.Errorf("got child tracestate1 %v, want %v", got, want)
+		return fmt.Errorf("got child tracestate %v, want %v", got, want)
 	}
 	return nil
 }
@@ -210,7 +211,7 @@ func TestStartSpanWithRemoteParent(t *testing.T) {
 		TraceID:      tid,
 		SpanID:       sid,
 		TraceOptions: 0x1,
-		Tracestate:   tracestate1,
+		Tracestate:   testTracestate,
 	}
 	ctx, _ = StartSpanWithRemoteParent(context.Background(), "startSpanWithRemoteParent", sc)
 	if err := checkChild(sc, FromContext(ctx)); err != nil {
