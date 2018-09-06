@@ -42,30 +42,15 @@ type Tracestate struct {
 }
 
 // Entry represents one key-value pair in a list of key-value pair of Tracestate.
-// Key is an opaque string up to 256 characters printable. It MUST begin with a lowercase letter,
-// and can only contain lowercase letters a-z, digits 0-9, underscores _, dashes -, asterisks *, and
-// forward slashes /.
-//
-// Value is an opaque string up to 256 characters printable ASCII RFC0020 characters (i.e., the
-// range 0x20 to 0x7E) except comma , and =.
 type Entry struct {
-	Key   string
-	Value string
-}
+	// Key is an opaque string up to 256 characters printable. It MUST begin with a lowercase letter,
+	// and can only contain lowercase letters a-z, digits 0-9, underscores _, dashes -, asterisks *, and
+	// forward slashes /.
+	Key string
 
-// Get retrieves value for a given key from Tracestate ts.
-// If the key is not found then false is returned with the value "".
-// If the key is found then true is returned with its value.
-func (ts *Tracestate) Get(key string) (string, bool) {
-	if len(ts.entries) == 0 {
-		return "", false
-	}
-	for _, entry := range ts.entries {
-		if entry.Key == key {
-			return entry.Value, true
-		}
-	}
-	return "", false
+	// Value is an opaque string up to 256 characters printable ASCII RFC0020 characters (i.e., the
+	// range 0x20 to 0x7E) except comma , and =.
+	Value string
 }
 
 // Entries returns a slice of Entry.
@@ -83,12 +68,15 @@ func (ts *Tracestate) remove(key string) *Entry {
 	return nil
 }
 
-func (ts *Tracestate) add(entry Entry) error {
-	ts.remove(entry.Key)
-	if len(ts.entries) >= maxKeyValuePairs {
-		return fmt.Errorf("reached maximum key/value pairs limit of %d", maxKeyValuePairs)
+func (ts *Tracestate) add(entries []Entry) error {
+	for _, entry := range entries {
+		ts.remove(entry.Key)
 	}
-	ts.entries = append([]Entry{entry}, ts.entries...)
+	if len(ts.entries)+len(entries) > maxKeyValuePairs {
+		return fmt.Errorf("adding %d key-value pairs to current %d pairs exceeds the limit of %d",
+			len(entries), len(ts.entries), maxKeyValuePairs)
+	}
+	ts.entries = append(entries, ts.entries...)
 	return nil
 }
 
@@ -117,41 +105,27 @@ func areEntriesValid(entries []Entry) (*Entry, bool) {
 	return nil, true
 }
 
-// NewFromEntries creates a Tracestate object from an array of key-value pair.
-// nil is returned with an error if
-//  1. the len of the entries > maxKeyValuePairs
-//  2. the entries contain duplicate keys
-//  3. one or more entries are invalid.
-func NewFromEntries(entries []Entry) (*Tracestate, error) {
-	if len(entries) == 0 || len(entries) > maxKeyValuePairs {
-		return nil, fmt.Errorf("number of entries(%d) is larger than max (%d)", len(entries), maxKeyValuePairs)
+// New creates a Tracestate object from a parent and/or entries (key-value pair).
+// Entries from the parent are copied if present. The entries passed to this function
+// are inserted in front of those copied from the parent. If an entry copied from the
+// parent contains the same key as one of the entry in entries then the entry copied
+// from the parent is removed. See add func.
+//
+// An error is returned with nil Tracestate if
+//  1. one or more entry in entries is invalid.
+//  2. two or more entries in the input entries have the same key.
+//  3. the number of entries combined from the parent and the input entries exceeds maxKeyValuePairs.
+//     (duplicate entry is counted only once).
+func New(parent *Tracestate, entries []Entry) (*Tracestate, error) {
+	if parent == nil && len(entries) == 0 {
+		return nil, nil
 	}
-	if key, duplicate := containsDuplicateKey(entries); duplicate {
-		return nil, fmt.Errorf("contains duplicate keys (%s)", key)
-	}
-
 	if entry, ok := areEntriesValid(entries); !ok {
 		return nil, fmt.Errorf("key-value pair {%s, %s} is invalid", entry.Key, entry.Value)
 	}
-	tracestate := Tracestate{}
 
-	if entries != nil {
-		tracestate.entries = append([]Entry{}, entries...)
-	}
-
-	return &tracestate, nil
-}
-
-// NewFromParent creates a Tracestate object from a parent and an entry (key-value pair).
-// Entries from the parent are copied if present and the entry passed to this function
-// is inserted in front of the list. If there exists any entry with the same key it is
-// removed. See add func.
-// An error is returned with nil Tracestate if
-//  1. the entry is invalid.
-//  2. the number of entries exceeds maxKeyValuePairs.
-func NewFromParent(parent *Tracestate, entry Entry) (*Tracestate, error) {
-	if !isValid(entry) {
-		return nil, fmt.Errorf("key-value pair {%s, %s} is invalid", entry.Key, entry.Value)
+	if key, duplicate := containsDuplicateKey(entries); duplicate {
+		return nil, fmt.Errorf("contains duplicate keys (%s)", key)
 	}
 
 	tracestate := Tracestate{}
@@ -160,7 +134,7 @@ func NewFromParent(parent *Tracestate, entry Entry) (*Tracestate, error) {
 		tracestate.entries = append([]Entry{}, parent.entries...)
 	}
 
-	err := tracestate.add(entry)
+	err := tracestate.add(entries)
 	if err != nil {
 		return nil, err
 	}

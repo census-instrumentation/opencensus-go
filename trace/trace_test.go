@@ -28,7 +28,7 @@ var (
 	tid               = TraceID{1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 4, 8, 16, 32, 64, 128}
 	sid               = SpanID{1, 2, 4, 8, 16, 32, 64, 128}
 	defaultTracestate = tracestate.Tracestate{}
-	testTracestate, _ = tracestate.NewFromParent(nil, tracestate.Entry{"foo", "bar"})
+	testTracestate, _ = tracestate.New(nil, []tracestate.Entry{tracestate.Entry{"foo", "bar"}})
 )
 
 func init() {
