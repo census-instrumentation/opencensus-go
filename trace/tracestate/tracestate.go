@@ -85,7 +85,7 @@ func isValid(entry Entry) bool {
 		valueValidationRegExp.MatchString(entry.Value)
 }
 
-func containsDuplicateKey(entries []Entry) (string, bool) {
+func containsDuplicateKey(entries ...Entry) (string, bool) {
 	keyMap := make(map[string]int)
 	for _, entry := range entries {
 		if _, ok := keyMap[entry.Key]; ok {
@@ -96,7 +96,7 @@ func containsDuplicateKey(entries []Entry) (string, bool) {
 	return "", false
 }
 
-func areEntriesValid(entries []Entry) (*Entry, bool) {
+func areEntriesValid(entries ...Entry) (*Entry, bool) {
 	for _, entry := range entries {
 		if !isValid(entry) {
 			return &entry, false
@@ -116,15 +116,15 @@ func areEntriesValid(entries []Entry) (*Entry, bool) {
 //  2. two or more entries in the input entries have the same key.
 //  3. the number of entries combined from the parent and the input entries exceeds maxKeyValuePairs.
 //     (duplicate entry is counted only once).
-func New(parent *Tracestate, entries []Entry) (*Tracestate, error) {
+func New(parent *Tracestate, entries ...Entry) (*Tracestate, error) {
 	if parent == nil && len(entries) == 0 {
 		return nil, nil
 	}
-	if entry, ok := areEntriesValid(entries); !ok {
+	if entry, ok := areEntriesValid(entries...); !ok {
 		return nil, fmt.Errorf("key-value pair {%s, %s} is invalid", entry.Key, entry.Value)
 	}
 
-	if key, duplicate := containsDuplicateKey(entries); duplicate {
+	if key, duplicate := containsDuplicateKey(entries...); duplicate {
 		return nil, fmt.Errorf("contains duplicate keys (%s)", key)
 	}
 

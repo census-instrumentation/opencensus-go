@@ -80,7 +80,7 @@ func TestCreateWithNullParent(t *testing.T) {
 	testname := "TestCreateWithNullParent"
 
 	entry := Entry{key1, value1}
-	tracestate, err := New(nil, []Entry{entry})
+	tracestate, err := New(nil, entry)
 	checkError(t, tracestate, err, testname, "create failed from null parent")
 	checkKeyValue(t, tracestate, key1, value1, testname)
 }
@@ -91,8 +91,8 @@ func TestCreateFromParentWithSingleKey(t *testing.T) {
 
 	entry1 := Entry{key1, value1}
 	entry2 := Entry{key2, value2}
-	parent, _ := New(nil, []Entry{entry1})
-	tracestate, err := New(parent, []Entry{entry2})
+	parent, _ := New(nil, entry1)
+	tracestate, err := New(parent, entry2)
 
 	checkError(t, tracestate, err, testname, "create failed from parent with single key")
 	checkKeyValue(t, tracestate, key2, value2, testname)
@@ -107,9 +107,8 @@ func TestCreateFromParentWithDoubleKeys(t *testing.T) {
 	entry1 := Entry{key1, value1}
 	entry2 := Entry{key2, value2}
 	entry3 := Entry{key3, value3}
-	entries := []Entry{entry2, entry1}
-	parent, _ := New(nil, entries)
-	tracestate, err := New(parent, []Entry{entry3})
+	parent, _ := New(nil, entry2, entry1)
+	tracestate, err := New(parent, entry3)
 
 	checkError(t, tracestate, err, testname, "create failed from parent with double keys")
 	checkKeyValue(t, tracestate, key3, value3, testname)
@@ -124,9 +123,8 @@ func TestCreateFromParentWithExistingKey(t *testing.T) {
 	entry1 := Entry{key1, value1}
 	entry2 := Entry{key2, value2}
 	entry3 := Entry{key3, value3}
-	entries := []Entry{entry1, entry2}
-	parent, _ := New(nil, entries)
-	tracestate, err := New(parent, []Entry{entry3})
+	parent, _ := New(nil, entry2, entry1)
+	tracestate, err := New(parent, entry3)
 
 	checkError(t, tracestate, err, testname, "create failed with an existing key")
 	checkKeyValue(t, tracestate, key3, value3, testname)
@@ -141,8 +139,8 @@ func TestImplicitImmutableTracestate(t *testing.T) {
 
 	entry1 := Entry{key1, value1}
 	entry2 := Entry{key2, value2}
-	parent, _ := New(nil, []Entry{entry1})
-	tracestate, err := New(parent, []Entry{entry2})
+	parent, _ := New(nil, entry1)
+	tracestate, err := New(parent, entry2)
 
 	checkError(t, tracestate, err, testname, "create failed")
 	checkKeyValue(t, tracestate, key2, value2, testname)
@@ -173,7 +171,7 @@ func TestKeyWithValidChar(t *testing.T) {
 	arrayRune = append(arrayRune, '/')
 	key := string(arrayRune)
 	entry := Entry{key, "world"}
-	tracestate, err := New(nil, []Entry{entry})
+	tracestate, err := New(nil, entry)
 
 	checkError(t, tracestate, err, testname, "create failed when the key contains all valid characters")
 }
@@ -185,7 +183,7 @@ func TestKeyWithInvalidChar(t *testing.T) {
 
 	for _, key := range keys {
 		entry := Entry{key, "world"}
-		tracestate, err := New(nil, []Entry{entry})
+		tracestate, err := New(nil, entry)
 		wantError(t, tracestate, err, testname, fmt.Sprintf(
 			"create did not err with invalid key=%q", key))
 	}
@@ -195,7 +193,7 @@ func TestNilKey(t *testing.T) {
 	testname := "TestNilKey"
 
 	entry := Entry{"", "world"}
-	tracestate, err := New(nil, []Entry{entry})
+	tracestate, err := New(nil, entry)
 	wantError(t, tracestate, err, testname, "create did not err when the key is nil (\"\")")
 }
 
@@ -206,7 +204,7 @@ func TestValueWithInvalidChar(t *testing.T) {
 
 	for _, value := range keys {
 		entry := Entry{"hello", value}
-		tracestate, err := New(nil, []Entry{entry})
+		tracestate, err := New(nil, entry)
 		wantError(t, tracestate, err, testname,
 			fmt.Sprintf("create did not err when the value is invalid (%q)", value))
 	}
@@ -215,8 +213,7 @@ func TestValueWithInvalidChar(t *testing.T) {
 func TestNilValue(t *testing.T) {
 	testname := "TestNilValue"
 
-	entry := Entry{"hello", ""}
-	tracestate, err := New(nil, []Entry{entry})
+	tracestate, err := New(nil, Entry{"hello", ""})
 	wantError(t, tracestate, err, testname, "create did not err when the value is nil (\"\")")
 }
 
@@ -228,8 +225,7 @@ func TestInvalidKeyLen(t *testing.T) {
 		arrayRune = append(arrayRune, 'a')
 	}
 	key := string(arrayRune)
-	entry := Entry{key, "world"}
-	tracestate, err := New(nil, []Entry{entry})
+	tracestate, err := New(nil, Entry{key, "world"})
 
 	wantError(t, tracestate, err, testname,
 		fmt.Sprintf("create did not err when the length (%d) of the key is larger than max (%d)",
@@ -244,8 +240,7 @@ func TestInvalidValueLen(t *testing.T) {
 		arrayRune = append(arrayRune, 'a')
 	}
 	value := string(arrayRune)
-	entry := Entry{"hello", value}
-	tracestate, err := New(nil, []Entry{entry})
+	tracestate, err := New(nil, Entry{"hello", value})
 
 	wantError(t, tracestate, err, testname,
 		fmt.Sprintf("create did not err when the length (%d) of the value is larger than max (%d)",
@@ -261,7 +256,7 @@ func TestCreateFromArrayWithOverLimitKVPairs(t *testing.T) {
 		entry := Entry{key, "world"}
 		entries = append(entries, entry)
 	}
-	tracestate, err := New(nil, entries)
+	tracestate, err := New(nil, entries...)
 	wantError(t, tracestate, err, testname,
 		fmt.Sprintf("create did not err when the number (%d) of key-value pairs is larger than max (%d)",
 			len(entries), maxKeyValuePairs))
@@ -270,18 +265,9 @@ func TestCreateFromArrayWithOverLimitKVPairs(t *testing.T) {
 func TestCreateFromEmptyArray(t *testing.T) {
 	testname := "TestCreateFromEmptyArray"
 
-	entries := []Entry{}
-	tracestate, err := New(nil, entries)
+	tracestate, err := New(nil, nil...)
 	checkError(t, tracestate, err, testname,
 		"failed to create nil tracestate")
-}
-
-func TestCreateFromNilArray(t *testing.T) {
-	testname := "TestCreateFromNilArray"
-
-	tracestate, err := New(nil, nil)
-	checkError(t, tracestate, err, testname,
-		"failed to create nil tracesate")
 }
 
 func TestCreateFromParentWithOverLimitKVPairs(t *testing.T) {
@@ -293,14 +279,13 @@ func TestCreateFromParentWithOverLimitKVPairs(t *testing.T) {
 		entry := Entry{key, "world"}
 		entries = append(entries, entry)
 	}
-	parent, err := New(nil, entries)
+	parent, err := New(nil, entries...)
 
 	checkError(t, parent, err, testname, fmt.Sprintf("create failed to add %d key-value pair", maxKeyValuePairs))
 
-	// Add one more to go over limit
+	// Add one more to go over the limit
 	key := fmt.Sprintf("a%d", maxKeyValuePairs)
-	entry := Entry{key, "world"}
-	tracestate, err := New(parent, []Entry{entry})
+	tracestate, err := New(parent, Entry{key, "world"})
 	wantError(t, tracestate, err, testname,
 		fmt.Sprintf("create did not err when attempted to exceed the key-value pair limit of %d", maxKeyValuePairs))
 }
@@ -312,8 +297,7 @@ func TestCreateFromArrayWithDuplicateKeys(t *testing.T) {
 	entry1 := Entry{key1, value1}
 	entry2 := Entry{key2, value2}
 	entry3 := Entry{key3, value3}
-	entries := []Entry{entry1, entry2, entry3}
-	tracestate, err := New(nil, entries)
+	tracestate, err := New(nil, entry1, entry2, entry3)
 
 	wantError(t, tracestate, err, testname,
 		"create did not err when entries contained duplicate keys")
