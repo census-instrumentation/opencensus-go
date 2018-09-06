@@ -34,8 +34,7 @@ func checkBack(t *testing.T, tracestate *Tracestate, wantKey, testname string) {
 }
 
 func checkSize(t *testing.T, tracestate *Tracestate, wantSize int, testname string) {
-	gotSize := len(tracestate.entries)
-	if gotSize != wantSize {
+	if gotSize := len(tracestate.entries); gotSize != wantSize {
 		t.Errorf("test:%s: size of the list: got %q want %q", testname, gotSize, wantSize)
 	}
 }

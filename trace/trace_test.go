@@ -27,7 +27,7 @@ import (
 var (
 	tid               = TraceID{1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 4, 8, 16, 32, 64, 128}
 	sid               = SpanID{1, 2, 4, 8, 16, 32, 64, 128}
-	testTracestate, _ = tracestate.New(nil, tracestate.Entry{"foo", "bar"})
+	testTracestate, _ = tracestate.New(nil, tracestate.Entry{Key: "foo", Value: "bar"})
 )
 
 func init() {
