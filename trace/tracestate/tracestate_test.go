@@ -301,3 +301,13 @@ func TestCreateFromArrayWithDuplicateKeys(t *testing.T) {
 	wantError(t, tracestate, err, testname,
 		"create did not err when entries contained duplicate keys")
 }
+
+func TestEntriesWithNil(t *testing.T) {
+	ts, err := New(nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, want := len(ts.Entries()), 0; got != want {
+		t.Errorf("zero value should have no entries, got %v; want %v", got, want)
+	}
+}

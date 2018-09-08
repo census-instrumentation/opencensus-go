@@ -55,6 +55,9 @@ type Entry struct {
 
 // Entries returns a slice of Entry.
 func (ts *Tracestate) Entries() []Entry {
+	if ts == nil {
+		return nil
+	}
 	return ts.entries
 }
 
