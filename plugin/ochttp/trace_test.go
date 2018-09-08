@@ -520,16 +520,16 @@ func TestStatusUnitTest(t *testing.T) {
 		in   int
 		want trace.Status
 	}{
-		{200, trace.Status{Code: trace.StatusCodeOK, Message: `"OK"`}},
-		{204, trace.Status{Code: trace.StatusCodeOK, Message: `"OK"`}},
-		{100, trace.Status{Code: trace.StatusCodeUnknown, Message: `"UNKNOWN"`}},
-		{500, trace.Status{Code: trace.StatusCodeUnknown, Message: `"UNKNOWN"`}},
-		{404, trace.Status{Code: trace.StatusCodeNotFound, Message: `"NOT_FOUND"`}},
-		{600, trace.Status{Code: trace.StatusCodeUnknown, Message: `"UNKNOWN"`}},
-		{401, trace.Status{Code: trace.StatusCodeUnauthenticated, Message: `"UNAUTHENTICATED"`}},
-		{403, trace.Status{Code: trace.StatusCodePermissionDenied, Message: `"PERMISSION_DENIED"`}},
-		{301, trace.Status{Code: trace.StatusCodeOK, Message: `"OK"`}},
-		{501, trace.Status{Code: trace.StatusCodeUnimplemented, Message: `"UNIMPLEMENTED"`}},
+		{200, trace.Status{Code: trace.StatusCodeOK, Message: `OK`}},
+		{204, trace.Status{Code: trace.StatusCodeOK, Message: `OK`}},
+		{100, trace.Status{Code: trace.StatusCodeUnknown, Message: `UNKNOWN`}},
+		{500, trace.Status{Code: trace.StatusCodeUnknown, Message: `UNKNOWN`}},
+		{404, trace.Status{Code: trace.StatusCodeNotFound, Message: `NOT_FOUND`}},
+		{600, trace.Status{Code: trace.StatusCodeUnknown, Message: `UNKNOWN`}},
+		{401, trace.Status{Code: trace.StatusCodeUnauthenticated, Message: `UNAUTHENTICATED`}},
+		{403, trace.Status{Code: trace.StatusCodePermissionDenied, Message: `PERMISSION_DENIED`}},
+		{301, trace.Status{Code: trace.StatusCodeOK, Message: `OK`}},
+		{501, trace.Status{Code: trace.StatusCodeUnimplemented, Message: `UNIMPLEMENTED`}},
 	}
 
 	for _, tt := range tests {
