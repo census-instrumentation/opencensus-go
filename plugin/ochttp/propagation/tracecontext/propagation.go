@@ -90,58 +90,52 @@ func (f *HTTPFormat) SpanContextFromRequest(req *http.Request) (sc trace.SpanCon
 		return trace.SpanContext{}, false
 	}
 
-	// Extract Tracestate
-	tracestate, ok := tracestateFromRequest(req)
-	if ok == false {
-		return trace.SpanContext{}, false
-	}
-	sc.Tracestate = tracestate
+	sc.Tracestate = tracestateFromRequest(req)
 	return sc, true
 }
 
-func tracestateFromRequest(req *http.Request) (*tracestate.Tracestate, bool) {
+// TODO(rghetia): return an empty Tracestate when parsing tracestate header encounters an error.
+// Revisit to return additional boolean value to indicate parsing error when following issues
+// are resolved.
+// https://github.com/w3c/distributed-tracing/issues/172
+// https://github.com/w3c/distributed-tracing/issues/175
+func tracestateFromRequest(req *http.Request) *tracestate.Tracestate {
 	h := req.Header.Get(tracestateHeader)
 	if h == "" {
-		return nil, true
+		return nil
 	}
 
 	var entries []tracestate.Entry
 	pairs := strings.Split(h, ",")
 	headerLenWithoutTrailingSpaces := len(pairs) - 1 // Number of commas
 	for _, pair := range pairs {
-		trimmedPair := strings.TrimSpace(pair)
-		headerLenWithoutTrailingSpaces += len(trimmedPair)
+		pair := strings.TrimSpace(pair)
+		headerLenWithoutTrailingSpaces += len(pair)
 		if headerLenWithoutTrailingSpaces > maxTracestateLen {
-			// Drop the entire Tracestate
-			return nil, true
+			return nil
 		}
 		kv := strings.Split(strings.TrimSpace(pair), "=")
 		if len(kv) != 2 {
-			return nil, false
+			return nil
 		}
 		entries = append(entries, tracestate.Entry{Key: kv[0], Value: kv[1]})
 	}
 	ts, err := tracestate.New(nil, entries...)
 	if err != nil {
-		return nil, false
+		return nil
 	}
 
-	return ts, true
+	return ts
 }
 
 func tracestateToRequest(sc trace.SpanContext, req *http.Request) {
-	pairs := []string{}
+	var pairs = make([]string, 0, len(sc.Tracestate.Entries()))
 	if sc.Tracestate != nil {
-		entries := sc.Tracestate.Entries()
-
-		for _, entry := range entries {
+		for _, entry := range sc.Tracestate.Entries() {
 			pairs = append(pairs, strings.Join([]string{entry.Key, entry.Value}, "="))
 		}
 		h := strings.Join(pairs, ",")
 
-		// According to the spec https://github.com/w3c/distributed-tracing/blob/master/trace_context/HTTP_HEADER_FORMAT.md
-		// tracer can decide to forward tracestate if the header len exceeds maxTracestateLen.
-		// The choice here is to not forward under such circumstances.
 		if h != "" && len(h) <= maxTracestateLen {
 			req.Header.Set(tracestateHeader, h)
 		}

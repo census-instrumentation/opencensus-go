@@ -22,6 +22,7 @@ import (
 
 	"go.opencensus.io/trace"
 	"go.opencensus.io/trace/tracestate"
+	"strings"
 )
 
 var (
@@ -29,7 +30,7 @@ var (
 	traceID         = trace.TraceID{75, 249, 47, 53, 119, 179, 77, 166, 163, 206, 146, 157, 14, 14, 71, 54}
 	spanID          = trace.SpanID{0, 240, 103, 170, 11, 169, 2, 183}
 	traceOpt        = trace.TraceOptions(1)
-	oversizeValue   = makeOversizeValueString()
+	oversizeValue   = strings.Repeat("a", maxTracestateLen/2)
 	oversizeEntry1  = tracestate.Entry{Key: "foo", Value: oversizeValue}
 	oversizeEntry2  = tracestate.Entry{Key: "hello", Value: oversizeValue}
 	entry1          = tracestate.Entry{Key: "foo", Value: "bar"}
@@ -131,14 +132,6 @@ func TestHTTPFormat_ToRequest(t *testing.T) {
 	}
 }
 
-func makeOversizeValueString() string {
-	arrayRune := []rune("")
-	for i := 0; i < maxTracestateLen/2; i++ {
-		arrayRune = append(arrayRune, 'a')
-	}
-	return string(arrayRune)
-}
-
 func TestHTTPFormatTracestate_FromRequest(t *testing.T) {
 	scWithNonDefaultTracestate := trace.SpanContext{
 		TraceID:      traceID,
@@ -165,15 +158,15 @@ func TestHTTPFormatTracestate_FromRequest(t *testing.T) {
 			name:     "tracestate invalid entries delimiter",
 			tpHeader: tpHeader,
 			tsHeader: "foo=bar;hello=world",
-			wantSc:   trace.SpanContext{},
-			wantOk:   false,
+			wantSc:   scWithDefaultTracestate,
+			wantOk:   true,
 		},
 		{
 			name:     "tracestate invalid key-value delimiter",
 			tpHeader: tpHeader,
 			tsHeader: "foo=bar,hello-world",
-			wantSc:   trace.SpanContext{},
-			wantOk:   false,
+			wantSc:   scWithDefaultTracestate,
+			wantOk:   true,
 		},
 		{
 			name:     "tracestate oversize header",
