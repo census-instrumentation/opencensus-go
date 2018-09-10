@@ -25,6 +25,7 @@ import (
 	"go.opencensus.io/trace"
 	"go.opencensus.io/trace/propagation"
 	"go.opencensus.io/trace/tracestate"
+	"regexp"
 )
 
 const (
@@ -33,7 +34,10 @@ const (
 	maxTracestateLen  = 512
 	traceparentHeader = "traceparent"
 	tracestateHeader  = "tracestate"
+	trimOWSRegexFmt   = `^[\x09\x20]*(.*[^\x20\x09])[\x09\x20]*$`
 )
+
+var trimOWSRegExp = regexp.MustCompile(trimOWSRegexFmt)
 
 var _ propagation.HTTPFormat = (*HTTPFormat)(nil)
 
@@ -109,12 +113,16 @@ func tracestateFromRequest(req *http.Request) *tracestate.Tracestate {
 	pairs := strings.Split(h, ",")
 	headerLenWithoutTrailingSpaces := len(pairs) - 1 // Number of commas
 	for _, pair := range pairs {
-		pair := strings.TrimSpace(pair)
+		matches := trimOWSRegExp.FindStringSubmatch(pair)
+		if matches == nil {
+			return nil
+		}
+		pair = matches[1]
 		headerLenWithoutTrailingSpaces += len(pair)
 		if headerLenWithoutTrailingSpaces > maxTracestateLen {
 			return nil
 		}
-		kv := strings.Split(strings.TrimSpace(pair), "=")
+		kv := strings.Split(pair, "=")
 		if len(kv) != 2 {
 			return nil
 		}

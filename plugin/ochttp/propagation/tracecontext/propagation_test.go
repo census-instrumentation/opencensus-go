@@ -34,7 +34,7 @@ var (
 	oversizeEntry1  = tracestate.Entry{Key: "foo", Value: oversizeValue}
 	oversizeEntry2  = tracestate.Entry{Key: "hello", Value: oversizeValue}
 	entry1          = tracestate.Entry{Key: "foo", Value: "bar"}
-	entry2          = tracestate.Entry{Key: "hello", Value: "world"}
+	entry2          = tracestate.Entry{Key: "hello", Value: "world   example"}
 	oversizeTs, _   = tracestate.New(nil, oversizeEntry1, oversizeEntry2)
 	defaultTs, _    = tracestate.New(nil, nil...)
 	nonDefaultTs, _ = tracestate.New(nil, entry1, entry2)
@@ -169,6 +169,20 @@ func TestHTTPFormatTracestate_FromRequest(t *testing.T) {
 			wantOk:   true,
 		},
 		{
+			name:     "tracestate invalid value character",
+			tpHeader: tpHeader,
+			tsHeader: "foo=bar,hello=world   example   \u00a0  ",
+			wantSc:   scWithDefaultTracestate,
+			wantOk:   true,
+		},
+		{
+			name:     "tracestate blank key-value",
+			tpHeader: tpHeader,
+			tsHeader: "foo=bar,    ",
+			wantSc:   scWithDefaultTracestate,
+			wantOk:   true,
+		},
+		{
 			name:     "tracestate oversize header",
 			tpHeader: tpHeader,
 			tsHeader: fmt.Sprintf("foo=%s,hello=%s", oversizeValue, oversizeValue),
@@ -178,7 +192,7 @@ func TestHTTPFormatTracestate_FromRequest(t *testing.T) {
 		{
 			name:     "tracestate valid",
 			tpHeader: tpHeader,
-			tsHeader: "foo=bar   ,   hello=world",
+			tsHeader: "foo=bar   ,   hello=world   example",
 			wantSc:   scWithNonDefaultTracestate,
 			wantOk:   true,
 		},
@@ -193,7 +207,7 @@ func TestHTTPFormatTracestate_FromRequest(t *testing.T) {
 
 			gotSc, gotOk := f.SpanContextFromRequest(req)
 			if !reflect.DeepEqual(gotSc, tt.wantSc) {
-				t.Errorf("HTTPFormat.FromRequest() gotSc = %v, want %v", gotSc, tt.wantSc)
+				t.Errorf("HTTPFormat.FromRequest() gotTs = %v, want %v", gotSc.Tracestate, tt.wantSc.Tracestate)
 			}
 			if gotOk != tt.wantOk {
 				t.Errorf("HTTPFormat.FromRequest() gotOk = %v, want %v", gotOk, tt.wantOk)
@@ -225,7 +239,7 @@ func TestHTTPFormatTracestate_ToRequest(t *testing.T) {
 				TraceOptions: traceOpt,
 				Tracestate:   nonDefaultTs,
 			},
-			wantHeader: "foo=bar,hello=world",
+			wantHeader: "foo=bar,hello=world   example",
 		},
 		{
 			name: "valid span context with oversize tracestate",
