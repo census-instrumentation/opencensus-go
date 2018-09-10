@@ -76,7 +76,7 @@ func (t testPropagator) SpanContextToRequest(sc trace.SpanContext, req *http.Req
 	buf.Write(sc.TraceID[:])
 	buf.Write(sc.SpanID[:])
 	buf.WriteByte(byte(sc.TraceOptions))
-	req.Header.Set("trace", hex.EncodeToString(buf.Bytes()))
+	req.Header.Add("trace", hex.EncodeToString(buf.Bytes()))
 }
 
 func TestTransport_RoundTrip_Race(t *testing.T) {
@@ -92,10 +92,14 @@ func TestTransport_RoundTrip_Race(t *testing.T) {
 		Base:        transport,
 	}
 	req, _ := http.NewRequest("GET", "http://foo.com", nil)
+
 	go func() {
-		fmt.Println(*req)
+		for i := 0; i < 1000; i++ {
+			req.Header.Add("trace", "another value")
+		}
 	}()
 	rt.RoundTrip(req)
+
 	_ = <-transport.ch
 }
 

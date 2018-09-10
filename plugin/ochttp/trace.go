@@ -73,7 +73,7 @@ func (t *traceTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 		// the WithContext calls above and so we just need to copy the header.
 		header := make(http.Header)
 		for k, v := range req.Header {
-			header[k] = v
+			header[k] = append([]string(nil), v...)
 		}
 		req.Header = header
 		t.format.SpanContextToRequest(span.SpanContext(), req)
