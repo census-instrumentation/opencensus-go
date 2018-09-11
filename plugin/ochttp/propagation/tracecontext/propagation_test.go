@@ -15,14 +15,12 @@
 package tracecontext
 
 import (
-	"fmt"
 	"net/http"
 	"reflect"
 	"testing"
 
 	"go.opencensus.io/trace"
 	"go.opencensus.io/trace/tracestate"
-	"strings"
 )
 
 var (
@@ -30,14 +28,7 @@ var (
 	traceID         = trace.TraceID{75, 249, 47, 53, 119, 179, 77, 166, 163, 206, 146, 157, 14, 14, 71, 54}
 	spanID          = trace.SpanID{0, 240, 103, 170, 11, 169, 2, 183}
 	traceOpt        = trace.TraceOptions(1)
-	oversizeValue   = strings.Repeat("a", maxTracestateLen/2)
-	oversizeEntry1  = tracestate.Entry{Key: "foo", Value: oversizeValue}
-	oversizeEntry2  = tracestate.Entry{Key: "hello", Value: oversizeValue}
-	entry1          = tracestate.Entry{Key: "foo", Value: "bar"}
-	entry2          = tracestate.Entry{Key: "hello", Value: "world   example"}
-	oversizeTs, _   = tracestate.New(nil, oversizeEntry1, oversizeEntry2)
-	defaultTs, _    = tracestate.New(nil, nil...)
-	nonDefaultTs, _ = tracestate.New(nil, entry1, entry2)
+	nonDefaultTs, _ = tracestate.New(nil, tracestate.Entry{Key: "foo", Value: "bar"})
 )
 
 func TestHTTPFormat_FromRequest(t *testing.T) {
@@ -132,136 +123,46 @@ func TestHTTPFormat_ToRequest(t *testing.T) {
 	}
 }
 
-func TestHTTPFormatTracestate_FromRequest(t *testing.T) {
-	scWithNonDefaultTracestate := trace.SpanContext{
+func TestHTTPFormatFromRequestWithTracestate(t *testing.T) {
+	wantSc := trace.SpanContext{
 		TraceID:      traceID,
 		SpanID:       spanID,
 		TraceOptions: traceOpt,
 		Tracestate:   nonDefaultTs,
 	}
 
-	scWithDefaultTracestate := trace.SpanContext{
-		TraceID:      traceID,
-		SpanID:       spanID,
-		TraceOptions: traceOpt,
-		Tracestate:   defaultTs,
-	}
-
-	tests := []struct {
-		name     string
-		tpHeader string
-		tsHeader string
-		wantSc   trace.SpanContext
-		wantOk   bool
-	}{
-		{
-			name:     "tracestate invalid entries delimiter",
-			tpHeader: tpHeader,
-			tsHeader: "foo=bar;hello=world",
-			wantSc:   scWithDefaultTracestate,
-			wantOk:   true,
-		},
-		{
-			name:     "tracestate invalid key-value delimiter",
-			tpHeader: tpHeader,
-			tsHeader: "foo=bar,hello-world",
-			wantSc:   scWithDefaultTracestate,
-			wantOk:   true,
-		},
-		{
-			name:     "tracestate invalid value character",
-			tpHeader: tpHeader,
-			tsHeader: "foo=bar,hello=world   example   \u00a0  ",
-			wantSc:   scWithDefaultTracestate,
-			wantOk:   true,
-		},
-		{
-			name:     "tracestate blank key-value",
-			tpHeader: tpHeader,
-			tsHeader: "foo=bar,    ",
-			wantSc:   scWithDefaultTracestate,
-			wantOk:   true,
-		},
-		{
-			name:     "tracestate oversize header",
-			tpHeader: tpHeader,
-			tsHeader: fmt.Sprintf("foo=%s,hello=%s", oversizeValue, oversizeValue),
-			wantSc:   scWithDefaultTracestate,
-			wantOk:   true,
-		},
-		{
-			name:     "tracestate valid",
-			tpHeader: tpHeader,
-			tsHeader: "foo=bar   ,   hello=world   example",
-			wantSc:   scWithNonDefaultTracestate,
-			wantOk:   true,
-		},
-	}
+	tsHeader := "foo=bar"
+	wantOk := true
 
 	f := &HTTPFormat{}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			req, _ := http.NewRequest("GET", "http://example.com", nil)
-			req.Header.Set("traceparent", tt.tpHeader)
-			req.Header.Set("tracestate", tt.tsHeader)
+	req, _ := http.NewRequest("GET", "http://example.com", nil)
+	req.Header.Set("traceparent", tpHeader)
+	req.Header.Set("tracestate", tsHeader)
 
-			gotSc, gotOk := f.SpanContextFromRequest(req)
-			if !reflect.DeepEqual(gotSc, tt.wantSc) {
-				t.Errorf("HTTPFormat.FromRequest() gotTs = %v, want %v", gotSc.Tracestate, tt.wantSc.Tracestate)
-			}
-			if gotOk != tt.wantOk {
-				t.Errorf("HTTPFormat.FromRequest() gotOk = %v, want %v", gotOk, tt.wantOk)
-			}
-		})
+	gotSc, gotOk := f.SpanContextFromRequest(req)
+	if !reflect.DeepEqual(gotSc, wantSc) {
+		t.Errorf("HTTPFormat.FromRequest() gotSc = %v, want %v", gotSc, wantSc)
+	}
+	if gotOk != wantOk {
+		t.Errorf("HTTPFormat.FromRequest() gotOk = %v, want %v", gotOk, wantOk)
 	}
 }
 
-func TestHTTPFormatTracestate_ToRequest(t *testing.T) {
-	tests := []struct {
-		name       string
-		sc         trace.SpanContext
-		wantHeader string
-	}{
-		{
-			name: "valid span context with default tracestate",
-			sc: trace.SpanContext{
-				TraceID:      traceID,
-				SpanID:       spanID,
-				TraceOptions: traceOpt,
-			},
-			wantHeader: "",
-		},
-		{
-			name: "valid span context with non default tracestate",
-			sc: trace.SpanContext{
-				TraceID:      traceID,
-				SpanID:       spanID,
-				TraceOptions: traceOpt,
-				Tracestate:   nonDefaultTs,
-			},
-			wantHeader: "foo=bar,hello=world   example",
-		},
-		{
-			name: "valid span context with oversize tracestate",
-			sc: trace.SpanContext{
-				TraceID:      traceID,
-				SpanID:       spanID,
-				TraceOptions: traceOpt,
-				Tracestate:   oversizeTs,
-			},
-			wantHeader: "",
-		},
+func TestHTTPFormatToRequestWithTracestate(t *testing.T) {
+	sc := trace.SpanContext{
+		TraceID:      traceID,
+		SpanID:       spanID,
+		TraceOptions: traceOpt,
+		Tracestate:   nonDefaultTs,
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			f := &HTTPFormat{}
-			req, _ := http.NewRequest("GET", "http://example.com", nil)
-			f.SpanContextToRequest(tt.sc, req)
+	wantHeader := "foo=bar"
 
-			h := req.Header.Get("tracestate")
-			if got, want := h, tt.wantHeader; got != want {
-				t.Errorf("HTTPFormat.ToRequest() tracestate header = %v, want %v", got, want)
-			}
-		})
+	f := &HTTPFormat{}
+	req, _ := http.NewRequest("GET", "http://example.com", nil)
+	f.SpanContextToRequest(sc, req)
+
+	h := req.Header.Get("tracestate")
+	if got, want := h, wantHeader; got != want {
+		t.Errorf("HTTPFormat.ToRequest() tracestate header = %v, want %v", got, want)
 	}
 }
