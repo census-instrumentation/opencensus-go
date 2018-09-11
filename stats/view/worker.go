@@ -113,7 +113,7 @@ func record(tags *tag.Map, ms interface{}) {
 		ms: ms.([]stats.Measurement),
 	}
 	defaultWorker.c <- req
-};
+}
 
 // SetReportingPeriod sets the interval between reporting aggregated views in
 // the program. If duration is less than or equal to zero, it enables the
