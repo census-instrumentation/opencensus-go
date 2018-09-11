@@ -67,12 +67,7 @@ func FromRequest(req *http.Request) (*ts.Tracestate, error) {
 		}
 		entries = append(entries, ts.Entry{Key: kv[0], Value: kv[1]})
 	}
-	ts, err := ts.New(nil, entries...)
-	if err != nil {
-		return nil, err
-	}
-
-	return ts, nil
+	return ts.New(nil, entries...)
 }
 
 // ToRequest injects tracestate header as per the spec at
