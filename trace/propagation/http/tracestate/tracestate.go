@@ -15,7 +15,7 @@
 // Package tracestate contains HTTP propagator for Tracestate as specified
 // in Tracecontext standard.
 // See https://github.com/w3c/distributed-tracing for more information.
-package tracestate // import "go.opencensus.io/trace/propagation/http/tracestate"
+package tracestate
 
 import (
 	"errors"
@@ -53,7 +53,7 @@ func FromRequest(req *http.Request) (*ts.Tracestate, error) {
 	hdrLenWithoutOWS := len(pairs) - 1 // Number of commas
 	for _, pair := range pairs {
 		matches := trimOWSRegExp.FindStringSubmatch(pair)
-		if matches == nil || len(matches) != 2 {
+		if matches == nil {
 			return nil, errInvalidTs
 		}
 		pair := matches[1]
