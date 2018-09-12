@@ -54,6 +54,13 @@ func main() {
 	http.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
 		fmt.Fprintf(w, "hello world")
 
+		// Provide an example of how spans can be annotated with metadata
+		_, span := trace.StartSpan(req.Context(), "child")
+		defer span.End()
+		span.Annotate([]trace.Attribute{trace.StringAttribute("key", "value")}, "something happened")
+		span.AddAttributes(trace.StringAttribute("hello", "world"))
+		time.Sleep(time.Millisecond * 125)
+
 		r, _ := http.NewRequest("GET", "https://example.com", nil)
 
 		// Propagate the trace header info in the outgoing requests.
