@@ -24,7 +24,7 @@ import (
 
 	"go.opencensus.io/trace"
 	"go.opencensus.io/trace/propagation"
-	ts "go.opencensus.io/trace/propagation/http/tracestate"
+	httpTs "go.opencensus.io/trace/propagation/http/tracestate"
 )
 
 const (
@@ -91,7 +91,7 @@ func (f *HTTPFormat) SpanContextFromRequest(req *http.Request) (sc trace.SpanCon
 	// TODO(rghetia): ignore error for now until following issues are resolved.
 	// https://github.com/w3c/distributed-tracing/issues/172
 	// https://github.com/w3c/distributed-tracing/issues/175
-	sc.Tracestate, _ = ts.FromRequest(req)
+	sc.Tracestate, _ = httpTs.FromRequest(req)
 	return sc, true
 }
 
@@ -103,5 +103,5 @@ func (f *HTTPFormat) SpanContextToRequest(sc trace.SpanContext, req *http.Reques
 		sc.SpanID[:],
 		[]byte{byte(sc.TraceOptions)})
 	req.Header.Set(header, h)
-	ts.ToRequest(sc.Tracestate, req)
+	httpTs.ToRequest(sc.Tracestate, req)
 }
