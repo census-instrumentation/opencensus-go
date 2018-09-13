@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -38,14 +39,18 @@ type Resource struct {
 
 // EncodeTags encodes a tags to a string as provided via the OC_RESOURCE_TAGS environment variable.
 func EncodeTags(tags map[string]string) string {
+	sortedKeys := make([]string, 0, len(tags))
+	for k := range tags {
+		sortedKeys = append(sortedKeys, k)
+	}
+	sort.Strings(sortedKeys)
+
 	s := ""
-	i := 0
-	for k, v := range tags {
+	for i, k := range sortedKeys {
 		if i > 0 {
 			s += ","
 		}
-		s += k + "=" + strconv.Quote(v)
-		i++
+		s += k + "=" + strconv.Quote(tags[k])
 	}
 	return s
 }

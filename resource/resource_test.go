@@ -15,6 +15,8 @@
 package resource
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"reflect"
 	"testing"
@@ -89,7 +91,6 @@ func TestDecodeTags(t *testing.T) {
 		{encoded: `missing=leading-quote"`, wantFail: true},
 		{encoded: `extra=chars, a`, wantFail: true},
 		{encoded: `a, extra=chars`, wantFail: true},
-		{encoded: `a, extra=chars`, wantFail: true},
 	}
 	for i, c := range cases {
 		t.Run(fmt.Sprintf("case-%d", i), func(t *testing.T) {
@@ -113,7 +114,61 @@ func TestEncodeTags(t *testing.T) {
 		"un":                 "quøted",
 		"Abc":                "Def",
 	})
-	if want := `example.org/test-1="test ¥ \"",un="quøted",Abc="Def"`; got != want {
+	if want := `Abc="Def",example.org/test-1="test ¥ \"",un="quøted"`; got != want {
 		t.Fatalf("got %q, want %q", got, want)
+	}
+}
+
+func TestNewDetectorFromResource(t *testing.T) {
+	got, err := NewDetectorFromResource(&Resource{
+		Type: "t",
+		Tags: map[string]string{"a": "1", "b": "2"},
+	})(context.Background())
+	if err != nil {
+		t.Fatalf("unexpected error: %s", err)
+	}
+	want := &Resource{
+		Type: "t",
+		Tags: map[string]string{"a": "1", "b": "2"},
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("unexpected resource: want %v, got %v", want, got)
+	}
+}
+
+func TestChainedDetector(t *testing.T) {
+	got, err := ChainedDetector(
+		NewDetectorFromResource(&Resource{
+			Type: "t1",
+			Tags: map[string]string{"a": "1", "b": "2"},
+		}),
+		NewDetectorFromResource(&Resource{
+			Type: "t2",
+			Tags: map[string]string{"a": "11", "c": "3"},
+		}),
+	)(context.Background())
+	if err != nil {
+		t.Fatalf("unexpected error: %s", err)
+	}
+	want := &Resource{
+		Type: "t1",
+		Tags: map[string]string{"a": "1", "b": "2", "c": "3"},
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("unexpected resource: want %v, got %v", want, got)
+	}
+
+	wantErr := errors.New("err1")
+	got, err = ChainedDetector(
+		NewDetectorFromResource(&Resource{
+			Type: "t1",
+			Tags: map[string]string{"a": "1", "b": "2"},
+		}),
+		func(context.Context) (*Resource, error) {
+			return nil, wantErr
+		},
+	)(context.Background())
+	if err != wantErr {
+		t.Fatalf("unexpected error: want %v, got %v", wantErr, err)
 	}
 }
