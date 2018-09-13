@@ -111,15 +111,15 @@ func tracestateFromRequest(req *http.Request) *tracestate.Tracestate {
 
 	var entries []tracestate.Entry
 	pairs := strings.Split(h, ",")
-	headerLenWithoutTrailingSpaces := len(pairs) - 1 // Number of commas
+	hdrLenWithoutOWS := len(pairs) - 1 // Number of commas
 	for _, pair := range pairs {
 		matches := trimOWSRegExp.FindStringSubmatch(pair)
 		if matches == nil {
 			return nil
 		}
 		pair = matches[1]
-		headerLenWithoutTrailingSpaces += len(pair)
-		if headerLenWithoutTrailingSpaces > maxTracestateLen {
+		hdrLenWithoutOWS += len(pair)
+		if hdrLenWithoutOWS > maxTracestateLen {
 			return nil
 		}
 		kv := strings.Split(pair, "=")
