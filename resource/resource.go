@@ -147,13 +147,13 @@ func NewDetectorFromResource(r *Resource) Detector {
 // It returns on the first error that a sub-detector encounters.
 func ChainedDetector(detectors ...Detector) Detector {
 	return func(ctx context.Context) (*Resource, error) {
-		return DetectAll(ctx, detectors...)
+		return detectAll(ctx, detectors...)
 	}
 }
 
-// Detectall calls all input detectors sequentially an merges each result with the previous one.
+// detectall calls all input detectors sequentially an merges each result with the previous one.
 // It returns on the first error that a sub-detector encounters.
-func DetectAll(ctx context.Context, detectors ...Detector) (*Resource, error) {
+func detectAll(ctx context.Context, detectors ...Detector) (*Resource, error) {
 	var res *Resource
 	for _, d := range detectors {
 		r, err := d(ctx)
