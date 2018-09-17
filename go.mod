@@ -4,6 +4,7 @@ require (
 	git.apache.org/thrift.git v0.0.0-20180902110319-2566ecd5d999
 	github.com/beorn7/perks v0.0.0-20180321164747-3a771d992973
 	github.com/golang/protobuf v1.2.0
+	github.com/google/go-cmp v0.2.0
 	github.com/matttproud/golang_protobuf_extensions v1.0.1
 	github.com/openzipkin/zipkin-go v0.1.1
 	github.com/prometheus/client_golang v0.8.0

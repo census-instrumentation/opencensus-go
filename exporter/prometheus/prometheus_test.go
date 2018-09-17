@@ -307,7 +307,7 @@ func TestCumulativenessFromHistograms(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	ms := make([]stats.Measurement, len(values))
+	ms := make([]stats.Measurement, 0, len(values))
 	for _, value := range values {
 		mx := m.M(value)
 		ms = append(ms, mx)

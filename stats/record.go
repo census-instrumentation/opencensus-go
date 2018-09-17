@@ -30,15 +30,19 @@ func init() {
 	}
 }
 
-// Record records one or multiple measurements with the same tags at once.
+// Record records one or multiple measurements with the same context at once.
 // If there are any tags in the context, measurements will be tagged with them.
 func Record(ctx context.Context, ms ...Measurement) {
+	recorder := internal.DefaultRecorder
+	if recorder == nil {
+		return
+	}
 	if len(ms) == 0 {
 		return
 	}
-	var record bool
+	record := false
 	for _, m := range ms {
-		if (m != Measurement{}) {
+		if m.m.subscribed() {
 			record = true
 			break
 		}
@@ -46,7 +50,5 @@ func Record(ctx context.Context, ms ...Measurement) {
 	if !record {
 		return
 	}
-	if internal.DefaultRecorder != nil {
-		internal.DefaultRecorder(tag.FromContext(ctx), ms)
-	}
+	recorder(tag.FromContext(ctx), ms)
 }
