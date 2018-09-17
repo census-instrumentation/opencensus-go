@@ -40,6 +40,7 @@ type Options struct {
 	Endpoint string
 
 	// EndpointPath is the url path where spans are sent.
+	// If this is not set, it will send to "/api/traces" as the default
 	// For example, /api/traces
 	EndpointPath string
 
