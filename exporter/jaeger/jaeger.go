@@ -39,6 +39,10 @@ type Options struct {
 	// For example, http://localhost:14268.
 	Endpoint string
 
+	// EndpointPath is the url path where spans are sent.
+	// For example, /api/traces
+	EndpointPath string
+
 	// AgentEndpoint instructs exporter to send spans to jaeger-agent at this address.
 	// For example, localhost:6831.
 	AgentEndpoint string
@@ -76,7 +80,12 @@ func NewExporter(o Options) (*Exporter, error) {
 	var client *agentClientUDP
 	var err error
 	if endpoint != "" {
-		endpoint = endpoint + "/api/traces?format=jaeger.thrift"
+		if o.EndpointPath != "" {
+			endpoint = endpoint + o.EndpointPath
+		} else {
+			endpoint = endpoint + "/api/traces"
+		}
+		endpoint = endpoint + "?format=jaeger.thrift"
 	} else {
 		client, err = newAgentClientUDP(o.AgentEndpoint, udpPacketMaxLength)
 		if err != nil {
