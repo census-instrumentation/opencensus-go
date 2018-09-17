@@ -399,3 +399,39 @@ func TestRegisterUnregisterParity(t *testing.T) {
 		}
 	}
 }
+
+func TestRegisterAfterMeasurement(t *testing.T) {
+	// Tests that we can register views after measurements are created and
+	// they still take effect.
+
+	m := stats.Int64(t.Name(), "", stats.UnitDimensionless)
+	mm := m.M(1)
+	ctx := context.Background()
+
+	stats.Record(ctx, mm)
+	v := &View{
+		Measure:     m,
+		Aggregation: Count(),
+	}
+	if err := Register(v); err != nil {
+		t.Fatal(err)
+	}
+
+	rows, err := RetrieveData(v.Name)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(rows) > 0 {
+		t.Error("View should not have data")
+	}
+
+	stats.Record(ctx, mm)
+
+	rows, err = RetrieveData(v.Name)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(rows) == 0 {
+		t.Error("View should have data")
+	}
+}
