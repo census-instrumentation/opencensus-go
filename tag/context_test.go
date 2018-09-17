@@ -11,15 +11,34 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+//
 
-package internal
+package tag
 
 import (
-	"go.opencensus.io/tag"
+	"context"
+	"testing"
 )
 
-// DefaultRecorder will be called for each Record call.
-var DefaultRecorder func(tags *tag.Map, measurement interface{}, attachments map[string]string)
+func TestExtractTagsAttachment(t *testing.T) {
+	// We can't depend on the stats of view package without creating a
+	// dependency cycle.
 
-// SubscriptionReporter reports when a view subscribed with a measure.
-var SubscriptionReporter func(measure string)
+	var m map[string]string
+	ctx := context.Background()
+
+	res := extractTagsAttachments(ctx, m)
+	if res != nil {
+		t.Fatalf("res = %v; want nil", res)
+	}
+
+	k, _ := NewKey("test")
+	ctx, _ = New(ctx, Insert(k, "test123"))
+	res = extractTagsAttachments(ctx, m)
+	if res == nil {
+		t.Fatal("res = nil")
+	}
+	if got, want := res["tag:test"], "test123"; got != want {
+		t.Fatalf("res[Tags:test] = %v; want %v", got, want)
+	}
+}
