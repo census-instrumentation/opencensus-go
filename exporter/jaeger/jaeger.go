@@ -39,10 +39,9 @@ type Options struct {
 	// For example, http://localhost:14268.
 	Endpoint string
 
-	// EndpointPath is the url path where spans are sent.
-	// If this is not set, it will send to "/api/traces" as the default
-	// For example, /api/traces
-	EndpointPath string
+	// CollectorEndpoint is the full url to the Jaeger HTTP Thrift collector.
+	// For example, http://localhost:14268/api/traces
+	CollectorEndpoint string
 
 	// AgentEndpoint instructs exporter to send spans to jaeger-agent at this address.
 	// For example, localhost:6831.
@@ -73,20 +72,17 @@ type Options struct {
 // NewExporter returns a trace.Exporter implementation that exports
 // the collected spans to Jaeger.
 func NewExporter(o Options) (*Exporter, error) {
-	endpoint := o.Endpoint
-	if endpoint == "" && o.AgentEndpoint == "" {
+	if o.Endpoint == "" && o.CollectorEndpoint == "" && o.AgentEndpoint == "" {
 		return nil, errors.New("missing endpoint for Jaeger exporter")
 	}
 
+	var endpoint string
 	var client *agentClientUDP
 	var err error
-	if endpoint != "" {
-		if o.EndpointPath != "" {
-			endpoint = endpoint + o.EndpointPath
-		} else {
-			endpoint = endpoint + "/api/traces"
-		}
-		endpoint = endpoint + "?format=jaeger.thrift"
+	if o.Endpoint != "" {
+		endpoint = o.Endpoint + "/api/traces?format=jaeger.thrift"
+	} else if o.CollectorEndpoint != "" {
+		endpoint = o.CollectorEndpoint
 	} else {
 		client, err = newAgentClientUDP(o.AgentEndpoint, udpPacketMaxLength)
 		if err != nil {
