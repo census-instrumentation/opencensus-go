@@ -37,6 +37,8 @@ const defaultServiceName = "OpenCensus"
 type Options struct {
 	// Endpoint is the Jaeger HTTP Thrift endpoint.
 	// For example, http://localhost:14268.
+	//
+	// Deprecated: Use CollectorEndpoint instead.
 	Endpoint string
 
 	// CollectorEndpoint is the full url to the Jaeger HTTP Thrift collector.
@@ -81,6 +83,7 @@ func NewExporter(o Options) (*Exporter, error) {
 	var err error
 	if o.Endpoint != "" {
 		endpoint = o.Endpoint + "/api/traces?format=jaeger.thrift"
+		log.Printf("Endpoint has been deprecated. Please use CollectorEndpoint instead.")
 	} else if o.CollectorEndpoint != "" {
 		endpoint = o.CollectorEndpoint
 	} else {
