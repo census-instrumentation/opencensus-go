@@ -99,8 +99,9 @@ func (t *tracker) end() {
 		if t.reqSize >= 0 {
 			m = append(m, ClientRequestBytes.M(t.reqSize))
 		}
-		ctx, _ := tag.New(t.ctx, tag.Upsert(StatusCode, strconv.Itoa(t.statusCode)))
-		stats.Record(ctx, m...)
+		stats.RecordWithTags(t.ctx, []tag.Mutator{
+			tag.Upsert(StatusCode, strconv.Itoa(t.statusCode)),
+		}, m...)
 	})
 }
 
