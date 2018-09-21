@@ -8,6 +8,8 @@ import (
 )
 
 func TestMeasureFloat64AndInt64(t *testing.T) {
+	restart()
+
 	// Recording through both a Float64Measure and Int64Measure with the
 	// same name should work.
 

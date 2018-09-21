@@ -73,6 +73,17 @@ func (cmd *registerViewReq) handleCommand(w *worker) {
 	}
 }
 
+// flushReq is the command to flush all recorded
+// data regardless of time period and buffering.
+type flushReq struct {
+	c chan bool
+}
+
+func (fr *flushReq) handleCommand(w *worker) {
+	w.reportUsage(time.Now())
+	fr.c <- true
+}
+
 // unregisterFromViewReq is the command to unregister to a view. Has no
 // impact on the data collection for client that are pulling data from the
 // library.

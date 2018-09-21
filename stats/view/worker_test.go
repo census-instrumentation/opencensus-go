@@ -397,6 +397,68 @@ func TestUnregisterReportsUsage(t *testing.T) {
 	}
 }
 
+func TestFlush(t *testing.T) {
+	restart()
+	ctx := context.Background()
+
+	SetReportingPeriod(time.Hour)
+
+	m1 := stats.Int64("measure", "desc", "unit")
+	view1 := &View{Name: "count", Measure: m1, Aggregation: Count()}
+	m2 := stats.Int64("measure2", "desc", "unit")
+	view2 := &View{Name: "count2", Measure: m2, Aggregation: Count()}
+
+	if err := Register(view1, view2); err != nil {
+		t.Fatalf("cannot register: %v", err)
+	}
+
+	e := &countExporter{}
+	RegisterExporter(e)
+
+	// Irrespective of the reporting period, with Flush
+	// all the recorded points should be reported. Hence we'll
+	// set an arbitrarily large period of 1 hr.
+	SetReportingPeriod(time.Hour)
+
+	stats.Record(ctx, m1.M(1))
+	stats.Record(ctx, m2.M(3))
+	stats.Record(ctx, m2.M(1))
+
+	<-time.After(40 * time.Millisecond)
+	Flush()
+	<-time.After(40 * time.Millisecond)
+
+	e.Lock()
+	got := e.totalCount
+	e.Unlock()
+	want := int64(3) // Number of wanted data points
+	if got != want {
+		t.Errorf("Count data\nGot:  %d\nWant: %v", got, want)
+	}
+}
+
+func TestFlush_afterStopDoesnotBlock(t *testing.T) {
+	restart()
+
+	doneCh := make(chan bool)
+	go func() {
+		defer close(doneCh)
+
+		for i := 0; i < 10; i++ {
+			Flush()
+			defaultWorker.stop()
+			Flush()
+		}
+	}()
+
+	select {
+	case <-time.After(300 * time.Microsecond): // Arbitrary duration that's considered "long"
+		t.Fatal("Flush + stop goroutine did not return on time")
+	case <-doneCh:
+		// returned ASAP so okay
+	}
+}
+
 type countExporter struct {
 	sync.Mutex
 	count      int64

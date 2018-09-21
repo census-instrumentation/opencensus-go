@@ -17,6 +17,7 @@ package view
 
 import (
 	"fmt"
+	"sync"
 	"time"
 
 	"go.opencensus.io/stats"
@@ -43,6 +44,8 @@ type worker struct {
 	timer      *time.Ticker
 	c          chan command
 	quit, done chan bool
+	flushCh    chan bool
+	quitOnce   sync.Once
 }
 
 var defaultWorker *worker
@@ -142,6 +145,21 @@ func newWorker() *worker {
 		c:          make(chan command, 1024),
 		quit:       make(chan bool),
 		done:       make(chan bool),
+		flushCh:    make(chan bool),
+	}
+}
+
+// Flush reports all collected points regardless
+// of the time reporting period or buffering.
+func Flush() {
+	select {
+	case <-defaultWorker.quit:
+		// If this channel is closed i.e. we quit, do nothing.
+		return
+	default: // Otherwise we can proceed with flushing.
+		req := &flushReq{c: make(chan bool)}
+		defaultWorker.c <- req
+		<-req.c // don't return until the flush is complete.
 	}
 }
 
@@ -162,8 +180,13 @@ func (w *worker) start() {
 }
 
 func (w *worker) stop() {
-	w.quit <- true
-	<-w.done
+	w.quitOnce.Do(func() {
+		// Close w.quit so that any operations that need
+		// to check if we've stopped/quit will immediately
+		// select on w.quit.
+		close(w.quit)
+		<-w.done
+	})
 }
 
 func (w *worker) getMeasureRef(name string) *measureRef {
