@@ -56,6 +56,7 @@ can implement their own exporters by implementing the exporter interfaces
 * [AWS X-Ray][exporter-xray] for traces
 * [Datadog][exporter-datadog] for stats and traces
 * [Graphite][exporter-graphite] for stats
+* [HoneyComb][exporter-honeycomb] for traces
 
 ## Overview
 
@@ -259,4 +260,4 @@ release in which the functionality was marked *Deprecated*.
 [exporter-xray]: https://github.com/census-ecosystem/opencensus-go-exporter-aws
 [exporter-datadog]: https://github.com/DataDog/opencensus-go-exporter-datadog
 [exporter-graphite]: https://github.com/census-ecosystem/opencensus-go-exporter-graphite
-
+[exporter-honeycomb]: https://github.com/honeycombio/opencensus-exporter
