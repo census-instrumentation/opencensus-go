@@ -397,6 +397,36 @@ func TestUnregisterReportsUsage(t *testing.T) {
 	}
 }
 
+func TestFlush(t *testing.T) {
+	restart()
+
+	ctx := context.Background()
+
+	m := stats.Int64("measure", "desc", "unit")
+	SetReportingPeriod(time.Hour)
+
+	e := &vdExporter{}
+	RegisterExporter(e)
+
+	if err := Register(&View{Name: "count", Measure: m, Aggregation: Count()}); err != nil {
+		t.Fatal(err)
+	}
+
+	stats.Record(ctx, m.M(1))
+	stats.Record(ctx, m.M(1))
+	stats.Record(ctx, m.M(1))
+
+	Flush()
+
+	e.Lock()
+	got := len(e.vds)
+	e.Unlock()
+
+	if got == 0 {
+		t.Errorf("got %v aggregations; want at least one", got)
+	}
+}
+
 type countExporter struct {
 	sync.Mutex
 	count      int64

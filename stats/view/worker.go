@@ -40,9 +40,9 @@ type worker struct {
 	views      map[string]*viewInternal
 	startTimes map[*viewInternal]time.Time
 
-	timer      *time.Ticker
-	c          chan command
-	quit, done chan bool
+	timer                   *time.Ticker
+	c                       chan command
+	quitCh, doneCh, flushCh chan struct{}
 }
 
 var defaultWorker *worker
@@ -107,6 +107,15 @@ func RetrieveData(viewName string) ([]*Row, error) {
 	return resp.rows, resp.err
 }
 
+// Flush force aggregates all buffered in-memory data.
+// Otherwise, aggregation is going to happen at each period
+// set by SetReportingPeriod.
+//
+// Flush is useful before program termination to avoid data loss.
+func Flush() {
+	defaultWorker.flushAll()
+}
+
 func record(tags *tag.Map, ms interface{}) {
 	req := &recordReq{
 		tm: tags,
@@ -140,8 +149,9 @@ func newWorker() *worker {
 		startTimes: make(map[*viewInternal]time.Time),
 		timer:      time.NewTicker(defaultReportingDuration),
 		c:          make(chan command, 1024),
-		quit:       make(chan bool),
-		done:       make(chan bool),
+		quitCh:     make(chan struct{}),
+		doneCh:     make(chan struct{}),
+		flushCh:    make(chan struct{}),
 	}
 }
 
@@ -152,18 +162,26 @@ func (w *worker) start() {
 			cmd.handleCommand(w)
 		case <-w.timer.C:
 			w.reportUsage(time.Now())
-		case <-w.quit:
+		case <-w.flushCh:
+			w.reportUsage(time.Now())
+			w.doneCh <- struct{}{}
+		case <-w.quitCh:
 			w.timer.Stop()
 			close(w.c)
-			w.done <- true
+			w.doneCh <- struct{}{}
 			return
 		}
 	}
 }
 
+func (w *worker) flushAll() {
+	w.flushCh <- struct{}{}
+	<-w.doneCh
+}
+
 func (w *worker) stop() {
-	w.quit <- true
-	<-w.done
+	w.quitCh <- struct{}{}
+	<-w.doneCh
 }
 
 func (w *worker) getMeasureRef(name string) *measureRef {
