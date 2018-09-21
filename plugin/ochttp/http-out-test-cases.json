@@ -1,0 +1,29 @@
+[{
+    "name":       "Successfull GET call to https://example.com",
+    "method":     "GET",
+    "url":        "https://example.com/",
+    "spanName":   "/",
+    "spanStatus": "Ok",
+    "spanAttributes": {
+        "http.path":        "/",
+        "http.method":      "GET",
+        "http.host":        "example.com",
+        "http.status_code": "200",
+        "http.user_agent":  ""
+    }
+},
+{
+    "name":         "Response code 501",
+    "method":       "GET",
+    "url":          "http://{host}:{port}/",
+    "responseCode": 501,
+    "spanName":     "/",
+    "spanStatus":   "Unimplemented",
+    "spanAttributes": {
+        "http.path":        "/",
+        "http.method":      "GET",
+        "http.host":        "{host}:{port}",
+        "http.status_code": "501",
+        "http.user_agent":  ""
+    }
+}]

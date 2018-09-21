@@ -18,6 +18,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -519,51 +520,35 @@ func TestResponseAttributes(t *testing.T) {
 	}
 }
 
+type TestCase struct {
+	Name           string
+	Method         string
+	Url            string
+	ResponseCode   int
+	SpanName       string
+	SpanStatus     string
+	SpanAttributes map[string]string
+}
+
 func TestAgainstSpecs(t *testing.T) {
-	tests := []struct {
-		name           string
-		method         string
-		url            string
-		responseCode   int
-		spanName       string
-		spanStatus     string
-		spanAttributes map[string]string
-	}{
-		{
-			name:       "Successfull GET call to https://example.com",
-			method:     "GET",
-			url:        "https://example.com/",
-			spanName:   "/",
-			spanStatus: "Ok",
-			spanAttributes: map[string]string{
-				"http.path":        "/",
-				"http.method":      "GET",
-				"http.host":        "example.com",
-				"http.status_code": "200",
-				"http.user_agent":  "",
-			},
-		},
-		{
-			name:         "Response code 501",
-			method:       "GET",
-			url:          "http://{host}:{port}/",
-			responseCode: 501,
-			spanName:     "/",
-			spanStatus:   "Unimplemented",
-			spanAttributes: map[string]string{
-				"http.path":        "/",
-				"http.method":      "GET",
-				"http.host":        "{host}:{port}",
-				"http.status_code": "501",
-				"http.user_agent":  "",
-			},
-		},
+
+	fmt.Println("start")
+
+	dat, err := ioutil.ReadFile("http-out-test-cases.json")
+	if err != nil {
+		t.Fatalf("error reading file: %v", err)
+	}
+
+	tests := make([]TestCase, 0)
+	err = json.Unmarshal(dat, &tests)
+	if err != nil {
+		t.Fatalf("error parsing json: %v", err)
 	}
 
 	trace.ApplyConfig(trace.Config{DefaultSampler: trace.AlwaysSample()})
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.Name, func(t *testing.T) {
 			var spans collector
 			trace.RegisterExporter(&spans)
 			defer trace.UnregisterExporter(&spans)
@@ -575,18 +560,18 @@ func TestAgainstSpecs(t *testing.T) {
 			serverReturn := make(chan time.Time)
 			host := ""
 			port := ""
-			serverRequired := strings.Contains(tt.url, "{")
+			serverRequired := strings.Contains(tt.Url, "{")
 			if serverRequired {
 				// Start the server.
-				localServerUrl := serveHTTP(handler, serverDone, serverReturn, tt.responseCode)
+				localServerUrl := serveHTTP(handler, serverDone, serverReturn, tt.ResponseCode)
 				u, _ := url.Parse(localServerUrl)
 				host, port, _ = net.SplitHostPort(u.Host)
 
-				tt.url = strings.Replace(tt.url, "{host}", host, 1)
-				tt.url = strings.Replace(tt.url, "{port}", port, 1)
+				tt.Url = strings.Replace(tt.Url, "{host}", host, 1)
+				tt.Url = strings.Replace(tt.Url, "{port}", port, 1)
 			}
 
-			t.Log(tt.url)
+			t.Log(tt.Url)
 
 			// Start a root Span in the client.
 			ctx, _ := trace.StartSpan(
@@ -594,8 +579,8 @@ func TestAgainstSpecs(t *testing.T) {
 				"top-level")
 			// Make the request.
 			req, err := http.NewRequest(
-				tt.method,
-				tt.url,
+				tt.Method,
+				tt.Url,
 				nil)
 			if err != nil {
 				t.Fatal(err)
@@ -625,8 +610,8 @@ func TestAgainstSpecs(t *testing.T) {
 				}
 			}
 
-			if client.Name != tt.spanName {
-				t.Errorf("span names don't match: expected: %s, actual: %s", tt.spanName, client.Name)
+			if client.Name != tt.SpanName {
+				t.Errorf("span names don't match: expected: %s, actual: %s", tt.SpanName, client.Name)
 			}
 
 			codeToStr := map[int32]string{
@@ -649,17 +634,16 @@ func TestAgainstSpecs(t *testing.T) {
 				trace.StatusCodeUnauthenticated:    `UNAUTHENTICATED`,
 			}
 
-			if !strings.EqualFold(codeToStr[client.Status.Code], tt.spanStatus) {
-				t.Errorf("span status don't match: expected: %s, actual: %d (%s)", tt.spanStatus, client.Status.Code, codeToStr[client.Status.Code])
+			if !strings.EqualFold(codeToStr[client.Status.Code], tt.SpanStatus) {
+				t.Errorf("span status don't match: expected: %s, actual: %d (%s)", tt.SpanStatus, client.Status.Code, codeToStr[client.Status.Code])
 			}
-
 			normalizedActualAttributes := map[string]string{}
 			for k, v := range client.Attributes {
 				normalizedActualAttributes[k] = fmt.Sprintf("%v", v)
 			}
 
 			normalizedExpectedAttributes := map[string]string{}
-			for k, v := range tt.spanAttributes {
+			for k, v := range tt.SpanAttributes {
 				normalizedValue := v
 				normalizedValue = strings.Replace(normalizedValue, "{host}", host, 1)
 				normalizedValue = strings.Replace(normalizedValue, "{port}", port, 1)
