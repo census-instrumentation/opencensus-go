@@ -52,3 +52,17 @@ func Record(ctx context.Context, ms ...Measurement) {
 	}
 	recorder(tag.FromContext(ctx), ms)
 }
+
+// RecordWithTags records one or multiple measurements at once.
+//
+// Measurements will be tagged with the tags in the context mutated by the mutators.
+// RecordWithTags is useful if you want to record with tag mutations but don't want
+// to propagate the mutations in the context.
+func RecordWithTags(ctx context.Context, mutators []tag.Mutator, ms ...Measurement) error {
+	ctx, err := tag.New(ctx, mutators...)
+	if err != nil {
+		return err
+	}
+	Record(ctx, ms...)
+	return nil
+}

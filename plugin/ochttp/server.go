@@ -179,8 +179,7 @@ func (t *trackingResponseWriter) end(tags *addedTags) {
 		allTags := make([]tag.Mutator, len(tags.t)+1)
 		allTags[0] = tag.Upsert(StatusCode, strconv.Itoa(t.statusCode))
 		copy(allTags[1:], tags.t)
-		ctx, _ := tag.New(t.ctx, allTags...)
-		stats.Record(ctx, m...)
+		stats.RecordWithTags(t.ctx, allTags, m...)
 	})
 }
 
