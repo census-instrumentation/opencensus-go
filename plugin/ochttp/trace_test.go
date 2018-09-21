@@ -23,8 +23,10 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"net"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"reflect"
 	"strings"
 	"testing"
@@ -245,7 +247,7 @@ func TestEndToEnd(t *testing.T) {
 			serverDone := make(chan struct{})
 			serverReturn := make(chan time.Time)
 			tt.handler.StartOptions.Sampler = trace.AlwaysSample()
-			url := serveHTTP(tt.handler, serverDone, serverReturn)
+			url := serveHTTP(tt.handler, serverDone, serverReturn, 200)
 
 			ctx := context.Background()
 			// Make the request.
@@ -343,9 +345,9 @@ func TestEndToEnd(t *testing.T) {
 	}
 }
 
-func serveHTTP(handler *Handler, done chan struct{}, wait chan time.Time) string {
+func serveHTTP(handler *Handler, done chan struct{}, wait chan time.Time, statusCode int) string {
 	handler.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(200)
+		w.WriteHeader(statusCode)
 		w.(http.Flusher).Flush()
 
 		// Simulate a slow-responding server.
@@ -522,6 +524,7 @@ func TestAgainstSpecs(t *testing.T) {
 		name           string
 		method         string
 		url            string
+		responseCode   int
 		spanName       string
 		spanStatus     string
 		spanAttributes map[string]string
@@ -540,6 +543,21 @@ func TestAgainstSpecs(t *testing.T) {
 				"http.user_agent":  "",
 			},
 		},
+		{
+			name:         "Response code 501",
+			method:       "GET",
+			url:          "http://{host}:{port}/",
+			responseCode: 501,
+			spanName:     "/",
+			spanStatus:   "Unimplemented",
+			spanAttributes: map[string]string{
+				"http.path":        "/",
+				"http.method":      "GET",
+				"http.host":        "{host}:{port}",
+				"http.status_code": "501",
+				"http.user_agent":  "",
+			},
+		},
 	}
 
 	trace.ApplyConfig(trace.Config{DefaultSampler: trace.AlwaysSample()})
@@ -555,14 +573,20 @@ func TestAgainstSpecs(t *testing.T) {
 
 			serverDone := make(chan struct{})
 			serverReturn := make(chan time.Time)
-			url := tt.url
+			host := ""
+			port := ""
 			serverRequired := strings.Contains(tt.url, "{")
 			if serverRequired {
 				// Start the server.
-				url = serveHTTP(handler, serverDone, serverReturn)
+				localServerUrl := serveHTTP(handler, serverDone, serverReturn, tt.responseCode)
+				u, _ := url.Parse(localServerUrl)
+				host, port, _ = net.SplitHostPort(u.Host)
+
+				tt.url = strings.Replace(tt.url, "{host}", host, 1)
+				tt.url = strings.Replace(tt.url, "{port}", port, 1)
 			}
 
-			t.Log(url)
+			t.Log(tt.url)
 
 			// Start a root Span in the client.
 			ctx, _ := trace.StartSpan(
@@ -580,10 +604,6 @@ func TestAgainstSpecs(t *testing.T) {
 			resp, err := transport.RoundTrip(req)
 			if err != nil {
 				t.Fatal(err)
-			}
-
-			if resp.StatusCode != http.StatusOK {
-				t.Fatalf("resp.StatusCode = %d", resp.StatusCode)
 			}
 
 			if serverRequired {
@@ -633,12 +653,21 @@ func TestAgainstSpecs(t *testing.T) {
 				t.Errorf("span status don't match: expected: %s, actual: %d (%s)", tt.spanStatus, client.Status.Code, codeToStr[client.Status.Code])
 			}
 
-			normalizedAttributes := map[string]string{}
+			normalizedActualAttributes := map[string]string{}
 			for k, v := range client.Attributes {
-				normalizedAttributes[k] = fmt.Sprintf("%v", v)
+				normalizedActualAttributes[k] = fmt.Sprintf("%v", v)
 			}
 
-			if got, want := normalizedAttributes, tt.spanAttributes; !reflect.DeepEqual(got, want) {
+			normalizedExpectedAttributes := map[string]string{}
+			for k, v := range tt.spanAttributes {
+				normalizedValue := v
+				normalizedValue = strings.Replace(normalizedValue, "{host}", host, 1)
+				normalizedValue = strings.Replace(normalizedValue, "{port}", port, 1)
+
+				normalizedExpectedAttributes[k] = normalizedValue
+			}
+
+			if got, want := normalizedActualAttributes, normalizedExpectedAttributes; !reflect.DeepEqual(got, want) {
 				t.Errorf("Request attributes = %#v; want %#v", got, want)
 			}
 		})
