@@ -517,6 +517,134 @@ func TestResponseAttributes(t *testing.T) {
 	}
 }
 
+func TestAgainstSpecs(t *testing.T) {
+	tests := []struct {
+		name           string
+		method         string
+		url            string
+		spanName       string
+		spanStatus     string
+		spanAttributes map[string]string
+	}{
+		{
+			name:       "Successfull GET call to https://example.com",
+			method:     "GET",
+			url:        "https://example.com/",
+			spanName:   "/",
+			spanStatus: "Ok",
+			spanAttributes: map[string]string{
+				"http.path":        "/",
+				"http.method":      "GET",
+				"http.host":        "example.com",
+				"http.status_code": "200",
+				"http.user_agent":  "",
+			},
+		},
+	}
+
+	trace.ApplyConfig(trace.Config{DefaultSampler: trace.AlwaysSample()})
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var spans collector
+			trace.RegisterExporter(&spans)
+			defer trace.UnregisterExporter(&spans)
+
+			handler := &Handler{}
+			transport := &Transport{}
+
+			serverDone := make(chan struct{})
+			serverReturn := make(chan time.Time)
+			url := tt.url
+			serverRequired := strings.Contains(tt.url, "{")
+			if serverRequired {
+				// Start the server.
+				url = serveHTTP(handler, serverDone, serverReturn)
+			}
+
+			t.Log(url)
+
+			// Start a root Span in the client.
+			ctx, _ := trace.StartSpan(
+				context.Background(),
+				"top-level")
+			// Make the request.
+			req, err := http.NewRequest(
+				tt.method,
+				tt.url,
+				nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			req = req.WithContext(ctx)
+			resp, err := transport.RoundTrip(req)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if resp.StatusCode != http.StatusOK {
+				t.Fatalf("resp.StatusCode = %d", resp.StatusCode)
+			}
+
+			if serverRequired {
+				// Tell the server to return from request handling.
+				serverReturn <- time.Now().Add(time.Millisecond)
+			}
+
+			// no need to read response. Just close it
+			resp.Body.Close()
+			if serverRequired {
+				<-serverDone
+			}
+			trace.UnregisterExporter(&spans)
+
+			var client *trace.SpanData
+			for _, sp := range spans {
+				if sp.SpanKind == trace.SpanKindClient {
+					client = sp
+				}
+			}
+
+			if client.Name != tt.spanName {
+				t.Errorf("span names don't match: expected: %s, actual: %s", tt.spanName, client.Name)
+			}
+
+			codeToStr := map[int32]string{
+				trace.StatusCodeOK:                 `OK`,
+				trace.StatusCodeCancelled:          `CANCELLED`,
+				trace.StatusCodeUnknown:            `UNKNOWN`,
+				trace.StatusCodeInvalidArgument:    `INVALID_ARGUMENT`,
+				trace.StatusCodeDeadlineExceeded:   `DEADLINE_EXCEEDED`,
+				trace.StatusCodeNotFound:           `NOT_FOUND`,
+				trace.StatusCodeAlreadyExists:      `ALREADY_EXISTS`,
+				trace.StatusCodePermissionDenied:   `PERMISSION_DENIED`,
+				trace.StatusCodeResourceExhausted:  `RESOURCE_EXHAUSTED`,
+				trace.StatusCodeFailedPrecondition: `FAILED_PRECONDITION`,
+				trace.StatusCodeAborted:            `ABORTED`,
+				trace.StatusCodeOutOfRange:         `OUT_OF_RANGE`,
+				trace.StatusCodeUnimplemented:      `UNIMPLEMENTED`,
+				trace.StatusCodeInternal:           `INTERNAL`,
+				trace.StatusCodeUnavailable:        `UNAVAILABLE`,
+				trace.StatusCodeDataLoss:           `DATA_LOSS`,
+				trace.StatusCodeUnauthenticated:    `UNAUTHENTICATED`,
+			}
+
+			if !strings.EqualFold(codeToStr[client.Status.Code], tt.spanStatus) {
+				t.Errorf("span status don't match: expected: %s, actual: %d (%s)", tt.spanStatus, client.Status.Code, codeToStr[client.Status.Code])
+			}
+
+			normalizedAttributes := map[string]string{}
+			for k, v := range client.Attributes {
+				normalizedAttributes[k] = fmt.Sprintf("%v", v)
+			}
+
+			if got, want := normalizedAttributes, tt.spanAttributes; !reflect.DeepEqual(got, want) {
+				t.Errorf("Request attributes = %#v; want %#v", got, want)
+			}
+		})
+	}
+}
+
 func TestStatusUnitTest(t *testing.T) {
 	tests := []struct {
 		in   int
