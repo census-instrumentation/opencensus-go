@@ -477,6 +477,7 @@ func TestRequestAttributes(t *testing.T) {
 			},
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			req := tt.makeReq()
@@ -524,9 +525,11 @@ type TestCase struct {
 	Name           string
 	Method         string
 	Url            string
+	Headers        map[string]string
 	ResponseCode   int
 	SpanName       string
 	SpanStatus     string
+	SpanKind       string
 	SpanAttributes map[string]string
 }
 
@@ -571,8 +574,6 @@ func TestAgainstSpecs(t *testing.T) {
 				tt.Url = strings.Replace(tt.Url, "{port}", port, 1)
 			}
 
-			t.Log(tt.Url)
-
 			// Start a root Span in the client.
 			ctx, _ := trace.StartSpan(
 				context.Background(),
@@ -582,13 +583,17 @@ func TestAgainstSpecs(t *testing.T) {
 				tt.Method,
 				tt.Url,
 				nil)
+			for headerName, headerValue := range tt.Headers {
+				req.Header.Add(headerName, headerValue)
+			}
 			if err != nil {
 				t.Fatal(err)
 			}
 			req = req.WithContext(ctx)
 			resp, err := transport.RoundTrip(req)
 			if err != nil {
-				t.Fatal(err)
+				// do not fail. We want to validate DNS issues
+				//t.Fatal(err)
 			}
 
 			if serverRequired {
@@ -596,10 +601,12 @@ func TestAgainstSpecs(t *testing.T) {
 				serverReturn <- time.Now().Add(time.Millisecond)
 			}
 
-			// no need to read response. Just close it
-			resp.Body.Close()
-			if serverRequired {
-				<-serverDone
+			if resp != nil {
+				// no need to read response. Just close it
+				resp.Body.Close()
+				if serverRequired {
+					<-serverDone
+				}
 			}
 			trace.UnregisterExporter(&spans)
 
@@ -634,9 +641,19 @@ func TestAgainstSpecs(t *testing.T) {
 				trace.StatusCodeUnauthenticated:    `UNAUTHENTICATED`,
 			}
 
+			spanKindToStr := map[int]string{
+				trace.SpanKindClient: "Client",
+				trace.SpanKindServer: "Server",
+			}
+
 			if !strings.EqualFold(codeToStr[client.Status.Code], tt.SpanStatus) {
 				t.Errorf("span status don't match: expected: %s, actual: %d (%s)", tt.SpanStatus, client.Status.Code, codeToStr[client.Status.Code])
 			}
+
+			if !strings.EqualFold(spanKindToStr[client.SpanKind], tt.SpanKind) {
+				t.Errorf("span kind don't match: expected: %s, actual: %d (%s)", tt.SpanKind, client.SpanKind, spanKindToStr[client.SpanKind])
+			}
+
 			normalizedActualAttributes := map[string]string{}
 			for k, v := range client.Attributes {
 				normalizedActualAttributes[k] = fmt.Sprintf("%v", v)
