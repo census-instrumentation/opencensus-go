@@ -25,9 +25,7 @@ import (
 // Transport is an http.RoundTripper that instruments all outgoing requests with
 // OpenCensus stats and tracing.
 //
-// The zero value is intended to be a useful default, but for
-// now it's recommended that you explicitly set Propagation, since the default
-// for this may change.
+// Use NewTransport to create a Transport with the default configuration.
 type Transport struct {
 	// Base may be set to wrap another http.RoundTripper that does the actual
 	// requests. By default http.DefaultTransport is used.
@@ -36,8 +34,9 @@ type Transport struct {
 	// the returned round tripper will be cancelable.
 	Base http.RoundTripper
 
-	// Propagation defines how traces are propagated. If unspecified, a default
-	// (currently B3 format) will be used.
+	// Propagation defines how traces are propagated. NewTransport will configure
+	// W3C TraceContext as the default format. For backwards compatibility, if
+	// this field is set to nil, B3 propagation format will be used.
 	Propagation propagation.HTTPFormat
 
 	// StartOptions are applied to the span started by this Transport around each
@@ -60,6 +59,15 @@ type Transport struct {
 	// TODO: Implement tag propagation for HTTP.
 }
 
+// NewTransport returns a new Transport with the default configuration (W3C
+// TraceContext propagation format.
+func NewTransport() *Transport {
+	return &Transport{
+		Propagation: defaultFormat,
+		Base:        http.DefaultTransport,
+	}
+}
+
 // RoundTrip implements http.RoundTripper, delegating to Base and recording stats and traces for the request.
 func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	rt := t.base()
@@ -69,7 +77,7 @@ func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	// TODO: remove excessive nesting of http.RoundTrippers here.
 	format := t.Propagation
 	if format == nil {
-		format = defaultFormat
+		format = compatibilityFormat
 	}
 	spanNameFormatter := t.FormatSpanName
 	if spanNameFormatter == nil {

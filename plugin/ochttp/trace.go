@@ -15,18 +15,22 @@
 package ochttp
 
 import (
+	"go.opencensus.io/plugin/ochttp/propagation/b3"
+	"go.opencensus.io/plugin/ochttp/propagation/tracecontext"
 	"io"
 	"net/http"
 	"net/http/httptrace"
 
-	"go.opencensus.io/plugin/ochttp/propagation/b3"
 	"go.opencensus.io/trace"
 	"go.opencensus.io/trace/propagation"
 )
 
-// TODO(jbd): Add godoc examples.
-
-var defaultFormat propagation.HTTPFormat = &b3.HTTPFormat{}
+var (
+	defaultFormat = &tracecontext.HTTPFormat{}
+	// for backwards compatibility with previous releases, we still use B3 as
+	// default if users rely on the zero value of Transport/Handler.
+	compatibilityFormat = &b3.HTTPFormat{}
+)
 
 // Attributes recorded on the span for the requests.
 // Only trace exporters will need them.

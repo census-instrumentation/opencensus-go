@@ -19,7 +19,6 @@ import (
 	"net/http"
 
 	"go.opencensus.io/plugin/ochttp"
-	"go.opencensus.io/plugin/ochttp/propagation/b3"
 	"go.opencensus.io/stats/view"
 	"go.opencensus.io/tag"
 )
@@ -48,7 +47,7 @@ func ExampleTransport() {
 	}
 
 	client := &http.Client{
-		Transport: &ochttp.Transport{},
+		Transport: ochttp.NewTransport(),
 	}
 
 	// Use client to perform requests.
@@ -60,19 +59,7 @@ var usersHandler http.Handler
 func ExampleHandler() {
 	// import "go.opencensus.io/plugin/ochttp"
 
-	http.Handle("/users", ochttp.WithRouteTag(usersHandler, "/users"))
-
-	// If no handler is specified, the default mux is used.
-	log.Fatal(http.ListenAndServe("localhost:8080", &ochttp.Handler{}))
-}
-
-func ExampleHandler_mux() {
-	// import "go.opencensus.io/plugin/ochttp"
-
 	mux := http.NewServeMux()
 	mux.Handle("/users", ochttp.WithRouteTag(usersHandler, "/users"))
-	log.Fatal(http.ListenAndServe("localhost:8080", &ochttp.Handler{
-		Handler:     mux,
-		Propagation: &b3.HTTPFormat{},
-	}))
+	log.Fatal(http.ListenAndServe("localhost:8080", ochttp.NewHandler(mux)))
 }

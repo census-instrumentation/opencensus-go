@@ -31,6 +31,8 @@ import (
 // Handler is an http.Handler wrapper to instrument your HTTP server with
 // OpenCensus. It supports both stats and tracing.
 //
+// Use NewHandler to create a Handler with the default configuration.
+//
 // Tracing
 //
 // This handler is aware of the incoming request's span, reading it from request
@@ -42,8 +44,10 @@ import (
 //
 // The server span will be automatically ended at the end of ServeHTTP.
 type Handler struct {
-	// Propagation defines how traces are propagated. If unspecified,
-	// B3 propagation will be used.
+	// Propagation defines how traces are propagated.
+	// NewHandler will configure W3C TraceContext as the default format.
+	// For backwards compatibility, if this field is set to nil then B3
+	// propagation will be used.
 	Propagation propagation.HTTPFormat
 
 	// Handler is the handler used to handle the incoming request.
@@ -66,6 +70,17 @@ type Handler struct {
 	// from the information found in the incoming HTTP Request. By default the
 	// name equals the URL Path.
 	FormatSpanName func(*http.Request) string
+}
+
+// NewHandler wraps the given handler to add stats and tracing instrumentation.
+// By default, W3C TraceContext propagation format is used and the returned
+// handler is assumed to be a public endpoint.
+func NewHandler(next http.Handler) *Handler {
+	return &Handler{
+		Handler:          next,
+		Propagation:      defaultFormat,
+		IsPublicEndpoint: true,
+	}
 }
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -119,7 +134,7 @@ func (h *Handler) startTrace(w http.ResponseWriter, r *http.Request) (*http.Requ
 
 func (h *Handler) extractSpanContext(r *http.Request) (trace.SpanContext, bool) {
 	if h.Propagation == nil {
-		return defaultFormat.SpanContextFromRequest(r)
+		return compatibilityFormat.SpanContextFromRequest(r)
 	}
 	return h.Propagation.SpanContextFromRequest(r)
 }
