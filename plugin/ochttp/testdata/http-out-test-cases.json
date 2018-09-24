@@ -1,11 +1,11 @@
 [
     {
-      "name": "Successfull GET call to https://example.com",
+      "name": "Successful GET call to https://example.com",
       "method": "GET",
       "url": "https://example.com/",
       "spanName": "/",
       "spanStatus": "OK",
-      "spanKind":  "Client",
+      "spanKind": "Client",
       "spanAttributes": {
         "http.path": "/",
         "http.method": "GET",

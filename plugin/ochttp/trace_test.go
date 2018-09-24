@@ -537,7 +537,7 @@ func TestAgainstSpecs(t *testing.T) {
 
 	fmt.Println("start")
 
-	dat, err := ioutil.ReadFile("http-out-test-cases.json")
+	dat, err := ioutil.ReadFile("testdata/http-out-test-cases.json")
 	if err != nil {
 		t.Fatalf("error reading file: %v", err)
 	}
