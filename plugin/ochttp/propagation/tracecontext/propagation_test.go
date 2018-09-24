@@ -18,11 +18,11 @@ import (
 	"fmt"
 	"net/http"
 	"reflect"
+	"strings"
 	"testing"
 
 	"go.opencensus.io/trace"
 	"go.opencensus.io/trace/tracestate"
-	"strings"
 )
 
 var (

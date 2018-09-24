@@ -20,12 +20,12 @@ import (
 	"encoding/hex"
 	"fmt"
 	"net/http"
+	"regexp"
 	"strings"
 
 	"go.opencensus.io/trace"
 	"go.opencensus.io/trace/propagation"
 	"go.opencensus.io/trace/tracestate"
-	"regexp"
 )
 
 const (
