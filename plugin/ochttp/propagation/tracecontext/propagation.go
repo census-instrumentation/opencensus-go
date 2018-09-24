@@ -51,43 +51,49 @@ func (f *HTTPFormat) SpanContextFromRequest(req *http.Request) (sc trace.SpanCon
 		return trace.SpanContext{}, false
 	}
 	sections := strings.Split(h, "-")
-	if len(sections) < 3 {
+	if len(sections) < 4 {
 		return trace.SpanContext{}, false
 	}
 
+	if len(sections[0]) != 2 {
+		return trace.SpanContext{}, false
+	}
 	ver, err := hex.DecodeString(sections[0])
 	if err != nil {
 		return trace.SpanContext{}, false
 	}
-	if len(ver) == 0 || int(ver[0]) > supportedVersion || int(ver[0]) > maxVersion {
+	version := int(ver[0])
+	if version > maxVersion {
 		return trace.SpanContext{}, false
 	}
 
+	if version == 0 && len(sections) != 4 {
+		return trace.SpanContext{}, false
+	}
+
+	if len(sections[1]) != 32 {
+		return trace.SpanContext{}, false
+	}
 	tid, err := hex.DecodeString(sections[1])
 	if err != nil {
 		return trace.SpanContext{}, false
 	}
-	if len(tid) != 16 {
-		return trace.SpanContext{}, false
-	}
 	copy(sc.TraceID[:], tid)
 
+	if len(sections[2]) != 16 {
+		return trace.SpanContext{}, false
+	}
 	sid, err := hex.DecodeString(sections[2])
 	if err != nil {
 		return trace.SpanContext{}, false
 	}
-	if len(sid) != 8 {
-		return trace.SpanContext{}, false
-	}
 	copy(sc.SpanID[:], sid)
 
-	if len(sections) == 4 {
-		opts, err := hex.DecodeString(sections[3])
-		if err != nil || len(opts) < 1 {
-			return trace.SpanContext{}, false
-		}
-		sc.TraceOptions = trace.TraceOptions(opts[0])
+	opts, err := hex.DecodeString(sections[3])
+	if err != nil || len(opts) < 1 {
+		return trace.SpanContext{}, false
 	}
+	sc.TraceOptions = trace.TraceOptions(opts[0])
 
 	// Don't allow all zero trace or span ID.
 	if sc.TraceID == [16]byte{} || sc.SpanID == [8]byte{} {
