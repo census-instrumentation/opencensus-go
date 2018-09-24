@@ -46,8 +46,8 @@ type HTTPFormat struct{}
 
 // SpanContextFromRequest extracts a span context from incoming requests.
 func (f *HTTPFormat) SpanContextFromRequest(req *http.Request) (sc trace.SpanContext, ok bool) {
-	h := req.Header.Get(traceparentHeader)
-	if h == "" {
+	h, ok := getRequestHeader(req, traceparentHeader, false)
+	if !ok {
 		return trace.SpanContext{}, false
 	}
 	sections := strings.Split(h, "-")
@@ -98,13 +98,26 @@ func (f *HTTPFormat) SpanContextFromRequest(req *http.Request) (sc trace.SpanCon
 	return sc, true
 }
 
+func getRequestHeader(req *http.Request, name string, commaSeparated bool) (hdr string, ok bool) {
+	ok = false
+	for k, v := range req.Header {
+		if strings.EqualFold(k, name) {
+			if commaSeparated || len(v) == 1 {
+				ok = true
+			}
+			return strings.Join(v, ","), ok
+		}
+	}
+	return "", false
+}
+
 // TODO(rghetia): return an empty Tracestate when parsing tracestate header encounters an error.
 // Revisit to return additional boolean value to indicate parsing error when following issues
 // are resolved.
 // https://github.com/w3c/distributed-tracing/issues/172
 // https://github.com/w3c/distributed-tracing/issues/175
 func tracestateFromRequest(req *http.Request) *tracestate.Tracestate {
-	h := req.Header.Get(tracestateHeader)
+	h, _ := getRequestHeader(req, tracestateHeader, true)
 	if h == "" {
 		return nil
 	}
