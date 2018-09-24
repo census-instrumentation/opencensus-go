@@ -31,13 +31,14 @@ const (
 	envVarTags = "OC_RESOURCE_TAGS"
 )
 
-// Resource describes an entity about which data is exposed.
+// Resource describes an entity about which identifying information and metadata is exposed.
+// For example, a type "k8s.io/container" may hold tags describing the pod name and namespace.
 type Resource struct {
 	Type string
 	Tags map[string]string
 }
 
-// EncodeTags encodes a tags to a string as provided via the OC_RESOURCE_TAGS environment variable.
+// EncodeTags encodes a tags map to a string as provided via the OC_RESOURCE_TAGS environment variable.
 func EncodeTags(tags map[string]string) string {
 	sortedKeys := make([]string, 0, len(tags))
 	for k := range tags {
@@ -57,7 +58,7 @@ func EncodeTags(tags map[string]string) string {
 
 var tagRegex = regexp.MustCompile(`\s*([a-zA-Z0-9-_./]+)=(?:(".*?")|([^\s="]+))\s*,`)
 
-// DecodeTags decodes serialized a tag map as used in the OC_RESOURCE_TAGS variable.
+// DecodeTags decodes a serialized tag map as used in the OC_RESOURCE_TAGS variable.
 // A list of tags of the form `<key1>=<value1>,<key2>=<value2>,...` is accepted.
 // Domain names and paths are accepted as tag keys. Values may be quoted or unquoted in general.
 // If a value contains whitespaces, =, or " characters, it must always be quoted.
@@ -87,7 +88,8 @@ func DecodeTags(s string) (map[string]string, error) {
 	return m, nil
 }
 
-// FromEnv loads resource information from the OC_TYPE and OC_RESOURCE_TAGS environment variables.
+// FromEnv is a detector that loads resource information from the OC_RESOURCE_TYPE
+// and OC_RESOURCE_TAGS environment variables.
 func FromEnv(context.Context) (*Resource, error) {
 	res := &Resource{
 		Type: strings.TrimSpace(os.Getenv(envVarType)),
@@ -103,6 +105,8 @@ func FromEnv(context.Context) (*Resource, error) {
 	return res, nil
 }
 
+var _ Detector = FromEnv
+
 // Merge resource information from b into a. In case of a collision, a takes precedence.
 func Merge(a, b *Resource) *Resource {
 	if a == nil {
@@ -115,24 +119,23 @@ func Merge(a, b *Resource) *Resource {
 		Type: a.Type,
 		Tags: map[string]string{},
 	}
-	for k, v := range a.Tags {
-		res.Tags[k] = v
-	}
 	if res.Type == "" {
 		res.Type = b.Type
 	}
 	for k, v := range b.Tags {
-		if _, ok := res.Tags[k]; !ok {
-			res.Tags[k] = v
-		}
+		res.Tags[k] = v
+	}
+	// Tags from resource a overwrite tags from resource b.
+	for k, v := range a.Tags {
+		res.Tags[k] = v
 	}
 	return res
 }
 
 // Detector attempts to detect resource information.
-// If the detector cannot find specific information, the respective Resource fields should
-// be left empty but no error should be returned.
-// An error should only be returned if unexpected errors occur during lookup.
+// If the detector cannot find resource information, the returned resource is nil but no
+// error is returned.
+// An error is only returned on unexpected failures.
 type Detector func(context.Context) (*Resource, error)
 
 // NewDetectorFromResource returns a detector that will always return resource r.
