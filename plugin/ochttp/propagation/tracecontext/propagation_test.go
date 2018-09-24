@@ -48,10 +48,14 @@ func TestHTTPFormat_FromRequest(t *testing.T) {
 		wantOk bool
 	}{
 		{
-			name:   "unsupported version",
+			name:   "future version",
 			header: "02-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
-			wantSc: trace.SpanContext{},
-			wantOk: false,
+			wantSc: trace.SpanContext{
+				TraceID:      trace.TraceID{75, 249, 47, 53, 119, 179, 77, 166, 163, 206, 146, 157, 14, 14, 71, 54},
+				SpanID:       trace.SpanID{0, 240, 103, 170, 11, 169, 2, 183},
+				TraceOptions: trace.TraceOptions(1),
+			},
+			wantOk: true,
 		},
 		{
 			name:   "zero trace ID and span ID",
@@ -70,17 +74,13 @@ func TestHTTPFormat_FromRequest(t *testing.T) {
 			wantOk: true,
 		},
 		{
-			name:   "no options",
+			name:   "missing options",
 			header: "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7",
-			wantSc: trace.SpanContext{
-				TraceID:      trace.TraceID{75, 249, 47, 53, 119, 179, 77, 166, 163, 206, 146, 157, 14, 14, 71, 54},
-				SpanID:       trace.SpanID{0, 240, 103, 170, 11, 169, 2, 183},
-				TraceOptions: trace.TraceOptions(0),
-			},
-			wantOk: true,
+			wantSc: trace.SpanContext{},
+			wantOk: false,
 		},
 		{
-			name:   "missing options",
+			name:   "empty options",
 			header: "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-",
 			wantSc: trace.SpanContext{},
 			wantOk: false,
