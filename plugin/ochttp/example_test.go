@@ -32,15 +32,14 @@ func ExampleTransport() {
 
 	if err := view.Register(
 		// Register a few default views.
-		ochttp.ClientRequestCountByMethod,
-		ochttp.ClientResponseCountByStatusCode,
-		ochttp.ClientLatencyView,
-
+		ochttp.ClientSentBytesDistribution,
+		ochttp.ClientReceivedBytesDistribution,
+		ochttp.ClientRoundtripLatencyDistribution,
 		// Register a custom view.
 		&view.View{
-			Name:        "httpclient_latency_by_hostpath",
-			TagKeys:     []tag.Key{ochttp.Host, ochttp.Path},
-			Measure:     ochttp.ClientLatency,
+			Name:        "httpclient_latency_by_path",
+			TagKeys:     []tag.Key{ochttp.KeyClientPath},
+			Measure:     ochttp.ClientRoundtripLatency,
 			Aggregation: ochttp.DefaultLatencyDistribution,
 		},
 	); err != nil {
