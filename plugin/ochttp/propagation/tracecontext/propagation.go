@@ -121,7 +121,6 @@ func getRequestHeader(req *http.Request, name string, commaSeparated bool) (hdr 
 	default:
 		return strings.Join(v, ","), commaSeparated
 	}
-}
 
 // TODO(rghetia): return an empty Tracestate when parsing tracestate header encounters an error.
 // Revisit to return additional boolean value to indicate parsing error when following issues
