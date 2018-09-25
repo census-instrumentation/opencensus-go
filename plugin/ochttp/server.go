@@ -168,6 +168,7 @@ func (t *trackingResponseWriter) end(tags *addedTags) {
 
 		span := trace.FromContext(t.ctx)
 		span.SetStatus(TraceStatus(t.statusCode, t.statusLine))
+		span.AddAttributes(trace.Int64Attribute(StatusCodeAttribute, int64(t.statusCode)))
 
 		m := []stats.Measurement{
 			ServerLatency.M(float64(time.Since(t.start)) / float64(time.Millisecond)),
