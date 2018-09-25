@@ -20,6 +20,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"net/http"
+	"net/textproto"
 	"regexp"
 	"strings"
 
@@ -46,48 +47,54 @@ type HTTPFormat struct{}
 
 // SpanContextFromRequest extracts a span context from incoming requests.
 func (f *HTTPFormat) SpanContextFromRequest(req *http.Request) (sc trace.SpanContext, ok bool) {
-	h := req.Header.Get(traceparentHeader)
-	if h == "" {
+	h, ok := getRequestHeader(req, traceparentHeader, false)
+	if !ok {
 		return trace.SpanContext{}, false
 	}
 	sections := strings.Split(h, "-")
-	if len(sections) < 3 {
+	if len(sections) < 4 {
 		return trace.SpanContext{}, false
 	}
 
+	if len(sections[0]) != 2 {
+		return trace.SpanContext{}, false
+	}
 	ver, err := hex.DecodeString(sections[0])
 	if err != nil {
 		return trace.SpanContext{}, false
 	}
-	if len(ver) == 0 || int(ver[0]) > supportedVersion || int(ver[0]) > maxVersion {
+	version := int(ver[0])
+	if version > maxVersion {
 		return trace.SpanContext{}, false
 	}
 
+	if version == 0 && len(sections) != 4 {
+		return trace.SpanContext{}, false
+	}
+
+	if len(sections[1]) != 32 {
+		return trace.SpanContext{}, false
+	}
 	tid, err := hex.DecodeString(sections[1])
 	if err != nil {
 		return trace.SpanContext{}, false
 	}
-	if len(tid) != 16 {
-		return trace.SpanContext{}, false
-	}
 	copy(sc.TraceID[:], tid)
 
+	if len(sections[2]) != 16 {
+		return trace.SpanContext{}, false
+	}
 	sid, err := hex.DecodeString(sections[2])
 	if err != nil {
 		return trace.SpanContext{}, false
 	}
-	if len(sid) != 8 {
-		return trace.SpanContext{}, false
-	}
 	copy(sc.SpanID[:], sid)
 
-	if len(sections) == 4 {
-		opts, err := hex.DecodeString(sections[3])
-		if err != nil || len(opts) < 1 {
-			return trace.SpanContext{}, false
-		}
-		sc.TraceOptions = trace.TraceOptions(opts[0])
+	opts, err := hex.DecodeString(sections[3])
+	if err != nil || len(opts) < 1 {
+		return trace.SpanContext{}, false
 	}
+	sc.TraceOptions = trace.TraceOptions(opts[0])
 
 	// Don't allow all zero trace or span ID.
 	if sc.TraceID == [16]byte{} || sc.SpanID == [8]byte{} {
@@ -98,13 +105,31 @@ func (f *HTTPFormat) SpanContextFromRequest(req *http.Request) (sc trace.SpanCon
 	return sc, true
 }
 
+// getRequestHeader returns a combined header field according to RFC7230 section 3.2.2.
+// If commaSeparated is true, multiple header fields with the same field name using be
+// combined using ",".
+// If no header was found using the given name, "ok" would be false.
+// If more than one headers was found using the given name, while commaSeparated is false,
+// "ok" would be false.
+func getRequestHeader(req *http.Request, name string, commaSeparated bool) (hdr string, ok bool) {
+	v := req.Header[textproto.CanonicalMIMEHeaderKey(name)]
+	switch len(v) {
+	case 0:
+		return "", false
+	case 1:
+		return v[0], true
+	default:
+		return strings.Join(v, ","), commaSeparated
+	}
+}
+
 // TODO(rghetia): return an empty Tracestate when parsing tracestate header encounters an error.
 // Revisit to return additional boolean value to indicate parsing error when following issues
 // are resolved.
 // https://github.com/w3c/distributed-tracing/issues/172
 // https://github.com/w3c/distributed-tracing/issues/175
 func tracestateFromRequest(req *http.Request) *tracestate.Tracestate {
-	h := req.Header.Get(tracestateHeader)
+	h, _ := getRequestHeader(req, tracestateHeader, true)
 	if h == "" {
 		return nil
 	}
