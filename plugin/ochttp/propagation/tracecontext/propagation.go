@@ -20,6 +20,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"net/http"
+	"net/textproto"
 	"regexp"
 	"strings"
 
@@ -104,17 +105,22 @@ func (f *HTTPFormat) SpanContextFromRequest(req *http.Request) (sc trace.SpanCon
 	return sc, true
 }
 
+// getRequestHeader returns a combined header field according to RFC7230 section 3.2.2.
+// If commaSeparated is true, multiple header fields with the same field name using be
+// combined using ",".
+// If no header was found using the given name, "ok" would be false.
+// If more than one headers was found using the given name, while commaSeparated is false,
+// "ok" would be false.
 func getRequestHeader(req *http.Request, name string, commaSeparated bool) (hdr string, ok bool) {
-	ok = false
-	for k, v := range req.Header {
-		if strings.EqualFold(k, name) {
-			if commaSeparated || len(v) == 1 {
-				ok = true
-			}
-			return strings.Join(v, ","), ok
-		}
+	v := req.Header[textproto.CanonicalMIMEHeaderKey(name)]
+	switch len(v) {
+	case 0:
+		return "", false
+	case 1:
+		return v[0], true
+	default:
+		return strings.Join(v, ","), commaSeparated
 	}
-	return "", false
 }
 
 // TODO(rghetia): return an empty Tracestate when parsing tracestate header encounters an error.
