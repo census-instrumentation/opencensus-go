@@ -124,9 +124,9 @@ func (o *Options) onError(err error) {
 // to Untyped Metric, CountData will be a Counter Metric,
 // DistributionData will be a Histogram Metric.
 func (e *Exporter) ExportView(vd *view.Data) {
-	if len(vd.Rows) == 0 {
-		return
-	}
+	// if len(vd.Rows) == 0 {
+	// 	return
+	// }
 	e.c.addViewData(vd)
 }
 
@@ -185,19 +185,26 @@ func (c *collector) Describe(ch chan<- *prometheus.Desc) {
 func (c *collector) Collect(ch chan<- prometheus.Metric) {
 	// We need a copy of all the view data up until this point.
 	viewData := c.cloneViewData()
-
 	for _, vd := range viewData {
 		sig := viewSignature(c.opts.Namespace, vd.View)
 		c.registeredViewsMu.Lock()
 		desc := c.registeredViews[sig]
 		c.registeredViewsMu.Unlock()
-
-		for _, row := range vd.Rows {
-			metric, err := c.toMetric(desc, vd.View, row)
+		if len(vd.Rows) == 0 {
+			metric, err := c.toMetric(desc, vd.View, &view.Row{Data: &view.CountData{}})
 			if err != nil {
 				c.opts.onError(err)
 			} else {
 				ch <- metric
+			}
+		} else {
+			for _, row := range vd.Rows {
+				metric, err := c.toMetric(desc, vd.View, row)
+				if err != nil {
+					c.opts.onError(err)
+				} else {
+					ch <- metric
+				}
 			}
 		}
 	}
