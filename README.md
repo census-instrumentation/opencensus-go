@@ -56,7 +56,7 @@ can implement their own exporters by implementing the exporter interfaces
 * [AWS X-Ray][exporter-xray] for traces
 * [Datadog][exporter-datadog] for stats and traces
 * [Graphite][exporter-graphite] for stats
-* [HoneyComb][exporter-honeycomb] for traces
+* [Honeycomb][exporter-honeycomb] for traces
 
 ## Overview
 
