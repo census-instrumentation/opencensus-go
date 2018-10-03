@@ -36,7 +36,12 @@ func TestSpanAnnotatingClientTrace(t *testing.T) {
 
 	trace.RegisterExporter(recorder)
 
-	tr := ochttp.Transport{NewClientTrace: ochttp.NewSpanAnnotatingClientTrace}
+	tr := ochttp.Transport{
+		NewClientTrace: ochttp.NewSpanAnnotatingClientTrace,
+		StartOptions: trace.StartOptions{
+			Sampler: trace.AlwaysSample(),
+		},
+	}
 
 	req, err := http.NewRequest("POST", server.URL, strings.NewReader("req-body"))
 	if err != nil {
@@ -55,7 +60,7 @@ func TestSpanAnnotatingClientTrace(t *testing.T) {
 	}
 
 	if got, want := len(recorder.spans), 1; got != want {
-		t.Errorf("span count=%d; want=%d", got, want)
+		t.Fatalf("span count=%d; want=%d", got, want)
 	}
 
 	var annotations []string

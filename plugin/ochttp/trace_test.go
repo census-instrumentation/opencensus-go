@@ -200,8 +200,6 @@ func (c *collector) ExportSpan(s *trace.SpanData) {
 }
 
 func TestEndToEnd(t *testing.T) {
-	trace.ApplyConfig(trace.Config{DefaultSampler: trace.AlwaysSample()})
-
 	tc := []struct {
 		name            string
 		handler         *Handler
@@ -246,12 +244,10 @@ func TestEndToEnd(t *testing.T) {
 			// Start the server.
 			serverDone := make(chan struct{})
 			serverReturn := make(chan time.Time)
+			tt.handler.StartOptions.Sampler = trace.AlwaysSample()
 			url := serveHTTP(tt.handler, serverDone, serverReturn)
 
-			// Start a root Span in the client.
-			ctx, root := trace.StartSpan(
-				context.Background(),
-				"top-level")
+			ctx := context.Background()
 			// Make the request.
 			req, err := http.NewRequest(
 				http.MethodPost,
@@ -261,7 +257,11 @@ func TestEndToEnd(t *testing.T) {
 				t.Fatal(err)
 			}
 			req = req.WithContext(ctx)
-			resp, err := tt.transport.RoundTrip(req)
+			tt.transport.StartOptions.Sampler = trace.AlwaysSample()
+			c := &http.Client{
+				Transport: tt.transport,
+			}
+			resp, err := c.Do(req)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -328,9 +328,6 @@ func TestEndToEnd(t *testing.T) {
 					t.Errorf("len(server.Links) = %d; want %d", got, want)
 				} else {
 					link := server.Links[0]
-					if got, want := link.TraceID, root.SpanContext().TraceID; got != want {
-						t.Errorf("link.TraceID = %q; want %q", got, want)
-					}
 					if got, want := link.Type, trace.LinkTypeChild; got != want {
 						t.Errorf("link.Type = %v; want %v", got, want)
 					}
@@ -411,7 +408,12 @@ func TestFormatSpanName(t *testing.T) {
 	defer server.Close()
 
 	client := &http.Client{
-		Transport: &Transport{FormatSpanName: formatSpanName},
+		Transport: &Transport{
+			FormatSpanName: formatSpanName,
+			StartOptions: trace.StartOptions{
+				Sampler: trace.AlwaysSample(),
+			},
+		},
 	}
 
 	tests := []struct {
