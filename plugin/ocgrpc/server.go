@@ -37,6 +37,8 @@ type ServerHandler struct {
 	// Be aware that if you leave this false (the default) on a public-facing
 	// server, callers will be able to send tracing metadata in gRPC headers
 	// and trigger traces in your backend.
+	//
+	// Tags will only be read from incoming RPCs if IsPublicEndpoint is true.
 	IsPublicEndpoint bool
 
 	// StartOptions to use for to spans started around RPCs handled by this server.

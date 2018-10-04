@@ -25,7 +25,7 @@ import (
 )
 
 // statsTagRPC gets the tag.Map populated by the application code, serializes
-// its tags into the GRPC metadata in order to be sent to the server.
+// its tags into the gRPC metadata in order to be sent to the server.
 func (h *ClientHandler) statsTagRPC(ctx context.Context, info *stats.RPCTagInfo) context.Context {
 	startTime := time.Now()
 	if info == nil {

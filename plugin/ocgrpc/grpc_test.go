@@ -68,9 +68,9 @@ func TestClientHandler(t *testing.T) {
 
 func TestServerHandler(t *testing.T) {
 	tests := []struct {
-		name         string
-		newTrace     bool
-		expectTraces int
+		name           string
+		publicEndpoint bool
+		expectTraces   int
 	}{
 		{"trust_metadata", false, 1},
 		{"no_trust_metadata", true, 0},
@@ -82,7 +82,7 @@ func TestServerHandler(t *testing.T) {
 			ctx := context.Background()
 
 			handler := &ServerHandler{
-				IsPublicEndpoint: test.newTrace,
+				IsPublicEndpoint: test.publicEndpoint,
 				StartOptions: trace.StartOptions{
 					Sampler: trace.ProbabilitySampler(0.0),
 				},

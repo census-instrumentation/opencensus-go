@@ -39,8 +39,10 @@ func (h *ServerHandler) statsTagRPC(ctx context.Context, info *stats.RPCTagInfo)
 		startTime: startTime,
 		method:    info.FullMethodName,
 	}
-	propagated := h.extractPropagatedTags(ctx)
-	ctx = tag.NewContext(ctx, propagated)
+	if !h.IsPublicEndpoint {
+		propagated := h.extractPropagatedTags(ctx)
+		ctx = tag.NewContext(ctx, propagated)
+	}
 	ctx, _ = tag.New(ctx, tag.Upsert(KeyServerMethod, methodName(info.FullMethodName)))
 	return context.WithValue(ctx, rpcDataKey, d)
 }
