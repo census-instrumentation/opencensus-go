@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -673,5 +674,41 @@ func TestStartSpanAfterEnd(t *testing.T) {
 	}
 	if got, want := spans["span-2"].ParentSpanID, spans["span-1"].SpanID; got != want {
 		t.Errorf("span-2.ParentSpanID=%q; want %q (span1.SpanID)", got, want)
+	}
+}
+
+func TestNilSpanEnd(t *testing.T) {
+	var span *Span
+	span.End()
+}
+
+func TestExecutionTracerTaskEnd(t *testing.T) {
+	var n uint64
+	executionTracerTaskEnd := func() {
+		atomic.AddUint64(&n, 1)
+	}
+
+	var spans []*Span
+	_, span := StartSpan(context.Background(), "foo", WithSampler(NeverSample()))
+	span.executionTracerTaskEnd = executionTracerTaskEnd
+	spans = append(spans, span) // never sample
+
+	_, span = StartSpanWithRemoteParent(context.Background(), "foo", SpanContext{
+		TraceID:      TraceID{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
+		SpanID:       SpanID{0, 1, 2, 3, 4, 5, 6, 7},
+		TraceOptions: 0,
+	})
+	span.executionTracerTaskEnd = executionTracerTaskEnd
+	spans = append(spans, span) // parent not sampled
+
+	_, span = StartSpan(context.Background(), "foo", WithSampler(AlwaysSample()))
+	span.executionTracerTaskEnd = executionTracerTaskEnd
+	spans = append(spans, span) // always sample
+
+	for _, span := range spans {
+		span.End()
+	}
+	if got, want := n, uint64(len(spans)); got != want {
+		t.Fatalf("Execution tracer task ended for %v spans; want %v", got, want)
 	}
 }
