@@ -56,12 +56,11 @@ func EncodeLabels(labels map[string]string) string {
 	return s
 }
 
-var labelRegex = regexp.MustCompile(`\s*([a-zA-Z0-9-_./]+)=(?:(".*?")|([^\s="]+))\s*,`)
+var labelRegex = regexp.MustCompile(`^\s*([[:ascii:]]{1,256}?)=("[[:ascii:]]{0,256}?")\s*,`)
 
 // DecodeLabels decodes a serialized label map as used in the OC_RESOURCE_labelS variable.
-// A list of labels of the form `<key1>=<value1>,<key2>=<value2>,...` is accepted.
-// Domain names and paths are accepted as label keys. Values may be quoted or unquoted in general.
-// If a value contains whitespaces, =, or " characters, it must always be quoted.
+// A list of labels of the form `<key1>="<value1>",<key2>="<value2>",...` is accepted.
+// Domain names and paths are accepted as label keys.
 func DecodeLabels(s string) (map[string]string, error) {
 	m := map[string]string{}
 	// Ensure a trailing comma, which allows us to keep the regex simpler

@@ -80,17 +80,17 @@ func TestDecodeLabels(t *testing.T) {
 		wantFail   bool
 	}{
 		{
-			encoded:    `example.org/test-1="test ¥ \"" ,un=quøted,  Abc=Def`,
-			wantLabels: map[string]string{"example.org/test-1": "test ¥ \"", "un": "quøted", "Abc": "Def"},
+			encoded:    `example.org/test-1="test $ \"" ,  Abc="Def"`,
+			wantLabels: map[string]string{"example.org/test-1": "test $ \"", "Abc": "Def"},
 		}, {
-			encoded:    `single=key`,
+			encoded:    `single="key"`,
 			wantLabels: map[string]string{"single": "key"},
 		},
-		{encoded: `invalid-char-ü=test`, wantFail: true},
+		{encoded: `invalid-char-ü="test"`, wantFail: true},
+		{encoded: `invalid-char="ü-test"`, wantFail: true},
 		{encoded: `missing="trailing-quote`, wantFail: true},
 		{encoded: `missing=leading-quote"`, wantFail: true},
-		{encoded: `extra=chars, a`, wantFail: true},
-		{encoded: `a, extra=chars`, wantFail: true},
+		{encoded: `extra="chars", a`, wantFail: true},
 	}
 	for i, c := range cases {
 		t.Run(fmt.Sprintf("case-%d", i), func(t *testing.T) {
