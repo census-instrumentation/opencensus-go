@@ -27,21 +27,21 @@ import (
 )
 
 const (
-	envVarType = "OC_RESOURCE_TYPE"
-	envVarTags = "OC_RESOURCE_TAGS"
+	EnvVarType   = "OC_RESOURCE_TYPE"
+	EnvVarLabels = "OC_RESOURCE_labelS"
 )
 
 // Resource describes an entity about which identifying information and metadata is exposed.
-// For example, a type "k8s.io/container" may hold tags describing the pod name and namespace.
+// For example, a type "k8s.io/container" may hold labels describing the pod name and namespace.
 type Resource struct {
-	Type string
-	Tags map[string]string
+	Type   string
+	Labels map[string]string
 }
 
-// EncodeTags encodes a tags map to a string as provided via the OC_RESOURCE_TAGS environment variable.
-func EncodeTags(tags map[string]string) string {
-	sortedKeys := make([]string, 0, len(tags))
-	for k := range tags {
+// EncodeLabels encodes a labels map to a string as provided via the OC_RESOURCE_labelS environment variable.
+func EncodeLabels(labels map[string]string) string {
+	sortedKeys := make([]string, 0, len(labels))
+	for k := range labels {
 		sortedKeys = append(sortedKeys, k)
 	}
 	sort.Strings(sortedKeys)
@@ -51,26 +51,26 @@ func EncodeTags(tags map[string]string) string {
 		if i > 0 {
 			s += ","
 		}
-		s += k + "=" + strconv.Quote(tags[k])
+		s += k + "=" + strconv.Quote(labels[k])
 	}
 	return s
 }
 
-var tagRegex = regexp.MustCompile(`\s*([a-zA-Z0-9-_./]+)=(?:(".*?")|([^\s="]+))\s*,`)
+var labelRegex = regexp.MustCompile(`\s*([a-zA-Z0-9-_./]+)=(?:(".*?")|([^\s="]+))\s*,`)
 
-// DecodeTags decodes a serialized tag map as used in the OC_RESOURCE_TAGS variable.
-// A list of tags of the form `<key1>=<value1>,<key2>=<value2>,...` is accepted.
-// Domain names and paths are accepted as tag keys. Values may be quoted or unquoted in general.
+// DecodeLabels decodes a serialized label map as used in the OC_RESOURCE_labelS variable.
+// A list of labels of the form `<key1>=<value1>,<key2>=<value2>,...` is accepted.
+// Domain names and paths are accepted as label keys. Values may be quoted or unquoted in general.
 // If a value contains whitespaces, =, or " characters, it must always be quoted.
-func DecodeTags(s string) (map[string]string, error) {
+func DecodeLabels(s string) (map[string]string, error) {
 	m := map[string]string{}
 	// Ensure a trailing comma, which allows us to keep the regex simpler
 	s = strings.TrimRight(strings.TrimSpace(s), ",") + ","
 
 	for len(s) > 0 {
-		match := tagRegex.FindStringSubmatch(s)
+		match := labelRegex.FindStringSubmatch(s)
 		if len(match) == 0 {
-			return nil, fmt.Errorf("invalid tag formatting, remainder: %s", s)
+			return nil, fmt.Errorf("invalid label formatting, remainder: %s", s)
 		}
 		v := match[2]
 		if v == "" {
@@ -78,7 +78,7 @@ func DecodeTags(s string) (map[string]string, error) {
 		} else {
 			var err error
 			if v, err = strconv.Unquote(v); err != nil {
-				return nil, fmt.Errorf("invalid tag formatting, remainder: %s, err: %s", s, err)
+				return nil, fmt.Errorf("invalid label formatting, remainder: %s, err: %s", s, err)
 			}
 		}
 		m[match[1]] = v
@@ -89,17 +89,17 @@ func DecodeTags(s string) (map[string]string, error) {
 }
 
 // FromEnv is a detector that loads resource information from the OC_RESOURCE_TYPE
-// and OC_RESOURCE_TAGS environment variables.
+// and OC_RESOURCE_labelS environment variables.
 func FromEnv(context.Context) (*Resource, error) {
 	res := &Resource{
-		Type: strings.TrimSpace(os.Getenv(envVarType)),
+		Type: strings.TrimSpace(os.Getenv(EnvVarType)),
 	}
-	tags := strings.TrimSpace(os.Getenv(envVarTags))
-	if tags == "" {
+	labels := strings.TrimSpace(os.Getenv(EnvVarLabels))
+	if labels == "" {
 		return res, nil
 	}
 	var err error
-	if res.Tags, err = DecodeTags(tags); err != nil {
+	if res.Labels, err = DecodeLabels(labels); err != nil {
 		return nil, err
 	}
 	return res, nil
@@ -116,18 +116,18 @@ func Merge(a, b *Resource) *Resource {
 		return a
 	}
 	res := &Resource{
-		Type: a.Type,
-		Tags: map[string]string{},
+		Type:   a.Type,
+		Labels: map[string]string{},
 	}
 	if res.Type == "" {
 		res.Type = b.Type
 	}
-	for k, v := range b.Tags {
-		res.Tags[k] = v
+	for k, v := range b.Labels {
+		res.Labels[k] = v
 	}
-	// Tags from resource a overwrite tags from resource b.
-	for k, v := range a.Tags {
-		res.Tags[k] = v
+	// Labels from resource a overwrite labels from resource b.
+	for k, v := range a.Labels {
+		res.Labels[k] = v
 	}
 	return res
 }

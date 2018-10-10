@@ -28,38 +28,38 @@ func TestMerge(t *testing.T) {
 	}{
 		{
 			a: &Resource{
-				Type: "t1",
-				Tags: map[string]string{"a": "1", "b": "2"},
+				Type:   "t1",
+				Labels: map[string]string{"a": "1", "b": "2"},
 			},
 			b: &Resource{
-				Type: "t2",
-				Tags: map[string]string{"a": "1", "b": "3", "c": "4"},
+				Type:   "t2",
+				Labels: map[string]string{"a": "1", "b": "3", "c": "4"},
 			},
 			want: &Resource{
-				Type: "t1",
-				Tags: map[string]string{"a": "1", "b": "2", "c": "4"},
+				Type:   "t1",
+				Labels: map[string]string{"a": "1", "b": "2", "c": "4"},
 			},
 		},
 		{
 			a: nil,
 			b: &Resource{
-				Type: "t1",
-				Tags: map[string]string{"a": "1"},
+				Type:   "t1",
+				Labels: map[string]string{"a": "1"},
 			},
 			want: &Resource{
-				Type: "t1",
-				Tags: map[string]string{"a": "1"},
+				Type:   "t1",
+				Labels: map[string]string{"a": "1"},
 			},
 		},
 		{
 			a: &Resource{
-				Type: "t1",
-				Tags: map[string]string{"a": "1"},
+				Type:   "t1",
+				Labels: map[string]string{"a": "1"},
 			},
 			b: nil,
 			want: &Resource{
-				Type: "t1",
-				Tags: map[string]string{"a": "1"},
+				Type:   "t1",
+				Labels: map[string]string{"a": "1"},
 			},
 		},
 	}
@@ -73,18 +73,18 @@ func TestMerge(t *testing.T) {
 	}
 }
 
-func TestDecodeTags(t *testing.T) {
+func TestDecodeLabels(t *testing.T) {
 	cases := []struct {
-		encoded  string
-		wantTags map[string]string
-		wantFail bool
+		encoded    string
+		wantLabels map[string]string
+		wantFail   bool
 	}{
 		{
-			encoded:  `example.org/test-1="test ¥ \"" ,un=quøted,  Abc=Def`,
-			wantTags: map[string]string{"example.org/test-1": "test ¥ \"", "un": "quøted", "Abc": "Def"},
+			encoded:    `example.org/test-1="test ¥ \"" ,un=quøted,  Abc=Def`,
+			wantLabels: map[string]string{"example.org/test-1": "test ¥ \"", "un": "quøted", "Abc": "Def"},
 		}, {
-			encoded:  `single=key`,
-			wantTags: map[string]string{"single": "key"},
+			encoded:    `single=key`,
+			wantLabels: map[string]string{"single": "key"},
 		},
 		{encoded: `invalid-char-ü=test`, wantFail: true},
 		{encoded: `missing="trailing-quote`, wantFail: true},
@@ -94,22 +94,22 @@ func TestDecodeTags(t *testing.T) {
 	}
 	for i, c := range cases {
 		t.Run(fmt.Sprintf("case-%d", i), func(t *testing.T) {
-			res, err := DecodeTags(c.encoded)
+			res, err := DecodeLabels(c.encoded)
 			if err != nil && !c.wantFail {
 				t.Fatalf("unwanted error: %s", err)
 			}
 			if c.wantFail && err == nil {
 				t.Fatalf("wanted failure but got none, result: %v", res)
 			}
-			if !reflect.DeepEqual(res, c.wantTags) {
-				t.Fatalf("wanted result %v, got %v", c.wantTags, res)
+			if !reflect.DeepEqual(res, c.wantLabels) {
+				t.Fatalf("wanted result %v, got %v", c.wantLabels, res)
 			}
 		})
 	}
 }
 
-func TestEncodeTags(t *testing.T) {
-	got := EncodeTags(map[string]string{
+func TestEncodeLabels(t *testing.T) {
+	got := EncodeLabels(map[string]string{
 		"example.org/test-1": "test ¥ \"",
 		"un":                 "quøted",
 		"Abc":                "Def",
@@ -121,15 +121,15 @@ func TestEncodeTags(t *testing.T) {
 
 func TestNewDetectorFromResource(t *testing.T) {
 	got, err := NewDetectorFromResource(&Resource{
-		Type: "t",
-		Tags: map[string]string{"a": "1", "b": "2"},
+		Type:   "t",
+		Labels: map[string]string{"a": "1", "b": "2"},
 	})(context.Background())
 	if err != nil {
 		t.Fatalf("unexpected error: %s", err)
 	}
 	want := &Resource{
-		Type: "t",
-		Tags: map[string]string{"a": "1", "b": "2"},
+		Type:   "t",
+		Labels: map[string]string{"a": "1", "b": "2"},
 	}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("unexpected resource: want %v, got %v", want, got)
@@ -139,20 +139,20 @@ func TestNewDetectorFromResource(t *testing.T) {
 func TestChainedDetector(t *testing.T) {
 	got, err := ChainedDetector(
 		NewDetectorFromResource(&Resource{
-			Type: "t1",
-			Tags: map[string]string{"a": "1", "b": "2"},
+			Type:   "t1",
+			Labels: map[string]string{"a": "1", "b": "2"},
 		}),
 		NewDetectorFromResource(&Resource{
-			Type: "t2",
-			Tags: map[string]string{"a": "11", "c": "3"},
+			Type:   "t2",
+			Labels: map[string]string{"a": "11", "c": "3"},
 		}),
 	)(context.Background())
 	if err != nil {
 		t.Fatalf("unexpected error: %s", err)
 	}
 	want := &Resource{
-		Type: "t1",
-		Tags: map[string]string{"a": "1", "b": "2", "c": "3"},
+		Type:   "t1",
+		Labels: map[string]string{"a": "1", "b": "2", "c": "3"},
 	}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("unexpected resource: want %v, got %v", want, got)
@@ -161,8 +161,8 @@ func TestChainedDetector(t *testing.T) {
 	wantErr := errors.New("err1")
 	got, err = ChainedDetector(
 		NewDetectorFromResource(&Resource{
-			Type: "t1",
-			Tags: map[string]string{"a": "1", "b": "2"},
+			Type:   "t1",
+			Labels: map[string]string{"a": "1", "b": "2"},
 		}),
 		func(context.Context) (*Resource, error) {
 			return nil, wantErr
