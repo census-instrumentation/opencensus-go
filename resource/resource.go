@@ -28,7 +28,7 @@ import (
 
 const (
 	EnvVarType   = "OC_RESOURCE_TYPE"
-	EnvVarLabels = "OC_RESOURCE_labelS"
+	EnvVarLabels = "OC_RESOURCE_LABELS"
 )
 
 // Resource describes an entity about which identifying information and metadata is exposed.
