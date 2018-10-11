@@ -65,7 +65,7 @@ func TestMerge(t *testing.T) {
 	}
 	for i, c := range cases {
 		t.Run(fmt.Sprintf("case-%d", i), func(t *testing.T) {
-			res := Merge(c.a, c.b)
+			res := merge(c.a, c.b)
 			if !reflect.DeepEqual(res, c.want) {
 				t.Fatalf("unwanted result: want %+v, got %+v", c.want, res)
 			}
@@ -119,33 +119,20 @@ func TestEncodeLabels(t *testing.T) {
 	}
 }
 
-func TestNewDetectorFromResource(t *testing.T) {
-	got, err := NewDetectorFromResource(&Resource{
-		Type:   "t",
-		Labels: map[string]string{"a": "1", "b": "2"},
-	})(context.Background())
-	if err != nil {
-		t.Fatalf("unexpected error: %s", err)
-	}
-	want := &Resource{
-		Type:   "t",
-		Labels: map[string]string{"a": "1", "b": "2"},
-	}
-	if !reflect.DeepEqual(got, want) {
-		t.Fatalf("unexpected resource: want %v, got %v", want, got)
-	}
-}
-
 func TestChainedDetector(t *testing.T) {
 	got, err := ChainedDetector(
-		NewDetectorFromResource(&Resource{
-			Type:   "t1",
-			Labels: map[string]string{"a": "1", "b": "2"},
-		}),
-		NewDetectorFromResource(&Resource{
-			Type:   "t2",
-			Labels: map[string]string{"a": "11", "c": "3"},
-		}),
+		func(context.Context) (*Resource, error) {
+			return &Resource{
+				Type:   "t1",
+				Labels: map[string]string{"a": "1", "b": "2"},
+			}, nil
+		},
+		func(context.Context) (*Resource, error) {
+			return &Resource{
+				Type:   "t2",
+				Labels: map[string]string{"a": "11", "c": "3"},
+			}, nil
+		},
 	)(context.Background())
 	if err != nil {
 		t.Fatalf("unexpected error: %s", err)
@@ -160,10 +147,12 @@ func TestChainedDetector(t *testing.T) {
 
 	wantErr := errors.New("err1")
 	got, err = ChainedDetector(
-		NewDetectorFromResource(&Resource{
-			Type:   "t1",
-			Labels: map[string]string{"a": "1", "b": "2"},
-		}),
+		func(context.Context) (*Resource, error) {
+			return &Resource{
+				Type:   "t1",
+				Labels: map[string]string{"a": "1", "b": "2"},
+			}, nil
+		},
 		func(context.Context) (*Resource, error) {
 			return nil, wantErr
 		},

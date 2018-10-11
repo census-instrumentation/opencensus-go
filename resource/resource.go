@@ -38,7 +38,7 @@ type Resource struct {
 	Labels map[string]string
 }
 
-// EncodeLabels encodes a labels map to a string as provided via the OC_RESOURCE_labelS environment variable.
+// EncodeLabels encodes a labels map to a string as provided via the OC_RESOURCE_LABELS environment variable.
 func EncodeLabels(labels map[string]string) string {
 	sortedKeys := make([]string, 0, len(labels))
 	for k := range labels {
@@ -58,7 +58,7 @@ func EncodeLabels(labels map[string]string) string {
 
 var labelRegex = regexp.MustCompile(`^\s*([[:ascii:]]{1,256}?)=("[[:ascii:]]{0,256}?")\s*,`)
 
-// DecodeLabels decodes a serialized label map as used in the OC_RESOURCE_labelS variable.
+// DecodeLabels decodes a serialized label map as used in the OC_RESOURCE_LABELS variable.
 // A list of labels of the form `<key1>="<value1>",<key2>="<value2>",...` is accepted.
 // Domain names and paths are accepted as label keys.
 func DecodeLabels(s string) (map[string]string, error) {
@@ -106,8 +106,8 @@ func FromEnv(context.Context) (*Resource, error) {
 
 var _ Detector = FromEnv
 
-// Merge resource information from b into a. In case of a collision, a takes precedence.
-func Merge(a, b *Resource) *Resource {
+// merge resource information from b into a. In case of a collision, a takes precedence.
+func merge(a, b *Resource) *Resource {
 	if a == nil {
 		return b
 	}
@@ -137,15 +137,9 @@ func Merge(a, b *Resource) *Resource {
 // An error is only returned on unexpected failures.
 type Detector func(context.Context) (*Resource, error)
 
-// NewDetectorFromResource returns a detector that will always return resource r.
-func NewDetectorFromResource(r *Resource) Detector {
-	return func(context.Context) (*Resource, error) {
-		return r, nil
-	}
-}
-
-// ChainedDetector returns a Detector that calls all input detectors sequentially an
-// merges each result with the previous one.
+// ChainedDetector returns a Detector that calls all input detectors in order and
+// merges each result with the previous one. In case a type of label key is already set,
+// the first set value is takes precedence.
 // It returns on the first error that a sub-detector encounters.
 func ChainedDetector(detectors ...Detector) Detector {
 	return func(ctx context.Context) (*Resource, error) {
@@ -162,7 +156,7 @@ func detectAll(ctx context.Context, detectors ...Detector) (*Resource, error) {
 		if err != nil {
 			return nil, err
 		}
-		res = Merge(res, r)
+		res = merge(res, r)
 	}
 	return res, nil
 }
