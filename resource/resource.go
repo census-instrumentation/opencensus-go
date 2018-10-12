@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package resource defines the resource type and provides helpers to derive them as well
-// as the generic population through environment variables.
+// Package resource provides functionality for resource, which capture
+// identifying information about the entities for which signals are exported.
 package resource
 
 import (
@@ -61,6 +61,7 @@ var labelRegex = regexp.MustCompile(`^\s*([[:ascii:]]{1,256}?)=("[[:ascii:]]{0,2
 // DecodeLabels decodes a serialized label map as used in the OC_RESOURCE_LABELS variable.
 // A list of labels of the form `<key1>="<value1>",<key2>="<value2>",...` is accepted.
 // Domain names and paths are accepted as label keys.
+// Most users will want to use FromEnv instead.
 func DecodeLabels(s string) (map[string]string, error) {
 	m := map[string]string{}
 	// Ensure a trailing comma, which allows us to keep the regex simpler
@@ -137,11 +138,11 @@ func merge(a, b *Resource) *Resource {
 // An error is only returned on unexpected failures.
 type Detector func(context.Context) (*Resource, error)
 
-// ChainedDetector returns a Detector that calls all input detectors in order and
+// MultiDetector returns a Detector that calls all input detectors in order and
 // merges each result with the previous one. In case a type of label key is already set,
 // the first set value is takes precedence.
 // It returns on the first error that a sub-detector encounters.
-func ChainedDetector(detectors ...Detector) Detector {
+func MultiDetector(detectors ...Detector) Detector {
 	return func(ctx context.Context) (*Resource, error) {
 		return detectAll(ctx, detectors...)
 	}

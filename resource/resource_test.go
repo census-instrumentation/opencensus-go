@@ -119,8 +119,8 @@ func TestEncodeLabels(t *testing.T) {
 	}
 }
 
-func TestChainedDetector(t *testing.T) {
-	got, err := ChainedDetector(
+func TestMultiDetector(t *testing.T) {
+	got, err := MultiDetector(
 		func(context.Context) (*Resource, error) {
 			return &Resource{
 				Type:   "t1",
@@ -146,7 +146,7 @@ func TestChainedDetector(t *testing.T) {
 	}
 
 	wantErr := errors.New("err1")
-	got, err = ChainedDetector(
+	got, err = MultiDetector(
 		func(context.Context) (*Resource, error) {
 			return &Resource{
 				Type:   "t1",
