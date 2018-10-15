@@ -19,7 +19,7 @@ import "testing"
 
 func TestCountFormatter(t *testing.T) {
 	tests := []struct {
-		in   int
+		in   int64
 		want string
 	}{
 		{-1, " "},
@@ -30,6 +30,9 @@ func TestCountFormatter(t *testing.T) {
 		{1e6, "1.000 M "},
 		{1e9, "1.000 G "},
 		{1e8 + 2e9, "2.100 G "},
+		{1e12, "1.000 T "},
+		{1e15, "1.000 P "},
+		{1e18, "1.000 E "},
 	}
 
 	for _, tt := range tests {
