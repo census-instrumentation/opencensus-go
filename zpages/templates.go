@@ -57,7 +57,7 @@ func parseTemplate(name string) *template.Template {
 	return template.Must(template.New(name).Funcs(templateFunctions).Parse(string(text)))
 }
 
-func countFormatter(num int64) string {
+func countFormatter(num uint64) string {
 	if num <= 0 {
 		return " "
 	}

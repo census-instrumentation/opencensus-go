@@ -19,10 +19,9 @@ import "testing"
 
 func TestCountFormatter(t *testing.T) {
 	tests := []struct {
-		in   int64
+		in   uint64
 		want string
 	}{
-		{-1, " "},
 		{0, " "},
 		{1, "1"},
 		{1024, "1024"},
