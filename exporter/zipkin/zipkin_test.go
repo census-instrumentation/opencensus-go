@@ -15,14 +15,18 @@
 package zipkin
 
 import (
+	"bytes"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+	"net/http/httptest"
 	"reflect"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
+	openzipkin "github.com/openzipkin/zipkin-go"
 	"github.com/openzipkin/zipkin-go/model"
 	httpreporter "github.com/openzipkin/zipkin-go/reporter/http"
 	"go.opencensus.io/trace"
@@ -212,7 +216,7 @@ func TestExport(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		got := zipkinSpan(tt.span, nil)
+		got := zipkinSpan(tt.span, nil, nil)
 		if len(got.Annotations) != len(tt.want.Annotations) {
 			t.Fatalf("zipkinSpan: got %d annotations in span, want %d", len(got.Annotations), len(tt.want.Annotations))
 		}
@@ -252,4 +256,85 @@ func TestExport(t *testing.T) {
 			t.Errorf("Export:\n\tgot  %#v\n\twant %#v", got, tt.want)
 		}
 	}
+}
+
+// Ensure that we can pass in a remote endpoint but also that it is
+// transmitted to its origina. Issue #959
+func TestRemoteEndpointOptionAndTransmission(t *testing.T) {
+	type lockableBuffer struct {
+		sync.Mutex
+		*bytes.Buffer
+	}
+
+	buf := &lockableBuffer{Mutex: sync.Mutex{}, Buffer: new(bytes.Buffer)}
+
+	cst := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		blob, _ := ioutil.ReadAll(r.Body)
+		_ = r.Body.Close()
+		buf.Lock()
+		buf.Write(blob)
+		buf.Unlock()
+	}))
+	defer cst.Close()
+
+	reporter := httpreporter.NewReporter(cst.URL, httpreporter.BatchInterval(10*time.Millisecond))
+	localEndpoint, _ := openzipkin.NewEndpoint("app", "10.0.0.17")
+	remoteEndpoint, _ := openzipkin.NewEndpoint("memcached", "10.0.0.42")
+	exp := NewExporter(reporter, localEndpoint, WithRemoteEndpoint(remoteEndpoint))
+	exp.ExportSpan(&trace.SpanData{
+		Name: "Test",
+	})
+
+	// Wait for the upload
+	<-time.After(300 * time.Millisecond)
+
+	want := `[{
+            "traceId":"0000000000000000",
+            "id":"0000000000000000",
+            "name":"Test",
+            "localEndpoint":{
+                "serviceName":"app",
+                "ipv4":"10.0.0.17"
+            },
+            "remoteEndpoint":{
+                "serviceName":"memcached","ipv4":"10.0.0.42"
+            }
+        }]`
+
+	buf.Lock()
+	got := buf.String()
+	buf.Unlock()
+
+	// Since the reported JSON could contain spaces and other indentation,
+	// strip spaces out but also the fields could be mangled so we'll instead
+	// just use an anagram equivalence to ensure all the output is present
+	replacer := strings.NewReplacer(" ", "", "\t", "", "\n", "")
+	wj := replacer.Replace(want)
+	gj := replacer.Replace(got)
+	if !anagrams(gj, wj) {
+		t.Errorf("Mismatched JSON content\nGot:\n\t%s\nWant:\n\t%s", gj, wj)
+	}
+}
+
+func anagrams(s1, s2 string) bool {
+	if len(s1) != len(s2) {
+		return false
+	}
+	if s1 == "" && s2 == "" {
+		return true
+	}
+	m1 := make(map[byte]int)
+	for i := range s1 {
+		m1[s1[i]] += 1
+		m1[s2[i]] -= 1
+	}
+
+	// Finally check that all the values are at 0
+	// that is, all the letters in s1 were matched in s2
+	for _, count := range m1 {
+		if count != 0 {
+			return false
+		}
+	}
+	return true
 }

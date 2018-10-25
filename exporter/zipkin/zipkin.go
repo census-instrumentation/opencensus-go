@@ -27,8 +27,9 @@ import (
 // Exporter is an implementation of trace.Exporter that uploads spans to a
 // Zipkin server.
 type Exporter struct {
-	reporter      reporter.Reporter
-	localEndpoint *model.Endpoint
+	reporter       reporter.Reporter
+	localEndpoint  *model.Endpoint
+	remoteEndpoint *model.Endpoint
 }
 
 // NewExporter returns an implementation of trace.Exporter that uploads spans
@@ -42,16 +43,22 @@ type Exporter struct {
 // constructed with github.com/openzipkin/zipkin-go.NewEndpoint, e.g.:
 // 	localEndpoint, err := NewEndpoint("my server", listener.Addr().String())
 // localEndpoint can be nil.
-func NewExporter(reporter reporter.Reporter, localEndpoint *model.Endpoint) *Exporter {
-	return &Exporter{
+func NewExporter(reporter reporter.Reporter, localEndpoint *model.Endpoint, opts ...Option) *Exporter {
+	exp := &Exporter{
 		reporter:      reporter,
 		localEndpoint: localEndpoint,
 	}
+
+	for _, opt := range opts {
+		opt.mutateExporter(exp)
+	}
+
+	return exp
 }
 
 // ExportSpan exports a span to a Zipkin server.
 func (e *Exporter) ExportSpan(s *trace.SpanData) {
-	e.reporter.Send(zipkinSpan(s, e.localEndpoint))
+	e.reporter.Send(zipkinSpan(s, e.localEndpoint, e.remoteEndpoint))
 }
 
 const (
@@ -110,7 +117,7 @@ func spanKind(s *trace.SpanData) model.Kind {
 	return model.Undetermined
 }
 
-func zipkinSpan(s *trace.SpanData, localEndpoint *model.Endpoint) model.SpanModel {
+func zipkinSpan(s *trace.SpanData, localEndpoint, remoteEndpoint *model.Endpoint) model.SpanModel {
 	sc := s.SpanContext
 	z := model.SpanModel{
 		SpanContext: model.SpanContext{
@@ -118,11 +125,12 @@ func zipkinSpan(s *trace.SpanData, localEndpoint *model.Endpoint) model.SpanMode
 			ID:      convertSpanID(sc.SpanID),
 			Sampled: &sampledTrue,
 		},
-		Kind:          spanKind(s),
-		Name:          s.Name,
-		Timestamp:     s.StartTime,
-		Shared:        false,
-		LocalEndpoint: localEndpoint,
+		Kind:           spanKind(s),
+		Name:           s.Name,
+		Timestamp:      s.StartTime,
+		Shared:         false,
+		LocalEndpoint:  localEndpoint,
+		RemoteEndpoint: remoteEndpoint,
 	}
 
 	if s.ParentSpanID != (trace.SpanID{}) {
