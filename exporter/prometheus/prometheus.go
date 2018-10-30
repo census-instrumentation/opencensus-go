@@ -44,9 +44,10 @@ type Exporter struct {
 
 // Options contains options for configuring the exporter.
 type Options struct {
-	Namespace string
-	Registry  *prometheus.Registry
-	OnError   func(err error)
+	Namespace   string
+	Registry    *prometheus.Registry
+	OnError     func(err error)
+	ConstLabels prometheus.Labels // ConstLabels will be set as labels on all views.
 }
 
 // NewExporter returns an exporter that exports stats to Prometheus.
@@ -80,7 +81,7 @@ func (c *collector) registerViews(views ...*view.View) {
 				viewName(c.opts.Namespace, view),
 				view.Description,
 				tagKeysToLabels(view.TagKeys),
-				nil,
+				c.opts.ConstLabels,
 			)
 			c.registeredViewsMu.Lock()
 			c.registeredViews[sig] = desc
