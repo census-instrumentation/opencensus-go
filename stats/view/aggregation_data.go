@@ -17,18 +17,22 @@ package view
 
 import (
 	"math"
+	"time"
+
+	"go.opencensus.io/metric"
 
 	"go.opencensus.io/exemplar"
 )
 
 // AggregationData represents an aggregated value from a collection.
 // They are reported on the view data during exporting.
-// Mosts users won't directly access aggregration data.
+// Most users won't directly access aggregation data.
 type AggregationData interface {
 	isAggregationData() bool
 	addSample(e *exemplar.Exemplar)
 	clone() AggregationData
 	equal(other AggregationData) bool
+	toMetricPoint(time.Time, metric.ValueType) metric.Point
 }
 
 const epsilon = 1e-9
@@ -60,6 +64,10 @@ func (a *CountData) equal(other AggregationData) bool {
 	return a.Value == a2.Value
 }
 
+func (a *CountData) toMetricPoint(t time.Time, _ metric.ValueType) metric.Point {
+	return metric.NewInt64Point(t, a.Value)
+}
+
 // SumData is the aggregated data for the Sum aggregation.
 // A sum aggregation processes data and sums up the recordings.
 //
@@ -84,6 +92,14 @@ func (a *SumData) equal(other AggregationData) bool {
 		return false
 	}
 	return math.Pow(a.Value-a2.Value, 2) < epsilon
+}
+
+func (a *SumData) toMetricPoint(t time.Time, vt metric.ValueType) metric.Point {
+	if vt == metric.ValueTypeInt64 {
+		return metric.NewInt64Point(t, int64(a.Value))
+	} else {
+		return metric.NewDoublePoint(t, a.Value)
+	}
 }
 
 // DistributionData is the aggregated data for the
@@ -209,6 +225,30 @@ func (a *DistributionData) equal(other AggregationData) bool {
 	return a.Count == a2.Count && a.Min == a2.Min && a.Max == a2.Max && math.Pow(a.Mean-a2.Mean, 2) < epsilon && math.Pow(a.variance()-a2.variance(), 2) < epsilon
 }
 
+func (a *DistributionData) toMetricPoint(t time.Time, _ metric.ValueType) metric.Point {
+	buckets := make([]metric.Bucket, 0, len(a.CountPerBucket))
+	for i := range a.CountPerBucket {
+		buckets = append(buckets, metric.Bucket{
+			Count:    a.CountPerBucket[i],
+			Exemplar: a.ExemplarsPerBucket[i],
+		})
+	}
+	bucketOpts := &metric.BucketOptions{
+		ExplicitBoundaries: make([]float64, len(a.bounds)),
+	}
+	for i := range a.bounds {
+		bucketOpts.ExplicitBoundaries[i] = a.bounds[i]
+	}
+	md := &metric.Distribution{
+		Sum:                   a.Sum(),
+		Count:                 a.Count,
+		SumOfSquaredDeviation: a.SumOfSquaredDev,
+		Buckets:               buckets,
+		BucketOptions:         bucketOpts,
+	}
+	return metric.NewDistributionPoint(t, md)
+}
+
 // LastValueData returns the last value recorded for LastValue aggregation.
 type LastValueData struct {
 	Value float64
@@ -232,4 +272,12 @@ func (l *LastValueData) equal(other AggregationData) bool {
 		return false
 	}
 	return l.Value == a2.Value
+}
+
+func (l *LastValueData) toMetricPoint(t time.Time, vt metric.ValueType) metric.Point {
+	if vt == metric.ValueTypeInt64 {
+		return metric.NewInt64Point(t, int64(l.Value))
+	} else {
+		return metric.NewDoublePoint(t, l.Value)
+	}
 }

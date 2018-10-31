@@ -17,18 +17,19 @@
 package main
 
 import (
+	"go.opencensus.io/examples/exporter"
+	"go.opencensus.io/metric"
+	"go.opencensus.io/zpages"
 	"log"
 	"math/rand"
 	"net"
 	"net/http"
 	"time"
 
-	"go.opencensus.io/examples/exporter"
 	pb "go.opencensus.io/examples/grpc/proto"
 	"go.opencensus.io/plugin/ocgrpc"
 	"go.opencensus.io/stats/view"
 	"go.opencensus.io/trace"
-	"go.opencensus.io/zpages"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
@@ -49,14 +50,17 @@ func (s *server) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloRe
 func main() {
 	// Start z-Pages server.
 	go func() {
-		mux := http.NewServeMux()
-		zpages.Handle(mux, "/debug")
-		log.Fatal(http.ListenAndServe("127.0.0.1:8081", mux))
+		zpages.Handle(http.DefaultServeMux, "/debug")
+		log.Fatal(http.ListenAndServe("127.0.0.1:8081", nil))
 	}()
 
-	// Register stats and trace exporters to export
-	// the collected data.
-	view.RegisterExporter(&exporter.PrintExporter{})
+	// Start a metrics exporter to log metrics to os.Stderr.
+	logger := metric.NewLogExporter()
+	logger.ReportingPeriod = 2 * time.Second
+	go logger.Run()
+
+	// Register trace exporter to export the collected data.
+	trace.RegisterExporter(&exporter.PrintExporter{})
 
 	// Register the views to collect server request count.
 	if err := view.Register(ocgrpc.DefaultServerViews...); err != nil {

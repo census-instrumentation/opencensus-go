@@ -12,21 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package prometheus_test
+package resource
 
-import (
-	"log"
-	"net/http"
+import "context"
 
-	"go.opencensus.io/exporter/prometheus"
-)
+type resourceKey struct{}
 
-func Example() {
-	exporter, err := prometheus.NewExporter(prometheus.Options{})
-	if err != nil {
-		log.Fatal(err)
+// NewContext returns a new context with the given resource added.
+// For now, this is only supported for use in Gauges but will eventually
+// also be supported for Views.
+func NewContext(ctx context.Context, resource *Resource) context.Context {
+	return context.WithValue(ctx, resourceKey{}, resource)
+}
+
+// FromContext extracts the resource from the context.
+func FromContext(ctx context.Context) (resource *Resource, ok bool) {
+	if val := ctx.Value(resourceKey{}); val != nil {
+		return val.(*Resource), true
 	}
-	// Serve the scrape endpoint on port 9999.
-	http.Handle("/metrics", exporter)
-	log.Fatal(http.ListenAndServe(":9999", nil))
+	return nil, false
 }

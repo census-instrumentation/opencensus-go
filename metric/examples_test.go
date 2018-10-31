@@ -11,17 +11,26 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
 
-package stats
+package metric_test
 
-import "go.opencensus.io/metric"
+import (
+	"context"
+	"time"
 
-// Units are encoded according to the case-sensitive abbreviations from the
-// Unified Code for Units of Measure: http://unitsofmeasure.org/ucum.html
-const (
-	UnitDimensionless = string(metric.UnitDimensionless)
-	UnitBytes         = string(metric.UnitBytes)
-	UnitMilliseconds  = string(metric.UnitMilliseconds)
-	UnitNone          = UnitDimensionless // Deprecated: Use metric.UnitDimesionless.
+	"go.opencensus.io/metric"
 )
+
+func ExamplePushExporter() {
+	push := func(context context.Context, metrics []*metric.Metric) error {
+		// publish metrics to monitoring backend ...
+		return nil
+	}
+	var pe metric.PushExporter
+	pe.Init(metric.DefaultRegistry(), push)
+	pe.Timeout = 10 * time.Second
+	pe.ReportingPeriod = 5 * time.Second
+	go pe.Run()
+	time.Sleep(10 * time.Second)
+	pe.Stop()
+}

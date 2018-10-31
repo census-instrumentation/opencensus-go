@@ -40,6 +40,9 @@ type Resource struct {
 
 // EncodeLabels encodes a labels map to a string as provided via the OC_RESOURCE_LABELS environment variable.
 func EncodeLabels(labels map[string]string) string {
+	if len(labels) == 0 {
+		return ""
+	}
 	sortedKeys := make([]string, 0, len(labels))
 	for k := range labels {
 		sortedKeys = append(sortedKeys, k)
@@ -63,11 +66,11 @@ var labelRegex = regexp.MustCompile(`^\s*([[:ascii:]]{1,256}?)=("[[:ascii:]]{0,2
 // Domain names and paths are accepted as label keys.
 // Most users will want to use FromEnv instead.
 func DecodeLabels(s string) (map[string]string, error) {
-	m := map[string]string{}
+	var m map[string]string
 	// Ensure a trailing comma, which allows us to keep the regex simpler
 	s = strings.TrimRight(strings.TrimSpace(s), ",") + ","
 
-	for len(s) > 0 {
+	for len(s) > 1 {
 		match := labelRegex.FindStringSubmatch(s)
 		if len(match) == 0 {
 			return nil, fmt.Errorf("invalid label formatting, remainder: %s", s)
@@ -80,6 +83,9 @@ func DecodeLabels(s string) (map[string]string, error) {
 			if v, err = strconv.Unquote(v); err != nil {
 				return nil, fmt.Errorf("invalid label formatting, remainder: %s, err: %s", s, err)
 			}
+		}
+		if m == nil {
+			m = make(map[string]string)
 		}
 		m[match[1]] = v
 

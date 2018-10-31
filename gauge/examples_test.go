@@ -11,17 +11,26 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
 
-package stats
+package gauge_test
 
-import "go.opencensus.io/metric"
+import (
+	"net/http"
 
-// Units are encoded according to the case-sensitive abbreviations from the
-// Unified Code for Units of Measure: http://unitsofmeasure.org/ucum.html
-const (
-	UnitDimensionless = string(metric.UnitDimensionless)
-	UnitBytes         = string(metric.UnitBytes)
-	UnitMilliseconds  = string(metric.UnitMilliseconds)
-	UnitNone          = UnitDimensionless // Deprecated: Use metric.UnitDimesionless.
+	"go.opencensus.io/gauge"
+	"go.opencensus.io/metric"
+	"go.opencensus.io/tag"
 )
+
+func ExampleInt64() {
+	method, _ := tag.NewKey("method")
+	g := gauge.NewInt64("active_request", "Number of active requests, per method.", metric.UnitDimensionless, method)
+	metric.DefaultRegistry().AddProducer(g)
+
+	http.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) {
+		ctx, _ := tag.New(request.Context(), tag.Upsert(method, request.Method))
+		g.Add(ctx, 1)
+		defer g.Add(ctx, -1)
+		// process request ...
+	})
+}

@@ -42,7 +42,6 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	view.RegisterExporter(exporter)
 
 	// Create view to see the number of processed videos cumulatively.
 	// Create view to see the amount of video processed
@@ -64,9 +63,6 @@ func main() {
 	); err != nil {
 		log.Fatalf("Cannot register the view: %v", err)
 	}
-
-	// Set reporting period to report data at every second.
-	view.SetReportingPeriod(1 * time.Second)
 
 	// Record some data points...
 	go func() {

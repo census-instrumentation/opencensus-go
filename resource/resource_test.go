@@ -161,3 +161,13 @@ func TestMultiDetector(t *testing.T) {
 		t.Fatalf("unexpected error: want %v, got %v", wantErr, err)
 	}
 }
+
+func TestEncodeDecode(t *testing.T) {
+	l, err := DecodeLabels(EncodeLabels(nil))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, want := len(l), 0; got != want {
+		t.Fatalf("len = %d; want %d", got, want)
+	}
+}

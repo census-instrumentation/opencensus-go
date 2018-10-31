@@ -15,11 +15,13 @@
 package main
 
 import (
+	"go.opencensus.io/examples/exporter"
+	"go.opencensus.io/metric"
+	"go.opencensus.io/trace"
 	"log"
 	"os"
 	"time"
 
-	"go.opencensus.io/examples/exporter"
 	pb "go.opencensus.io/examples/grpc/proto"
 	"go.opencensus.io/plugin/ocgrpc"
 	"go.opencensus.io/stats/view"
@@ -33,9 +35,13 @@ const (
 )
 
 func main() {
-	// Register stats and trace exporters to export
-	// the collected data.
-	view.RegisterExporter(&exporter.PrintExporter{})
+	// Start a metrics exporter to log metrics to os.Stderr.
+	logger := metric.NewLogExporter()
+	logger.ReportingPeriod = 2 * time.Second
+	go logger.Run()
+
+	// Register trace exporter to export the collected data.
+	trace.RegisterExporter(&exporter.PrintExporter{})
 
 	// Register the view to collect gRPC client stats.
 	if err := view.Register(ocgrpc.DefaultClientViews...); err != nil {

@@ -15,6 +15,7 @@
 package main
 
 import (
+	"go.opencensus.io/metric"
 	"log"
 	"net/http"
 	"time"
@@ -29,10 +30,13 @@ import (
 const server = "http://localhost:50030"
 
 func main() {
-	// Register stats and trace exporters to export the collected data.
-	exporter := &exporter.PrintExporter{}
-	view.RegisterExporter(exporter)
-	trace.RegisterExporter(exporter)
+	// Start a metrics exporter to log metrics to os.Stderr.
+	logger := metric.NewLogExporter()
+	logger.ReportingPeriod = 2 * time.Second
+	go logger.Run()
+
+	// Register trace exporter to export the collected data.
+	trace.RegisterExporter(&exporter.PrintExporter{})
 
 	// Always trace for this demo. In a production application, you should
 	// configure this to a trace.ProbabilitySampler set at the desired

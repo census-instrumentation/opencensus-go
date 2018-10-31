@@ -19,6 +19,8 @@ import (
 	"fmt"
 	"time"
 
+	"go.opencensus.io/metric"
+
 	"go.opencensus.io/stats"
 	"go.opencensus.io/stats/internal"
 	"go.opencensus.io/tag"
@@ -26,8 +28,9 @@ import (
 
 func init() {
 	defaultWorker = newWorker()
-	go defaultWorker.start()
+	metric.DefaultRegistry().AddProducer(defaultWorker)
 	internal.DefaultRecorder = record
+	go defaultWorker.start()
 }
 
 type measureRef struct {
