@@ -61,6 +61,9 @@ type Transport struct {
 	// httptrace package.
 	NewClientTrace func(*http.Request, *trace.Span) *httptrace.ClientTrace
 
+	// DefaultAttributes will be set to each span as default.
+	DefaultAttributes []trace.Attribute
+
 	// TODO: Implement tag propagation for HTTP.
 }
 
@@ -92,8 +95,9 @@ func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 			Sampler:  startOpts.Sampler,
 			SpanKind: trace.SpanKindClient,
 		},
-		formatSpanName: spanNameFormatter,
-		newClientTrace: t.NewClientTrace,
+		formatSpanName:    spanNameFormatter,
+		newClientTrace:    t.NewClientTrace,
+		defaultAttributes: t.DefaultAttributes,
 	}
 	rt = statsTransport{base: rt}
 	return rt.RoundTrip(req)

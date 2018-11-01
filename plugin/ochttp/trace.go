@@ -39,11 +39,12 @@ const (
 )
 
 type traceTransport struct {
-	base           http.RoundTripper
-	startOptions   trace.StartOptions
-	format         propagation.HTTPFormat
-	formatSpanName func(*http.Request) string
-	newClientTrace func(*http.Request, *trace.Span) *httptrace.ClientTrace
+	base              http.RoundTripper
+	startOptions      trace.StartOptions
+	format            propagation.HTTPFormat
+	formatSpanName    func(*http.Request) string
+	newClientTrace    func(*http.Request, *trace.Span) *httptrace.ClientTrace
+	defaultAttributes []trace.Attribute
 }
 
 // TODO(jbd): Add message events for request and response size.
@@ -58,6 +59,11 @@ func (t *traceTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	ctx, span := trace.StartSpan(req.Context(), name,
 		trace.WithSampler(t.startOptions.Sampler),
 		trace.WithSpanKind(trace.SpanKindClient))
+
+	// Set default attributes to span
+	if len(t.defaultAttributes) > 0 {
+		span.AddAttributes(t.defaultAttributes...)
+	}
 
 	if t.newClientTrace != nil {
 		req = req.WithContext(httptrace.WithClientTrace(ctx, t.newClientTrace(req, span)))

@@ -70,6 +70,9 @@ type Handler struct {
 	// from the information found in the incoming HTTP Request. By default the
 	// name equals the URL Path.
 	FormatSpanName func(*http.Request) string
+
+	// DefaultAttributes will be set to each span as default.
+	DefaultAttributes []trace.Attribute
 }
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -124,6 +127,9 @@ func (h *Handler) startTrace(w http.ResponseWriter, r *http.Request) (*http.Requ
 		}
 	}
 	span.AddAttributes(requestAttrs(r)...)
+	if len(h.DefaultAttributes) > 0 {
+		span.AddAttributes(h.DefaultAttributes...)
+	}
 	return r.WithContext(ctx), span.End
 }
 
