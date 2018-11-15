@@ -22,7 +22,7 @@ import (
 	"go.opencensus.io/metric"
 )
 
-func ExamplePushExporter() {
+func ExamplePush() {
 	push := func(context context.Context, metrics []*metric.Metric) error {
 		// publish metrics to monitoring backend ...
 		return nil
