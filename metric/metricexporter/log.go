@@ -12,19 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package metric
+package metricexporter
 
 import (
 	"context"
 	"encoding/json"
+	"go.opencensus.io/metric"
 	"log"
 	"os"
 )
 
-// LogExporter is a metrics exporter that periodically logs all metric in JSON
+// Log is a metrics exporter that periodically logs all metric in JSON
 // format.
-type LogExporter struct {
-	PushExporter
+type Log struct {
+	Push
 	// Logger is where metrics will be written. By default, a logger
 	// that logs to standard error will be configured.
 	Logger interface {
@@ -32,21 +33,15 @@ type LogExporter struct {
 	}
 }
 
-// NewLogExporter calls NewLogExporterWithRegistry with the default registry.
-func NewLogExporter() *LogExporter {
-	return NewLogExporterWithRegistry(DefaultRegistry())
-}
-
-// NewLogExporterWithRegistry creates a new LogExporter that exports all the
-// metrics from the given registry.
-func NewLogExporterWithRegistry(r *Registry) *LogExporter {
-	le := &LogExporter{}
-	le.PushExporter.Init(r, le.log)
+// NewLogging calls NewLoggingWithRegistry with the default registry.
+func NewLogging() *Log {
+	le := &Log{}
+	le.Push.Init(le.log)
 	le.Logger = log.New(os.Stderr, "", 0)
 	return le
 }
 
-func (le *LogExporter) log(_ context.Context, ms []*Metric) error {
+func (le *Log) log(_ context.Context, ms []*metric.Metric) error {
 	for _, m := range ms {
 		bb, err := json.Marshal(m)
 		if err != nil {

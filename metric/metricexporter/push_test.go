@@ -12,21 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package metric
+package metricexporter
 
 import (
 	"context"
+	"go.opencensus.io/metric"
 	"strings"
 	"testing"
 	"time"
 )
 
 func TestPushExporter_Run(t *testing.T) {
-	var pe PushExporter
-	r := NewRegistry()
-	r.AddProducer(&constProducer{&Metric{}})
+	var pe Push
 	exported := make(chan bool, 1)
-	pe.Init(r, func(ctx context.Context, ms []*Metric) error {
+	pe.Init(func(ctx context.Context, ms []*metric.Metric) error {
 		_, ok := ctx.Deadline()
 		if !ok {
 			t.Fatal("Expected a deadline")
@@ -37,6 +36,8 @@ func TestPushExporter_Run(t *testing.T) {
 		}
 		return nil
 	})
+	pe.Registry = metric.NewRegistry()
+	pe.Registry.AddProducer(&constProducer{&metric.Metric{}})
 	pe.ReportingPeriod = 100 * time.Millisecond
 
 	go pe.Run()
@@ -50,13 +51,13 @@ func TestPushExporter_Run(t *testing.T) {
 }
 
 func TestPushExporter_Run_panic(t *testing.T) {
-	var pe PushExporter
-	r := NewRegistry()
-	r.AddProducer(&constProducer{&Metric{}})
+	var pe Push
 	errs := make(chan error, 1)
-	pe.Init(r, func(ctx context.Context, ms []*Metric) error {
+	pe.Init(func(ctx context.Context, ms []*metric.Metric) error {
 		panic("test")
 	})
+	pe.Registry = metric.NewRegistry()
+	pe.Registry.AddProducer(&constProducer{&metric.Metric{}})
 	pe.ReportingPeriod = 100 * time.Millisecond
 	pe.OnError = func(err error) {
 		errs <- err
@@ -76,11 +77,9 @@ func TestPushExporter_Run_panic(t *testing.T) {
 }
 
 func TestPushExporter_Stop(t *testing.T) {
-	var pe PushExporter
-	r := NewRegistry()
-	r.AddProducer(&constProducer{&Metric{}})
+	var pe Push
 	exported := make(chan bool, 1)
-	pe.Init(r, func(ctx context.Context, ms []*Metric) error {
+	pe.Init(func(ctx context.Context, ms []*metric.Metric) error {
 		select {
 		case exported <- true:
 		default:
@@ -88,6 +87,8 @@ func TestPushExporter_Stop(t *testing.T) {
 		}
 		return nil
 	})
+	pe.Registry = metric.NewRegistry()
+	pe.Registry.AddProducer(&constProducer{&metric.Metric{}})
 	pe.ReportingPeriod = time.Hour // prevent timer-based push
 
 	go pe.Run()
@@ -98,4 +99,10 @@ func TestPushExporter_Stop(t *testing.T) {
 	default:
 		t.Fatal("PushFunc should have been called before Stop returns")
 	}
+}
+
+type constProducer []*metric.Metric
+
+func (cp constProducer) Read() []*metric.Metric {
+	return cp
 }

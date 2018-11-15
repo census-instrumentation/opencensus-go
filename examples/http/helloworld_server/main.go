@@ -16,7 +16,7 @@ package main
 
 import (
 	"fmt"
-	"go.opencensus.io/metric"
+	"go.opencensus.io/metric/metricexporter"
 	"log"
 	"net/http"
 	"time"
@@ -38,9 +38,9 @@ func main() {
 	}()
 
 	// Start a metrics exporter to log metrics to os.Stderr.
-	logger := metric.NewLogExporter()
-	logger.ReportingPeriod = 2 * time.Second
-	go logger.Run()
+	le := metricexporter.NewLogging()
+	le.ReportingPeriod = 2 * time.Second
+	go le.Run()
 
 	// Register trace exporter.
 	trace.RegisterExporter(&exporter.PrintExporter{})

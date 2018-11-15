@@ -12,10 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package metric_test
+package metricexporter_test
 
 import (
 	"context"
+	"go.opencensus.io/metric/metricexporter"
 	"time"
 
 	"go.opencensus.io/metric"
@@ -26,8 +27,10 @@ func ExamplePushExporter() {
 		// publish metrics to monitoring backend ...
 		return nil
 	}
-	var pe metric.PushExporter
-	pe.Init(metric.DefaultRegistry(), push)
+	// Usually, Push will be embedded in your own custom push exporter and your
+	// exporter's constructor function should call Init.
+	var pe metricexporter.Push
+	pe.Init(push)
 	pe.Timeout = 10 * time.Second
 	pe.ReportingPeriod = 5 * time.Second
 	go pe.Run()

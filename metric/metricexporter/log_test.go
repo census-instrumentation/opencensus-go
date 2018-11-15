@@ -12,9 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package metric
+package metricexporter
 
 import (
+	"go.opencensus.io/metric"
 	"go.opencensus.io/resource"
 	"strings"
 	"testing"
@@ -22,14 +23,14 @@ import (
 )
 
 func TestNewLogExporter(t *testing.T) {
-	r := NewRegistry()
-	le := NewLogExporterWithRegistry(r)
-	r.AddProducer(producerFunc(func() []*Metric {
-		return []*Metric{
+	le := NewLogging()
+	le.Registry = metric.NewRegistry()
+	le.Registry.AddProducer(producerFunc(func() []*metric.Metric {
+		return []*metric.Metric{
 			{
-				Descriptor: &Descriptor{
-					Unit:        UnitBytes,
-					Type:        TypeCumulativeDistribution,
+				Descriptor: &metric.Descriptor{
+					Unit:        metric.UnitBytes,
+					Type:        metric.TypeCumulativeDistribution,
 					LabelKeys:   []string{"k1"},
 					Description: "Test metric",
 					Name:        "m1",
@@ -40,13 +41,13 @@ func TestNewLogExporter(t *testing.T) {
 						"zone": "a1",
 					},
 				},
-				TimeSeries: []*TimeSeries{
+				TimeSeries: []*metric.TimeSeries{
 					{
-						Points: []Point{
-							NewInt64Point(time.Time{}, 1),
+						Points: []metric.Point{
+							metric.NewInt64Point(time.Time{}, 1),
 						},
-						LabelValues: []LabelValue{
-							NewLabelValue("v1"),
+						LabelValues: []metric.LabelValue{
+							metric.NewLabelValue("v1"),
 						},
 					},
 				},
@@ -84,8 +85,8 @@ func (ch logToChan) Println(vals ...interface{}) {
 	ch <- vals
 }
 
-type producerFunc func() []*Metric
+type producerFunc func() []*metric.Metric
 
-func (tp producerFunc) Read() []*Metric {
+func (tp producerFunc) Read() []*metric.Metric {
 	return tp()
 }
