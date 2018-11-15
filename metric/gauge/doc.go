@@ -12,25 +12,5 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package gauge_test
-
-import (
-	"net/http"
-
-	"go.opencensus.io/gauge"
-	"go.opencensus.io/metric"
-	"go.opencensus.io/tag"
-)
-
-func ExampleInt64() {
-	method, _ := tag.NewKey("method")
-	g := gauge.NewInt64("active_request", "Number of active requests, per method.", metric.UnitDimensionless, method)
-	metric.DefaultRegistry().AddProducer(g)
-
-	http.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) {
-		ctx, _ := tag.New(request.Context(), tag.Upsert(method, request.Method))
-		g.Add(ctx, 1)
-		defer g.Add(ctx, -1)
-		// process request ...
-	})
-}
+// Package gauge implements Gauge-type metrics.
+package gauge // import "go.opencensus.io/metric/gauge"

@@ -22,9 +22,9 @@ import (
 	"os"
 )
 
-// Log is a metrics exporter that periodically logs all metric in JSON
+// Logging is a metrics exporter that periodically logs all metric in JSON
 // format.
-type Log struct {
+type Logging struct {
 	Push
 	// Logger is where metrics will be written. By default, a logger
 	// that logs to standard error will be configured.
@@ -34,14 +34,14 @@ type Log struct {
 }
 
 // NewLogging calls NewLoggingWithRegistry with the default registry.
-func NewLogging() *Log {
-	le := &Log{}
-	le.Push.Init(le.log)
+func NewLogging() *Logging {
+	le := &Logging{}
+	le.Push.Init(le.logMetrics)
 	le.Logger = log.New(os.Stderr, "", 0)
 	return le
 }
 
-func (le *Log) log(_ context.Context, ms []*metric.Metric) error {
+func (le *Logging) logMetrics(_ context.Context, ms []*metric.Metric) error {
 	for _, m := range ms {
 		bb, err := json.Marshal(m)
 		if err != nil {

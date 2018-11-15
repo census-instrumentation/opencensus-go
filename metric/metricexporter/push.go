@@ -48,6 +48,9 @@ type Push struct {
 	// Timeout that will be applied to the context for each push call.
 	Timeout time.Duration
 
+	// NewContext may be set to override the default context that will be
+	// used for exporting.
+	// By default, this is set to context.Background.
 	NewContext func() context.Context
 }
 
