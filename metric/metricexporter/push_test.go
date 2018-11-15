@@ -23,9 +23,8 @@ import (
 )
 
 func TestPushExporter_Run(t *testing.T) {
-	var pe Push
 	exported := make(chan bool, 1)
-	pe.Init(func(ctx context.Context, ms []*metric.Metric) error {
+	pe := NewPush(func(ctx context.Context, ms []*metric.Metric) error {
 		_, ok := ctx.Deadline()
 		if !ok {
 			t.Fatal("Expected a deadline")
@@ -51,9 +50,8 @@ func TestPushExporter_Run(t *testing.T) {
 }
 
 func TestPushExporter_Run_panic(t *testing.T) {
-	var pe Push
 	errs := make(chan error, 1)
-	pe.Init(func(ctx context.Context, ms []*metric.Metric) error {
+	pe := NewPush(func(ctx context.Context, ms []*metric.Metric) error {
 		panic("test")
 	})
 	pe.Registry = metric.NewRegistry()
@@ -77,9 +75,8 @@ func TestPushExporter_Run_panic(t *testing.T) {
 }
 
 func TestPushExporter_Stop(t *testing.T) {
-	var pe Push
 	exported := make(chan bool, 1)
-	pe.Init(func(ctx context.Context, ms []*metric.Metric) error {
+	pe := NewPush(func(ctx context.Context, ms []*metric.Metric) error {
 		select {
 		case exported <- true:
 		default:

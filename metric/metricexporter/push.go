@@ -65,8 +65,8 @@ const (
 
 // Init initializes a new Push metrics exporter that reads
 // metrics from the given registry and pushes them to the given PushFunc.
-func (p *Push) Init(push PushFunc) {
-	*p = Push{
+func NewPush(push PushFunc) *Push {
+	return &Push{
 		push:            push,
 		quit:            make(chan struct{}),
 		didQuit:         make(chan struct{}),

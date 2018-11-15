@@ -27,10 +27,8 @@ func ExamplePush() {
 		// publish metrics to monitoring backend ...
 		return nil
 	}
-	// Usually, Push will be embedded in your own custom push exporter and your
-	// exporter's constructor function should call Init.
-	var pe metricexporter.Push
-	pe.Init(push)
+	// Usually, Push will be embedded in your own custom push exporter.
+	pe := metricexporter.NewPush(push)
 	pe.Timeout = 10 * time.Second
 	pe.ReportingPeriod = 5 * time.Second
 	go pe.Run()

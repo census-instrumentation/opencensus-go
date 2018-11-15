@@ -25,7 +25,7 @@ import (
 // Logging is a metrics exporter that periodically logs all metric in JSON
 // format.
 type Logging struct {
-	Push
+	*Push
 	// Logger is where metrics will be written. By default, a logger
 	// that logs to standard error will be configured.
 	Logger interface {
@@ -36,7 +36,7 @@ type Logging struct {
 // NewLogging calls NewLoggingWithRegistry with the default registry.
 func NewLogging() *Logging {
 	le := &Logging{}
-	le.Push.Init(le.logMetrics)
+	le.Push = NewPush(le.logMetrics)
 	le.Logger = log.New(os.Stderr, "", 0)
 	return le
 }
