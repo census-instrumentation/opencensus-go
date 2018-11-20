@@ -13,6 +13,4 @@
 // limitations under the License.
 
 // Package metric contains a data model and exporter support for metrics.
-// The data model is derived from the metric protocol buffers:
-//   https://github.com/census-instrumentation/opencensus-proto/blob/master/src/opencensus/proto/metrics/v1/metrics.proto
 package metric // import "go.opencensus.io/metric"

@@ -38,16 +38,16 @@ type ValueType int
 
 // Value types. New value types may be added.
 const (
-	ValueTypeDouble ValueType = iota
+	ValueTypeFloat64 ValueType = iota
 	ValueTypeInt64
 	ValueTypeDistribution
 	ValueTypeSummary
 )
 
-// NewDoublePoint creates a new Point holding a float64 value.
-func NewDoublePoint(t time.Time, val float64) Point {
+// NewFloat64Point creates a new Point holding a float64 value.
+func NewFloat64Point(t time.Time, val float64) Point {
 	return Point{
-		ValueType: ValueTypeDouble,
+		ValueType: ValueTypeFloat64,
 		Value:     val,
 		Time:      t,
 	}
@@ -82,7 +82,7 @@ func NewSummaryPoint(t time.Time, val *Summary) Point {
 
 // ValueVisitor allows reading the value of a point.
 type ValueVisitor interface {
-	VisitDoubleValue(float64)
+	VisitFloat64Value(float64)
 	VisitInt64Value(int64)
 	VisitDistributionValue(*Distribution)
 	VisitSummaryValue(*Summary)
@@ -97,7 +97,7 @@ func (p Point) ReadValue(vv ValueVisitor) {
 	case int64:
 		vv.VisitInt64Value(v)
 	case float64:
-		vv.VisitDoubleValue(v)
+		vv.VisitFloat64Value(v)
 	case *Distribution:
 		vv.VisitDistributionValue(v)
 	case *Summary:
@@ -145,16 +145,17 @@ type Distribution struct {
 // BucketOptions describes the bounds of the histogram buckets in this
 // distribution.
 type BucketOptions struct {
-	// ExplicitBoundaries specifies a set of buckets with arbitrary upper-bounds.
+	// Bounds specifies a set of buckets with arbitrary upper-bounds.
 	// This defines len(bounds) + 1 (= N) buckets. The boundaries for bucket
 	// index i are:
 	//
-	// [0, bucket_bounds[i]) for i == 0
-	// [bucket_bounds[i-1], bucket_bounds[i]) for 0 < i < N-1
-	// [bucket_bounds[i-1], +infinity) for i == N-1
-	ExplicitBoundaries []float64
+	// [0, Bounds[i]) for i == 0
+	// [Bounds[i-1], Bounds[i]) for 0 < i < N-1
+	// [Bounds[i-1], +infinity) for i == N-1
+	Bounds []float64
 }
 
+// Bucket represents a single bucket (value range) in a distribution.
 type Bucket struct {
 	// Count is the number of values in each bucket of the histogram, as described in
 	// bucket_bounds.
@@ -163,6 +164,7 @@ type Bucket struct {
 	Exemplar *exemplar.Exemplar
 }
 
+// Summary is a representation of percentiles.
 type Summary struct {
 	// Count is the cumulative count (if available).
 	Count int64
@@ -201,10 +203,10 @@ type Type int
 // Metric types.
 const (
 	TypeGaugeInt64 Type = iota
-	TypeGaugeDouble
+	TypeGaugeFloat64
 	TypeGaugeDistribution
 	TypeCumulativeInt64
-	TypeCumulativeDouble
+	TypeCumulativeFloat64
 	TypeCumulativeDistribution
 	TypeSummary
 )
@@ -212,7 +214,7 @@ const (
 // IsGuage returns true if the metric type represents a gauge-type value.
 func (t Type) IsGuage() bool {
 	switch t {
-	case TypeGaugeInt64, TypeGaugeDouble, TypeGaugeDistribution:
+	case TypeGaugeInt64, TypeGaugeFloat64, TypeGaugeDistribution:
 		return true
 	default:
 		return false
@@ -223,8 +225,8 @@ func (t Type) IsGuage() bool {
 // type.
 func (t Type) ValueType() ValueType {
 	switch t {
-	case TypeGaugeDouble, TypeCumulativeDouble:
-		return ValueTypeDouble
+	case TypeGaugeFloat64, TypeCumulativeFloat64:
+		return ValueTypeFloat64
 	case TypeGaugeDistribution, TypeCumulativeDistribution:
 		return ValueTypeDistribution
 	case TypeGaugeInt64, TypeCumulativeInt64:

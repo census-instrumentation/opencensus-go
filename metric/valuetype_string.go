@@ -4,9 +4,9 @@ package metric
 
 import "strconv"
 
-const _ValueType_name = "ValueTypeDoubleValueTypeInt64ValueTypeDistributionValueTypeSummary"
+const _ValueType_name = "ValueTypeFloat64ValueTypeInt64ValueTypeDistributionValueTypeSummary"
 
-var _ValueType_index = [...]uint8{0, 15, 29, 50, 66}
+var _ValueType_index = [...]uint8{0, 16, 30, 51, 67}
 
 func (i ValueType) String() string {
 	if i < 0 || i >= ValueType(len(_ValueType_index)-1) {
