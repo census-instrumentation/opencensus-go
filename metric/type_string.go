@@ -4,9 +4,9 @@ package metric
 
 import "strconv"
 
-const _Type_name = "TypeGaugeInt64TypeGaugeDoubleTypeGaugeDistributionTypeCumulativeInt64TypeCumulativeDoubleTypeCumulativeDistributionTypeSummary"
+const _Type_name = "TypeGaugeInt64TypeGaugeFloat64TypeGaugeDistributionTypeCumulativeInt64TypeCumulativeFloat64TypeCumulativeDistributionTypeSummary"
 
-var _Type_index = [...]uint8{0, 14, 29, 50, 69, 89, 115, 126}
+var _Type_index = [...]uint8{0, 14, 30, 51, 70, 91, 117, 128}
 
 func (i Type) String() string {
 	if i < 0 || i >= Type(len(_Type_index)-1) {

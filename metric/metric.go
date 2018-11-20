@@ -41,7 +41,7 @@ type Descriptor struct {
 // Metric represents a quantity measured against a resource with different
 // label value combinations.
 type Metric struct {
-	Descriptor *Descriptor        // metric descriptor
+	Descriptor Descriptor         // metric descriptor
 	Resource   *resource.Resource // resource against which this was measured
 	TimeSeries []*TimeSeries      // one time series for each combination of label values
 }
