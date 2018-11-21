@@ -15,6 +15,7 @@
 package main
 
 import (
+	"context"
 	"log"
 	"os"
 	"time"
@@ -23,7 +24,6 @@ import (
 	pb "go.opencensus.io/examples/grpc/proto"
 	"go.opencensus.io/plugin/ocgrpc"
 	"go.opencensus.io/stats/view"
-	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
 

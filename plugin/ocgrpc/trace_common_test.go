@@ -15,10 +15,10 @@
 package ocgrpc
 
 import (
+	"context"
 	"testing"
 
 	"go.opencensus.io/trace"
-	"golang.org/x/net/context"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/stats"
 )

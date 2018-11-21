@@ -17,6 +17,7 @@
 package main
 
 import (
+	"context"
 	"log"
 	"math/rand"
 	"net"
@@ -29,7 +30,6 @@ import (
 	"go.opencensus.io/stats/view"
 	"go.opencensus.io/trace"
 	"go.opencensus.io/zpages"
-	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
 

@@ -15,13 +15,12 @@
 package ocgrpc
 
 import (
+	"context"
 	"strings"
-
-	"google.golang.org/grpc/codes"
 
 	"go.opencensus.io/trace"
 	"go.opencensus.io/trace/propagation"
-	"golang.org/x/net/context"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/stats"
 	"google.golang.org/grpc/status"
