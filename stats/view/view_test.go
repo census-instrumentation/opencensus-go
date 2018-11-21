@@ -19,6 +19,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
+
 	"go.opencensus.io/exemplar"
 
 	"go.opencensus.io/stats"
@@ -442,5 +444,33 @@ func TestRegisterAfterMeasurement(t *testing.T) {
 	}
 	if len(rows) == 0 {
 		t.Error("View should have data")
+	}
+}
+
+func TestViewRegister_negativeBucketBounds(t *testing.T) {
+	m := stats.Int64("TestViewRegister_negativeBucketBounds", "", "")
+	v := &View{
+		Measure:     m,
+		Aggregation: Distribution(-1, 2),
+	}
+	err := Register(v)
+	if err != ErrNegativeBucketBounds {
+		t.Errorf("Expected ErrNegativeBucketBounds, got %v", err)
+	}
+}
+
+func TestViewRegister_sortBuckets(t *testing.T) {
+	m := stats.Int64("TestViewRegister_sortBuckets", "", "")
+	v := &View{
+		Measure:     m,
+		Aggregation: Distribution(2, 1),
+	}
+	err := Register(v)
+	if err != nil {
+		t.Fatalf("Unexpected err %s", err)
+	}
+	want := []float64{1, 2}
+	if diff := cmp.Diff(v.Aggregation.Buckets, want); diff != "" {
+		t.Errorf("buckets differ -got +want: %s", diff)
 	}
 }
