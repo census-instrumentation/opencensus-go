@@ -433,3 +433,78 @@ tests_foo{method="issue961",service="spanner"} 1
 		t.Fatal("output differed from expected")
 	}
 }
+
+func TestViewMeasureWithoutTag(t *testing.T) {
+	exporter, err := NewExporter(Options{})
+	if err != nil {
+		t.Fatalf("failed to create prometheus exporter: %v", err)
+	}
+	view.RegisterExporter(exporter)
+	defer view.UnregisterExporter(exporter)
+
+	m := stats.Int64("tests/foo", "foo", stats.UnitDimensionless)
+	k, _ := tag.NewKey("key")
+
+	v := &view.View{
+		Name:        m.Name(),
+		Description: m.Description(),
+		TagKeys:     []tag.Key{k}, // Ensure view has a tag
+		Measure:     m,
+		Aggregation: view.Count(),
+	}
+
+	if err := view.Register(v); err != nil {
+		t.Fatalf("failed to create views: %v", err)
+	}
+	defer view.Unregister(v)
+
+	view.SetReportingPeriod(time.Millisecond)
+
+	// Make a measure without the tag in the view.
+	stats.Record(context.Background(), m.M(1))
+
+	srv := httptest.NewServer(exporter)
+	defer srv.Close()
+
+	var i int
+	var output string
+	for {
+		time.Sleep(10 * time.Millisecond)
+		if i == 1000 {
+			t.Fatal("no output at /metrics (10s wait)")
+		}
+		i++
+
+		resp, err := http.Get(srv.URL)
+		if err != nil {
+			t.Fatalf("failed to get /metrics: %v", err)
+		}
+
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			t.Fatalf("failed to read body: %v", err)
+		}
+		resp.Body.Close()
+
+		output = string(body)
+		if output != "" {
+			break
+		}
+	}
+
+	if strings.Contains(output, "collected before with the same name and label values") {
+		t.Fatal("metric name and labels being duplicated but must be unique")
+	}
+
+	if strings.Contains(output, "error(s) occurred") {
+		t.Fatal("error reported by prometheus registry")
+	}
+
+	want := `# HELP tests_foo foo
+# TYPE tests_foo counter
+tests_foo{key=""} 1
+`
+	if output != want {
+		t.Fatal("output differed from expected")
+	}
+}
