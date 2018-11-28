@@ -442,11 +442,11 @@ func TestViewMeasureWithoutTag(t *testing.T) {
 	view.RegisterExporter(exporter)
 	defer view.UnregisterExporter(exporter)
 	m := stats.Int64("tests/foo", "foo", stats.UnitDimensionless)
-	k1, _ := tag.NewKey("key1")
-	k2, _ := tag.NewKey("key2")
-	k3, _ := tag.NewKey("key3")
-	k4, _ := tag.NewKey("key4")
-	k5, _ := tag.NewKey("key5")
+	k1, _ := tag.NewKey("key/1")
+	k2, _ := tag.NewKey("key/2")
+	k3, _ := tag.NewKey("key/3")
+	k4, _ := tag.NewKey("key/4")
+	k5, _ := tag.NewKey("key/5")
 	v := &view.View{
 		Name:        m.Name(),
 		Description: m.Description(),
@@ -494,7 +494,7 @@ func TestViewMeasureWithoutTag(t *testing.T) {
 	}
 	want := `# HELP tests_foo foo
 # TYPE tests_foo counter
-tests_foo{key1="",key2="issue659",key3="",key4="issue659",key5=""} 1
+tests_foo{key_1="",key_2="issue659",key_3="",key_4="issue659",key_5=""} 1
 `
 	if output != want {
 		t.Fatal("output differed from expected")
