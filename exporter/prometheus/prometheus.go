@@ -255,14 +255,6 @@ func tagKeysToLabels(keys []tag.Key) (labels []string) {
 	return labels
 }
 
-func tagsToLabels(tags []tag.Tag) []string {
-	var names []string
-	for _, tag := range tags {
-		names = append(names, internal.Sanitize(tag.Key.Name()))
-	}
-	return names
-}
-
 func newCollector(opts Options, registrar *prometheus.Registry) *collector {
 	return &collector{
 		reg:             registrar,
