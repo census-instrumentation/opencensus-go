@@ -208,7 +208,7 @@ func (c *collector) Collect(ch chan<- prometheus.Metric) {
 func (c *collector) toMetric(desc *prometheus.Desc, v *view.View, row *view.Row) (prometheus.Metric, error) {
 	switch data := row.Data.(type) {
 	case *view.CountData:
-		return prometheus.NewConstMetric(desc, prometheus.CounterValue, float64(data.Value), tagValues(row.Tags)...)
+		return prometheus.NewConstMetric(desc, prometheus.CounterValue, float64(data.Value), tagValues(row.Tags, v.TagKeys)...)
 
 	case *view.DistributionData:
 		points := make(map[float64]uint64)
@@ -235,13 +235,13 @@ func (c *collector) toMetric(desc *prometheus.Desc, v *view.View, row *view.Row)
 			cumCount += uint64(data.CountPerBucket[i])
 			points[b] = cumCount
 		}
-		return prometheus.NewConstHistogram(desc, uint64(data.Count), data.Sum(), points, tagValues(row.Tags)...)
+		return prometheus.NewConstHistogram(desc, uint64(data.Count), data.Sum(), points, tagValues(row.Tags, v.TagKeys)...)
 
 	case *view.SumData:
-		return prometheus.NewConstMetric(desc, prometheus.UntypedValue, data.Value, tagValues(row.Tags)...)
+		return prometheus.NewConstMetric(desc, prometheus.UntypedValue, data.Value, tagValues(row.Tags, v.TagKeys)...)
 
 	case *view.LastValueData:
-		return prometheus.NewConstMetric(desc, prometheus.GaugeValue, data.Value, tagValues(row.Tags)...)
+		return prometheus.NewConstMetric(desc, prometheus.GaugeValue, data.Value, tagValues(row.Tags, v.TagKeys)...)
 
 	default:
 		return nil, fmt.Errorf("aggregation %T is not yet supported", v.Aggregation)
@@ -272,10 +272,21 @@ func newCollector(opts Options, registrar *prometheus.Registry) *collector {
 	}
 }
 
-func tagValues(t []tag.Tag) []string {
+func tagValues(t []tag.Tag, expectedKeys []tag.Key) []string {
 	var values []string
+	// Add empty string for all missing keys in the tags map.
+	idx := 0
 	for _, t := range t {
+		for t.Key != expectedKeys[idx] {
+			idx++
+			values = append(values, "")
+		}
 		values = append(values, t.Value)
+		idx++
+	}
+	for idx < len(expectedKeys) {
+		idx++
+		values = append(values, "")
 	}
 	return values
 }

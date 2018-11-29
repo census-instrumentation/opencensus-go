@@ -433,3 +433,74 @@ tests_foo{method="issue961",service="spanner"} 1
 		t.Fatal("output differed from expected")
 	}
 }
+
+func TestViewMeasureWithoutTag(t *testing.T) {
+	exporter, err := NewExporter(Options{})
+	if err != nil {
+		t.Fatalf("failed to create prometheus exporter: %v", err)
+	}
+	view.RegisterExporter(exporter)
+	defer view.UnregisterExporter(exporter)
+	m := stats.Int64("tests/foo", "foo", stats.UnitDimensionless)
+	k1, _ := tag.NewKey("key/1")
+	k2, _ := tag.NewKey("key/2")
+	k3, _ := tag.NewKey("key/3")
+	k4, _ := tag.NewKey("key/4")
+	k5, _ := tag.NewKey("key/5")
+	randomKey, _ := tag.NewKey("issue659")
+	v := &view.View{
+		Name:        m.Name(),
+		Description: m.Description(),
+		TagKeys:     []tag.Key{k2, k5, k3, k1, k4}, // Ensure view has a tag
+		Measure:     m,
+		Aggregation: view.Count(),
+	}
+	if err := view.Register(v); err != nil {
+		t.Fatalf("failed to create views: %v", err)
+	}
+	defer view.Unregister(v)
+	view.SetReportingPeriod(time.Millisecond)
+	// Make a measure without some tags in the view.
+	ctx1, _ := tag.New(context.Background(), tag.Upsert(k4, "issue659"), tag.Upsert(randomKey, "value"), tag.Upsert(k2, "issue659"))
+	stats.Record(ctx1, m.M(1))
+	ctx2, _ := tag.New(context.Background(), tag.Upsert(k5, "issue659"), tag.Upsert(k3, "issue659"), tag.Upsert(k1, "issue659"))
+	stats.Record(ctx2, m.M(2))
+	srv := httptest.NewServer(exporter)
+	defer srv.Close()
+	var i int
+	var output string
+	for {
+		time.Sleep(10 * time.Millisecond)
+		if i == 1000 {
+			t.Fatal("no output at /metrics (10s wait)")
+		}
+		i++
+		resp, err := http.Get(srv.URL)
+		if err != nil {
+			t.Fatalf("failed to get /metrics: %v", err)
+		}
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			t.Fatalf("failed to read body: %v", err)
+		}
+		resp.Body.Close()
+		output = string(body)
+		if output != "" {
+			break
+		}
+	}
+	if strings.Contains(output, "collected before with the same name and label values") {
+		t.Fatal("metric name and labels being duplicated but must be unique")
+	}
+	if strings.Contains(output, "error(s) occurred") {
+		t.Fatal("error reported by prometheus registry")
+	}
+	want := `# HELP tests_foo foo
+# TYPE tests_foo counter
+tests_foo{key_1="",key_2="issue659",key_3="",key_4="issue659",key_5=""} 1
+tests_foo{key_1="issue659",key_2="",key_3="issue659",key_4="",key_5="issue659"} 1
+`
+	if output != want {
+		t.Fatalf("output differed from expected output: %s want: %s", output, want)
+	}
+}
