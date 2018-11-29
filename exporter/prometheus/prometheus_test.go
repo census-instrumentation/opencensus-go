@@ -447,10 +447,11 @@ func TestViewMeasureWithoutTag(t *testing.T) {
 	k3, _ := tag.NewKey("key/3")
 	k4, _ := tag.NewKey("key/4")
 	k5, _ := tag.NewKey("key/5")
+	randomKey, _ := tag.NewKey("issue659")
 	v := &view.View{
 		Name:        m.Name(),
 		Description: m.Description(),
-		TagKeys:     []tag.Key{k1, k2, k3, k4, k5}, // Ensure view has a tag
+		TagKeys:     []tag.Key{k2, k5, k3, k1, k4}, // Ensure view has a tag
 		Measure:     m,
 		Aggregation: view.Count(),
 	}
@@ -460,8 +461,10 @@ func TestViewMeasureWithoutTag(t *testing.T) {
 	defer view.Unregister(v)
 	view.SetReportingPeriod(time.Millisecond)
 	// Make a measure without some tags in the view.
-	ctx, _ := tag.New(context.Background(), tag.Upsert(k2, "issue659"), tag.Upsert(k4, "issue659"))
-	stats.Record(ctx, m.M(1))
+	ctx1, _ := tag.New(context.Background(), tag.Upsert(k4, "issue659"), tag.Upsert(randomKey, "value"), tag.Upsert(k2, "issue659"))
+	stats.Record(ctx1, m.M(1))
+	ctx2, _ := tag.New(context.Background(), tag.Upsert(k5, "issue659"), tag.Upsert(k3, "issue659"), tag.Upsert(k1, "issue659"))
+	stats.Record(ctx2, m.M(2))
 	srv := httptest.NewServer(exporter)
 	defer srv.Close()
 	var i int
@@ -495,8 +498,9 @@ func TestViewMeasureWithoutTag(t *testing.T) {
 	want := `# HELP tests_foo foo
 # TYPE tests_foo counter
 tests_foo{key_1="",key_2="issue659",key_3="",key_4="issue659",key_5=""} 1
+tests_foo{key_1="issue659",key_2="",key_3="issue659",key_4="",key_5="issue659"} 1
 `
 	if output != want {
-		t.Fatal("output differed from expected")
+		t.Fatalf("output differed from expected output: %s want: %s", output, want)
 	}
 }
