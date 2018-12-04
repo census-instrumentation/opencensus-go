@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package metric
+package metricexport
 
 import (
 	"sync"
@@ -35,8 +35,6 @@ type Registry struct {
 	ind     uint64
 }
 
-var _ Producer = (*Registry)(nil)
-
 // NewRegistry creates a new Registry.
 func NewRegistry() *Registry {
 	m := &Registry{
@@ -47,7 +45,7 @@ func NewRegistry() *Registry {
 }
 
 // Read returns all the metrics from all the metric produces in this registry.
-func (m *Registry) Read() []*Metric {
+func (m *Registry) ReadAll() []*Metric {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	ms := make([]*Metric, 0, len(m.sources))
@@ -61,9 +59,6 @@ func (m *Registry) Read() []*Metric {
 func (m *Registry) AddProducer(source Producer) (remove func()) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	if source == m {
-		panic("attempt to add registry to itself")
-	}
 	tok := new(uintptr)
 	m.sources[tok] = source
 	return func() {

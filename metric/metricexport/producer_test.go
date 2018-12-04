@@ -12,5 +12,32 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package metric contains a data model and exporter support for metrics.
-package metric // import "go.opencensus.io/metric"
+package metricexport
+
+import (
+	"testing"
+)
+
+func TestRegistry_AddProducer(t *testing.T) {
+	r := NewRegistry()
+	m1 := &Metric{
+		Descriptor: Descriptor{
+			Name: "test",
+			Unit: UnitDimensionless,
+		},
+	}
+	remove := r.AddProducer(&constProducer{m1})
+	if got, want := len(r.ReadAll()), 1; got != want {
+		t.Fatal("Expected to read a single metric")
+	}
+	remove()
+	if got, want := len(r.ReadAll()), 0; got != want {
+		t.Fatal("Expected to read no metrics")
+	}
+}
+
+type constProducer []*Metric
+
+func (cp constProducer) Read() []*Metric {
+	return cp
+}

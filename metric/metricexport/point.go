@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package metric
+package metricexport
 
 import (
 	"time"
@@ -145,7 +145,7 @@ type Distribution struct {
 // BucketOptions describes the bounds of the histogram buckets in this
 // distribution.
 type BucketOptions struct {
-	// Bounds specifies a set of buckets with arbitrary upper-bounds.
+	// Bounds specifies a set of bucket upper bounds.
 	// This defines len(bounds) + 1 (= N) buckets. The boundaries for bucket
 	// index i are:
 	//

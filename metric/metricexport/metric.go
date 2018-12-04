@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package metric
+package metricexport
 
 import (
 	"time"
@@ -22,11 +22,14 @@ import (
 
 // LabelValue represents the value of a label. A missing value (nil) is distinct
 // from an empty string value.
-type LabelValue *string
+type LabelValue struct {
+	Value   string
+	Present bool
+}
 
 // NewLabelValue creates a new non-nil LabelValue that represents the given string.
 func NewLabelValue(val string) LabelValue {
-	return &val
+	return LabelValue{Value: val, Present: true}
 }
 
 // Descriptor holds metadata about a metric.
