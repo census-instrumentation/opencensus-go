@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package metricexport
+package metric
 
 // Unit is a string encoded according to the case-sensitive abbreviations from the
 // Unified Code for Units of Measure: http://unitsofmeasure.org/ucum.html

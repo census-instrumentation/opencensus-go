@@ -15,30 +15,19 @@
 package metricexport
 
 import (
+	"go.opencensus.io/metric"
 	"time"
 
 	"go.opencensus.io/resource"
 )
 
-// LabelValue represents the value of a label. A missing value (nil) is distinct
-// from an empty string value.
-type LabelValue struct {
-	Value   string
-	Present bool
-}
-
-// NewLabelValue creates a new non-nil LabelValue that represents the given string.
-func NewLabelValue(val string) LabelValue {
-	return LabelValue{Value: val, Present: true}
-}
-
 // Descriptor holds metadata about a metric.
 type Descriptor struct {
-	Name        string   // full name of the metric
-	Description string   // human-readable description
-	Unit        Unit     // units for the measure
-	Type        Type     // type of measure
-	LabelKeys   []string // label keys
+	Name        string      // full name of the metric
+	Description string      // human-readable description
+	Unit        metric.Unit // units for the measure
+	Type        Type        // type of measure
+	LabelKeys   []string    // label keys
 }
 
 // Metric represents a quantity measured against a resource with different
@@ -52,7 +41,7 @@ type Metric struct {
 // TimeSeries is a sequence of points associated with a combination of label
 // values.
 type TimeSeries struct {
-	LabelValues []LabelValue // label values, same order as keys in the metric descriptor
-	Points      []Point      // points sequence
-	StartTime   time.Time    // time we started recording this time series
+	LabelValues []metric.LabelValue // label values, same order as keys in the metric descriptor
+	Points      []Point             // points sequence
+	StartTime   time.Time           // time we started recording this time series
 }

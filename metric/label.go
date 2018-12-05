@@ -12,33 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package metricexport
+package metric
 
-import (
-	"go.opencensus.io/metric"
-	"testing"
-)
-
-func TestRegistry_AddProducer(t *testing.T) {
-	r := NewRegistry()
-	m1 := &Metric{
-		Descriptor: Descriptor{
-			Name: "test",
-			Unit: metric.UnitDimensionless,
-		},
-	}
-	remove := r.AddProducer(&constProducer{m1})
-	if got, want := len(r.ReadAll()), 1; got != want {
-		t.Fatal("Expected to read a single metric")
-	}
-	remove()
-	if got, want := len(r.ReadAll()), 0; got != want {
-		t.Fatal("Expected to read no metrics")
-	}
+// LabelValue represents the value of a label. A missing value (nil) is distinct
+// from an empty string value.
+type LabelValue struct {
+	Value   string
+	Present bool
 }
 
-type constProducer []*Metric
-
-func (cp constProducer) Read() []*Metric {
-	return cp
+// NewLabelValue creates a new non-nil LabelValue that represents the given string.
+func NewLabelValue(val string) LabelValue {
+	return LabelValue{Value: val, Present: true}
 }
