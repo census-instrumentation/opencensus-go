@@ -32,6 +32,27 @@ type command interface {
 	handleCommand(w *worker)
 }
 
+type runSyncCommand struct {
+	commandFunc func()
+	done        chan struct{}
+}
+
+func (gc runSyncCommand) handleCommand(w *worker) {
+	defer func() {
+		gc.done <- struct{}{}
+	}()
+	gc.commandFunc()
+}
+
+func (w *worker) runSync(cmd func()) {
+	gc := &runSyncCommand{
+		commandFunc: cmd,
+		done:        make(chan struct{}, 1),
+	}
+	w.c <- gc
+	<-gc.done
+}
+
 // getViewByNameReq is the command to get a view given its name.
 type getViewByNameReq struct {
 	name string
