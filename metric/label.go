@@ -14,11 +14,12 @@
 
 package metric
 
-// LabelValue represents the value of a label. A missing value (nil) is distinct
-// from an empty string value.
+// LabelValue represents the value of a label.
+// The zero value represents a missing label value, which may be treated
+// differently to an empty string value by some back ends.
 type LabelValue struct {
-	Value   string
-	Present bool
+	Value   string // string value of the label
+	Present bool   // flag that indicated whether a value is present or not
 }
 
 // NewLabelValue creates a new non-nil LabelValue that represents the given string.

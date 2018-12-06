@@ -15,8 +15,9 @@
 package metricexport
 
 import (
-	"go.opencensus.io/metric"
 	"testing"
+
+	"go.opencensus.io/metric"
 )
 
 func TestRegistry_AddProducer(t *testing.T) {

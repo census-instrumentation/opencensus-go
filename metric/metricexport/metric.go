@@ -15,8 +15,9 @@
 package metricexport
 
 import (
-	"go.opencensus.io/metric"
 	"time"
+
+	"go.opencensus.io/metric"
 
 	"go.opencensus.io/resource"
 )
