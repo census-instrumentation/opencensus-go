@@ -61,7 +61,9 @@ func (t statsTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 		track.end()
 	} else {
 		track.statusCode = resp.StatusCode
-		track.respContentLength = resp.ContentLength
+		if req.Method != "HEAD" {
+			track.respContentLength = resp.ContentLength
+		}
 		if resp.Body == nil {
 			track.end()
 		} else {
