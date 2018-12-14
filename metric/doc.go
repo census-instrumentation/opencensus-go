@@ -12,17 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package metricexport
-
-import (
-	"go.opencensus.io/metric/metricdata"
-)
-
-// Producer is a source of metrics.
-type Producer interface {
-	// Read should return the current values of all metrics supported by this
-	// metric provider.
-	// The returned metrics should be unique for each combination of name and
-	// resource.
-	Read() []*metricdata.Metric
-}
+// Package metric support for gauge metrics.
+//
+// This is an EXPERIMENTAL package, and may change in arbitrary ways without
+// notice.
+package metric // import "go.opencensus.io/metric"
