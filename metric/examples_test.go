@@ -12,34 +12,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package metricexport
+package metric_test
 
 import (
+	"net/http"
+
+	"go.opencensus.io/metric"
 	"go.opencensus.io/metric/metricdata"
-	"testing"
 )
 
-func TestRegistry_AddProducer(t *testing.T) {
-	r := NewRegistry()
-	m1 := &metricdata.Metric{
-		Descriptor: metricdata.Descriptor{
-			Name: "test",
-			Unit: metricdata.UnitDimensionless,
-		},
-	}
-	p := &constProducer{m1}
-	r.AddProducer(p)
-	if got, want := len(r.ReadAll()), 1; got != want {
-		t.Fatal("Expected to read a single metric")
-	}
-	r.RemoveProducer(p)
-	if got, want := len(r.ReadAll()), 0; got != want {
-		t.Fatal("Expected to read no metrics")
-	}
-}
+func ExampleRegistry_AddInt64Gauge() {
+	r := metric.NewRegistry()
+	// TODO: allow exporting from a registry
 
-type constProducer []*metricdata.Metric
+	g := r.AddInt64Gauge("active_request", "Number of active requests, per method.", metricdata.UnitDimensionless, "method")
 
-func (cp constProducer) Read() []*metricdata.Metric {
-	return cp
+	http.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) {
+		e := g.GetEntry(metricdata.NewLabelValue(request.Method))
+		e.Add(1)
+		defer e.Add(-1)
+		// process request ...
+	})
 }
