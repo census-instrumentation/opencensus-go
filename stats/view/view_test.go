@@ -459,6 +459,18 @@ func TestViewRegister_negativeBucketBounds(t *testing.T) {
 	}
 }
 
+func TestViewRegister_zeroBucketBounds(t *testing.T) {
+	m := stats.Int64("TestViewRegister_negativeBucketBounds", "", "")
+	v := &View{
+		Measure:     m,
+		Aggregation: Distribution(0, 2),
+	}
+	err := Register(v)
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
+}
+
 func TestViewRegister_sortBuckets(t *testing.T) {
 	m := stats.Int64("TestViewRegister_sortBuckets", "", "")
 	v := &View{
