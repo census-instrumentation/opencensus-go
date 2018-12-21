@@ -9,6 +9,6 @@
   "license": "",
   "name": "go.opencensus.io",
   "releaseCmd": "git commit -a -m \"gx publish $VERSION\"",
-  "version": "0.0.2"
+  "version": "0.0.3"
 }
 
