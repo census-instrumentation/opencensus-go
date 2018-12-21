@@ -1,0 +1,14 @@
+{
+  "author": "lanzafame",
+  "bugs": {},
+  "gx": {
+    "dvcsimport": "go.opencensus.io"
+  },
+  "gxVersion": "0.14.0",
+  "language": "go",
+  "license": "",
+  "name": "go.opencensus.io",
+  "releaseCmd": "git commit -a -m \"gx publish $VERSION\"",
+  "version": "0.0.2"
+}
+
