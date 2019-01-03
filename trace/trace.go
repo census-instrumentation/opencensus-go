@@ -286,6 +286,14 @@ func (s *Span) makeSpanData() *SpanData {
 	return &sd
 }
 
+// SpanData returns the data of the span
+func (s *Span) SpanData() SpanData {
+	if s == nil || s.data == nil {
+		return SpanData{}
+	}
+	return *s.data
+}
+
 // SpanContext returns the SpanContext of the span.
 func (s *Span) SpanContext() SpanContext {
 	if s == nil {
