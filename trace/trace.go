@@ -147,6 +147,14 @@ func WithSampler(sampler Sampler) StartOption {
 	}
 }
 
+// force to generate span data even span is not be sampled
+var forceGenerateSpanData = false
+
+// SetForceGenerateSpanData set true to flag forceGenerateSpanData
+func SetForceGenerateSpanData() {
+	forceGenerateSpanData = true
+}
+
 // StartSpan starts a new child span of the current span in the context. If
 // there is no span in the context, creates a new trace and span.
 //
@@ -215,7 +223,8 @@ func startSpanInternal(name string, hasParent bool, parent SpanContext, remotePa
 			HasRemoteParent: remoteParent}).Sample)
 	}
 
-	if !internal.LocalSpanStoreEnabled && !span.spanContext.IsSampled() {
+	// will not return here if forceGenerateSpanData
+	if !forceGenerateSpanData && !internal.LocalSpanStoreEnabled && !span.spanContext.IsSampled() {
 		return span
 	}
 
@@ -287,11 +296,10 @@ func (s *Span) makeSpanData() *SpanData {
 }
 
 // SpanData returns the data of the span
-func (s *Span) SpanData() SpanData {
-	if s == nil || s.data == nil {
-		return SpanData{}
-	}
-	return *s.data
+func (s *Span) SpanData() *SpanData {
+	// use makeSpanData to deep copy span.data
+	// to avoid concurrent operation to attributes map
+	return s.makeSpanData()
 }
 
 // SpanContext returns the SpanContext of the span.
