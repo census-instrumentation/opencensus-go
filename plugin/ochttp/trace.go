@@ -152,22 +152,19 @@ func spanNameFromURL(req *http.Request) string {
 func requestAttrs(r *http.Request) []trace.Attribute {
 	userAgent := r.UserAgent()
 
+	attrs := make([]trace.Attribute, 0, 5)
+	attrs = append(attrs,
+		trace.StringAttribute(PathAttribute, r.URL.Path),
+		trace.StringAttribute(UrlAttribute, r.URL.String()),
+		trace.StringAttribute(HostAttribute, r.URL.Host),
+		trace.StringAttribute(MethodAttribute, r.Method),
+	)
+
 	if userAgent != "" {
-		return []trace.Attribute{
-			trace.StringAttribute(PathAttribute, r.URL.Path),
-			trace.StringAttribute(UrlAttribute, r.URL.String()),
-			trace.StringAttribute(HostAttribute, r.URL.Host),
-			trace.StringAttribute(MethodAttribute, r.Method),
-			trace.StringAttribute(UserAgentAttribute, r.UserAgent()),
-		}
-	} else {
-		return []trace.Attribute{
-			trace.StringAttribute(PathAttribute, r.URL.Path),
-			trace.StringAttribute(UrlAttribute, r.URL.String()),
-			trace.StringAttribute(HostAttribute, r.URL.Host),
-			trace.StringAttribute(MethodAttribute, r.Method),
-		}
+		attrs = append(attrs, trace.StringAttribute(UserAgentAttribute, userAgent))
 	}
+
+	return attrs
 }
 
 func responseAttrs(resp *http.Response) []trace.Attribute {
