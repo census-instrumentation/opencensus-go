@@ -471,6 +471,7 @@ func TestRequestAttributes(t *testing.T) {
 			},
 			wantAttrs: []trace.Attribute{
 				trace.StringAttribute("http.path", "/hello"),
+				trace.StringAttribute("http.url", "http://example.com:779/hello"),
 				trace.StringAttribute("http.host", "example.com:779"),
 				trace.StringAttribute("http.method", "GET"),
 				trace.StringAttribute("http.user_agent", "ua"),

@@ -10,7 +10,8 @@
         "http.path": "/",
         "http.method": "GET",
         "http.host": "example.com",
-        "http.status_code": "200"
+        "http.status_code": "200",
+        "http.url": "https://example.com/"
       }
     },
     {
@@ -24,7 +25,8 @@
         "http.path": "/",
         "http.method": "POST",
         "http.host": "example.com",
-        "http.status_code": "200"
+        "http.status_code": "200",
+        "http.url": "https://example.com/"
       }
     },
     {
@@ -39,7 +41,8 @@
         "http.path": "/path/to/resource/",
         "http.method": "GET",
         "http.host": "{host}:{port}",
-        "http.status_code": "200"
+        "http.status_code": "200",
+        "http.url": "http://{host}:{port}/path/to/resource/"
       }
     },
     {
@@ -53,11 +56,11 @@
         "http.path": "/",
         "http.method": "GET",
         "http.host": "sdlfaldfjalkdfjlkajdflkajlsdjf.sdlkjafsdjfalfadslkf.com",
-        "error": "true"
+        "http.url": "https://sdlfaldfjalkdfjlkajdflkajlsdjf.sdlkjafsdjfalfadslkf.com/"
       }
     },
     {
-      "name": "Response code: 199. This test case is not possible to implement for some platforms as this considered an invalid status code. Fallback into 200 test case",
+      "name": "Response code: 199. This test case is not possible to implement on some platforms as they don't allow to return this status code. Keeping this test case for visibility, but it actually simply a fallback into 200 test case",
       "method": "GET",
       "url": "http://{host}:{port}/",
       "responseCode": 200,
@@ -68,7 +71,8 @@
         "http.path": "/",
         "http.method": "GET",
         "http.host": "{host}:{port}",
-        "http.status_code": "200"
+        "http.status_code": "200",
+        "http.url": "http://{host}:{port}/"
       }
     },
     {
@@ -83,7 +87,8 @@
         "http.path": "/",
         "http.method": "GET",
         "http.host": "{host}:{port}",
-        "http.status_code": "200"
+        "http.status_code": "200",
+        "http.url": "http://{host}:{port}/"
       }
     },
     {
@@ -98,7 +103,8 @@
         "http.path": "/",
         "http.method": "GET",
         "http.host": "{host}:{port}",
-        "http.status_code": "399"
+        "http.status_code": "399",
+        "http.url": "http://{host}:{port}/"
       }
     },
     {
@@ -113,7 +119,8 @@
         "http.path": "/",
         "http.method": "GET",
         "http.host": "{host}:{port}",
-        "http.status_code": "400"
+        "http.status_code": "400",
+        "http.url": "http://{host}:{port}/"
       }
     },
     {
@@ -128,7 +135,8 @@
         "http.path": "/",
         "http.method": "GET",
         "http.host": "{host}:{port}",
-        "http.status_code": "401"
+        "http.status_code": "401",
+        "http.url": "http://{host}:{port}/"
       }
     },
     {
@@ -143,7 +151,8 @@
         "http.path": "/",
         "http.method": "GET",
         "http.host": "{host}:{port}",
-        "http.status_code": "403"
+        "http.status_code": "403",
+        "http.url": "http://{host}:{port}/"
       }
     },
     {
@@ -158,7 +167,8 @@
         "http.path": "/",
         "http.method": "GET",
         "http.host": "{host}:{port}",
-        "http.status_code": "404"
+        "http.status_code": "404",
+        "http.url": "http://{host}:{port}/"
       }
     },
     {
@@ -173,7 +183,8 @@
         "http.path": "/",
         "http.method": "GET",
         "http.host": "{host}:{port}",
-        "http.status_code": "429"
+        "http.status_code": "429",
+        "http.url": "http://{host}:{port}/"
       }
     },
     {
@@ -188,7 +199,8 @@
         "http.path": "/",
         "http.method": "GET",
         "http.host": "{host}:{port}",
-        "http.status_code": "501"
+        "http.status_code": "501",
+        "http.url": "http://{host}:{port}/"
       }
     },
     {
@@ -203,7 +215,8 @@
         "http.path": "/",
         "http.method": "GET",
         "http.host": "{host}:{port}",
-        "http.status_code": "503"
+        "http.status_code": "503",
+        "http.url": "http://{host}:{port}/"
       }
     },
     {
@@ -218,7 +231,8 @@
         "http.path": "/",
         "http.method": "GET",
         "http.host": "{host}:{port}",
-        "http.status_code": "504"
+        "http.status_code": "504",
+        "http.url": "http://{host}:{port}/"
       }
     },
     {
@@ -233,7 +247,8 @@
         "http.path": "/",
         "http.method": "GET",
         "http.host": "{host}:{port}",
-        "http.status_code": "600"
+        "http.status_code": "600",
+        "http.url": "http://{host}:{port}/"
       }
     },
     {
@@ -252,7 +267,8 @@
         "http.method": "GET",
         "http.host": "{host}:{port}",
         "http.status_code": "200",
-        "http.user_agent": "test-user-agent"
+        "http.user_agent": "test-user-agent",
+        "http.url": "http://{host}:{port}/"
       }
     }
   ]

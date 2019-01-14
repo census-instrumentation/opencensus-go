@@ -34,6 +34,7 @@ const (
 	HostAttribute       = "http.host"
 	MethodAttribute     = "http.method"
 	PathAttribute       = "http.path"
+	UrlAttribute        = "http.url"
 	UserAgentAttribute  = "http.user_agent"
 	StatusCodeAttribute = "http.status_code"
 )
@@ -83,7 +84,6 @@ func (t *traceTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	resp, err := t.base.RoundTrip(req)
 	if err != nil {
 		span.SetStatus(trace.Status{Code: trace.StatusCodeUnknown, Message: err.Error()})
-		span.AddAttributes(trace.BoolAttribute("error", true))
 		span.End()
 		return resp, err
 	}
@@ -155,6 +155,7 @@ func requestAttrs(r *http.Request) []trace.Attribute {
 	if userAgent != "" {
 		return []trace.Attribute{
 			trace.StringAttribute(PathAttribute, r.URL.Path),
+			trace.StringAttribute(UrlAttribute, r.URL.String()),
 			trace.StringAttribute(HostAttribute, r.URL.Host),
 			trace.StringAttribute(MethodAttribute, r.Method),
 			trace.StringAttribute(UserAgentAttribute, r.UserAgent()),
@@ -162,6 +163,7 @@ func requestAttrs(r *http.Request) []trace.Attribute {
 	} else {
 		return []trace.Attribute{
 			trace.StringAttribute(PathAttribute, r.URL.Path),
+			trace.StringAttribute(UrlAttribute, r.URL.String()),
 			trace.StringAttribute(HostAttribute, r.URL.Host),
 			trace.StringAttribute(MethodAttribute, r.Method),
 		}
