@@ -69,6 +69,9 @@ type Options struct {
 
 	// Process contains the information about the exporting process.
 	Process Process
+
+	//BufferMaxCount defines the total number of traces that can be buffered in memory
+	BufferMaxCount int
 }
 
 // NewExporter returns a trace.Exporter implementation that exports
@@ -126,6 +129,14 @@ func NewExporter(o Options) (*Exporter, error) {
 			onError(err)
 		}
 	})
+
+	// Set BufferedByteLimit with the total number of spans that are permissible to be held in memory.
+	// This needs to be done since the size of messages is always set to 1. Failing to set this would allow
+	// 1G messages to be held in memory since that is the default value of BufferedByteLimit.
+	if o.BufferMaxCount != 0 {
+		bundler.BufferedByteLimit = o.BufferMaxCount
+	}
+
 	e.bundler = bundler
 	return e, nil
 }
