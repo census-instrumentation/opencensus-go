@@ -42,6 +42,11 @@ type Span struct {
 	data        *SpanData
 	mu          sync.Mutex // protects the contents of *data (but not the pointer value.)
 	spanContext SpanContext
+
+	// lruAttributes are capped at configured limit. When the capacity is reached an oldest entry
+	// is removed to create room for a new entry.
+	lruAttributes *lruMap
+
 	// spanStore is the spanStore this span belongs to, if any, otherwise it is nil.
 	*spanStore
 	endOnce sync.Once
@@ -226,6 +231,7 @@ func startSpanInternal(name string, hasParent bool, parent SpanContext, remotePa
 		Name:            name,
 		HasRemoteParent: remoteParent,
 	}
+	span.lruAttributes = newLruMap(cfg.MaxAttributesPerSpan)
 	if hasParent {
 		span.data.ParentSpanID = parent.SpanID
 	}
@@ -276,11 +282,9 @@ func (s *Span) makeSpanData() *SpanData {
 	var sd SpanData
 	s.mu.Lock()
 	sd = *s.data
-	if s.data.Attributes != nil {
-		sd.Attributes = make(map[string]interface{})
-		for k, v := range s.data.Attributes {
-			sd.Attributes[k] = v
-		}
+	if s.lruAttributes.simpleLruMap.Len() > 0 {
+		sd.Attributes = s.lruAttributesToAttributeMap()
+		sd.DroppedAttributeCount = s.lruAttributes.droppedCount
 	}
 	s.mu.Unlock()
 	return &sd
@@ -314,6 +318,24 @@ func (s *Span) SetStatus(status Status) {
 	s.mu.Unlock()
 }
 
+func (s *Span) lruAttributesToAttributeMap() map[string]interface{} {
+	attributes := make(map[string]interface{})
+	for _, key := range s.lruAttributes.simpleLruMap.Keys() {
+		value, ok := s.lruAttributes.simpleLruMap.Get(key)
+		if ok {
+			keyStr := key.(string)
+			attributes[keyStr] = value
+		}
+	}
+	return attributes
+}
+
+func (s *Span) copyToCappedAttributes(attributes []Attribute) {
+	for _, a := range attributes {
+		s.lruAttributes.add(a.key, a.value)
+	}
+}
+
 // AddAttributes sets attributes in the span.
 //
 // Existing attributes whose keys appear in the attributes parameter are overwritten.
@@ -322,10 +344,7 @@ func (s *Span) AddAttributes(attributes ...Attribute) {
 		return
 	}
 	s.mu.Lock()
-	if s.data.Attributes == nil {
-		s.data.Attributes = make(map[string]interface{})
-	}
-	copyAttributes(s.data.Attributes, attributes)
+	s.copyToCappedAttributes(attributes)
 	s.mu.Unlock()
 }
 

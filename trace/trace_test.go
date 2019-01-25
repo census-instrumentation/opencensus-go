@@ -386,6 +386,37 @@ func TestSetSpanAttributes(t *testing.T) {
 	}
 }
 
+func TestSetSpanAttributesOverLimit(t *testing.T) {
+	cfg := Config{MaxAttributesPerSpan: 2}
+	ApplyConfig(cfg)
+
+	span := startSpan(StartOptions{})
+	span.AddAttributes(StringAttribute("key1", "value1"))
+	span.AddAttributes(StringAttribute("key2", "value2"))
+	span.AddAttributes(StringAttribute("key1", "value3")) // Replace key1.
+	span.AddAttributes(StringAttribute("key4", "value4")) // Remove key2 and add key4
+	got, err := endSpan(span)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	want := &SpanData{
+		SpanContext: SpanContext{
+			TraceID:      tid,
+			SpanID:       SpanID{},
+			TraceOptions: 0x1,
+		},
+		ParentSpanID:          sid,
+		Name:                  "span0",
+		Attributes:            map[string]interface{}{"key1": "value3", "key4": "value4"},
+		HasRemoteParent:       true,
+		DroppedAttributeCount: 1,
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("exporting span: got %#v want %#v", got, want)
+	}
+}
+
 func TestAnnotations(t *testing.T) {
 	span := startSpan(StartOptions{})
 	span.Annotatef([]Attribute{StringAttribute("key1", "value1")}, "%f", 1.5)
