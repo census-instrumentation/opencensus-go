@@ -451,6 +451,45 @@ func TestAnnotations(t *testing.T) {
 	}
 }
 
+func TestAnnotationsOverLimit(t *testing.T) {
+	cfg := Config{MaxAnnotationEventsPerSpan: 2}
+	ApplyConfig(cfg)
+	span := startSpan(StartOptions{})
+	span.Annotatef([]Attribute{StringAttribute("key4", "value4")}, "%d", 1)
+	span.Annotate([]Attribute{StringAttribute("key3", "value3")}, "Annotate oldest")
+	span.Annotatef([]Attribute{StringAttribute("key1", "value1")}, "%f", 1.5)
+	span.Annotate([]Attribute{StringAttribute("key2", "value2")}, "Annotate")
+	got, err := endSpan(span)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for i := range got.Annotations {
+		if !checkTime(&got.Annotations[i].Time) {
+			t.Error("exporting span: expected nonzero Annotation Time")
+		}
+	}
+
+	want := &SpanData{
+		SpanContext: SpanContext{
+			TraceID:      tid,
+			SpanID:       SpanID{},
+			TraceOptions: 0x1,
+		},
+		ParentSpanID: sid,
+		Name:         "span0",
+		Annotations: []Annotation{
+			{Message: "1.500000", Attributes: map[string]interface{}{"key1": "value1"}},
+			{Message: "Annotate", Attributes: map[string]interface{}{"key2": "value2"}},
+		},
+		DroppedAnnotationCount: 2,
+		HasRemoteParent:        true,
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("exporting span: got %#v want %#v", got, want)
+	}
+}
+
 func TestMessageEvents(t *testing.T) {
 	span := startSpan(StartOptions{})
 	span.AddMessageReceiveEvent(3, 400, 300)
