@@ -47,6 +47,9 @@ type Span struct {
 	// is removed to create room for a new entry.
 	lruAttributes *lruMap
 
+	// annotations are stored in FIFO queue capped by configured limit.
+	annotations *evictedQueue
+
 	// spanStore is the spanStore this span belongs to, if any, otherwise it is nil.
 	*spanStore
 	endOnce sync.Once
@@ -232,6 +235,8 @@ func startSpanInternal(name string, hasParent bool, parent SpanContext, remotePa
 		HasRemoteParent: remoteParent,
 	}
 	span.lruAttributes = newLruMap(cfg.MaxAttributesPerSpan)
+	span.annotations = newEvictedQueue(cfg.MaxAnnotationEventsPerSpan)
+
 	if hasParent {
 		span.data.ParentSpanID = parent.SpanID
 	}
@@ -286,6 +291,10 @@ func (s *Span) makeSpanData() *SpanData {
 		sd.Attributes = s.lruAttributesToAttributeMap()
 		sd.DroppedAttributeCount = s.lruAttributes.droppedCount
 	}
+	if len(s.annotations.queue) > 0 {
+		sd.Annotations = s.interfaceArrayToAnnotationArray()
+		sd.DroppedAnnotationCount = s.annotations.droppedCount
+	}
 	s.mu.Unlock()
 	return &sd
 }
@@ -316,6 +325,14 @@ func (s *Span) SetStatus(status Status) {
 	s.mu.Lock()
 	s.data.Status = status
 	s.mu.Unlock()
+}
+
+func (s *Span) interfaceArrayToAnnotationArray() []Annotation {
+	annotationArr := make([]Annotation, 0)
+	for _, value := range s.annotations.queue {
+		annotationArr = append(annotationArr, value.(Annotation))
+	}
+	return annotationArr
 }
 
 func (s *Span) lruAttributesToAttributeMap() map[string]interface{} {
@@ -364,7 +381,7 @@ func (s *Span) lazyPrintfInternal(attributes []Attribute, format string, a ...in
 		m = make(map[string]interface{})
 		copyAttributes(m, attributes)
 	}
-	s.data.Annotations = append(s.data.Annotations, Annotation{
+	s.annotations.add(Annotation{
 		Time:       now,
 		Message:    msg,
 		Attributes: m,
@@ -380,7 +397,7 @@ func (s *Span) printStringInternal(attributes []Attribute, str string) {
 		a = make(map[string]interface{})
 		copyAttributes(a, attributes)
 	}
-	s.data.Annotations = append(s.data.Annotations, Annotation{
+	s.annotations.add(Annotation{
 		Time:       now,
 		Message:    str,
 		Attributes: a,

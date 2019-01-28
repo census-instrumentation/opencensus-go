@@ -81,11 +81,12 @@ type SpanData struct {
 	// from StartTime by the duration of the span.
 	EndTime time.Time
 	// The values of Attributes each have type string, bool, or int64.
-	Attributes            map[string]interface{}
-	DroppedAttributeCount int
-	Annotations           []Annotation
-	MessageEvents         []MessageEvent
+	Attributes             map[string]interface{}
+	Annotations            []Annotation
+	MessageEvents          []MessageEvent
 	Status
-	Links           []Link
-	HasRemoteParent bool
+	Links                  []Link
+	HasRemoteParent        bool
+	DroppedAttributeCount  int
+	DroppedAnnotationCount int
 }
