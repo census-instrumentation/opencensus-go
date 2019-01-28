@@ -483,13 +483,12 @@ func TestAnnotationsOverLimit(t *testing.T) {
 			{Message: "Annotate", Attributes: map[string]interface{}{"key2": "value2"}},
 		},
 		DroppedAnnotationCount: 2,
-		HasRemoteParent: true,
+		HasRemoteParent:        true,
 	}
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("exporting span: got %#v want %#v", got, want)
 	}
 }
-
 
 func TestMessageEvents(t *testing.T) {
 	span := startSpan(StartOptions{})
