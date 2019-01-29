@@ -50,6 +50,12 @@ type Span struct {
 	// annotations are stored in FIFO queue capped by configured limit.
 	annotations *evictedQueue
 
+	// messageEvents are stored in FIFO queue capped by configured limit.
+	messageEvents *evictedQueue
+
+	// links are stored in FIFO queue capped by configured limit.
+	links *evictedQueue
+
 	// spanStore is the spanStore this span belongs to, if any, otherwise it is nil.
 	*spanStore
 	endOnce sync.Once
@@ -236,6 +242,8 @@ func startSpanInternal(name string, hasParent bool, parent SpanContext, remotePa
 	}
 	span.lruAttributes = newLruMap(cfg.MaxAttributesPerSpan)
 	span.annotations = newEvictedQueue(cfg.MaxAnnotationEventsPerSpan)
+	span.messageEvents = newEvictedQueue(cfg.MaxMessageEventsPerSpan)
+	span.links = newEvictedQueue(cfg.MaxLinksPerSpan)
 
 	if hasParent {
 		span.data.ParentSpanID = parent.SpanID
@@ -295,6 +303,14 @@ func (s *Span) makeSpanData() *SpanData {
 		sd.Annotations = s.interfaceArrayToAnnotationArray()
 		sd.DroppedAnnotationCount = s.annotations.droppedCount
 	}
+	if len(s.messageEvents.queue) > 0 {
+		sd.MessageEvents = s.interfaceArrayToMessageEventArray()
+		sd.DroppedMessageEventCount = s.messageEvents.droppedCount
+	}
+	if len(s.links.queue) > 0 {
+		sd.Links = s.interfaceArrayToLinksArray()
+		sd.DroppedLinkCount = s.links.droppedCount
+	}
 	s.mu.Unlock()
 	return &sd
 }
@@ -325,6 +341,22 @@ func (s *Span) SetStatus(status Status) {
 	s.mu.Lock()
 	s.data.Status = status
 	s.mu.Unlock()
+}
+
+func (s *Span) interfaceArrayToLinksArray() []Link {
+	linksArr := make([]Link, 0)
+	for _, value := range s.links.queue {
+		linksArr = append(linksArr, value.(Link))
+	}
+	return linksArr
+}
+
+func (s *Span) interfaceArrayToMessageEventArray() []MessageEvent {
+	messageEventArr := make([]MessageEvent, 0)
+	for _, value := range s.messageEvents.queue {
+		messageEventArr = append(messageEventArr, value.(MessageEvent))
+	}
+	return messageEventArr
 }
 
 func (s *Span) interfaceArrayToAnnotationArray() []Annotation {
@@ -434,7 +466,7 @@ func (s *Span) AddMessageSendEvent(messageID, uncompressedByteSize, compressedBy
 	}
 	now := time.Now()
 	s.mu.Lock()
-	s.data.MessageEvents = append(s.data.MessageEvents, MessageEvent{
+	s.messageEvents.add(MessageEvent{
 		Time:                 now,
 		EventType:            MessageEventTypeSent,
 		MessageID:            messageID,
@@ -456,7 +488,7 @@ func (s *Span) AddMessageReceiveEvent(messageID, uncompressedByteSize, compresse
 	}
 	now := time.Now()
 	s.mu.Lock()
-	s.data.MessageEvents = append(s.data.MessageEvents, MessageEvent{
+	s.messageEvents.add(MessageEvent{
 		Time:                 now,
 		EventType:            MessageEventTypeRecv,
 		MessageID:            messageID,
@@ -472,7 +504,7 @@ func (s *Span) AddLink(l Link) {
 		return
 	}
 	s.mu.Lock()
-	s.data.Links = append(s.data.Links, l)
+	s.links.add(l)
 	s.mu.Unlock()
 }
 

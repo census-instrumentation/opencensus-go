@@ -524,6 +524,45 @@ func TestMessageEvents(t *testing.T) {
 	}
 }
 
+func TestMessageEventsOverLimit(t *testing.T) {
+	cfg := Config{MaxMessageEventsPerSpan: 2}
+	ApplyConfig(cfg)
+	span := startSpan(StartOptions{})
+	span.AddMessageReceiveEvent(5, 300, 120)
+	span.AddMessageSendEvent(4, 100, 50)
+	span.AddMessageReceiveEvent(3, 400, 300)
+	span.AddMessageSendEvent(1, 200, 100)
+	got, err := endSpan(span)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for i := range got.MessageEvents {
+		if !checkTime(&got.MessageEvents[i].Time) {
+			t.Error("exporting span: expected nonzero MessageEvent Time")
+		}
+	}
+
+	want := &SpanData{
+		SpanContext: SpanContext{
+			TraceID:      tid,
+			SpanID:       SpanID{},
+			TraceOptions: 0x1,
+		},
+		ParentSpanID: sid,
+		Name:         "span0",
+		MessageEvents: []MessageEvent{
+			{EventType: 2, MessageID: 0x3, UncompressedByteSize: 0x190, CompressedByteSize: 0x12c},
+			{EventType: 1, MessageID: 0x1, UncompressedByteSize: 0xc8, CompressedByteSize: 0x64},
+		},
+		DroppedMessageEventCount: 2,
+		HasRemoteParent:          true,
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("exporting span: got %#v want %#v", got, want)
+	}
+}
+
 func TestSetSpanName(t *testing.T) {
 	want := "SpanName-1"
 	span := startSpan(StartOptions{})
@@ -627,6 +666,49 @@ func TestAddLink(t *testing.T) {
 			Attributes: map[string]interface{}{"key5": "value5"},
 		}},
 		HasRemoteParent: true,
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("exporting span: got %#v want %#v", got, want)
+	}
+}
+
+func TestAddLinkOverLimit(t *testing.T) {
+	cfg := Config{MaxLinksPerSpan: 1}
+	ApplyConfig(cfg)
+	span := startSpan(StartOptions{})
+	span.AddLink(Link{
+		TraceID:    tid,
+		SpanID:     sid,
+		Type:       LinkTypeParent,
+		Attributes: map[string]interface{}{"key4": "value4"},
+	})
+	span.AddLink(Link{
+		TraceID:    tid,
+		SpanID:     sid,
+		Type:       LinkTypeParent,
+		Attributes: map[string]interface{}{"key5": "value5"},
+	})
+	got, err := endSpan(span)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	want := &SpanData{
+		SpanContext: SpanContext{
+			TraceID:      tid,
+			SpanID:       SpanID{},
+			TraceOptions: 0x1,
+		},
+		ParentSpanID: sid,
+		Name:         "span0",
+		Links: []Link{{
+			TraceID:    tid,
+			SpanID:     sid,
+			Type:       2,
+			Attributes: map[string]interface{}{"key5": "value5"},
+		}},
+		DroppedLinkCount: 1,
+		HasRemoteParent:  true,
 	}
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("exporting span: got %#v want %#v", got, want)
