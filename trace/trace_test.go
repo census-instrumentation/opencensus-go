@@ -829,6 +829,37 @@ func TestStartSpanAfterEnd(t *testing.T) {
 	}
 }
 
+func TestChildSpanCount(t *testing.T) {
+	spans := make(exporter)
+	RegisterExporter(&spans)
+	defer UnregisterExporter(&spans)
+	ctx, span0 := StartSpan(context.Background(), "parent", WithSampler(AlwaysSample()))
+	ctx1, span1 := StartSpan(ctx, "span-1", WithSampler(AlwaysSample()))
+	_, span2 := StartSpan(ctx1, "span-2", WithSampler(AlwaysSample()))
+	span2.End()
+	span1.End()
+
+	_, span3 := StartSpan(ctx, "span-3", WithSampler(AlwaysSample()))
+	span3.End()
+	span0.End()
+	UnregisterExporter(&spans)
+	if got, want := len(spans), 4; got != want {
+		t.Fatalf("len(%#v) = %d; want %d", spans, got, want)
+	}
+	if got, want := spans["span-3"].ChildSpanCount, 0; got != want {
+		t.Errorf("span-3.ChildSpanCount=%q; want %q", got, want)
+	}
+	if got, want := spans["span-2"].ChildSpanCount, 0; got != want {
+		t.Errorf("span-2.ChildSpanCount=%q; want %q", got, want)
+	}
+	if got, want := spans["span-1"].ChildSpanCount, 1; got != want {
+		t.Errorf("span-1.ChildSpanCount=%q; want %q", got, want)
+	}
+	if got, want := spans["parent"].ChildSpanCount, 2; got != want {
+		t.Errorf("parent.ChildSpanCount=%q; want %q", got, want)
+	}
+}
+
 func TestNilSpanEnd(t *testing.T) {
 	var span *Span
 	span.End()
