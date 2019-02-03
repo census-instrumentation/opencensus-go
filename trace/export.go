@@ -91,4 +91,7 @@ type SpanData struct {
 	DroppedAnnotationCount   int
 	DroppedMessageEventCount int
 	DroppedLinkCount         int
+
+	// ChildSpanCount holds the number of child span created for this span.
+	ChildSpanCount int
 }

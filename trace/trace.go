@@ -170,6 +170,7 @@ func StartSpan(ctx context.Context, name string, o ...StartOption) (context.Cont
 	var opts StartOptions
 	var parent SpanContext
 	if p := FromContext(ctx); p != nil {
+		p.addChild()
 		parent = p.spanContext
 	}
 	for _, op := range o {
@@ -383,6 +384,15 @@ func (s *Span) copyToCappedAttributes(attributes []Attribute) {
 	for _, a := range attributes {
 		s.lruAttributes.add(a.key, a.value)
 	}
+}
+
+func (s *Span) addChild() {
+	if !s.IsRecordingEvents() {
+		return
+	}
+	s.mu.Lock()
+	s.data.ChildSpanCount++
+	s.mu.Unlock()
 }
 
 // AddAttributes sets attributes in the span.
