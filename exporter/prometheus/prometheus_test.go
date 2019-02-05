@@ -17,7 +17,6 @@ package prometheus
 import (
 	"context"
 	"fmt"
-	"github.com/google/go-cmp/cmp"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -295,16 +294,16 @@ func TestCumulativenessFromHistograms(t *testing.T) {
 	// 100: []			| 0 + prev(i) = 0 + 4 = 4
 	// 250: [187.12, 199.9, 245.67]	| 3 + prev(i) = 3 + 4 = 7
 	wantLines := []string{
-		`cash_register_bucket{le="1.0"} 1.0`,
-		`cash_register_bucket{le="5.0"} 2.0`,
-		`cash_register_bucket{le="10.0"} 3.0`,
-		`cash_register_bucket{le="20.0"} 4.0`,
-		`cash_register_bucket{le="50.0"} 4.0`,
-		`cash_register_bucket{le="100.0"} 4.0`,
-		`cash_register_bucket{le="250.0"} 7.0`,
-		`cash_register_bucket{le="+Inf"} 7.0`,
+		`cash_register_bucket{le="1"} 1`,
+		`cash_register_bucket{le="5"} 2`,
+		`cash_register_bucket{le="10"} 3`,
+		`cash_register_bucket{le="20"} 4`,
+		`cash_register_bucket{le="50"} 4`,
+		`cash_register_bucket{le="100"} 4`,
+		`cash_register_bucket{le="250"} 7`,
+		`cash_register_bucket{le="+Inf"} 7`,
 		`cash_register_sum 654.0799999999999`, // Summation of the input values
-		`cash_register_count 7.0`,
+		`cash_register_count 7`,
 	}
 
 	ctx := context.Background()
@@ -422,16 +421,16 @@ func TestConstLabelsIncluded(t *testing.T) {
 
 	want := `# HELP tests_bar bar
 # TYPE tests_bar counter
-tests_bar{method="issue961",service="spanner"} 1.0
+tests_bar{method="issue961",service="spanner"} 1
 # HELP tests_baz baz
 # TYPE tests_baz counter
-tests_baz{method="issue961",service="spanner"} 1.0
+tests_baz{method="issue961",service="spanner"} 1
 # HELP tests_foo foo
 # TYPE tests_foo counter
-tests_foo{method="issue961",service="spanner"} 1.0
+tests_foo{method="issue961",service="spanner"} 1
 `
-	if diff := cmp.Diff(output, want); diff != "" {
-		t.Fatalf("output differed from expected -got +want: %s", diff)
+	if output != want {
+		t.Fatal("output differed from expected")
 	}
 }
 
@@ -498,8 +497,8 @@ func TestViewMeasureWithoutTag(t *testing.T) {
 	}
 	want := `# HELP tests_foo foo
 # TYPE tests_foo counter
-tests_foo{key_1="",key_2="issue659",key_3="",key_4="issue659",key_5=""} 1.0
-tests_foo{key_1="issue659",key_2="",key_3="issue659",key_4="",key_5="issue659"} 1.0
+tests_foo{key_1="",key_2="issue659",key_3="",key_4="issue659",key_5=""} 1
+tests_foo{key_1="issue659",key_2="",key_3="issue659",key_4="",key_5="issue659"} 1
 `
 	if output != want {
 		t.Fatalf("output differed from expected output: %s want: %s", output, want)

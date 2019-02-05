@@ -2,7 +2,7 @@ module go.opencensus.io
 
 require (
 	cloud.google.com/go v0.34.0 // indirect
-        git.apache.org/thrift.git v0.12.0
+	git.apache.org/thrift.git v0.12.0
 	github.com/beorn7/perks v0.0.0-20180321164747-3a771d992973
 	github.com/ghodss/yaml v1.0.0 // indirect
 	github.com/golang/mock v1.2.0 // indirect
@@ -12,14 +12,11 @@ require (
 	github.com/hashicorp/golang-lru v0.5.0
 	github.com/matttproud/golang_protobuf_extensions v1.0.1
 	github.com/openzipkin/zipkin-go v0.1.3
-	github.com/prometheus/client_golang v0.9.2
-	github.com/prometheus/client_model v0.0.0-20180712105110-5c3871d89910
-	github.com/prometheus/common v0.0.0-20181218105931-67670fe90761
-	github.com/prometheus/procfs v0.0.0-20181204211112-1dc9a6cbc91a
+	github.com/prometheus/client_golang v0.9.3-0.20190127221311-3c4408c8b829
 	golang.org/x/lint v0.0.0-20181217174547-8f45f776aaf1 // indirect
-	golang.org/x/net v0.0.0-20181217023233-e147a9138326
+	golang.org/x/net v0.0.0-20190125091013-d26f9f9a57f3
 	golang.org/x/oauth2 v0.0.0-20181203162652-d668ce993890 // indirect
-	golang.org/x/sync v0.0.0-20181108010431-42b317875d0f
+	golang.org/x/sync v0.0.0-20181221193216-37e7f081c4d4
 	golang.org/x/sys v0.0.0-20181218192612-074acd46bca6
 	golang.org/x/text v0.3.0
 	golang.org/x/tools v0.0.0-20181219222714-6e267b5cc78e // indirect
