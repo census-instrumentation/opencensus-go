@@ -543,7 +543,7 @@ func TestHandlerImplementsHTTPCloseNotify(t *testing.T) {
 	}
 
 	// Wait for a couple of milliseconds for the GoAway frames to be properly propagated
-	<-time.After(150 * time.Millisecond)
+	<-time.After(200 * time.Millisecond)
 
 	wantHTTP1Log := strings.Repeat("ended\n", len(transports))
 	wantHTTP2Log := strings.Repeat("ended\n", len(transports))
