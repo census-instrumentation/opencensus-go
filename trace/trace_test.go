@@ -230,6 +230,32 @@ func TestStartSpanWithRemoteParent(t *testing.T) {
 	}
 }
 
+func TestLocalRootSpanID(t *testing.T) {
+	ctx, span1 := StartSpan(context.Background(), "span1")
+	if span1.spanContext.LocalRootSpanID == (SpanID{}) {
+		t.Errorf("exporting root span: expected nonzero LocalRootSpanID")
+	}
+
+	_, span2 := StartSpan(ctx, "span2")
+	if err := checkChild(span1.spanContext, span2); err != nil {
+		t.Error(err)
+	}
+	if got, want := span2.spanContext.LocalRootSpanID, span2.spanContext.LocalRootSpanID; got != want {
+		t.Errorf("span2.LocalRootSpanID=%q; want %q (span1.LocalRootSpanID)", got, want)
+	}
+
+	_, span3 := StartSpanWithRemoteParent(context.Background(), "span3", span2.SpanContext())
+	if err := checkChild(span3.spanContext, span2); err != nil {
+		t.Error(err)
+	}
+	if span3.spanContext.LocalRootSpanID == (SpanID{}) {
+		t.Errorf("exporting span with remote parent: expected nonzero LocalRootSpanID")
+	}
+	if got, want := span3.spanContext.LocalRootSpanID, span2.spanContext.LocalRootSpanID; got == want {
+		t.Errorf("span2.LocalRootSpanID=%q; expected different value to span1.LocalRootSpanID, got same", got)
+	}
+}
+
 // startSpan returns a context with a new Span that is recording events and will be exported.
 func startSpan(o StartOptions) *Span {
 	_, span := StartSpanWithRemoteParent(context.Background(), "span0",
@@ -274,7 +300,11 @@ func endSpan(span *Span) (*SpanData, error) {
 	if got.SpanContext.SpanID == (SpanID{}) {
 		return nil, fmt.Errorf("exporting span: expected nonzero SpanID")
 	}
+	if got.SpanContext.LocalRootSpanID == (SpanID{}) {
+		return nil, fmt.Errorf("exporting span: expected nonzero LocalRootSpanID")
+	}
 	got.SpanContext.SpanID = SpanID{}
+	got.SpanContext.LocalRootSpanID = SpanID{}
 	if !checkTime(&got.StartTime) {
 		return nil, fmt.Errorf("exporting span: expected nonzero StartTime")
 	}

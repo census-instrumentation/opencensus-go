@@ -100,10 +100,11 @@ func (t TraceOptions) IsSampled() bool {
 // SpanContext is not an implementation of context.Context.
 // TODO: add reference to external Census docs for SpanContext.
 type SpanContext struct {
-	TraceID      TraceID
-	SpanID       SpanID
-	TraceOptions TraceOptions
-	Tracestate   *tracestate.Tracestate
+	TraceID         TraceID
+	SpanID          SpanID
+	LocalRootSpanID SpanID
+	TraceOptions    TraceOptions
+	Tracestate      *tracestate.Tracestate
 }
 
 type contextKey struct{}
@@ -212,6 +213,10 @@ func startSpanInternal(name string, hasParent bool, parent SpanContext, remotePa
 	}
 	span.spanContext.SpanID = cfg.IDGenerator.NewSpanID()
 	sampler := cfg.DefaultSampler
+
+	if !hasParent || remoteParent {
+		span.spanContext.LocalRootSpanID = span.spanContext.SpanID
+	}
 
 	if !hasParent || remoteParent || o.Sampler != nil {
 		// If this span is the child of a local span and no Sampler is set in the
