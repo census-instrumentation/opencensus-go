@@ -73,10 +73,11 @@ func UnregisterExporter(e Exporter) {
 // SpanData contains all the information collected by a Span.
 type SpanData struct {
 	SpanContext
-	ParentSpanID SpanID
-	SpanKind     int
-	Name         string
-	StartTime    time.Time
+	ParentSpanID    SpanID
+	LocalRootSpanID SpanID
+	SpanKind        int
+	Name            string
+	StartTime       time.Time
 	// The wall clock time of EndTime will be adjusted to always be offset
 	// from StartTime by the duration of the span.
 	EndTime time.Time

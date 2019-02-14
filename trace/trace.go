@@ -39,9 +39,10 @@ type Span struct {
 	// It will be non-nil if we are exporting the span or recording events for it.
 	// Otherwise, data is nil, and the Span is simply a carrier for the
 	// SpanContext, so that the trace ID is propagated.
-	data        *SpanData
-	mu          sync.Mutex // protects the contents of *data (but not the pointer value.)
-	spanContext SpanContext
+	data            *SpanData
+	mu              sync.Mutex // protects the contents of *data (but not the pointer value.)
+	spanContext     SpanContext
+	localRootSpanID SpanID
 
 	// lruAttributes are capped at configured limit. When the capacity is reached an oldest entry
 	// is removed to create room for a new entry.
@@ -169,14 +170,16 @@ func WithSampler(sampler Sampler) StartOption {
 func StartSpan(ctx context.Context, name string, o ...StartOption) (context.Context, *Span) {
 	var opts StartOptions
 	var parent SpanContext
+	var localRoot SpanID
 	if p := FromContext(ctx); p != nil {
 		p.addChild()
 		parent = p.spanContext
+		localRoot = p.localRootSpanID
 	}
 	for _, op := range o {
 		op(&opts)
 	}
-	span := startSpanInternal(name, parent != SpanContext{}, parent, false, opts)
+	span := startSpanInternal(name, parent != SpanContext{}, parent, localRoot, false, opts)
 
 	ctx, end := startExecutionTracerTask(ctx, name)
 	span.executionTracerTaskEnd = end
@@ -195,15 +198,16 @@ func StartSpanWithRemoteParent(ctx context.Context, name string, parent SpanCont
 	for _, op := range o {
 		op(&opts)
 	}
-	span := startSpanInternal(name, parent != SpanContext{}, parent, true, opts)
+	span := startSpanInternal(name, parent != SpanContext{}, parent, SpanID{}, true, opts)
 	ctx, end := startExecutionTracerTask(ctx, name)
 	span.executionTracerTaskEnd = end
 	return NewContext(ctx, span), span
 }
 
-func startSpanInternal(name string, hasParent bool, parent SpanContext, remoteParent bool, o StartOptions) *Span {
+func startSpanInternal(name string, hasParent bool, parent SpanContext, localRoot SpanID, remoteParent bool, o StartOptions) *Span {
 	span := &Span{}
 	span.spanContext = parent
+	span.localRootSpanID = localRoot
 
 	cfg := config.Load().(*Config)
 
@@ -212,6 +216,10 @@ func startSpanInternal(name string, hasParent bool, parent SpanContext, remotePa
 	}
 	span.spanContext.SpanID = cfg.IDGenerator.NewSpanID()
 	sampler := cfg.DefaultSampler
+
+	if localRoot == (SpanID{}) {
+		span.localRootSpanID = span.spanContext.SpanID
+	}
 
 	if !hasParent || remoteParent || o.Sampler != nil {
 		// If this span is the child of a local span and no Sampler is set in the
@@ -236,6 +244,7 @@ func startSpanInternal(name string, hasParent bool, parent SpanContext, remotePa
 
 	span.data = &SpanData{
 		SpanContext:     span.spanContext,
+		LocalRootSpanID: span.localRootSpanID,
 		StartTime:       time.Now(),
 		SpanKind:        o.SpanKind,
 		Name:            name,
