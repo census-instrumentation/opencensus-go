@@ -240,7 +240,7 @@ func TestLocalRootSpanID(t *testing.T) {
 	if err := checkChild(span1.spanContext, span2); err != nil {
 		t.Error(err)
 	}
-	if got, want := span2.localRootSpanID, span2.localRootSpanID; got != want {
+	if got, want := span2.localRootSpanID, span1.localRootSpanID; got != want {
 		t.Errorf("span2.localRootSpanID=%q; want %q (span1.localRootSpanID)", got, want)
 	}
 
@@ -252,7 +252,7 @@ func TestLocalRootSpanID(t *testing.T) {
 		t.Errorf("exporting span with remote parent: expected nonzero localRootSpanID")
 	}
 	if got, want := span3.localRootSpanID, span2.localRootSpanID; got == want {
-		t.Errorf("span2.localRootSpanID=%q; expected different value to span1.localRootSpanID, got same", got)
+		t.Errorf("span3.localRootSpanID=%q; expected different value to span2.localRootSpanID, got same", got)
 	}
 }
 
