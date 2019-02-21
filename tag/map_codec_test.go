@@ -91,7 +91,7 @@ func TestEncodeDecode(t *testing.T) {
 
 		got := make([]keyValue, 0)
 		for k, v := range decoded.m {
-			got = append(got, keyValue{k, string(v)})
+			got = append(got, keyValue{k, string(v.value)})
 		}
 		want := tc.pairs
 
@@ -106,7 +106,7 @@ func TestEncodeDecode(t *testing.T) {
 
 func TestDecode(t *testing.T) {
 	k1, _ := NewKey("k1")
-	ctx, _ := New(context.Background(), Insert(k1, "v1"))
+	ctx, _ := New(context.Background(), InsertWithMetadata(k1, "v1", PropagatingMetadata))
 
 	tests := []struct {
 		name    string

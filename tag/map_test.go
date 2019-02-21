@@ -34,8 +34,8 @@ func TestContext(t *testing.T) {
 	)
 	got := FromContext(ctx)
 	want := newMap()
-	want.insert(k1, "v1")
-	want.insert(k2, "v2")
+	want.insert(k1, "v1", PropagatingMetadata)
+	want.insert(k2, "v2", PropagatingMetadata)
 
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("Map = %#v; want %#v", got, want)
@@ -52,8 +52,8 @@ func TestDo(t *testing.T) {
 	)
 	got := FromContext(ctx)
 	want := newMap()
-	want.insert(k1, "v1")
-	want.insert(k2, "v2")
+	want.insert(k1, "v1", PropagatingMetadata)
+	want.insert(k2, "v2", PropagatingMetadata)
 	Do(ctx, func(ctx context.Context) {
 		got = FromContext(ctx)
 	})
@@ -168,23 +168,145 @@ func TestNewMap(t *testing.T) {
 	}
 }
 
+func TestNewMapWithMetadata(t *testing.T) {
+	k3, _ := NewKey("k3")
+	k4, _ := NewKey("k4")
+	k5, _ := NewKey("k5")
+
+	tests := []struct {
+		name    string
+		initial *Map
+		mods    []Mutator
+		want    *Map
+	}{
+		{
+			name:    "from empty; insert",
+			initial: nil,
+			mods: []Mutator{
+				InsertWithMetadata(k5, "5", NonPropagatingMetadata),
+				InsertWithMetadata(k4, "4", nil),
+			},
+			want: makeTestTagMapWithMetadata(
+				tagContent{"5", NonPropagatingMetadata},
+				tagContent{"4", NonPropagatingMetadata}),
+		},
+		{
+			name:    "from existing; insert existing",
+			initial: makeTestTagMapWithMetadata(tagContent{"5", NonPropagatingMetadata}),
+			mods: []Mutator{
+				InsertWithMetadata(k5, "5", PropagatingMetadata),
+			},
+			want: makeTestTagMapWithMetadata(tagContent{"5", NonPropagatingMetadata}),
+		},
+		{
+			name:    "from existing; update non-existing",
+			initial: makeTestTagMapWithMetadata(tagContent{"5", NonPropagatingMetadata}),
+			mods: []Mutator{
+				UpdateWithMetadata(k4, "4", PropagatingMetadata),
+			},
+			want: makeTestTagMapWithMetadata(tagContent{"5", NonPropagatingMetadata}),
+		},
+		{
+			name: "from existing; update existing",
+			initial: makeTestTagMapWithMetadata(
+				tagContent{"5", PropagatingMetadata},
+				tagContent{"4", NonPropagatingMetadata}),
+			mods: []Mutator{
+				UpdateWithMetadata(k5, "5", nil),
+				UpdateWithMetadata(k4, "4", PropagatingMetadata),
+			},
+			want: makeTestTagMapWithMetadata(
+				tagContent{"5", NonPropagatingMetadata},
+				tagContent{"4", PropagatingMetadata}),
+		},
+		{
+			name: "from existing; upsert existing",
+			initial: makeTestTagMapWithMetadata(
+				tagContent{"5", NonPropagatingMetadata},
+				tagContent{"4", NonPropagatingMetadata}),
+			mods: []Mutator{
+				UpsertWithMetadata(k4, "4", PropagatingMetadata),
+			},
+			want: makeTestTagMapWithMetadata(
+				tagContent{"5", NonPropagatingMetadata},
+				tagContent{"4", PropagatingMetadata}),
+		},
+		{
+			name: "from existing; upsert non-existing",
+			initial: makeTestTagMapWithMetadata(
+				tagContent{"5", NonPropagatingMetadata}),
+			mods: []Mutator{
+				UpsertWithMetadata(k4, "4", PropagatingMetadata),
+				UpsertWithMetadata(k3, "3", nil),
+			},
+			want: makeTestTagMapWithMetadata(
+				tagContent{"5", NonPropagatingMetadata},
+				tagContent{"4", PropagatingMetadata},
+				tagContent{"3", NonPropagatingMetadata}),
+		},
+		{
+			name: "from existing; delete",
+			initial: makeTestTagMapWithMetadata(
+				tagContent{"5", NonPropagatingMetadata},
+				tagContent{"4", NonPropagatingMetadata}),
+			mods: []Mutator{
+				Delete(k5),
+			},
+			want: makeTestTagMapWithMetadata(
+				tagContent{"4", NonPropagatingMetadata}),
+		},
+		{
+			name:    "from empty; update invalid",
+			initial: nil,
+			mods: []Mutator{
+				InsertWithMetadata(k4, "4\x19", PropagatingMetadata),
+				UpsertWithMetadata(k4, "4\x19", PropagatingMetadata),
+				UpdateWithMetadata(k4, "4\x19", PropagatingMetadata),
+			},
+			want: nil,
+		},
+		{
+			name:    "from empty; insert partial",
+			initial: nil,
+			mods: []Mutator{
+				UpsertWithMetadata(k3, "3", PropagatingMetadata),
+				UpsertWithMetadata(k4, "4\x19", PropagatingMetadata),
+			},
+			want: nil,
+		},
+	}
+
+	// Test using new api for insert, update, and upsert.
+	for _, tt := range tests {
+		ctx := NewContext(context.Background(), tt.initial)
+		ctx, err := New(ctx, tt.mods...)
+		if tt.want != nil && err != nil {
+			t.Errorf("%v: New = %v", tt.name, err)
+		}
+
+		if got, want := FromContext(ctx), tt.want; !reflect.DeepEqual(got, want) {
+			t.Errorf("%v: got %v; want %v", tt.name, got, want)
+		}
+	}
+}
+
 func TestNewValidation(t *testing.T) {
 	tests := []struct {
 		err  string
 		seed *Map
 	}{
 		// Key name validation in seed
-		{err: "invalid key", seed: &Map{m: map[Key]string{{name: ""}: "foo"}}},
-		{err: "", seed: &Map{m: map[Key]string{{name: "key"}: "foo"}}},
-		{err: "", seed: &Map{m: map[Key]string{{name: strings.Repeat("a", 255)}: "census"}}},
-		{err: "invalid key", seed: &Map{m: map[Key]string{{name: strings.Repeat("a", 256)}: "census"}}},
-		{err: "invalid key", seed: &Map{m: map[Key]string{{name: "Приве́т"}: "census"}}},
+		{err: "invalid key", seed: &Map{m: map[Key]tagContent{{name: ""}: {"foo", NonPropagatingMetadata}}}},
+		{err: "", seed: &Map{m: map[Key]tagContent{{name: "key"}: {"foo", NonPropagatingMetadata}}}},
+		{err: "", seed: &Map{m: map[Key]tagContent{{name: strings.Repeat("a", 255)}: {"census", NonPropagatingMetadata}}}},
+		{err: "invalid key", seed: &Map{m: map[Key]tagContent{{name: strings.Repeat("a", 256)}: {"census", NonPropagatingMetadata}}}},
+		{err: "invalid key", seed: &Map{m: map[Key]tagContent{{name: "Приве́т"}: {"census", NonPropagatingMetadata}}}},
 
 		// Value validation
-		{err: "", seed: &Map{m: map[Key]string{{name: "key"}: ""}}},
-		{err: "", seed: &Map{m: map[Key]string{{name: "key"}: strings.Repeat("a", 255)}}},
-		{err: "invalid value", seed: &Map{m: map[Key]string{{name: "key"}: "Приве́т"}}},
-		{err: "invalid value", seed: &Map{m: map[Key]string{{name: "key"}: strings.Repeat("a", 256)}}},
+		{err: "", seed: &Map{m: map[Key]tagContent{{name: "key"}: {"", NonPropagatingMetadata}}}},
+		{err: "", seed: &Map{m: map[Key]tagContent{{name: "key"}: {strings.Repeat("a", 255), NonPropagatingMetadata}}}},
+		{err: "invalid value", seed: &Map{m: map[Key]tagContent{{name: "key"}: {"Приве́т", NonPropagatingMetadata}}}},
+		{err: "invalid value", seed: &Map{m: map[Key]tagContent{{name: "key"}: {strings.Repeat("a", 256), NonPropagatingMetadata}}}},
 	}
 
 	for i, tt := range tests {
@@ -216,7 +338,16 @@ func makeTestTagMap(ids ...int) *Map {
 	m := newMap()
 	for _, v := range ids {
 		k, _ := NewKey(fmt.Sprintf("k%d", v))
-		m.m[k] = fmt.Sprintf("v%d", v)
+		m.m[k] = tagContent{fmt.Sprintf("v%d", v), PropagatingMetadata}
+	}
+	return m
+}
+
+func makeTestTagMapWithMetadata(tcs ...tagContent) *Map {
+	m := newMap()
+	for _, tc := range tcs {
+		k, _ := NewKey(fmt.Sprintf("k%s", tc.value))
+		m.m[k] = tc
 	}
 	return m
 }
