@@ -144,8 +144,8 @@ func handleRPCEnd(ctx context.Context, s *stats.End) {
 	if s.Client {
 		ocstats.RecordWithTags(ctx,
 			[]tag.Mutator{
-				tag.Upsert(KeyClientMethod, methodName(d.method)),
-				tag.Upsert(KeyClientStatus, st),
+				tag.UpsertWithMetadata(KeyClientMethod, methodName(d.method), nil),
+				tag.UpsertWithMetadata(KeyClientStatus, st, nil),
 			},
 			ClientSentBytesPerRPC.M(atomic.LoadInt64(&d.sentBytes)),
 			ClientSentMessagesPerRPC.M(atomic.LoadInt64(&d.sentCount)),
@@ -155,7 +155,7 @@ func handleRPCEnd(ctx context.Context, s *stats.End) {
 	} else {
 		ocstats.RecordWithTags(ctx,
 			[]tag.Mutator{
-				tag.Upsert(KeyServerStatus, st),
+				tag.UpsertWithMetadata(KeyServerStatus, st, nil),
 			},
 			ServerSentBytesPerRPC.M(atomic.LoadInt64(&d.sentBytes)),
 			ServerSentMessagesPerRPC.M(atomic.LoadInt64(&d.sentCount)),

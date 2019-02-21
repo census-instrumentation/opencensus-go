@@ -24,9 +24,8 @@ import (
 
 // Tag is a key value pair that can be propagated on wire.
 type Tag struct {
-	Key      Key
-	Value    string
-	Metadata *Metadata
+	Key   Key
+	Value string
 }
 
 type tagContent struct {

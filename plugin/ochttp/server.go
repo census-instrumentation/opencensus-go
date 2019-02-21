@@ -188,7 +188,7 @@ func (t *trackingResponseWriter) end(tags *addedTags) {
 			m = append(m, ServerRequestBytes.M(t.reqSize))
 		}
 		allTags := make([]tag.Mutator, len(tags.t)+1)
-		allTags[0] = tag.Upsert(StatusCode, strconv.Itoa(t.statusCode))
+		allTags[0] = tag.UpsertWithMetadata(StatusCode, strconv.Itoa(t.statusCode), nil)
 		copy(allTags[1:], tags.t)
 		stats.RecordWithTags(t.ctx, allTags, m...)
 	})
