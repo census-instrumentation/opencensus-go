@@ -49,7 +49,7 @@ func Test_bytesToInt64(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(fmt.Sprintf("%d", tt.want), func(t *testing.T) {
 			if got := bytesToInt64(tt.buf); got != tt.want {
-				t.Errorf("bytesToInt64() = %v, want %v", got, tt.want)
+				t.Errorf("bytesToInt64() = \n%v, \n want \n%v", got, tt.want)
 			}
 		})
 	}
@@ -62,6 +62,7 @@ func Test_spanDataToThrift(t *testing.T) {
 	keyValue := "value"
 	resultValue := true
 	statusCodeValue := int64(2)
+	doubleValue := float64(123.456)
 	statusMessage := "error"
 
 	tests := []struct {
@@ -80,7 +81,8 @@ func Test_spanDataToThrift(t *testing.T) {
 				StartTime: now,
 				EndTime:   now,
 				Attributes: map[string]interface{}{
-					"key": keyValue,
+					"double": doubleValue,
+					"key":    keyValue,
 				},
 				Annotations: []trace.Annotation{
 					{
@@ -108,6 +110,7 @@ func Test_spanDataToThrift(t *testing.T) {
 				StartTime:     now.UnixNano() / 1000,
 				Duration:      0,
 				Tags: []*gen.Tag{
+					{Key: "double", VType: gen.TagType_DOUBLE, VDouble: &doubleValue},
 					{Key: "key", VType: gen.TagType_STRING, VStr: &keyValue},
 					{Key: "status.code", VType: gen.TagType_LONG, VLong: &statusCodeValue},
 					{Key: "status.message", VType: gen.TagType_STRING, VStr: &statusMessage},

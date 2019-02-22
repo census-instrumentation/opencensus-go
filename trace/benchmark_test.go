@@ -30,7 +30,7 @@ func BenchmarkStartEndSpan(b *testing.B) {
 	})
 }
 
-func BenchmarkSpanWithAnnotations_3(b *testing.B) {
+func BenchmarkSpanWithAnnotations_4(b *testing.B) {
 	traceBenchmark(b, func(b *testing.B) {
 		ctx := context.Background()
 		b.ResetTimer()
@@ -41,13 +41,14 @@ func BenchmarkSpanWithAnnotations_3(b *testing.B) {
 				BoolAttribute("key1", false),
 				StringAttribute("key2", "hello"),
 				Int64Attribute("key3", 123),
+				Float64Attribute("key4", 123.456),
 			)
 			span.End()
 		}
 	})
 }
 
-func BenchmarkSpanWithAnnotations_6(b *testing.B) {
+func BenchmarkSpanWithAnnotations_8(b *testing.B) {
 	traceBenchmark(b, func(b *testing.B) {
 		ctx := context.Background()
 		b.ResetTimer()
@@ -61,6 +62,8 @@ func BenchmarkSpanWithAnnotations_6(b *testing.B) {
 				StringAttribute("key4", "hello"),
 				Int64Attribute("key5", 123),
 				Int64Attribute("key6", 456),
+				Float64Attribute("key7", 123.456),
+				Float64Attribute("key8", 456.789),
 			)
 			span.End()
 		}
