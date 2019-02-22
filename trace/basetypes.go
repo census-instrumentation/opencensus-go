@@ -59,7 +59,7 @@ func Int64Attribute(key string, value int64) Attribute {
 	return Attribute{key: key, value: value}
 }
 
-// Float64Attribute returns an float64-valued attribute.
+// Float64Attribute returns a float64-valued attribute.
 func Float64Attribute(key string, value float64) Attribute {
 	return Attribute{key: key, value: value}
 }
