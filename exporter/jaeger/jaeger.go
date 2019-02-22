@@ -283,6 +283,13 @@ func attributeToTag(key string, a interface{}) *gen.Tag {
 			VLong: &v,
 			VType: gen.TagType_LONG,
 		}
+	case float64:
+		v := float64(value)
+		tag = &gen.Tag{
+			Key:     key,
+			VDouble: &v,
+			VType:   gen.TagType_DOUBLE,
+		}
 	}
 	return tag
 }
