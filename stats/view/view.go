@@ -70,7 +70,7 @@ func (v *View) same(other *View) bool {
 		v.Measure.Name() == other.Measure.Name()
 }
 
-var ErrNonPositiveBucketBounds = errors.New("non-positive bucket bounds not supported")
+var ErrNegativeBucketBounds = errors.New("negative bucket bounds not supported")
 
 // canonicalize canonicalizes v by setting explicit
 // defaults for Name and Description and sorting the TagKeys
@@ -95,11 +95,23 @@ func (v *View) canonicalize() error {
 	})
 	sort.Float64s(v.Aggregation.Buckets)
 	for _, b := range v.Aggregation.Buckets {
-		if b <= 0 {
-			return ErrNonPositiveBucketBounds
+		if b < 0 {
+			return ErrNegativeBucketBounds
 		}
 	}
+	// drop 0 bucket silently.
+	v.Aggregation.Buckets = dropZeroBounds(v.Aggregation.Buckets...)
+
 	return nil
+}
+
+func dropZeroBounds(bounds ...float64) []float64 {
+	for i, bound := range bounds {
+		if bound > 0 {
+			return bounds[i:]
+		}
+	}
+	return []float64{}
 }
 
 // viewInternal is the internal representation of a View.

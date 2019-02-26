@@ -454,20 +454,8 @@ func TestViewRegister_negativeBucketBounds(t *testing.T) {
 		Aggregation: Distribution(-1, 2),
 	}
 	err := Register(v)
-	if err != ErrNonPositiveBucketBounds {
-		t.Errorf("Expected ErrNonPositiveBucketBounds, got %v", err)
-	}
-}
-
-func TestViewRegister_zeroBucketBounds(t *testing.T) {
-	m := stats.Int64("TestViewRegister_negativeBucketBounds", "", "")
-	v := &View{
-		Measure:     m,
-		Aggregation: Distribution(0, 2),
-	}
-	err := Register(v)
-	if err != ErrNonPositiveBucketBounds {
-		t.Errorf("Expected ErrNonPositiveBucketBounds, got %v", err)
+	if err != ErrNegativeBucketBounds {
+		t.Errorf("Expected ErrNegativeBucketBounds, got %v", err)
 	}
 }
 
