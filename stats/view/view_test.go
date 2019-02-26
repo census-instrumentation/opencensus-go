@@ -466,8 +466,8 @@ func TestViewRegister_zeroBucketBounds(t *testing.T) {
 		Aggregation: Distribution(0, 2),
 	}
 	err := Register(v)
-	if err != nil {
-		t.Errorf("Expected no error, got %v", err)
+	if err != ErrNegativeBucketBounds {
+		t.Errorf("Expected ErrNegativeBucketBounds, got %v", err)
 	}
 }
 

@@ -95,7 +95,7 @@ func (v *View) canonicalize() error {
 	})
 	sort.Float64s(v.Aggregation.Buckets)
 	for _, b := range v.Aggregation.Buckets {
-		if b < 0 {
+		if b <= 0 {
 			return ErrNegativeBucketBounds
 		}
 	}

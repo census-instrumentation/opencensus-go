@@ -27,7 +27,7 @@ func TestTraceExemplar(t *testing.T) {
 	m := stats.Float64("measure."+t.Name(), "", stats.UnitDimensionless)
 	v := &view.View{
 		Measure:     m,
-		Aggregation: view.Distribution(0, 1, 2, 3),
+		Aggregation: view.Distribution(1, 2, 3),
 	}
 	view.Register(v)
 	ctx := context.Background()
@@ -46,7 +46,7 @@ func TestTraceExemplar(t *testing.T) {
 	if got := len(dd.ExemplarsPerBucket); got < 3 {
 		t.Fatalf("len(dd.ExemplarsPerBucket) = %d; want >= 2", got)
 	}
-	exemplar := dd.ExemplarsPerBucket[2]
+	exemplar := dd.ExemplarsPerBucket[1]
 	if exemplar == nil {
 		t.Fatal("Expected exemplar")
 	}
@@ -65,7 +65,7 @@ func TestTraceExemplar_notSampled(t *testing.T) {
 	m := stats.Float64("measure."+t.Name(), "", stats.UnitDimensionless)
 	v := &view.View{
 		Measure:     m,
-		Aggregation: view.Distribution(0, 1, 2, 3),
+		Aggregation: view.Distribution(1, 2, 3),
 	}
 	view.Register(v)
 	ctx := context.Background()
@@ -84,7 +84,7 @@ func TestTraceExemplar_notSampled(t *testing.T) {
 	if got := len(dd.ExemplarsPerBucket); got < 3 {
 		t.Fatalf("len(buckets) = %d; want >= 2", got)
 	}
-	exemplar := dd.ExemplarsPerBucket[2]
+	exemplar := dd.ExemplarsPerBucket[1]
 	if exemplar == nil {
 		t.Fatal("Expected exemplar")
 	}

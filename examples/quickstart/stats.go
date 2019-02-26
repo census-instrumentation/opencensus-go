@@ -61,7 +61,7 @@ var (
 
 		// Latency in buckets:
 		// [>=0ms, >=25ms, >=50ms, >=75ms, >=100ms, >=200ms, >=400ms, >=600ms, >=800ms, >=1s, >=2s, >=4s, >=6s]
-		Aggregation: view.Distribution(0, 25, 50, 75, 100, 200, 400, 600, 800, 1000, 2000, 4000, 6000),
+		Aggregation: view.Distribution(25, 50, 75, 100, 200, 400, 600, 800, 1000, 2000, 4000, 6000),
 		TagKeys:     []tag.Key{KeyMethod}}
 
 	LineCountView = &view.View{
@@ -83,7 +83,7 @@ var (
 		Description: "Groups the lengths of keys in buckets",
 		Measure:     MLineLengths,
 		// Lengths: [>=0B, >=5B, >=10B, >=15B, >=20B, >=40B, >=60B, >=80, >=100B, >=200B, >=400, >=600, >=800, >=1000]
-		Aggregation: view.Distribution(0, 5, 10, 15, 20, 40, 60, 80, 100, 200, 400, 600, 800, 1000),
+		Aggregation: view.Distribution(5, 2000, 15, 20, 40, 60, 80, 100, 200, 400, 600, 800, 1000),
 	}
 )
 
