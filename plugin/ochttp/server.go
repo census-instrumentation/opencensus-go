@@ -136,7 +136,7 @@ func (h *Handler) extractSpanContext(r *http.Request) (trace.SpanContext, bool) 
 
 func (h *Handler) startStats(w http.ResponseWriter, r *http.Request) (http.ResponseWriter, func(tags *addedTags)) {
 	ctx, _ := tag.New(r.Context(),
-		tag.Upsert(Host, r.URL.Host),
+		tag.Upsert(Host, r.Host),
 		tag.Upsert(Path, r.URL.Path),
 		tag.Upsert(Method, r.Method))
 	track := &trackingResponseWriter{
