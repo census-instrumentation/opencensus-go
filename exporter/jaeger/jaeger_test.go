@@ -138,7 +138,7 @@ func Test_spanDataToThrift(t *testing.T) {
 			sort.Slice(tt.want.Tags, func(i, j int) bool {
 				return tt.want.Tags[i].Key < tt.want.Tags[j].Key
 			})
-			if got := spanDataToThrift(tt.data); !reflect.DeepEqual(got, tt.want) {
+			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("spanDataToThrift() = %v, want %v", got, tt.want)
 			}
 		})
