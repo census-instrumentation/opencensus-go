@@ -474,3 +474,19 @@ func TestViewRegister_sortBuckets(t *testing.T) {
 		t.Errorf("buckets differ -got +want: %s", diff)
 	}
 }
+
+func TestViewRegister_dropZeroBuckets(t *testing.T) {
+	m := stats.Int64("TestViewRegister_dropZeroBuckets", "", "")
+	v := &View{
+		Measure:     m,
+		Aggregation: Distribution(2, 0, 1),
+	}
+	err := Register(v)
+	if err != nil {
+		t.Fatalf("Unexpected err %s", err)
+	}
+	want := []float64{1, 2}
+	if diff := cmp.Diff(v.Aggregation.Buckets, want); diff != "" {
+		t.Errorf("buckets differ -got +want: %s", diff)
+	}
+}
