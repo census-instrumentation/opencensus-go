@@ -99,7 +99,19 @@ func (v *View) canonicalize() error {
 			return ErrNegativeBucketBounds
 		}
 	}
+	// drop 0 bucket silently.
+	v.Aggregation.Buckets = dropZeroBounds(v.Aggregation.Buckets...)
+
 	return nil
+}
+
+func dropZeroBounds(bounds ...float64) []float64 {
+	for i, bound := range bounds {
+		if bound > 0 {
+			return bounds[i:]
+		}
+	}
+	return []float64{}
 }
 
 // viewInternal is the internal representation of a View.
