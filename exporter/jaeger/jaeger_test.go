@@ -22,6 +22,7 @@ import (
 
 	gen "go.opencensus.io/exporter/jaeger/internal/gen-go/jaeger"
 	"go.opencensus.io/trace"
+	"sort"
 )
 
 // TODO(jbd): Test export.
@@ -130,6 +131,13 @@ func Test_spanDataToThrift(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			got := spanDataToThrift(tt.data)
+			sort.Slice(got.Tags, func(i, j int) bool {
+				return got.Tags[i].Key < got.Tags[j].Key
+			})
+			sort.Slice(tt.want.Tags, func(i, j int) bool {
+				return tt.want.Tags[i].Key < tt.want.Tags[j].Key
+			})
 			if got := spanDataToThrift(tt.data); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("spanDataToThrift() = %v, want %v", got, tt.want)
 			}
