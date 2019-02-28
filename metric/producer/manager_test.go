@@ -43,17 +43,19 @@ func TestAdd(t *testing.T) {
 
 	got := GetAll()
 	want := []*testProducer{myProd1, myProd2}
-	checkSlice("add test", got, want, t)
+	checkSlice(got, want, t)
+	deleteAll()
 }
 
-func TestAddSame(t *testing.T) {
+func TestAddExisting(t *testing.T) {
 	Add(myProd1)
 	Add(myProd2)
 	Add(myProd1)
 
 	got := GetAll()
 	want := []*testProducer{myProd1, myProd2}
-	checkSlice("add test", got, want, t)
+	checkSlice(got, want, t)
+	deleteAll()
 }
 
 func TestDelete(t *testing.T) {
@@ -64,7 +66,8 @@ func TestDelete(t *testing.T) {
 
 	got := GetAll()
 	want := []*testProducer{myProd1, myProd3}
-	checkSlice("add test", got, want, t)
+	checkSlice(got, want, t)
+	deleteAll()
 }
 
 func TestDeleteNonExisting(t *testing.T) {
@@ -74,19 +77,38 @@ func TestDeleteNonExisting(t *testing.T) {
 
 	got := GetAll()
 	want := []*testProducer{myProd1, myProd3}
-	checkSlice("add test", got, want, t)
+	checkSlice(got, want, t)
+	deleteAll()
 }
 
-func checkSlice(testName string, got []Producer, want []*testProducer, t *testing.T) {
+func TestImplicitImmutableProducers(t *testing.T) {
+	Add(myProd1)
+	Add(myProd2)
+
+	producersToMutate := GetAll()
+	producersToMutate = append(producersToMutate, myProd3)
+	got := GetAll()
+	want := []*testProducer{myProd1, myProd2}
+	checkSlice(got, want, t)
+	deleteAll()
+}
+
+func checkSlice(got []Producer, want []*testProducer, t *testing.T) {
 	gotLen := len(got)
 	wantLen := len(want)
 	if gotLen != wantLen {
-		t.Errorf("test: %s, got len: %d want: %d\n", testName, gotLen, wantLen)
+		t.Errorf("got len: %d want: %d\n", gotLen, wantLen)
 	} else {
 		for i := 0 ; i<gotLen; i++ {
 			if got[i] != want[i] {
-				t.Errorf("test: %s, at index %d, got %p, want %p\n", testName, i, got[i], want[i])
+				t.Errorf("at index %d, got %p, want %p\n", i, got[i], want[i])
 			}
 		}
 	}
+}
+
+func deleteAll() {
+	Delete(myProd1)
+	Delete(myProd2)
+	Delete(myProd3)
 }

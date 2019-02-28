@@ -51,20 +51,13 @@ func GetAll() []Producer{
 	return pm.producers
 }
 
-func (pm *manager) contains(producer Producer) bool {
-	for _, prod := range pm.producers {
-		if producer == prod {
-			return true
-		}
-	}
-	return false
-}
-
 func (pm *manager) add(producer Producer) {
 	pm.mu.Lock()
 	defer pm.mu.Unlock()
-	if pm.contains(producer) {
-		return
+	for _, prod := range pm.producers {
+		if producer == prod {
+			return
+		}
 	}
 	pm.producers = append(pm.producers, producer)
 }
