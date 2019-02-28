@@ -1,4 +1,4 @@
-// Copyright 2018, OpenCensus Authors
+// Copyright 2019, OpenCensus Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,14 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package metricexport
+package producer
 
 import (
 	"go.opencensus.io/metric/metricdata"
 )
 
 // Producer is a source of metrics.
-// Deprecated in lieu of go.opencensus.io.metric.producer.Producer
 type Producer interface {
 	// Read should return the current values of all metrics supported by this
 	// metric provider.
