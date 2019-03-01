@@ -16,6 +16,7 @@ package producer
 
 import (
 	"testing"
+
 	"go.opencensus.io/metric/metricdata"
 )
 
@@ -24,12 +25,12 @@ type testProducer struct {
 }
 
 var (
-	myProd1 = NewTestProducer("foo")
-	myProd2 = NewTestProducer("bar")
-	myProd3 = NewTestProducer("foobar")
+	myProd1 = newTestProducer("foo")
+	myProd2 = newTestProducer("bar")
+	myProd3 = newTestProducer("foobar")
 )
 
-func NewTestProducer(name string) *testProducer {
+func newTestProducer(name string) *testProducer {
 	return &testProducer{name}
 }
 
@@ -99,7 +100,7 @@ func checkSlice(got []Producer, want []*testProducer, t *testing.T) {
 	if gotLen != wantLen {
 		t.Errorf("got len: %d want: %d\n", gotLen, wantLen)
 	} else {
-		for i := 0 ; i<gotLen; i++ {
+		for i := 0; i < gotLen; i++ {
 			if got[i] != want[i] {
 				t.Errorf("at index %d, got %p, want %p\n", i, got[i], want[i])
 			}

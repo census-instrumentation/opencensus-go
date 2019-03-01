@@ -19,7 +19,7 @@ import (
 )
 
 type manager struct {
-	mu       sync.RWMutex
+	mu        sync.RWMutex
 	producers []Producer
 }
 
@@ -32,6 +32,7 @@ func getManager() *manager {
 	})
 	return prodMgr
 }
+
 // Add adds the producer to the manager if it is not already present.
 func Add(producer Producer) {
 	pm := getManager()
@@ -46,7 +47,7 @@ func Delete(producer Producer) {
 
 // GetAll returns all producer registered with the manager. It is typically
 // used by exporter to read metrics from producers.
-func GetAll() []Producer{
+func GetAll() []Producer {
 	pm := getManager()
 	return pm.producers
 }
