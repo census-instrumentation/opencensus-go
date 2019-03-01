@@ -20,7 +20,7 @@ import (
 
 type manager struct {
 	mu        sync.RWMutex
-	producers []Producer
+	producers map[Producer]struct{}
 }
 
 var prodMgr *manager
@@ -29,6 +29,7 @@ var once sync.Once
 func getManager() *manager {
 	once.Do(func() {
 		prodMgr = &manager{}
+		prodMgr.producers = make(map[Producer]struct{})
 	})
 	return prodMgr
 }
@@ -45,30 +46,36 @@ func Delete(producer Producer) {
 	pm.delete(producer)
 }
 
-// GetAll returns all producer registered with the manager. It is typically
-// used by exporter to read metrics from producers.
+// GetAll returns a slice of all producer currently registered with
+// the manager. For each call it generates a new slice. The slice
+// should not be cached as registration may change at any time. It is
+// typically called periodically by exporter to read metrics from
+// the producers.
 func GetAll() []Producer {
 	pm := getManager()
-	return pm.producers
+	return pm.getAll()
+}
+
+func (pm *manager) getAll() []Producer {
+	pm.mu.Lock()
+	defer pm.mu.Unlock()
+	producers := make([]Producer, len(pm.producers))
+	i := 0
+	for producer := range pm.producers {
+		producers[i] = producer
+		i++
+	}
+	return producers
 }
 
 func (pm *manager) add(producer Producer) {
 	pm.mu.Lock()
 	defer pm.mu.Unlock()
-	for _, prod := range pm.producers {
-		if producer == prod {
-			return
-		}
-	}
-	pm.producers = append(pm.producers, producer)
+	pm.producers[producer] = struct{}{}
 }
 
 func (pm *manager) delete(producer Producer) {
 	pm.mu.Lock()
 	defer pm.mu.Unlock()
-	for index, prod := range pm.producers {
-		if producer == prod {
-			pm.producers = append(pm.producers[:index], pm.producers[index+1:]...)
-		}
-	}
+	delete(pm.producers, producer)
 }

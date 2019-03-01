@@ -82,12 +82,12 @@ func TestDeleteNonExisting(t *testing.T) {
 	deleteAll()
 }
 
-func TestImplicitImmutableProducers(t *testing.T) {
+func TestImmutableProducerList(t *testing.T) {
 	Add(myProd1)
 	Add(myProd2)
 
 	producersToMutate := GetAll()
-	producersToMutate = append(producersToMutate, myProd3)
+	producersToMutate[0] = myProd3
 	got := GetAll()
 	want := []*testProducer{myProd1, myProd2}
 	checkSlice(got, want, t)
