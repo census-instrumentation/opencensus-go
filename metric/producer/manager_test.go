@@ -54,7 +54,16 @@ func TestAddExisting(t *testing.T) {
 	Add(myProd1)
 
 	got := GetAll()
-	want := []*testProducer{myProd1, myProd2}
+	want := []*testProducer{myProd2, myProd1}
+	checkSlice(got, want, t)
+	deleteAll()
+}
+
+func TestAddNil(t *testing.T) {
+	Add(nil)
+
+	got := GetAll()
+	want := []*testProducer{}
 	checkSlice(got, want, t)
 	deleteAll()
 }
@@ -82,6 +91,24 @@ func TestDeleteNonExisting(t *testing.T) {
 	deleteAll()
 }
 
+func TestDeleteNil(t *testing.T) {
+	Add(myProd1)
+	Add(myProd3)
+	Delete(nil)
+
+	got := GetAll()
+	want := []*testProducer{myProd1, myProd3}
+	checkSlice(got, want, t)
+	deleteAll()
+}
+
+func TestGetAllNil(t *testing.T) {
+	got := GetAll()
+	want := []*testProducer{}
+	checkSlice(got, want, t)
+	deleteAll()
+}
+
 func TestImmutableProducerList(t *testing.T) {
 	Add(myProd1)
 	Add(myProd2)
@@ -100,10 +127,15 @@ func checkSlice(got []Producer, want []*testProducer, t *testing.T) {
 	if gotLen != wantLen {
 		t.Errorf("got len: %d want: %d\n", gotLen, wantLen)
 	} else {
+		gotMap := map[Producer]struct{}{}
 		for i := 0; i < gotLen; i++ {
-			if got[i] != want[i] {
-				t.Errorf("at index %d, got %p, want %p\n", i, got[i], want[i])
-			}
+			gotMap[got[i]] = struct{}{}
+		}
+		for i := 0; i < wantLen; i++ {
+			delete(gotMap, want[i])
+		}
+		if len(gotMap) > 0 {
+			t.Errorf("got %v, want %v\n", got, want)
 		}
 	}
 }

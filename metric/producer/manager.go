@@ -36,12 +36,18 @@ func getManager() *manager {
 
 // Add adds the producer to the manager if it is not already present.
 func Add(producer Producer) {
+	if producer == nil {
+		return
+	}
 	pm := getManager()
 	pm.add(producer)
 }
 
 // Delete deletes the producer from the manager if it is present.
 func Delete(producer Producer) {
+	if producer == nil {
+		return
+	}
 	pm := getManager()
 	pm.delete(producer)
 }
