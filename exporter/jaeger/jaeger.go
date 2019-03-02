@@ -192,6 +192,11 @@ func (e *Exporter) ExportSpan(data *trace.SpanData) {
 	// TODO(jbd): Handle oversized bundlers.
 }
 
+// As per the OpenCensus Status code mapping in
+//    https://opencensus.io/tracing/span/status/
+// the status is OK if the code is 0.
+const opencensusStatusCodeOK = 0
+
 func spanDataToThrift(data *trace.SpanData) *gen.Span {
 	tags := make([]*gen.Tag, 0, len(data.Attributes))
 	for k, v := range data.Attributes {
@@ -205,6 +210,12 @@ func spanDataToThrift(data *trace.SpanData) *gen.Span {
 		attributeToTag("status.code", data.Status.Code),
 		attributeToTag("status.message", data.Status.Message),
 	)
+
+	// Ensure that if Status.Code is not OK, that we set the "error" tag on the Jaeger span.
+	// See Issue https://github.com/census-instrumentation/opencensus-go/issues/1041
+	if data.Status.Code != opencensusStatusCodeOK {
+		tags = append(tags, attributeToTag("error", true))
+	}
 
 	var logs []*gen.Log
 	for _, a := range data.Annotations {

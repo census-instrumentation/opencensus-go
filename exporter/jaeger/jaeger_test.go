@@ -64,6 +64,7 @@ func Test_spanDataToThrift(t *testing.T) {
 	resultValue := true
 	statusCodeValue := int64(2)
 	doubleValue := float64(123.456)
+	boolTrue := true
 	statusMessage := "error"
 
 	tests := []struct {
@@ -113,6 +114,7 @@ func Test_spanDataToThrift(t *testing.T) {
 				Tags: []*gen.Tag{
 					{Key: "double", VType: gen.TagType_DOUBLE, VDouble: &doubleValue},
 					{Key: "key", VType: gen.TagType_STRING, VStr: &keyValue},
+					{Key: "error", VType: gen.TagType_BOOL, VBool: &boolTrue},
 					{Key: "status.code", VType: gen.TagType_LONG, VLong: &statusCodeValue},
 					{Key: "status.message", VType: gen.TagType_STRING, VStr: &statusMessage},
 				},
@@ -139,7 +141,7 @@ func Test_spanDataToThrift(t *testing.T) {
 				return tt.want.Tags[i].Key < tt.want.Tags[j].Key
 			})
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("spanDataToThrift() = %v, want %v", got, tt.want)
+				t.Errorf("spanDataToThrift()\nGot:\n%v\nWant;\n%v", got, tt.want)
 			}
 		})
 	}
