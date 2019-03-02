@@ -35,6 +35,8 @@ func getManager() *manager {
 }
 
 // Add adds the producer to the manager if it is not already present.
+// The manager maintains the list of active producers. It provides
+// this list to a reader to read metrics from each producer and then export.
 func Add(producer Producer) {
 	if producer == nil {
 		return
