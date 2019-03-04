@@ -18,53 +18,54 @@ import (
 	"sync"
 )
 
-type manager struct {
+// Manager maintains a list of active producers. Producers can register
+// with the manager to allow readers to read all metrics provided by them.
+// Readers can retrieve all producers registered with the manager,
+// read metrics from the producers and export them.
+type Manager struct {
 	mu        sync.RWMutex
 	producers map[Producer]struct{}
 }
 
-var prodMgr *manager
+var prodMgr *Manager
 var once sync.Once
 
-func getManager() *manager {
+// GlobalManager is a single instance of producer manager
+// that is used by all producers and all readers.
+func GlobalManager() *Manager {
 	once.Do(func() {
-		prodMgr = &manager{}
+		prodMgr = &Manager{}
 		prodMgr.producers = make(map[Producer]struct{})
 	})
 	return prodMgr
 }
 
-// Add adds the producer to the manager if it is not already present.
-// The manager maintains the list of active producers. It provides
-// this list to a reader to read metrics from each producer and then export.
-func Add(producer Producer) {
+// AddProducer adds the producer to the Manager if it is not already present.
+func (pm *Manager) AddProducer(producer Producer) {
 	if producer == nil {
 		return
 	}
-	pm := getManager()
-	pm.add(producer)
+	pm.mu.Lock()
+	defer pm.mu.Unlock()
+	pm.producers[producer] = struct{}{}
 }
 
-// Delete deletes the producer from the manager if it is present.
-func Delete(producer Producer) {
+// DeleteProducer deletes the producer from the Manager if it is present.
+func (pm *Manager) DeleteProducer(producer Producer) {
 	if producer == nil {
 		return
 	}
-	pm := getManager()
-	pm.delete(producer)
+	pm.mu.Lock()
+	defer pm.mu.Unlock()
+	delete(pm.producers, producer)
 }
 
 // GetAll returns a slice of all producer currently registered with
-// the manager. For each call it generates a new slice. The slice
+// the Manager. For each call it generates a new slice. The slice
 // should not be cached as registration may change at any time. It is
 // typically called periodically by exporter to read metrics from
 // the producers.
-func GetAll() []Producer {
-	pm := getManager()
-	return pm.getAll()
-}
-
-func (pm *manager) getAll() []Producer {
+func (pm *Manager) GetAll() []Producer {
 	pm.mu.Lock()
 	defer pm.mu.Unlock()
 	producers := make([]Producer, len(pm.producers))
@@ -74,16 +75,4 @@ func (pm *manager) getAll() []Producer {
 		i++
 	}
 	return producers
-}
-
-func (pm *manager) add(producer Producer) {
-	pm.mu.Lock()
-	defer pm.mu.Unlock()
-	pm.producers[producer] = struct{}{}
-}
-
-func (pm *manager) delete(producer Producer) {
-	pm.mu.Lock()
-	defer pm.mu.Unlock()
-	delete(pm.producers, producer)
 }

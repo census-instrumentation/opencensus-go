@@ -28,6 +28,7 @@ var (
 	myProd1 = newTestProducer("foo")
 	myProd2 = newTestProducer("bar")
 	myProd3 = newTestProducer("foobar")
+	pm      = GlobalManager()
 )
 
 func newTestProducer(name string) *testProducer {
@@ -39,83 +40,83 @@ func (mp *testProducer) Read() []*metricdata.Metric {
 }
 
 func TestAdd(t *testing.T) {
-	Add(myProd1)
-	Add(myProd2)
+	pm.AddProducer(myProd1)
+	pm.AddProducer(myProd2)
 
-	got := GetAll()
+	got := pm.GetAll()
 	want := []*testProducer{myProd1, myProd2}
 	checkSlice(got, want, t)
 	deleteAll()
 }
 
 func TestAddExisting(t *testing.T) {
-	Add(myProd1)
-	Add(myProd2)
-	Add(myProd1)
+	pm.AddProducer(myProd1)
+	pm.AddProducer(myProd2)
+	pm.AddProducer(myProd1)
 
-	got := GetAll()
+	got := pm.GetAll()
 	want := []*testProducer{myProd2, myProd1}
 	checkSlice(got, want, t)
 	deleteAll()
 }
 
 func TestAddNil(t *testing.T) {
-	Add(nil)
+	pm.AddProducer(nil)
 
-	got := GetAll()
+	got := pm.GetAll()
 	want := []*testProducer{}
 	checkSlice(got, want, t)
 	deleteAll()
 }
 
 func TestDelete(t *testing.T) {
-	Add(myProd1)
-	Add(myProd2)
-	Add(myProd3)
-	Delete(myProd2)
+	pm.AddProducer(myProd1)
+	pm.AddProducer(myProd2)
+	pm.AddProducer(myProd3)
+	pm.DeleteProducer(myProd2)
 
-	got := GetAll()
+	got := pm.GetAll()
 	want := []*testProducer{myProd1, myProd3}
 	checkSlice(got, want, t)
 	deleteAll()
 }
 
 func TestDeleteNonExisting(t *testing.T) {
-	Add(myProd1)
-	Add(myProd3)
-	Delete(myProd2)
+	pm.AddProducer(myProd1)
+	pm.AddProducer(myProd3)
+	pm.DeleteProducer(myProd2)
 
-	got := GetAll()
+	got := pm.GetAll()
 	want := []*testProducer{myProd1, myProd3}
 	checkSlice(got, want, t)
 	deleteAll()
 }
 
 func TestDeleteNil(t *testing.T) {
-	Add(myProd1)
-	Add(myProd3)
-	Delete(nil)
+	pm.AddProducer(myProd1)
+	pm.AddProducer(myProd3)
+	pm.DeleteProducer(nil)
 
-	got := GetAll()
+	got := pm.GetAll()
 	want := []*testProducer{myProd1, myProd3}
 	checkSlice(got, want, t)
 	deleteAll()
 }
 
 func TestGetAllNil(t *testing.T) {
-	got := GetAll()
+	got := pm.GetAll()
 	want := []*testProducer{}
 	checkSlice(got, want, t)
 	deleteAll()
 }
 
 func TestImmutableProducerList(t *testing.T) {
-	Add(myProd1)
-	Add(myProd2)
+	pm.AddProducer(myProd1)
+	pm.AddProducer(myProd2)
 
-	producersToMutate := GetAll()
+	producersToMutate := pm.GetAll()
 	producersToMutate[0] = myProd3
-	got := GetAll()
+	got := pm.GetAll()
 	want := []*testProducer{myProd1, myProd2}
 	checkSlice(got, want, t)
 	deleteAll()
@@ -141,7 +142,7 @@ func checkSlice(got []Producer, want []*testProducer, t *testing.T) {
 }
 
 func deleteAll() {
-	Delete(myProd1)
-	Delete(myProd2)
-	Delete(myProd3)
+	pm.DeleteProducer(myProd1)
+	pm.DeleteProducer(myProd2)
+	pm.DeleteProducer(myProd3)
 }
