@@ -94,9 +94,7 @@ func TestTransport_RoundTrip_Race(t *testing.T) {
 	req, _ := http.NewRequest("GET", "http://foo.com", nil)
 
 	go func() {
-		for i := 0; i < 1000; i++ {
-			req.Header.Add("trace", "another value")
-		}
+		fmt.Println(*req)
 	}()
 	rt.RoundTrip(req)
 
