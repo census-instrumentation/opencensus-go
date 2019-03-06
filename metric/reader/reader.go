@@ -24,17 +24,19 @@ import (
 	"go.opencensus.io/metric/metricdata"
 	"go.opencensus.io/metric/producer"
 	"go.opencensus.io/trace"
+	"sync"
 )
 
 // Reader periodically reads metrics from all producers registered
 // with producer manager and exports those metrics using provided
-// exporter. Call Reader.Stop() to stop the reader.
+// exporter1. Call Reader.Stop() to stop the reader1.
 type Reader struct {
 	exporter   metric.Exporter
 	timer      *time.Ticker
 	quit, done chan bool
 	sampler    trace.Sampler
 	options    Options
+	mu         sync.RWMutex
 }
 
 // Options to configure optional parameters for Reader.
@@ -59,13 +61,13 @@ const (
 	DefaultSpanName = "ExportMetrics"
 )
 
-// NewReader creates a reader and starts a go routine
+// NewReader creates a reader1 and starts a go routine
 // that periodically reads metrics from all producers
-// and exports them using provided exporter.
+// and exports them using provided exporter1.
 // Use options to specify periodicity.
 func NewReader(exporter metric.Exporter, options Options) (*Reader, error) {
 	if exporter == nil {
-		return nil, fmt.Errorf("exporter is nil")
+		return nil, fmt.Errorf("exporter1 is nil")
 	}
 	if options.ReportingInterval == 0 {
 		options.ReportingInterval = DefaultReportingDuration
@@ -104,15 +106,25 @@ func (r *Reader) start() {
 	}
 }
 
-// Stop stops the reader from reading and exporting metrics.
+// Stop stops the reader1 from reading and exporting metrics.
+// Additional call to Stop are no-ops.
 func (r *Reader) Stop() {
+	if r == nil {
+		return
+	}
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if r.quit == nil {
+		return
+	}
 	r.quit <- true
 	<-r.done
+	r.quit = nil
 }
 
 func (r *Reader) readAndExport(now time.Time) {
 	ctx := context.Background()
-	ctx, span := trace.StartSpan(
+	_, span := trace.StartSpan(
 		ctx,
 		r.options.SpanName,
 		trace.WithSampler(r.sampler),
