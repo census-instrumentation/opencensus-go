@@ -24,6 +24,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"go.opencensus.io/metric/metricdata"
 	"go.opencensus.io/stats"
 	"go.opencensus.io/tag"
 )
@@ -116,15 +117,17 @@ func dropZeroBounds(bounds ...float64) []float64 {
 
 // viewInternal is the internal representation of a View.
 type viewInternal struct {
-	view       *View  // view is the canonicalized View definition associated with this view.
-	subscribed uint32 // 1 if someone is subscribed and data need to be exported, use atomic to access
-	collector  *collector
+	view             *View  // view is the canonicalized View definition associated with this view.
+	subscribed       uint32 // 1 if someone is subscribed and data need to be exported, use atomic to access
+	collector        *collector
+	metricDescriptor *metricdata.Descriptor
 }
 
 func newViewInternal(v *View) (*viewInternal, error) {
 	return &viewInternal{
-		view:      v,
-		collector: &collector{make(map[string]AggregationData), v.Aggregation},
+		view:             v,
+		collector:        &collector{make(map[string]AggregationData), v.Aggregation},
+		metricDescriptor: viewToMetricDescriptor(v),
 	}, nil
 }
 

@@ -30,6 +30,7 @@ type AggregationData interface {
 	addSample(v float64, attachments map[string]interface{}, t time.Time)
 	clone() AggregationData
 	equal(other AggregationData) bool
+	toPoint(time time.Time) metricdata.Point
 }
 
 const epsilon = 1e-9
@@ -61,6 +62,10 @@ func (a *CountData) equal(other AggregationData) bool {
 	return a.Value == a2.Value
 }
 
+func (a *CountData) toPoint(t time.Time) metricdata.Point {
+	return metricdata.NewInt64Point(t, a.Value)
+}
+
 // SumData is the aggregated data for the Sum aggregation.
 // A sum aggregation processes data and sums up the recordings.
 //
@@ -85,6 +90,10 @@ func (a *SumData) equal(other AggregationData) bool {
 		return false
 	}
 	return math.Pow(a.Value-a2.Value, 2) < epsilon
+}
+
+func (a *SumData) toPoint(t time.Time) metricdata.Point {
+	return metricdata.NewFloat64Point(t, a.Value)
 }
 
 // DistributionData is the aggregated data for the
@@ -208,6 +217,26 @@ func (a *DistributionData) equal(other AggregationData) bool {
 	return a.Count == a2.Count && a.Min == a2.Min && a.Max == a2.Max && math.Pow(a.Mean-a2.Mean, 2) < epsilon && math.Pow(a.variance()-a2.variance(), 2) < epsilon
 }
 
+func (a *DistributionData) toPoint(t time.Time) metricdata.Point {
+	buckets := []metricdata.Bucket{}
+	for i := 0; i < len(a.CountPerBucket); i++ {
+		buckets = append(buckets, metricdata.Bucket{
+			Count:    a.CountPerBucket[i],
+			Exemplar: a.ExemplarsPerBucket[i],
+		})
+	}
+	bucketOptions := &metricdata.BucketOptions{Bounds: a.bounds}
+
+	val := &metricdata.Distribution{
+		Count:                 a.Count,
+		Sum:                   a.Sum(),
+		SumOfSquaredDeviation: a.SumOfSquaredDev,
+		BucketOptions:         bucketOptions,
+		Buckets:               buckets,
+	}
+	return metricdata.NewDistributionPoint(t, val)
+}
+
 // LastValueData returns the last value recorded for LastValue aggregation.
 type LastValueData struct {
 	Value float64
@@ -231,4 +260,8 @@ func (l *LastValueData) equal(other AggregationData) bool {
 		return false
 	}
 	return l.Value == a2.Value
+}
+
+func (l *LastValueData) toPoint(t time.Time) metricdata.Point {
+	return metricdata.NewFloat64Point(t, l.Value)
 }
