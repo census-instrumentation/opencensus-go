@@ -57,7 +57,7 @@ $ git push fork feature
 Open a pull request against the main opencensus-go repo.
 
 ## General Notes
-This project uses Go 1.11.4 and Travis for CI.	This project uses Appveyor and Travis for CI.
+This project uses Appveyor and Travis for CI.
 
 The dependencies are managed with `go mod` if you work with the sources under your
-`$GOPATH` you need to set the environment variable `GO111MODULE=on`.	`$GOPATH` you need to set the environment variable `GO111MODULE=on`.
+`$GOPATH` you need to set the environment variable `GO111MODULE=on`.
