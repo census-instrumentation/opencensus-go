@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-package reader
+package metricexport
 
 import (
 	"fmt"
@@ -22,7 +22,7 @@ import (
 	"context"
 	"go.opencensus.io/metric"
 	"go.opencensus.io/metric/metricdata"
-	"go.opencensus.io/metric/producer"
+	"go.opencensus.io/metric/metricproducer"
 	"go.opencensus.io/trace"
 	"sync"
 )
@@ -130,7 +130,7 @@ func (r *Reader) readAndExport(now time.Time) {
 		trace.WithSampler(r.sampler),
 	)
 	defer span.End()
-	producers := producer.GlobalManager().GetAll()
+	producers := metricproducer.GlobalManager().GetAll()
 	data := []*metricdata.Metric{}
 	for _, producer := range producers {
 		data = append(data, producer.Read()...)

@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-package reader
+package metricexport
 
 import (
 	"sync"
@@ -22,7 +22,7 @@ import (
 
 	"go.opencensus.io/metric"
 	"go.opencensus.io/metric/metricdata"
-	"go.opencensus.io/metric/producer"
+	"go.opencensus.io/metric/metricproducer"
 )
 
 var (
@@ -49,9 +49,9 @@ func (e *metricExporter) ExportMetric(metrics []*metricdata.Metric) {
 
 func init() {
 	r := metric.NewRegistry()
-	producer.GlobalManager().AddProducer(r)
-	g := r.AddInt64Gauge("active_request", "Number of active requests, per method.", metricdata.UnitDimensionless, "method")
-	gaugeEntry = g.GetEntry(metricdata.NewLabelValue("foo"))
+	metricproducer.GlobalManager().AddProducer(r)
+	g, _ := r.AddInt64Gauge("active_request", "Number of active requests, per method.", metricdata.UnitDimensionless, "method")
+	gaugeEntry, _ = g.GetEntry(metricdata.NewLabelValue("foo"))
 }
 
 func TestNewReader(t *testing.T) {
