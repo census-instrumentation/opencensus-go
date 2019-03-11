@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package producer
+package metricproducer
 
 import (
 	"go.opencensus.io/metric/metricdata"
