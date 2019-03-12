@@ -62,6 +62,7 @@ func (s *testServer) Multiple(stream Foo_MultipleServer) error {
 	}
 }
 
+// NewTestClient returns a new TestClient.
 func NewTestClient(l *testing.T) (client FooClient, cleanup func()) {
 	// initialize server
 	listener, err := net.Listen("tcp", "localhost:0")
