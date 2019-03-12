@@ -14,7 +14,9 @@
 
 package metric
 
-const (
-	errGaugeExistsWithDiffType = "gauge with same name exists with a different type"
-	errKeyValueMismatch        = "must supply the same number of label values as keys used to construct this gauge"
+import "errors"
+
+var (
+	errGaugeExistsWithDiffType = errors.New("gauge with same name exists with a different type")
+	errKeyValueMismatch        = errors.New("must supply the same number of label values as keys used to construct this gauge")
 )

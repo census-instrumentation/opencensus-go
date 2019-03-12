@@ -15,7 +15,6 @@
 package metric
 
 import (
-	"errors"
 	"math"
 	"sync"
 	"sync/atomic"
@@ -25,7 +24,7 @@ import (
 	"go.opencensus.io/metric/metricdata"
 )
 
-// gauge represents a quantity that can go up an down, for example queueInt64 depth
+// gauge represents a quantity that can go up an down, for example queue depth
 // or number of outstanding requests.
 //
 // gauge maintains a value for each combination of of label values passed to
@@ -95,7 +94,7 @@ func (g *gauge) labelValues(s string) []metricdata.LabelValue {
 
 func (g *gauge) entryForValues(labelVals []metricdata.LabelValue, newEntry func() gaugeEntry) (interface{}, error) {
 	if len(labelVals) != len(g.keys) {
-		return nil, errors.New(errKeyValueMismatch)
+		return nil, errKeyValueMismatch
 	}
 	mapKey := g.mapKey(labelVals)
 	if entry, ok := g.vals.Load(mapKey); ok {

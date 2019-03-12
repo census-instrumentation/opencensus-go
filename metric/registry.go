@@ -15,7 +15,6 @@
 package metric
 
 import (
-	"errors"
 	"sync"
 	"time"
 
@@ -76,7 +75,7 @@ func (r *Registry) initGauge(g *gauge, labelKeys []string, name string, descript
 	if ok {
 		existing := val.(*gauge)
 		if existing.gType != g.gType {
-			return nil, errors.New(errGaugeExistsWithDiffType)
+			return nil, errGaugeExistsWithDiffType
 		}
 	}
 	g.keys = labelKeys

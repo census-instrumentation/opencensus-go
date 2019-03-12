@@ -146,7 +146,7 @@ func TestGaugeWithSameNameDiffType(t *testing.T) {
 	r.AddInt64Gauge("g", "", metricdata.UnitDimensionless)
 	_, wantErr := r.AddFloat64Gauge("g", "", metricdata.UnitDimensionless)
 	if wantErr == nil {
-		t.Errorf("got: nil, want error: %s", errGaugeExistsWithDiffType)
+		t.Errorf("got: nil, want error: %v", errGaugeExistsWithDiffType)
 	}
 }
 
@@ -155,7 +155,7 @@ func TestGaugeWithLabelMismatch(t *testing.T) {
 	g, _ := r.AddInt64Gauge("g", "", metricdata.UnitDimensionless, "k1")
 	_, wantErr := g.GetEntry(metricdata.NewLabelValue("k1v2"), metricdata.NewLabelValue("k2v2"))
 	if wantErr == nil {
-		t.Errorf("got: nil, want error: %s", errKeyValueMismatch)
+		t.Errorf("got: nil, want error: %v", errKeyValueMismatch)
 	}
 }
 
