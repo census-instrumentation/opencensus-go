@@ -26,11 +26,15 @@ import (
 
 func TestGauge(t *testing.T) {
 	r := NewRegistry()
-	f := r.AddFloat64Gauge("TestGauge", "", "", "k1", "k2")
-	f.GetEntry(metricdata.LabelValue{}, metricdata.LabelValue{}).Set(5)
-	f.GetEntry(metricdata.NewLabelValue("k1v1"), metricdata.LabelValue{}).Add(1)
-	f.GetEntry(metricdata.NewLabelValue("k1v1"), metricdata.LabelValue{}).Add(1)
-	f.GetEntry(metricdata.NewLabelValue("k1v2"), metricdata.NewLabelValue("k2v2")).Add(1)
+	f, _ := r.AddFloat64Gauge("TestGauge", "", "", "k1", "k2")
+	e, _ := f.GetEntry(metricdata.LabelValue{}, metricdata.LabelValue{})
+	e.Set(5)
+	e, _ = f.GetEntry(metricdata.NewLabelValue("k1v1"), metricdata.LabelValue{})
+	e.Add(1)
+	e, _ = f.GetEntry(metricdata.NewLabelValue("k1v1"), metricdata.LabelValue{})
+	e.Add(1)
+	e, _ = f.GetEntry(metricdata.NewLabelValue("k1v2"), metricdata.NewLabelValue("k2v2"))
+	e.Add(1)
 	m := r.Read()
 	want := []*metricdata.Metric{
 		{
@@ -77,18 +81,21 @@ func TestGauge(t *testing.T) {
 
 func TestFloat64Entry_Add(t *testing.T) {
 	r := NewRegistry()
-	g := r.AddFloat64Gauge("g", "", metricdata.UnitDimensionless)
-	g.GetEntry().Add(0)
+	g, _ := r.AddFloat64Gauge("g", "", metricdata.UnitDimensionless)
+	e, _ := g.GetEntry()
+	e.Add(0)
 	ms := r.Read()
 	if got, want := ms[0].TimeSeries[0].Points[0].Value.(float64), 0.0; got != want {
 		t.Errorf("value = %v, want %v", got, want)
 	}
-	g.GetEntry().Add(1)
+	e, _ = g.GetEntry()
+	e.Add(1)
 	ms = r.Read()
 	if got, want := ms[0].TimeSeries[0].Points[0].Value.(float64), 1.0; got != want {
 		t.Errorf("value = %v, want %v", got, want)
 	}
-	g.GetEntry().Add(-1)
+	e, _ = g.GetEntry()
+	e.Add(-1)
 	ms = r.Read()
 	if got, want := ms[0].TimeSeries[0].Points[0].Value.(float64), 0.0; got != want {
 		t.Errorf("value = %v, want %v", got, want)
@@ -97,8 +104,9 @@ func TestFloat64Entry_Add(t *testing.T) {
 
 func TestFloat64Gauge_Add_NegativeTotals(t *testing.T) {
 	r := NewRegistry()
-	g := r.AddFloat64Gauge("g", "", metricdata.UnitDimensionless)
-	g.GetEntry().Add(-1.0)
+	g, _ := r.AddFloat64Gauge("g", "", metricdata.UnitDimensionless)
+	e, _ := g.GetEntry()
+	e.Add(-1.0)
 	ms := r.Read()
 	if got, want := ms[0].TimeSeries[0].Points[0].Value.(float64), float64(0); got != want {
 		t.Errorf("value = %v, want %v", got, want)
@@ -107,13 +115,15 @@ func TestFloat64Gauge_Add_NegativeTotals(t *testing.T) {
 
 func TestInt64GaugeEntry_Add(t *testing.T) {
 	r := NewRegistry()
-	g := r.AddInt64Gauge("g", "", metricdata.UnitDimensionless)
-	g.GetEntry().Add(0)
+	g, _ := r.AddInt64Gauge("g", "", metricdata.UnitDimensionless)
+	e, _ := g.GetEntry()
+	e.Add(0)
 	ms := r.Read()
 	if got, want := ms[0].TimeSeries[0].Points[0].Value.(int64), int64(0); got != want {
 		t.Errorf("value = %v, want %v", got, want)
 	}
-	g.GetEntry().Add(1)
+	e, _ = g.GetEntry()
+	e.Add(1)
 	ms = r.Read()
 	if got, want := ms[0].TimeSeries[0].Points[0].Value.(int64), int64(1); got != want {
 		t.Errorf("value = %v, want %v", got, want)
@@ -122,11 +132,30 @@ func TestInt64GaugeEntry_Add(t *testing.T) {
 
 func TestInt64Gauge_Add_NegativeTotals(t *testing.T) {
 	r := NewRegistry()
-	g := r.AddInt64Gauge("g", "", metricdata.UnitDimensionless)
-	g.GetEntry().Add(-1)
+	g, _ := r.AddInt64Gauge("g", "", metricdata.UnitDimensionless)
+	e, _ := g.GetEntry()
+	e.Add(-1)
 	ms := r.Read()
 	if got, want := ms[0].TimeSeries[0].Points[0].Value.(int64), int64(0); got != want {
 		t.Errorf("value = %v, want %v", got, want)
+	}
+}
+
+func TestGaugeWithSameNameDiffType(t *testing.T) {
+	r := NewRegistry()
+	r.AddInt64Gauge("g", "", metricdata.UnitDimensionless)
+	_, wantErr := r.AddFloat64Gauge("g", "", metricdata.UnitDimensionless)
+	if wantErr == nil {
+		t.Errorf("got: nil, want error: %s", errGaugeExistsWithDiffType)
+	}
+}
+
+func TestGaugeWithLabelMismatch(t *testing.T) {
+	r := NewRegistry()
+	g, _ := r.AddInt64Gauge("g", "", metricdata.UnitDimensionless, "k1")
+	_, wantErr := g.GetEntry(metricdata.NewLabelValue("k1v2"), metricdata.NewLabelValue("k2v2"))
+	if wantErr == nil {
+		t.Errorf("got: nil, want error: %s", errKeyValueMismatch)
 	}
 }
 
@@ -164,8 +193,9 @@ func TestRaceCondition(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		go func(k int) {
 			for j := 0; j < 5; j++ {
-				g := r.AddInt64Gauge(fmt.Sprintf("g%d%d", k, j), "", metricdata.UnitDimensionless)
-				g.GetEntry().Add(1)
+				g, _ := r.AddInt64Gauge(fmt.Sprintf("g%d%d", k, j), "", metricdata.UnitDimensionless)
+				e, _ := g.GetEntry()
+				e.Add(1)
 			}
 		}(i)
 	}

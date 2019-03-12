@@ -15,6 +15,7 @@
 package metric
 
 import (
+	"errors"
 	"math"
 	"sync"
 	"sync/atomic"
@@ -24,7 +25,7 @@ import (
 	"go.opencensus.io/metric/metricdata"
 )
 
-// gauge represents a quantity that can go up an down, for example queue depth
+// gauge represents a quantity that can go up an down, for example queueInt64 depth
 // or number of outstanding requests.
 //
 // gauge maintains a value for each combination of of label values passed to
@@ -32,11 +33,11 @@ import (
 //
 // gauge should not be used directly, use Float64Gauge or Int64Gauge.
 type gauge struct {
-	vals    sync.Map
-	desc    metricdata.Descriptor
-	start   time.Time
-	keys    []string
-	isFloat bool
+	vals  sync.Map
+	desc  metricdata.Descriptor
+	start time.Time
+	keys  []string
+	gType gaugeType
 }
 
 type gaugeEntry interface {
@@ -92,16 +93,16 @@ func (g *gauge) labelValues(s string) []metricdata.LabelValue {
 	return vals
 }
 
-func (g *gauge) entryForValues(labelVals []metricdata.LabelValue, newEntry func() gaugeEntry) interface{} {
+func (g *gauge) entryForValues(labelVals []metricdata.LabelValue, newEntry func() gaugeEntry) (interface{}, error) {
 	if len(labelVals) != len(g.keys) {
-		panic("must supply the same number of label values as keys used to construct this gauge")
+		return nil, errors.New(errKeyValueMismatch)
 	}
 	mapKey := g.mapKey(labelVals)
 	if entry, ok := g.vals.Load(mapKey); ok {
-		return entry
+		return entry, nil
 	}
 	entry, _ := g.vals.LoadOrStore(mapKey, newEntry())
-	return entry
+	return entry, nil
 }
 
 // Float64Gauge represents a float64 value that can go up and down.
@@ -131,10 +132,14 @@ func (e *Float64Entry) read(t time.Time) metricdata.Point {
 //
 // The number of label values supplied must be exactly the same as the number
 // of keys supplied when this gauge was created.
-func (g *Float64Gauge) GetEntry(labelVals ...metricdata.LabelValue) *Float64Entry {
-	return g.g.entryForValues(labelVals, func() gaugeEntry {
+func (g *Float64Gauge) GetEntry(labelVals ...metricdata.LabelValue) (*Float64Entry, error) {
+	entry, err := g.g.entryForValues(labelVals, func() gaugeEntry {
 		return &Float64Entry{}
-	}).(*Float64Entry)
+	})
+	if err != nil {
+		return nil, err
+	}
+	return entry.(*Float64Entry), nil
 }
 
 // Set sets the gauge entry value to val.
@@ -179,10 +184,14 @@ func (e *Int64GaugeEntry) read(t time.Time) metricdata.Point {
 //
 // The number of label values supplied must be exactly the same as the number
 // of keys supplied when this gauge was created.
-func (g *Int64Gauge) GetEntry(labelVals ...metricdata.LabelValue) *Int64GaugeEntry {
-	return g.g.entryForValues(labelVals, func() gaugeEntry {
+func (g *Int64Gauge) GetEntry(labelVals ...metricdata.LabelValue) (*Int64GaugeEntry, error) {
+	entry, err := g.g.entryForValues(labelVals, func() gaugeEntry {
 		return &Int64GaugeEntry{}
-	}).(*Int64GaugeEntry)
+	})
+	if err != nil {
+		return nil, err
+	}
+	return entry.(*Int64GaugeEntry), nil
 }
 
 // Set sets the value of the gauge entry to the provided value.
