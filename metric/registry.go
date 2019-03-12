@@ -26,15 +26,12 @@ import (
 // External synchronization is required if you want to add gauges to the same
 // registry from multiple goroutines.
 type Registry struct {
-	mu     sync.RWMutex
-	gauges map[string]*gauge
+	gauges sync.Map
 }
 
 // NewRegistry initializes a new Registry.
 func NewRegistry() *Registry {
-	return &Registry{
-		gauges: make(map[string]*gauge),
-	}
+	return &Registry{}
 }
 
 // AddFloat64Gauge creates and adds a new float64-valued gauge to this registry.
@@ -56,10 +53,9 @@ func (r *Registry) AddInt64Gauge(name, description string, unit metricdata.Unit,
 }
 
 func (r *Registry) initGauge(g *gauge, labelKeys []string, name string, description string, unit metricdata.Unit) *gauge {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	existing, ok := r.gauges[name]
+	val, ok := r.gauges.Load(name)
 	if ok {
+		existing := val.(*gauge)
 		if existing.isFloat != g.isFloat {
 			log.Panicf("Gauge with name %s already exists with a different type", name)
 		}
@@ -72,17 +68,17 @@ func (r *Registry) initGauge(g *gauge, labelKeys []string, name string, descript
 		Unit:        unit,
 		LabelKeys:   labelKeys,
 	}
-	r.gauges[name] = g
+	r.gauges.Store(name, g)
 	return g
 }
 
 // Read reads all gauges in this registry and returns their values as metrics.
 func (r *Registry) Read() []*metricdata.Metric {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	ms := make([]*metricdata.Metric, 0, len(r.gauges))
-	for _, g := range r.gauges {
+	ms := []*metricdata.Metric{}
+	r.gauges.Range(func(k, v interface{}) bool {
+		g := v.(*gauge)
 		ms = append(ms, g.read())
-	}
+		return true
+	})
 	return ms
 }
