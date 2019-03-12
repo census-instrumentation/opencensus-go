@@ -70,6 +70,38 @@ func (r *Registry) AddInt64Gauge(name, description string, unit metricdata.Unit,
 	return i, nil
 }
 
+// AddInt64DerivedGauge creates and adds a new derived int64-valued gauge to this registry.
+// A derived gauge is convinient form of gauge where the object associated with the gauge
+// provides its value by implementing ToInt64 function.
+func (r *Registry) AddInt64DerivedGauge(name, description string, unit metricdata.Unit, labelKeys ...string) (*Int64DerivedGauge, error) {
+	i := &Int64DerivedGauge{
+		g: gauge{
+			gType: derivedGaugeInt64,
+		},
+	}
+	_, err := r.initGauge(&i.g, labelKeys, name, description, unit)
+	if err != nil {
+		return nil, err
+	}
+	return i, nil
+}
+
+// AddFloat64DerivedGauge creates and adds a new derived float64-valued gauge to this registry.
+// A derived gauge is convinient form of gauge where the object associated with the gauge
+// provides its value by implementing ToFloat64 function.
+func (r *Registry) AddFloat64DerivedGauge(name, description string, unit metricdata.Unit, labelKeys ...string) (*Float64DerivedGauge, error) {
+	f := &Float64DerivedGauge{
+		g: gauge{
+			gType: derivedGaugeFloat64,
+		},
+	}
+	_, err := r.initGauge(&f.g, labelKeys, name, description, unit)
+	if err != nil {
+		return nil, err
+	}
+	return f, nil
+}
+
 func (r *Registry) initGauge(g *gauge, labelKeys []string, name string, description string, unit metricdata.Unit) (*gauge, error) {
 	val, ok := r.gauges.Load(name)
 	if ok {
