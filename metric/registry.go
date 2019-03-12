@@ -15,7 +15,6 @@
 package metric
 
 import (
-	"log"
 	"sync"
 	"time"
 
@@ -29,35 +28,54 @@ type Registry struct {
 	gauges sync.Map
 }
 
+type gaugeType int
+
+const (
+	gaugeInt64 gaugeType = iota
+	gaugeFloat64
+	derivedGaugeInt64
+	derivedGaugeFloat64
+)
+
 // NewRegistry initializes a new Registry.
 func NewRegistry() *Registry {
 	return &Registry{}
 }
 
 // AddFloat64Gauge creates and adds a new float64-valued gauge to this registry.
-func (r *Registry) AddFloat64Gauge(name, description string, unit metricdata.Unit, labelKeys ...string) *Float64Gauge {
+func (r *Registry) AddFloat64Gauge(name, description string, unit metricdata.Unit, labelKeys ...string) (*Float64Gauge, error) {
 	f := &Float64Gauge{
 		g: gauge{
-			isFloat: true,
+			gType: gaugeFloat64,
 		},
 	}
-	r.initGauge(&f.g, labelKeys, name, description, unit)
-	return f
+	_, err := r.initGauge(&f.g, labelKeys, name, description, unit)
+	if err != nil {
+		return nil, err
+	}
+	return f, nil
 }
 
 // AddInt64Gauge creates and adds a new int64-valued gauge to this registry.
-func (r *Registry) AddInt64Gauge(name, description string, unit metricdata.Unit, labelKeys ...string) *Int64Gauge {
-	i := &Int64Gauge{}
-	r.initGauge(&i.g, labelKeys, name, description, unit)
-	return i
+func (r *Registry) AddInt64Gauge(name, description string, unit metricdata.Unit, labelKeys ...string) (*Int64Gauge, error) {
+	i := &Int64Gauge{
+		g: gauge{
+			gType: gaugeInt64,
+		},
+	}
+	_, err := r.initGauge(&i.g, labelKeys, name, description, unit)
+	if err != nil {
+		return nil, err
+	}
+	return i, nil
 }
 
-func (r *Registry) initGauge(g *gauge, labelKeys []string, name string, description string, unit metricdata.Unit) *gauge {
+func (r *Registry) initGauge(g *gauge, labelKeys []string, name string, description string, unit metricdata.Unit) (*gauge, error) {
 	val, ok := r.gauges.Load(name)
 	if ok {
 		existing := val.(*gauge)
-		if existing.isFloat != g.isFloat {
-			log.Panicf("Gauge with name %s already exists with a different type", name)
+		if existing.gType != g.gType {
+			return nil, errGaugeExistsWithDiffType
 		}
 	}
 	g.keys = labelKeys
@@ -69,7 +87,7 @@ func (r *Registry) initGauge(g *gauge, labelKeys []string, name string, descript
 		LabelKeys:   labelKeys,
 	}
 	r.gauges.Store(name, g)
-	return g
+	return g, nil
 }
 
 // Read reads all gauges in this registry and returns their values as metrics.
