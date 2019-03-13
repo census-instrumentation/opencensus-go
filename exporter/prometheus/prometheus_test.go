@@ -288,7 +288,7 @@ func TestCumulativenessFromHistograms(t *testing.T) {
 	// We want the results that look like this:
 	// 1:   [0.25]      		| 1 + prev(i) = 1 + 0 = 1
 	// 5:   [1.45]			| 1 + prev(i) = 1 + 1 = 2
-	// 10:	[]			| 1 + prev(i) = 1 + 2 = 3
+	// 10:	[7.69]			| 1 + prev(i) = 1 + 2 = 3
 	// 20:  [12]			| 1 + prev(i) = 1 + 3 = 4
 	// 50:  []			| 0 + prev(i) = 0 + 4 = 4
 	// 100: []			| 0 + prev(i) = 0 + 4 = 4
@@ -358,9 +358,9 @@ func TestHistogramUnorderedBucketBounds(t *testing.T) {
 		Description: "this is a test",
 		Measure:     m,
 
-		// Intentionally used unordered elements in the ascending distribution
+		// Intentionally used unordered and duplicated elements in the distribution
 		// to ensure unordered bucket bounds are handled.
-		Aggregation: view.Distribution(10, 5, 1, 50, 20, 100, 250),
+		Aggregation: view.Distribution(10, 5, 1, 1, 50, 5, 20, 100, 250),
 	}
 
 	if err := view.Register(v); err != nil {
@@ -375,7 +375,7 @@ func TestHistogramUnorderedBucketBounds(t *testing.T) {
 	// We want the results that look like this:
 	// 1:   [0.25]      		| 1 + prev(i) = 1 + 0 = 1
 	// 5:   [1.45]			| 1 + prev(i) = 1 + 1 = 2
-	// 10:	[]			| 1 + prev(i) = 1 + 2 = 3
+	// 10:	[7.69]			| 1 + prev(i) = 1 + 2 = 3
 	// 20:  [12]			| 1 + prev(i) = 1 + 3 = 4
 	// 50:  []			| 0 + prev(i) = 0 + 4 = 4
 	// 100: []			| 0 + prev(i) = 0 + 4 = 4
