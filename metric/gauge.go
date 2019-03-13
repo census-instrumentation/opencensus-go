@@ -24,7 +24,7 @@ import (
 	"go.opencensus.io/metric/metricdata"
 )
 
-// gauge represents a quantity that can go up an down, for example queueInt64 depth
+// gauge represents a quantity that can go up an down, for example queue depth
 // or number of outstanding requests.
 //
 // gauge maintains a value for each combination of of label values passed to
@@ -222,33 +222,27 @@ type Int64DerivedGauge struct {
 	g gauge
 }
 
-// Int64DerivedGaugeInterface is an interface. Object used to create derived gauge entry
-// must implement this interface.
-type Int64DerivedGaugeInterface interface {
-	// ToInt64 returns int64 value representing an instantaneous value of the object.
-	ToInt64() int64
-}
-
 type int64DerivedGaugeEntry struct {
-	obj Int64DerivedGaugeInterface
+	fn func() int64
 }
 
 func (e *int64DerivedGaugeEntry) read(t time.Time) metricdata.Point {
-	return metricdata.NewInt64Point(t, e.obj.ToInt64())
+	return metricdata.NewInt64Point(t, e.fn())
 }
 
 // UpsertEntry inserts or updates a derived gauge entry for the given set of label values.
+// The object for which this gauge entry is inserted or updated, must implement func() int64
 //
 // It returns an error if
 // 1. The number of label values supplied are not the same as the number
 // of keys supplied when this gauge was created.
-// 2. obj implementing Int64DerivedGaugeInterface is nil.
-func (g *Int64DerivedGauge) UpsertEntry(obj Int64DerivedGaugeInterface, labelVals ...metricdata.LabelValue) error {
-	if obj == nil {
+// 2. fn func() int64 is nil.
+func (g *Int64DerivedGauge) UpsertEntry(fn func() int64, labelVals ...metricdata.LabelValue) error {
+	if fn == nil {
 		return errInvalidParam
 	}
 	return g.g.upsertEntry(labelVals, func() gaugeEntry {
-		return &int64DerivedGaugeEntry{obj}
+		return &int64DerivedGaugeEntry{fn}
 	})
 }
 
@@ -261,32 +255,26 @@ type Float64DerivedGauge struct {
 	g gauge
 }
 
-// Float64DerivedGaugeInterface is an interface. Object used to create derived gauge entry
-// must implement this interface.
-type Float64DerivedGaugeInterface interface {
-	// ToFloat64 returns float64 value representing an instantaneous value of the object.
-	ToFloat64() float64
-}
-
 type float64DerivedGaugeEntry struct {
-	obj Float64DerivedGaugeInterface
+	fn func() float64
 }
 
 func (e *float64DerivedGaugeEntry) read(t time.Time) metricdata.Point {
-	return metricdata.NewFloat64Point(t, e.obj.ToFloat64())
+	return metricdata.NewFloat64Point(t, e.fn())
 }
 
 // UpsertEntry inserts or updates a derived gauge entry for the given set of label values.
+// The object for which this gauge entry is inserted or updated, must implement func() float64
 //
 // It returns an error if
 // 1. The number of label values supplied are not the same as the number
 // of keys supplied when this gauge was created.
-// 2. obj implementing Float64DerivedGaugeInterface is nil.
-func (g *Float64DerivedGauge) UpsertEntry(obj Float64DerivedGaugeInterface, labelVals ...metricdata.LabelValue) error {
-	if obj == nil {
+// 2. fn func() float64 is nil.
+func (g *Float64DerivedGauge) UpsertEntry(fn func() float64, labelVals ...metricdata.LabelValue) error {
+	if fn == nil {
 		return errInvalidParam
 	}
 	return g.g.upsertEntry(labelVals, func() gaugeEntry {
-		return &float64DerivedGaugeEntry{obj}
+		return &float64DerivedGaugeEntry{fn}
 	})
 }

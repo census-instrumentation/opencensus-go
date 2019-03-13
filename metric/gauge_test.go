@@ -252,7 +252,7 @@ func TestInt64DerivedGaugeEntry_Add(t *testing.T) {
 	r := NewRegistry()
 	q := &queueInt64{3}
 	g, _ := r.AddInt64DerivedGauge("g", "", metricdata.UnitDimensionless, "k1", "k2")
-	err := g.UpsertEntry(q, metricdata.NewLabelValue("k1v1"), metricdata.LabelValue{})
+	err := g.UpsertEntry(q.ToInt64, metricdata.NewLabelValue("k1v1"), metricdata.LabelValue{})
 	if err != nil {
 		t.Errorf("want: nil, got: %v", err)
 	}
@@ -280,7 +280,7 @@ func TestInt64DerivedGaugeEntry_AddWithInvalidLabels(t *testing.T) {
 	r := NewRegistry()
 	q := &queueInt64{3}
 	g, _ := r.AddInt64DerivedGauge("g", "", metricdata.UnitDimensionless, "k1", "k2")
-	gotErr := g.UpsertEntry(q, metricdata.NewLabelValue("k1v1"))
+	gotErr := g.UpsertEntry(q.ToInt64, metricdata.NewLabelValue("k1v1"))
 	if gotErr == nil {
 		t.Errorf("expected error but got nil")
 	}
@@ -291,8 +291,8 @@ func TestInt64DerivedGaugeEntry_Update(t *testing.T) {
 	q := &queueInt64{3}
 	q2 := &queueInt64{5}
 	g, _ := r.AddInt64DerivedGauge("g", "", metricdata.UnitDimensionless, "k1", "k2")
-	g.UpsertEntry(q, metricdata.NewLabelValue("k1v1"), metricdata.LabelValue{})
-	gotErr := g.UpsertEntry(q2, metricdata.NewLabelValue("k1v1"), metricdata.LabelValue{})
+	g.UpsertEntry(q.ToInt64, metricdata.NewLabelValue("k1v1"), metricdata.LabelValue{})
+	gotErr := g.UpsertEntry(q2.ToInt64, metricdata.NewLabelValue("k1v1"), metricdata.LabelValue{})
 	if gotErr != nil {
 		t.Errorf("got: %v, want: nil", gotErr)
 	}
@@ -314,7 +314,7 @@ func TestFloat64DerivedGaugeEntry_Add(t *testing.T) {
 	r := NewRegistry()
 	q := &queueFloat64{5.0}
 	g, _ := r.AddFloat64DerivedGauge("g", "", metricdata.UnitDimensionless, "k1", "k2")
-	err := g.UpsertEntry(q, metricdata.NewLabelValue("k1v1"), metricdata.LabelValue{})
+	err := g.UpsertEntry(q.ToFloat64, metricdata.NewLabelValue("k1v1"), metricdata.LabelValue{})
 	if err != nil {
 		t.Errorf("want: nil, got: %v", err)
 	}
@@ -342,7 +342,7 @@ func TestFloat64DerivedGaugeEntry_AddWithInvalidLabels(t *testing.T) {
 	r := NewRegistry()
 	q := &queueFloat64{3}
 	g, _ := r.AddFloat64DerivedGauge("g", "", metricdata.UnitDimensionless, "k1", "k2")
-	gotErr := g.UpsertEntry(q, metricdata.NewLabelValue("k1v1"))
+	gotErr := g.UpsertEntry(q.ToFloat64, metricdata.NewLabelValue("k1v1"))
 	if gotErr == nil {
 		t.Errorf("expected error but got nil")
 	}
@@ -353,8 +353,8 @@ func TestFloat64DerivedGaugeEntry_Update(t *testing.T) {
 	q := &queueFloat64{3.0}
 	q2 := &queueFloat64{5.0}
 	g, _ := r.AddFloat64DerivedGauge("g", "", metricdata.UnitDimensionless, "k1", "k2")
-	g.UpsertEntry(q, metricdata.NewLabelValue("k1v1"), metricdata.LabelValue{})
-	gotErr := g.UpsertEntry(q2, metricdata.NewLabelValue("k1v1"), metricdata.LabelValue{})
+	g.UpsertEntry(q.ToFloat64, metricdata.NewLabelValue("k1v1"), metricdata.LabelValue{})
+	gotErr := g.UpsertEntry(q2.ToFloat64, metricdata.NewLabelValue("k1v1"), metricdata.LabelValue{})
 	if gotErr != nil {
 		t.Errorf("got: %v, want: nil", gotErr)
 	}
