@@ -34,7 +34,7 @@ const (
 	HostAttribute       = "http.host"
 	MethodAttribute     = "http.method"
 	PathAttribute       = "http.path"
-	UrlAttribute        = "http.url"
+	URLAttribute        = "http.url"
 	UserAgentAttribute  = "http.user_agent"
 	StatusCodeAttribute = "http.status_code"
 )
@@ -155,7 +155,7 @@ func requestAttrs(r *http.Request) []trace.Attribute {
 	attrs := make([]trace.Attribute, 0, 5)
 	attrs = append(attrs,
 		trace.StringAttribute(PathAttribute, r.URL.Path),
-		trace.StringAttribute(UrlAttribute, r.URL.String()),
+		trace.StringAttribute(URLAttribute, r.URL.String()),
 		trace.StringAttribute(HostAttribute, r.Host),
 		trace.StringAttribute(MethodAttribute, r.Method),
 	)

@@ -525,7 +525,7 @@ func TestResponseAttributes(t *testing.T) {
 type TestCase struct {
 	Name           string
 	Method         string
-	Url            string
+	URL            string
 	Headers        map[string]string
 	ResponseCode   int
 	SpanName       string
@@ -564,15 +564,15 @@ func TestAgainstSpecs(t *testing.T) {
 			serverReturn := make(chan time.Time)
 			host := ""
 			port := ""
-			serverRequired := strings.Contains(tt.Url, "{")
+			serverRequired := strings.Contains(tt.URL, "{")
 			if serverRequired {
 				// Start the server.
-				localServerUrl := serveHTTP(handler, serverDone, serverReturn, tt.ResponseCode)
-				u, _ := url.Parse(localServerUrl)
+				localServerURL := serveHTTP(handler, serverDone, serverReturn, tt.ResponseCode)
+				u, _ := url.Parse(localServerURL)
 				host, port, _ = net.SplitHostPort(u.Host)
 
-				tt.Url = strings.Replace(tt.Url, "{host}", host, 1)
-				tt.Url = strings.Replace(tt.Url, "{port}", port, 1)
+				tt.URL = strings.Replace(tt.URL, "{host}", host, 1)
+				tt.URL = strings.Replace(tt.URL, "{port}", port, 1)
 			}
 
 			// Start a root Span in the client.
@@ -582,7 +582,7 @@ func TestAgainstSpecs(t *testing.T) {
 			// Make the request.
 			req, err := http.NewRequest(
 				tt.Method,
-				tt.Url,
+				tt.URL,
 				nil)
 			for headerName, headerValue := range tt.Headers {
 				req.Header.Add(headerName, headerValue)
