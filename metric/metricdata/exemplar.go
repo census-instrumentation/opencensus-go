@@ -12,12 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package exemplar implements support for exemplars. Exemplars are additional
-// data associated with each measurement.
-//
-// Their purpose it to provide an example of the kind of thing
-// (request, RPC, trace span, etc.) that resulted in that measurement.
-package exemplar
+package metricdata
 
 import (
 	"context"
@@ -33,6 +28,9 @@ const (
 
 // Exemplar is an example data point associated with each bucket of a
 // distribution type aggregation.
+//
+// Their purpose is to provide an example of the kind of thing
+// (request, RPC, trace span, etc.) that resulted in that measurement.
 type Exemplar struct {
 	Value       float64     // the value that was recorded
 	Timestamp   time.Time   // the time the value was recorded

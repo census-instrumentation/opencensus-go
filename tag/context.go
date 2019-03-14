@@ -18,7 +18,7 @@ package tag
 import (
 	"context"
 
-	"go.opencensus.io/exemplar"
+	"go.opencensus.io/metric/metricdata"
 )
 
 // FromContext returns the tag map stored in the context.
@@ -45,10 +45,10 @@ type ctxKey struct{}
 var mapCtxKey = ctxKey{}
 
 func init() {
-	exemplar.RegisterAttachmentExtractor(extractTagsAttachments)
+	metricdata.RegisterAttachmentExtractor(extractTagsAttachments)
 }
 
-func extractTagsAttachments(ctx context.Context, a exemplar.Attachments) exemplar.Attachments {
+func extractTagsAttachments(ctx context.Context, a metricdata.Attachments) metricdata.Attachments {
 	m := FromContext(ctx)
 	if m == nil {
 		return a
@@ -61,7 +61,7 @@ func extractTagsAttachments(ctx context.Context, a exemplar.Attachments) exempla
 	}
 
 	for k, v := range m.m {
-		a[exemplar.KeyPrefixTag+k.Name()] = v
+		a[metricdata.KeyPrefixTag+k.Name()] = v
 	}
 	return a
 }

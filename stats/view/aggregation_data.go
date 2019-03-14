@@ -18,7 +18,7 @@ package view
 import (
 	"math"
 
-	"go.opencensus.io/exemplar"
+	"go.opencensus.io/metric/metricdata"
 )
 
 // AggregationData represents an aggregated value from a collection.
@@ -26,7 +26,7 @@ import (
 // Mosts users won't directly access aggregration data.
 type AggregationData interface {
 	isAggregationData() bool
-	addSample(e *exemplar.Exemplar)
+	addSample(e *metricdata.Exemplar)
 	clone() AggregationData
 	equal(other AggregationData) bool
 }
@@ -43,7 +43,7 @@ type CountData struct {
 
 func (a *CountData) isAggregationData() bool { return true }
 
-func (a *CountData) addSample(_ *exemplar.Exemplar) {
+func (a *CountData) addSample(_ *metricdata.Exemplar) {
 	a.Value = a.Value + 1
 }
 
@@ -70,7 +70,7 @@ type SumData struct {
 
 func (a *SumData) isAggregationData() bool { return true }
 
-func (a *SumData) addSample(e *exemplar.Exemplar) {
+func (a *SumData) addSample(e *metricdata.Exemplar) {
 	a.Value += e.Value
 }
 
@@ -101,8 +101,8 @@ type DistributionData struct {
 	SumOfSquaredDev float64 // sum of the squared deviation from the mean
 	CountPerBucket  []int64 // number of occurrences per bucket
 	// ExemplarsPerBucket is slice the same length as CountPerBucket containing
-	// an exemplar for the associated bucket, or nil.
-	ExemplarsPerBucket []*exemplar.Exemplar
+	// an metricdata for the associated bucket, or nil.
+	ExemplarsPerBucket []*metricdata.Exemplar
 	bounds             []float64 // histogram distribution of the values
 }
 
@@ -110,7 +110,7 @@ func newDistributionData(bounds []float64) *DistributionData {
 	bucketCount := len(bounds) + 1
 	return &DistributionData{
 		CountPerBucket:     make([]int64, bucketCount),
-		ExemplarsPerBucket: make([]*exemplar.Exemplar, bucketCount),
+		ExemplarsPerBucket: make([]*metricdata.Exemplar, bucketCount),
 		bounds:             bounds,
 		Min:                math.MaxFloat64,
 		Max:                math.SmallestNonzeroFloat64,
@@ -129,7 +129,7 @@ func (a *DistributionData) variance() float64 {
 
 func (a *DistributionData) isAggregationData() bool { return true }
 
-func (a *DistributionData) addSample(e *exemplar.Exemplar) {
+func (a *DistributionData) addSample(e *metricdata.Exemplar) {
 	f := e.Value
 	if f < a.Min {
 		a.Min = f
@@ -150,9 +150,9 @@ func (a *DistributionData) addSample(e *exemplar.Exemplar) {
 	a.SumOfSquaredDev = a.SumOfSquaredDev + (f-oldMean)*(f-a.Mean)
 }
 
-func (a *DistributionData) addToBucket(e *exemplar.Exemplar) {
+func (a *DistributionData) addToBucket(e *metricdata.Exemplar) {
 	var count *int64
-	var ex **exemplar.Exemplar
+	var ex **metricdata.Exemplar
 	for i, b := range a.bounds {
 		if e.Value < b {
 			count = &a.CountPerBucket[i]
@@ -168,15 +168,15 @@ func (a *DistributionData) addToBucket(e *exemplar.Exemplar) {
 	*ex = maybeRetainExemplar(*ex, e)
 }
 
-func maybeRetainExemplar(old, cur *exemplar.Exemplar) *exemplar.Exemplar {
+func maybeRetainExemplar(old, cur *metricdata.Exemplar) *metricdata.Exemplar {
 	if old == nil {
 		return cur
 	}
 
-	// Heuristic to pick the "better" exemplar: first keep the one with a
+	// Heuristic to pick the "better" metricdata: first keep the one with a
 	// sampled trace attachment, if neither have a trace attachment, pick the
 	// one with more attachments.
-	_, haveTraceID := cur.Attachments[exemplar.KeyTraceID]
+	_, haveTraceID := cur.Attachments[metricdata.KeyTraceID]
 	if haveTraceID || len(cur.Attachments) >= len(old.Attachments) {
 		return cur
 	}
@@ -186,7 +186,7 @@ func maybeRetainExemplar(old, cur *exemplar.Exemplar) *exemplar.Exemplar {
 func (a *DistributionData) clone() AggregationData {
 	c := *a
 	c.CountPerBucket = append([]int64(nil), a.CountPerBucket...)
-	c.ExemplarsPerBucket = append([]*exemplar.Exemplar(nil), a.ExemplarsPerBucket...)
+	c.ExemplarsPerBucket = append([]*metricdata.Exemplar(nil), a.ExemplarsPerBucket...)
 	return &c
 }
 
@@ -218,7 +218,7 @@ func (l *LastValueData) isAggregationData() bool {
 	return true
 }
 
-func (l *LastValueData) addSample(e *exemplar.Exemplar) {
+func (l *LastValueData) addSample(e *metricdata.Exemplar) {
 	l.Value = e.Value
 }
 

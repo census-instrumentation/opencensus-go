@@ -21,7 +21,7 @@ import (
 	"strings"
 	"time"
 
-	"go.opencensus.io/exemplar"
+	"go.opencensus.io/metric/metricdata"
 
 	"go.opencensus.io/stats"
 	"go.opencensus.io/stats/internal"
@@ -161,7 +161,7 @@ func (cmd *recordReq) handleCommand(w *worker) {
 		}
 		ref := w.getMeasureRef(m.Measure().Name())
 		for v := range ref.views {
-			e := &exemplar.Exemplar{
+			e := &metricdata.Exemplar{
 				Value:       m.Value(),
 				Timestamp:   cmd.t,
 				Attachments: cmd.attachments,

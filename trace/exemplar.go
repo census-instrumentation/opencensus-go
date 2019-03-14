@@ -18,14 +18,14 @@ import (
 	"context"
 	"encoding/hex"
 
-	"go.opencensus.io/exemplar"
+	"go.opencensus.io/metric/metricdata"
 )
 
 func init() {
-	exemplar.RegisterAttachmentExtractor(attachSpanContext)
+	metricdata.RegisterAttachmentExtractor(attachSpanContext)
 }
 
-func attachSpanContext(ctx context.Context, a exemplar.Attachments) exemplar.Attachments {
+func attachSpanContext(ctx context.Context, a metricdata.Attachments) metricdata.Attachments {
 	span := FromContext(ctx)
 	if span == nil {
 		return a
@@ -35,9 +35,9 @@ func attachSpanContext(ctx context.Context, a exemplar.Attachments) exemplar.Att
 		return a
 	}
 	if a == nil {
-		a = make(exemplar.Attachments)
+		a = make(metricdata.Attachments)
 	}
-	a[exemplar.KeyTraceID] = hex.EncodeToString(sc.TraceID[:])
-	a[exemplar.KeySpanID] = hex.EncodeToString(sc.SpanID[:])
+	a[metricdata.KeyTraceID] = hex.EncodeToString(sc.TraceID[:])
+	a[metricdata.KeySpanID] = hex.EncodeToString(sc.SpanID[:])
 	return a
 }

@@ -18,7 +18,7 @@ package view
 import (
 	"sort"
 
-	"go.opencensus.io/exemplar"
+	"go.opencensus.io/metric/metricdata"
 
 	"go.opencensus.io/internal/tagencoding"
 	"go.opencensus.io/tag"
@@ -33,7 +33,7 @@ type collector struct {
 	a *Aggregation
 }
 
-func (c *collector) addSample(s string, e *exemplar.Exemplar) {
+func (c *collector) addSample(s string, e *metricdata.Exemplar) {
 	aggregator, ok := c.signatures[s]
 	if !ok {
 		aggregator = c.a.newData()

@@ -24,7 +24,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"go.opencensus.io/exemplar"
+	"go.opencensus.io/metric/metricdata"
 
 	"go.opencensus.io/stats"
 	"go.opencensus.io/tag"
@@ -152,7 +152,7 @@ func (v *viewInternal) collectedRows() []*Row {
 	return v.collector.collectedRows(v.view.TagKeys)
 }
 
-func (v *viewInternal) addSample(m *tag.Map, e *exemplar.Exemplar) {
+func (v *viewInternal) addSample(m *tag.Map, e *metricdata.Exemplar) {
 	if !v.isSubscribed() {
 		return
 	}

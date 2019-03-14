@@ -21,7 +21,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 
-	"go.opencensus.io/exemplar"
+	"go.opencensus.io/metric/metricdata"
 
 	"go.opencensus.io/stats"
 	"go.opencensus.io/tag"
@@ -69,7 +69,7 @@ func Test_View_MeasureFloat64_AggregationDistribution(t *testing.T) {
 				{
 					[]tag.Tag{{Key: k1, Value: "v1"}},
 					&DistributionData{
-						Count: 2, Min: 1, Max: 5, Mean: 3, SumOfSquaredDev: 8, CountPerBucket: []int64{1, 1}, bounds: []float64{2}, ExemplarsPerBucket: []*exemplar.Exemplar{nil, nil},
+						Count: 2, Min: 1, Max: 5, Mean: 3, SumOfSquaredDev: 8, CountPerBucket: []int64{1, 1}, bounds: []float64{2}, ExemplarsPerBucket: []*metricdata.Exemplar{nil, nil},
 					},
 				},
 			},
@@ -84,13 +84,13 @@ func Test_View_MeasureFloat64_AggregationDistribution(t *testing.T) {
 				{
 					[]tag.Tag{{Key: k1, Value: "v1"}},
 					&DistributionData{
-						Count: 1, Min: 1, Max: 1, Mean: 1, CountPerBucket: []int64{1, 0}, bounds: []float64{2}, ExemplarsPerBucket: []*exemplar.Exemplar{nil, nil},
+						Count: 1, Min: 1, Max: 1, Mean: 1, CountPerBucket: []int64{1, 0}, bounds: []float64{2}, ExemplarsPerBucket: []*metricdata.Exemplar{nil, nil},
 					},
 				},
 				{
 					[]tag.Tag{{Key: k2, Value: "v2"}},
 					&DistributionData{
-						Count: 1, Min: 5, Max: 5, Mean: 5, CountPerBucket: []int64{0, 1}, bounds: []float64{2}, ExemplarsPerBucket: []*exemplar.Exemplar{nil, nil},
+						Count: 1, Min: 5, Max: 5, Mean: 5, CountPerBucket: []int64{0, 1}, bounds: []float64{2}, ExemplarsPerBucket: []*metricdata.Exemplar{nil, nil},
 					},
 				},
 			},
@@ -108,25 +108,25 @@ func Test_View_MeasureFloat64_AggregationDistribution(t *testing.T) {
 				{
 					[]tag.Tag{{Key: k1, Value: "v1"}},
 					&DistributionData{
-						Count: 2, Min: 1, Max: 5, Mean: 3, SumOfSquaredDev: 8, CountPerBucket: []int64{1, 1}, bounds: []float64{2}, ExemplarsPerBucket: []*exemplar.Exemplar{nil, nil},
+						Count: 2, Min: 1, Max: 5, Mean: 3, SumOfSquaredDev: 8, CountPerBucket: []int64{1, 1}, bounds: []float64{2}, ExemplarsPerBucket: []*metricdata.Exemplar{nil, nil},
 					},
 				},
 				{
 					[]tag.Tag{{Key: k1, Value: "v1 other"}},
 					&DistributionData{
-						Count: 1, Min: 1, Max: 1, Mean: 1, CountPerBucket: []int64{1, 0}, bounds: []float64{2}, ExemplarsPerBucket: []*exemplar.Exemplar{nil, nil},
+						Count: 1, Min: 1, Max: 1, Mean: 1, CountPerBucket: []int64{1, 0}, bounds: []float64{2}, ExemplarsPerBucket: []*metricdata.Exemplar{nil, nil},
 					},
 				},
 				{
 					[]tag.Tag{{Key: k2, Value: "v2"}},
 					&DistributionData{
-						Count: 1, Min: 5, Max: 5, Mean: 5, CountPerBucket: []int64{0, 1}, bounds: []float64{2}, ExemplarsPerBucket: []*exemplar.Exemplar{nil, nil},
+						Count: 1, Min: 5, Max: 5, Mean: 5, CountPerBucket: []int64{0, 1}, bounds: []float64{2}, ExemplarsPerBucket: []*metricdata.Exemplar{nil, nil},
 					},
 				},
 				{
 					[]tag.Tag{{Key: k1, Value: "v1"}, {Key: k2, Value: "v2"}},
 					&DistributionData{
-						Count: 1, Min: 5, Max: 5, Mean: 5, CountPerBucket: []int64{0, 1}, bounds: []float64{2}, ExemplarsPerBucket: []*exemplar.Exemplar{nil, nil},
+						Count: 1, Min: 5, Max: 5, Mean: 5, CountPerBucket: []int64{0, 1}, bounds: []float64{2}, ExemplarsPerBucket: []*metricdata.Exemplar{nil, nil},
 					},
 				},
 			},
@@ -146,19 +146,19 @@ func Test_View_MeasureFloat64_AggregationDistribution(t *testing.T) {
 				{
 					[]tag.Tag{{Key: k1, Value: "v1 is a very long value key"}},
 					&DistributionData{
-						Count: 2, Min: 1, Max: 5, Mean: 3, SumOfSquaredDev: 8, CountPerBucket: []int64{1, 1}, bounds: []float64{2}, ExemplarsPerBucket: []*exemplar.Exemplar{nil, nil},
+						Count: 2, Min: 1, Max: 5, Mean: 3, SumOfSquaredDev: 8, CountPerBucket: []int64{1, 1}, bounds: []float64{2}, ExemplarsPerBucket: []*metricdata.Exemplar{nil, nil},
 					},
 				},
 				{
 					[]tag.Tag{{Key: k1, Value: "v1 is another very long value key"}},
 					&DistributionData{
-						Count: 1, Min: 1, Max: 1, Mean: 1, CountPerBucket: []int64{1, 0}, bounds: []float64{2}, ExemplarsPerBucket: []*exemplar.Exemplar{nil, nil},
+						Count: 1, Min: 1, Max: 1, Mean: 1, CountPerBucket: []int64{1, 0}, bounds: []float64{2}, ExemplarsPerBucket: []*metricdata.Exemplar{nil, nil},
 					},
 				},
 				{
 					[]tag.Tag{{Key: k1, Value: "v1 is a very long value key"}, {Key: k2, Value: "v2 is a very long value key"}},
 					&DistributionData{
-						Count: 4, Min: 1, Max: 5, Mean: 3, SumOfSquaredDev: 2.66666666666667 * 3, CountPerBucket: []int64{1, 3}, bounds: []float64{2}, ExemplarsPerBucket: []*exemplar.Exemplar{nil, nil},
+						Count: 4, Min: 1, Max: 5, Mean: 3, SumOfSquaredDev: 2.66666666666667 * 3, CountPerBucket: []int64{1, 3}, bounds: []float64{2}, ExemplarsPerBucket: []*metricdata.Exemplar{nil, nil},
 					},
 				},
 			},
@@ -177,9 +177,9 @@ func Test_View_MeasureFloat64_AggregationDistribution(t *testing.T) {
 			if err != nil {
 				t.Errorf("%v: New = %v", tc.label, err)
 			}
-			e := &exemplar.Exemplar{
+			e := &metricdata.Exemplar{
 				Value:       r.f,
-				Attachments: exemplar.AttachmentsFromContext(ctx),
+				Attachments: metricdata.AttachmentsFromContext(ctx),
 			}
 			view.addSample(tag.FromContext(ctx), e)
 		}
@@ -297,7 +297,7 @@ func Test_View_MeasureFloat64_AggregationSum(t *testing.T) {
 			if err != nil {
 				t.Errorf("%v: New = %v", tt.label, err)
 			}
-			e := &exemplar.Exemplar{
+			e := &metricdata.Exemplar{
 				Value: r.f,
 			}
 			view.addSample(tag.FromContext(ctx), e)
