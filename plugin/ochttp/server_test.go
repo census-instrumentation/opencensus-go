@@ -110,7 +110,7 @@ func TestHandlerStatsCollection(t *testing.T) {
 			count = int(data.Count)
 			sum = data.Sum()
 		default:
-			t.Errorf("Unkown data type: %v", data)
+			t.Errorf("Unknown data type: %v", data)
 			continue
 		}
 

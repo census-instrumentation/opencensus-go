@@ -118,7 +118,7 @@ func TestClientNew(t *testing.T) {
 		case *view.DistributionData:
 			count = data.Count
 		default:
-			t.Errorf("Unkown data type: %v", data)
+			t.Errorf("Unknown data type: %v", data)
 			continue
 		}
 		if got := count; got != reqCount {
@@ -210,7 +210,7 @@ func TestClientOld(t *testing.T) {
 		case *view.DistributionData:
 			count = data.Count
 		default:
-			t.Errorf("Unkown data type: %v", data)
+			t.Errorf("Unknown data type: %v", data)
 			continue
 		}
 		if got := count; got != reqCount {
