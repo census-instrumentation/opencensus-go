@@ -69,6 +69,9 @@ type Options struct {
 
 	// Process contains the information about the exporting process.
 	Process Process
+
+	//BufferMaxCount defines the total number of traces that can be buffered in memory
+	BufferMaxCount int
 }
 
 // NewExporter returns a trace.Exporter implementation that exports
@@ -126,6 +129,14 @@ func NewExporter(o Options) (*Exporter, error) {
 			onError(err)
 		}
 	})
+
+	// Set BufferedByteLimit with the total number of spans that are permissible to be held in memory.
+	// This needs to be done since the size of messages is always set to 1. Failing to set this would allow
+	// 1G messages to be held in memory since that is the default value of BufferedByteLimit.
+	if o.BufferMaxCount != 0 {
+		bundler.BufferedByteLimit = o.BufferMaxCount
+	}
+
 	e.bundler = bundler
 	return e, nil
 }
@@ -181,6 +192,11 @@ func (e *Exporter) ExportSpan(data *trace.SpanData) {
 	// TODO(jbd): Handle oversized bundlers.
 }
 
+// As per the OpenCensus Status code mapping in
+//    https://opencensus.io/tracing/span/status/
+// the status is OK if the code is 0.
+const opencensusStatusCodeOK = 0
+
 func spanDataToThrift(data *trace.SpanData) *gen.Span {
 	tags := make([]*gen.Tag, 0, len(data.Attributes))
 	for k, v := range data.Attributes {
@@ -194,6 +210,12 @@ func spanDataToThrift(data *trace.SpanData) *gen.Span {
 		attributeToTag("status.code", data.Status.Code),
 		attributeToTag("status.message", data.Status.Message),
 	)
+
+	// Ensure that if Status.Code is not OK, that we set the "error" tag on the Jaeger span.
+	// See Issue https://github.com/census-instrumentation/opencensus-go/issues/1041
+	if data.Status.Code != opencensusStatusCodeOK {
+		tags = append(tags, attributeToTag("error", true))
+	}
 
 	var logs []*gen.Log
 	for _, a := range data.Annotations {
@@ -271,6 +293,13 @@ func attributeToTag(key string, a interface{}) *gen.Tag {
 			Key:   key,
 			VLong: &v,
 			VType: gen.TagType_LONG,
+		}
+	case float64:
+		v := float64(value)
+		tag = &gen.Tag{
+			Key:     key,
+			VDouble: &v,
+			VType:   gen.TagType_DOUBLE,
 		}
 	}
 	return tag

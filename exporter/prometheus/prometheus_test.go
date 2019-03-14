@@ -17,7 +17,6 @@ package prometheus
 import (
 	"context"
 	"fmt"
-	"github.com/google/go-cmp/cmp"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -289,22 +288,109 @@ func TestCumulativenessFromHistograms(t *testing.T) {
 	// We want the results that look like this:
 	// 1:   [0.25]      		| 1 + prev(i) = 1 + 0 = 1
 	// 5:   [1.45]			| 1 + prev(i) = 1 + 1 = 2
-	// 10:	[]			| 1 + prev(i) = 1 + 2 = 3
+	// 10:	[7.69]			| 1 + prev(i) = 1 + 2 = 3
 	// 20:  [12]			| 1 + prev(i) = 1 + 3 = 4
 	// 50:  []			| 0 + prev(i) = 0 + 4 = 4
 	// 100: []			| 0 + prev(i) = 0 + 4 = 4
 	// 250: [187.12, 199.9, 245.67]	| 3 + prev(i) = 3 + 4 = 7
 	wantLines := []string{
-		`cash_register_bucket{le="1.0"} 1.0`,
-		`cash_register_bucket{le="5.0"} 2.0`,
-		`cash_register_bucket{le="10.0"} 3.0`,
-		`cash_register_bucket{le="20.0"} 4.0`,
-		`cash_register_bucket{le="50.0"} 4.0`,
-		`cash_register_bucket{le="100.0"} 4.0`,
-		`cash_register_bucket{le="250.0"} 7.0`,
-		`cash_register_bucket{le="+Inf"} 7.0`,
+		`cash_register_bucket{le="1"} 1`,
+		`cash_register_bucket{le="5"} 2`,
+		`cash_register_bucket{le="10"} 3`,
+		`cash_register_bucket{le="20"} 4`,
+		`cash_register_bucket{le="50"} 4`,
+		`cash_register_bucket{le="100"} 4`,
+		`cash_register_bucket{le="250"} 7`,
+		`cash_register_bucket{le="+Inf"} 7`,
 		`cash_register_sum 654.0799999999999`, // Summation of the input values
-		`cash_register_count 7.0`,
+		`cash_register_count 7`,
+	}
+
+	ctx := context.Background()
+	ms := make([]stats.Measurement, 0, len(values))
+	for _, value := range values {
+		mx := m.M(value)
+		ms = append(ms, mx)
+	}
+	stats.Record(ctx, ms...)
+
+	// Give the recorder ample time to process recording
+	<-time.After(10 * reportPeriod)
+
+	cst := httptest.NewServer(exporter)
+	defer cst.Close()
+	res, err := http.Get(cst.URL)
+	if err != nil {
+		t.Fatalf("http.Get error: %v", err)
+	}
+	blob, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		t.Fatalf("Read body error: %v", err)
+	}
+	str := strings.Trim(string(blob), "\n")
+	lines := strings.Split(str, "\n")
+	nonComments := make([]string, 0, len(lines))
+	for _, line := range lines {
+		if !strings.Contains(line, "#") {
+			nonComments = append(nonComments, line)
+		}
+	}
+
+	got := strings.Join(nonComments, "\n")
+	want := strings.Join(wantLines, "\n")
+	if got != want {
+		t.Fatalf("\ngot:\n%s\n\nwant:\n%s\n", got, want)
+	}
+}
+
+func TestHistogramUnorderedBucketBounds(t *testing.T) {
+	exporter, err := NewExporter(Options{})
+	if err != nil {
+		t.Fatalf("failed to create prometheus exporter: %v", err)
+	}
+	view.RegisterExporter(exporter)
+	reportPeriod := time.Millisecond
+	view.SetReportingPeriod(reportPeriod)
+
+	m := stats.Float64("tests/bills", "payments by denomination", stats.UnitDimensionless)
+	v := &view.View{
+		Name:        "cash/register",
+		Description: "this is a test",
+		Measure:     m,
+
+		// Intentionally used unordered and duplicated elements in the distribution
+		// to ensure unordered bucket bounds are handled.
+		Aggregation: view.Distribution(10, 5, 1, 1, 50, 5, 20, 100, 250),
+	}
+
+	if err := view.Register(v); err != nil {
+		t.Fatalf("Register error: %v", err)
+	}
+	defer view.Unregister(v)
+
+	// Give the reporter ample time to process registration
+	<-time.After(10 * reportPeriod)
+
+	values := []float64{0.25, 245.67, 12, 1.45, 199.9, 7.69, 187.12}
+	// We want the results that look like this:
+	// 1:   [0.25]      		| 1 + prev(i) = 1 + 0 = 1
+	// 5:   [1.45]			| 1 + prev(i) = 1 + 1 = 2
+	// 10:	[7.69]			| 1 + prev(i) = 1 + 2 = 3
+	// 20:  [12]			| 1 + prev(i) = 1 + 3 = 4
+	// 50:  []			| 0 + prev(i) = 0 + 4 = 4
+	// 100: []			| 0 + prev(i) = 0 + 4 = 4
+	// 250: [187.12, 199.9, 245.67]	| 3 + prev(i) = 3 + 4 = 7
+	wantLines := []string{
+		`cash_register_bucket{le="1"} 1`,
+		`cash_register_bucket{le="5"} 2`,
+		`cash_register_bucket{le="10"} 3`,
+		`cash_register_bucket{le="20"} 4`,
+		`cash_register_bucket{le="50"} 4`,
+		`cash_register_bucket{le="100"} 4`,
+		`cash_register_bucket{le="250"} 7`,
+		`cash_register_bucket{le="+Inf"} 7`,
+		`cash_register_sum 654.0799999999999`, // Summation of the input values
+		`cash_register_count 7`,
 	}
 
 	ctx := context.Background()
@@ -422,16 +508,16 @@ func TestConstLabelsIncluded(t *testing.T) {
 
 	want := `# HELP tests_bar bar
 # TYPE tests_bar counter
-tests_bar{method="issue961",service="spanner"} 1.0
+tests_bar{method="issue961",service="spanner"} 1
 # HELP tests_baz baz
 # TYPE tests_baz counter
-tests_baz{method="issue961",service="spanner"} 1.0
+tests_baz{method="issue961",service="spanner"} 1
 # HELP tests_foo foo
 # TYPE tests_foo counter
-tests_foo{method="issue961",service="spanner"} 1.0
+tests_foo{method="issue961",service="spanner"} 1
 `
-	if diff := cmp.Diff(output, want); diff != "" {
-		t.Fatalf("output differed from expected -got +want: %s", diff)
+	if output != want {
+		t.Fatal("output differed from expected")
 	}
 }
 
@@ -498,8 +584,8 @@ func TestViewMeasureWithoutTag(t *testing.T) {
 	}
 	want := `# HELP tests_foo foo
 # TYPE tests_foo counter
-tests_foo{key_1="",key_2="issue659",key_3="",key_4="issue659",key_5=""} 1.0
-tests_foo{key_1="issue659",key_2="",key_3="issue659",key_4="",key_5="issue659"} 1.0
+tests_foo{key_1="",key_2="issue659",key_3="",key_4="issue659",key_5=""} 1
+tests_foo{key_1="issue659",key_2="",key_3="issue659",key_4="",key_5="issue659"} 1
 `
 	if output != want {
 		t.Fatalf("output differed from expected output: %s want: %s", output, want)

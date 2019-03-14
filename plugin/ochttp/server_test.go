@@ -110,7 +110,7 @@ func TestHandlerStatsCollection(t *testing.T) {
 			count = int(data.Count)
 			sum = data.Sum()
 		default:
-			t.Errorf("Unkown data type: %v", data)
+			t.Errorf("Unknown data type: %v", data)
 			continue
 		}
 
@@ -543,7 +543,7 @@ func TestHandlerImplementsHTTPCloseNotify(t *testing.T) {
 	}
 
 	// Wait for a couple of milliseconds for the GoAway frames to be properly propagated
-	<-time.After(150 * time.Millisecond)
+	<-time.After(200 * time.Millisecond)
 
 	wantHTTP1Log := strings.Repeat("ended\n", len(transports))
 	wantHTTP2Log := strings.Repeat("ended\n", len(transports))

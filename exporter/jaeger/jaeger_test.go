@@ -22,6 +22,7 @@ import (
 
 	gen "go.opencensus.io/exporter/jaeger/internal/gen-go/jaeger"
 	"go.opencensus.io/trace"
+	"sort"
 )
 
 // TODO(jbd): Test export.
@@ -49,7 +50,7 @@ func Test_bytesToInt64(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(fmt.Sprintf("%d", tt.want), func(t *testing.T) {
 			if got := bytesToInt64(tt.buf); got != tt.want {
-				t.Errorf("bytesToInt64() = %v, want %v", got, tt.want)
+				t.Errorf("bytesToInt64() = \n%v, \n want \n%v", got, tt.want)
 			}
 		})
 	}
@@ -62,6 +63,8 @@ func Test_spanDataToThrift(t *testing.T) {
 	keyValue := "value"
 	resultValue := true
 	statusCodeValue := int64(2)
+	doubleValue := float64(123.456)
+	boolTrue := true
 	statusMessage := "error"
 
 	tests := []struct {
@@ -80,7 +83,8 @@ func Test_spanDataToThrift(t *testing.T) {
 				StartTime: now,
 				EndTime:   now,
 				Attributes: map[string]interface{}{
-					"key": keyValue,
+					"double": doubleValue,
+					"key":    keyValue,
 				},
 				Annotations: []trace.Annotation{
 					{
@@ -108,7 +112,9 @@ func Test_spanDataToThrift(t *testing.T) {
 				StartTime:     now.UnixNano() / 1000,
 				Duration:      0,
 				Tags: []*gen.Tag{
+					{Key: "double", VType: gen.TagType_DOUBLE, VDouble: &doubleValue},
 					{Key: "key", VType: gen.TagType_STRING, VStr: &keyValue},
+					{Key: "error", VType: gen.TagType_BOOL, VBool: &boolTrue},
 					{Key: "status.code", VType: gen.TagType_LONG, VLong: &statusCodeValue},
 					{Key: "status.message", VType: gen.TagType_STRING, VStr: &statusMessage},
 				},
@@ -127,8 +133,15 @@ func Test_spanDataToThrift(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := spanDataToThrift(tt.data); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("spanDataToThrift() = %v, want %v", got, tt.want)
+			got := spanDataToThrift(tt.data)
+			sort.Slice(got.Tags, func(i, j int) bool {
+				return got.Tags[i].Key < got.Tags[j].Key
+			})
+			sort.Slice(tt.want.Tags, func(i, j int) bool {
+				return tt.want.Tags[i].Key < tt.want.Tags[j].Key
+			})
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("spanDataToThrift()\nGot:\n%v\nWant;\n%v", got, tt.want)
 			}
 		})
 	}

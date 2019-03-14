@@ -12,11 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package internal provides trace internals.
-package internal
-
-// IDGenerator allows custom generators for TraceId and SpanId.
-type IDGenerator interface {
-	NewTraceID() [16]byte
-	NewSpanID() [8]byte
-}
+// Package metric support for gauge metrics.
+//
+// This is an EXPERIMENTAL package, and may change in arbitrary ways without
+// notice.
+package metric // import "go.opencensus.io/metric"

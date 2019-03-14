@@ -1,4 +1,4 @@
-// Copyright 2018, OpenCensus Authors
+// Copyright 2019, OpenCensus Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,11 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package internal provides trace internals.
-package internal
+package metric
 
-// IDGenerator allows custom generators for TraceId and SpanId.
-type IDGenerator interface {
-	NewTraceID() [16]byte
-	NewSpanID() [8]byte
-}
+import "errors"
+
+var (
+	errInvalidParam            = errors.New("invalid parameter")
+	errGaugeExistsWithDiffType = errors.New("gauge with same name exists with a different type")
+	errKeyValueMismatch        = errors.New("must supply the same number of label values as keys used to construct this gauge")
+)

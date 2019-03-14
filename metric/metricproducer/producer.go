@@ -1,4 +1,4 @@
-// Copyright 2018, OpenCensus Authors
+// Copyright 2019, OpenCensus Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,11 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package internal provides trace internals.
-package internal
+package metricproducer
 
-// IDGenerator allows custom generators for TraceId and SpanId.
-type IDGenerator interface {
-	NewTraceID() [16]byte
-	NewSpanID() [8]byte
+import (
+	"go.opencensus.io/metric/metricdata"
+)
+
+// Producer is a source of metrics.
+type Producer interface {
+	// Read should return the current values of all metrics supported by this
+	// metric provider.
+	// The returned metrics should be unique for each combination of name and
+	// resource.
+	Read() []*metricdata.Metric
 }

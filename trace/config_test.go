@@ -19,15 +19,71 @@ import (
 	"testing"
 )
 
-func TestApplyZeroConfig(t *testing.T) {
+func TestApplyConfig(t *testing.T) {
+	testCfgs := []Config{
+		{},
+		{
+			MaxAttributesPerSpan:       1,
+			MaxAnnotationEventsPerSpan: 2,
+			MaxMessageEventsPerSpan:    3,
+			MaxLinksPerSpan:            4,
+		},
+		{
+			MaxAttributesPerSpan:       -1,
+			MaxAnnotationEventsPerSpan: 3,
+			MaxMessageEventsPerSpan:    -3,
+			MaxLinksPerSpan:            5,
+		}}
 	cfg := config.Load().(*Config)
-	ApplyConfig(Config{})
-	currentCfg := config.Load().(*Config)
+	wantCfgs := []Config{
+		{
+			DefaultSampler:             cfg.DefaultSampler,
+			IDGenerator:                cfg.IDGenerator,
+			MaxAttributesPerSpan:       DefaultMaxAttributesPerSpan,
+			MaxAnnotationEventsPerSpan: DefaultMaxAnnotationEventsPerSpan,
+			MaxMessageEventsPerSpan:    DefaultMaxMessageEventsPerSpan,
+			MaxLinksPerSpan:            DefaultMaxLinksPerSpan,
+		},
+		{
+			DefaultSampler:             cfg.DefaultSampler,
+			IDGenerator:                cfg.IDGenerator,
+			MaxAttributesPerSpan:       1,
+			MaxAnnotationEventsPerSpan: 2,
+			MaxMessageEventsPerSpan:    3,
+			MaxLinksPerSpan:            4,
+		},
+		{
+			DefaultSampler:             cfg.DefaultSampler,
+			IDGenerator:                cfg.IDGenerator,
+			MaxAttributesPerSpan:       1,
+			MaxAnnotationEventsPerSpan: 3,
+			MaxMessageEventsPerSpan:    3,
+			MaxLinksPerSpan:            5,
+		}}
 
-	if got, want := reflect.ValueOf(currentCfg.DefaultSampler).Pointer(), reflect.ValueOf(cfg.DefaultSampler).Pointer(); got != want {
-		t.Fatalf("config.DefaultSampler = %#v; want %#v", got, want)
-	}
-	if got, want := currentCfg.IDGenerator, cfg.IDGenerator; got != want {
-		t.Fatalf("config.IDGenerator = %#v; want %#v", got, want)
+	for i, newCfg := range testCfgs {
+		ApplyConfig(newCfg)
+		gotCfg := config.Load().(*Config)
+		wantCfg := wantCfgs[i]
+
+		if got, want := reflect.ValueOf(gotCfg.DefaultSampler).Pointer(), reflect.ValueOf(wantCfg.DefaultSampler).Pointer(); got != want {
+			t.Fatalf("testId = %d config.DefaultSampler = %#v; want %#v", i, got, want)
+		}
+		if got, want := gotCfg.IDGenerator, wantCfg.IDGenerator; got != want {
+			t.Fatalf("testId = %d config.IDGenerator = %#v; want %#v", i, got, want)
+		}
+		if got, want := gotCfg.MaxAttributesPerSpan, wantCfg.MaxAttributesPerSpan; got != want {
+			t.Fatalf("testId = %d config.MaxAttributesPerSpan = %#v; want %#v", i, got, want)
+		}
+		if got, want := gotCfg.MaxLinksPerSpan, wantCfg.MaxLinksPerSpan; got != want {
+			t.Fatalf("testId = %d config.MaxLinksPerSpan = %#v; want %#v", i, got, want)
+		}
+		if got, want := gotCfg.MaxAnnotationEventsPerSpan, wantCfg.MaxAnnotationEventsPerSpan; got != want {
+			t.Fatalf("testId = %d config.MaxAnnotationEventsPerSpan = %#v; want %#v", i, got, want)
+		}
+		if got, want := gotCfg.MaxMessageEventsPerSpan, wantCfg.MaxMessageEventsPerSpan; got != want {
+			t.Fatalf("testId = %d config.MaxMessageEventsPerSpan = %#v; want %#v", i, got, want)
+		}
+
 	}
 }

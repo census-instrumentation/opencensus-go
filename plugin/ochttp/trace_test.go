@@ -331,7 +331,7 @@ func TestEndToEnd(t *testing.T) {
 					t.Errorf("len(server.Links) = %d; want %d", got, want)
 				} else {
 					link := server.Links[0]
-					if got, want := link.Type, trace.LinkTypeChild; got != want {
+					if got, want := link.Type, trace.LinkTypeParent; got != want {
 						t.Errorf("link.Type = %v; want %v", got, want)
 					}
 				}

@@ -35,55 +35,58 @@ import (
 	"go.opencensus.io/zpages"
 )
 
+// Measures for the stats quickstart.
 var (
 	// The latency in milliseconds
-	MLatencyMs = stats.Float64("repl/latency", "The latency in milliseconds per REPL loop", "ms")
+	mLatencyMs = stats.Float64("repl/latency", "The latency in milliseconds per REPL loop", stats.UnitMilliseconds)
 
 	// Counts the number of lines read in from standard input
-	MLinesIn = stats.Int64("repl/lines_in", "The number of lines read in", "1")
+	mLinesIn = stats.Int64("repl/lines_in", "The number of lines read in", stats.UnitNone)
 
 	// Encounters the number of non EOF(end-of-file) errors.
-	MErrors = stats.Int64("repl/errors", "The number of errors encountered", "1")
+	mErrors = stats.Int64("repl/errors", "The number of errors encountered", stats.UnitNone)
 
 	// Counts/groups the lengths of lines read in.
-	MLineLengths = stats.Int64("repl/line_lengths", "The distribution of line lengths", "By")
+	mLineLengths = stats.Int64("repl/line_lengths", "The distribution of line lengths", stats.UnitBytes)
 )
 
+// TagKeys for the stats quickstart.
 var (
-	KeyMethod, _ = tag.NewKey("method")
+	keyMethod, _ = tag.NewKey("method")
 )
 
+// Views for the stats quickstart.
 var (
-	LatencyView = &view.View{
+	latencyView = &view.View{
 		Name:        "demo/latency",
-		Measure:     MLatencyMs,
+		Measure:     mLatencyMs,
 		Description: "The distribution of the latencies",
 
 		// Latency in buckets:
 		// [>=0ms, >=25ms, >=50ms, >=75ms, >=100ms, >=200ms, >=400ms, >=600ms, >=800ms, >=1s, >=2s, >=4s, >=6s]
-		Aggregation: view.Distribution(0, 25, 50, 75, 100, 200, 400, 600, 800, 1000, 2000, 4000, 6000),
-		TagKeys:     []tag.Key{KeyMethod}}
+		Aggregation: view.Distribution(25, 50, 75, 100, 200, 400, 600, 800, 1000, 2000, 4000, 6000),
+		TagKeys:     []tag.Key{keyMethod}}
 
-	LineCountView = &view.View{
+	lineCountView = &view.View{
 		Name:        "demo/lines_in",
-		Measure:     MLinesIn,
+		Measure:     mLinesIn,
 		Description: "The number of lines from standard input",
 		Aggregation: view.Count(),
 	}
 
-	ErrorCountView = &view.View{
+	errorCountView = &view.View{
 		Name:        "demo/errors",
-		Measure:     MErrors,
+		Measure:     mErrors,
 		Description: "The number of errors encountered",
 		Aggregation: view.Count(),
 	}
 
-	LineLengthView = &view.View{
+	lineLengthView = &view.View{
 		Name:        "demo/line_lengths",
 		Description: "Groups the lengths of keys in buckets",
-		Measure:     MLineLengths,
+		Measure:     mLineLengths,
 		// Lengths: [>=0B, >=5B, >=10B, >=15B, >=20B, >=40B, >=60B, >=80, >=100B, >=200B, >=400, >=600, >=800, >=1000]
-		Aggregation: view.Distribution(0, 5, 10, 15, 20, 40, 60, 80, 100, 200, 400, 600, 800, 1000),
+		Aggregation: view.Distribution(5, 2000, 15, 20, 40, 60, 80, 100, 200, 400, 600, 800, 1000),
 	}
 )
 
@@ -102,7 +105,7 @@ func main() {
 	view.RegisterExporter(exporter)
 
 	// Register the views
-	if err := view.Register(LatencyView, LineCountView, ErrorCountView, LineLengthView); err != nil {
+	if err := view.Register(latencyView, lineCountView, errorCountView, lineLengthView); err != nil {
 		log.Fatalf("Failed to register views: %v", err)
 	}
 
@@ -128,7 +131,7 @@ func main() {
 // readEvaluateProcess reads a line from the input reader and
 // then processes it. It returns an error if any was encountered.
 func readEvaluateProcess(br *bufio.Reader) error {
-	ctx, err := tag.New(context.Background(), tag.Insert(KeyMethod, "repl"))
+	ctx, err := tag.New(context.Background(), tag.Insert(keyMethod, "repl"))
 	if err != nil {
 		return err
 	}
@@ -137,14 +140,14 @@ func readEvaluateProcess(br *bufio.Reader) error {
 	line, _, err := br.ReadLine()
 	if err != nil {
 		if err != io.EOF {
-			stats.Record(ctx, MErrors.M(1))
+			stats.Record(ctx, mErrors.M(1))
 		}
 		return err
 	}
 
 	out, err := processLine(ctx, line)
 	if err != nil {
-		stats.Record(ctx, MErrors.M(1))
+		stats.Record(ctx, mErrors.M(1))
 		return err
 	}
 	fmt.Printf("< %s\n\n", out)
@@ -157,7 +160,7 @@ func processLine(ctx context.Context, in []byte) (out []byte, err error) {
 	startTime := time.Now()
 	defer func() {
 		ms := float64(time.Since(startTime).Nanoseconds()) / 1e6
-		stats.Record(ctx, MLinesIn.M(1), MLatencyMs.M(ms), MLineLengths.M(int64(len(in))))
+		stats.Record(ctx, mLinesIn.M(1), mLatencyMs.M(ms), mLineLengths.M(int64(len(in))))
 	}()
 
 	return bytes.ToUpper(in), nil

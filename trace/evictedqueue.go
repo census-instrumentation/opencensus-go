@@ -1,4 +1,4 @@
-// Copyright 2018, OpenCensus Authors
+// Copyright 2019, OpenCensus Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,11 +12,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package internal provides trace internals.
-package internal
+package trace
 
-// IDGenerator allows custom generators for TraceId and SpanId.
-type IDGenerator interface {
-	NewTraceID() [16]byte
-	NewSpanID() [8]byte
+type evictedQueue struct {
+	queue        []interface{}
+	capacity     int
+	droppedCount int
+}
+
+func newEvictedQueue(capacity int) *evictedQueue {
+	eq := &evictedQueue{
+		capacity: capacity,
+		queue:    make([]interface{}, 0),
+	}
+
+	return eq
+}
+
+func (eq *evictedQueue) add(value interface{}) {
+	if len(eq.queue) == eq.capacity {
+		eq.queue = eq.queue[1:]
+		eq.droppedCount++
+	}
+	eq.queue = append(eq.queue, value)
 }

@@ -66,7 +66,7 @@ func TestDataClone(t *testing.T) {
 }
 
 func TestDistributionData_addSample(t *testing.T) {
-	dd := newDistributionData([]float64{0, 1, 2})
+	dd := newDistributionData([]float64{1, 2})
 	t1, _ := time.Parse("Mon Jan 2 15:04:05 -0700 MST 2006", "Mon Jan 2 15:04:05 -0700 MST 2006")
 	e1 := &exemplar.Exemplar{
 		Attachments: exemplar.Attachments{
@@ -80,8 +80,8 @@ func TestDistributionData_addSample(t *testing.T) {
 
 	want := &DistributionData{
 		Count:              1,
-		CountPerBucket:     []int64{0, 1, 0, 0},
-		ExemplarsPerBucket: []*exemplar.Exemplar{nil, e1, nil, nil},
+		CountPerBucket:     []int64{1, 0, 0},
+		ExemplarsPerBucket: []*exemplar.Exemplar{e1, nil, nil},
 		Max:                0.5,
 		Min:                0.5,
 		Mean:               0.5,
@@ -104,8 +104,8 @@ func TestDistributionData_addSample(t *testing.T) {
 	// Previous exemplar should be preserved, since it has more annotations.
 	want = &DistributionData{
 		Count:              2,
-		CountPerBucket:     []int64{0, 2, 0, 0},
-		ExemplarsPerBucket: []*exemplar.Exemplar{nil, e1, nil, nil},
+		CountPerBucket:     []int64{2, 0, 0},
+		ExemplarsPerBucket: []*exemplar.Exemplar{e1, nil, nil},
 		Max:                0.7,
 		Min:                0.5,
 		Mean:               0.6,
@@ -128,8 +128,8 @@ func TestDistributionData_addSample(t *testing.T) {
 	// Exemplar should be replaced since it has a trace_id.
 	want = &DistributionData{
 		Count:              3,
-		CountPerBucket:     []int64{0, 3, 0, 0},
-		ExemplarsPerBucket: []*exemplar.Exemplar{nil, e3, nil, nil},
+		CountPerBucket:     []int64{3, 0, 0},
+		ExemplarsPerBucket: []*exemplar.Exemplar{e3, nil, nil},
 		Max:                0.7,
 		Min:                0.2,
 		Mean:               0.4666666666666667,
