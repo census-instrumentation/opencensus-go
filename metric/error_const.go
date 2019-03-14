@@ -17,6 +17,7 @@ package metric
 import "errors"
 
 var (
+	errInvalidParam            = errors.New("invalid parameter")
 	errGaugeExistsWithDiffType = errors.New("gauge with same name exists with a different type")
 	errKeyValueMismatch        = errors.New("must supply the same number of label values as keys used to construct this gauge")
 )
