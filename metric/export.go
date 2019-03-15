@@ -15,10 +15,12 @@
 package metric
 
 import (
+	"context"
+
 	"go.opencensus.io/metric/metricdata"
 )
 
 // Exporter is an interface that exporters implement to export the metric data.
 type Exporter interface {
-	ExportMetric(data []*metricdata.Metric)
+	ExportMetric(ctx context.Context, data []*metricdata.Metric)
 }

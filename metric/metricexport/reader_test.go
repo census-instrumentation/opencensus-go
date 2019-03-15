@@ -16,6 +16,7 @@
 package metricexport
 
 import (
+	"context"
 	"sync"
 	"testing"
 	"time"
@@ -26,13 +27,14 @@ import (
 )
 
 var (
-	reader1    *Reader
-	reader2    *Reader
+	ir1        *IntervalReader
+	ir2        *IntervalReader
+	reader1    = &Reader{SpanName: "test-export-span"}
 	exporter1  = &metricExporter{}
 	exporter2  = &metricExporter{}
 	gaugeEntry *metric.Int64GaugeEntry
-	options1   = Options{1000 * time.Millisecond, ""}
-	options2   = Options{2000 * time.Millisecond, ""}
+	options1   = Options{1000 * time.Millisecond}
+	options2   = Options{2000 * time.Millisecond}
 )
 
 type metricExporter struct {
@@ -40,7 +42,7 @@ type metricExporter struct {
 	metrics []*metricdata.Metric
 }
 
-func (e *metricExporter) ExportMetric(metrics []*metricdata.Metric) {
+func (e *metricExporter) ExportMetric(ctx context.Context, metrics []*metricdata.Metric) {
 	e.Lock()
 	defer e.Unlock()
 
@@ -55,7 +57,19 @@ func init() {
 }
 
 func TestNewReader(t *testing.T) {
-	reader1 = restartReader(reader1, exporter1, options1, t)
+	r := &Reader{SpanName: "test-export-span"}
+
+	gaugeEntry.Add(1)
+
+	r.ReadAndExport(exporter1)
+
+	checkExportedCount(exporter1, 1, t)
+	checkExportedMetricDesc(exporter1, "active_request", t)
+	resetExporter(exporter1)
+}
+
+func TestNewIntervalReader(t *testing.T) {
+	ir1 = restartReader(ir1, exporter1, options1, t)
 
 	gaugeEntry.Add(1)
 
@@ -65,9 +79,24 @@ func TestNewReader(t *testing.T) {
 	resetExporter(exporter1)
 }
 
-func TestProducerWithReaderStop(t *testing.T) {
-	reader1 = restartReader(reader1, exporter1, options1, t)
-	reader1.Stop()
+func TestManualReadForIntervalReader(t *testing.T) {
+	ir1 = restartReader(ir1, exporter1, options1, t)
+
+	gaugeEntry.Set(1)
+	reader1.ReadAndExport(exporter1)
+	gaugeEntry.Set(4)
+
+	time.Sleep(1500 * time.Millisecond)
+
+	checkExportedCount(exporter1, 2, t)
+	checkExportedValues(exporter1, []int64{1, 4}, t) // one for manual read other for time based.
+	checkExportedMetricDesc(exporter1, "active_request", t)
+	resetExporter(exporter1)
+}
+
+func TestProducerWithIntervalReaderStop(t *testing.T) {
+	ir1 = restartReader(ir1, exporter1, options1, t)
+	ir1.Stop()
 
 	gaugeEntry.Add(1)
 
@@ -78,9 +107,9 @@ func TestProducerWithReaderStop(t *testing.T) {
 	resetExporter(exporter1)
 }
 
-func TestProducerWithMultipleReaders(t *testing.T) {
-	reader1 = restartReader(reader1, exporter1, options1, t)
-	reader2 = restartReader(reader2, exporter2, options2, t)
+func TestProducerWithMultipleIntervalReaders(t *testing.T) {
+	ir1 = restartReader(ir1, exporter1, options1, t)
+	ir2 = restartReader(ir2, exporter2, options2, t)
 
 	gaugeEntry.Add(1)
 
@@ -94,31 +123,38 @@ func TestProducerWithMultipleReaders(t *testing.T) {
 	resetExporter(exporter1)
 }
 
-func TestReaderMultipleStop(t *testing.T) {
-	reader1 = restartReader(reader1, exporter1, options1, t)
+func TestIntervalReaderMultipleStop(t *testing.T) {
+	ir1 = restartReader(ir1, exporter1, options1, t)
 	stop := make(chan bool, 1)
 	go func() {
-		reader1.Stop()
-		reader1.Stop()
+		ir1.Stop()
+		ir1.Stop()
 		stop <- true
 	}()
 
 	select {
 	case _ = <-stop:
 	case <-time.After(1 * time.Second):
-		t.Fatalf("reader1 stop got blocked")
+		t.Fatalf("ir1 stop got blocked")
 	}
 }
 
-func TestNewReaderWithNilExporter(t *testing.T) {
-	_, err := NewReader(nil, Options{})
+func TestNewIntervalReaderWithNilReader(t *testing.T) {
+	_, err := NewIntervalReader(nil, exporter1, Options{})
 	if err == nil {
 		t.Fatalf("expected error but got nil\n")
 	}
 }
 
-func TestNewReaderWithInvalidOption(t *testing.T) {
-	_, err := NewReader(exporter1, Options{500 * time.Millisecond, ""})
+func TestNewIntervalReaderWithNilExporter(t *testing.T) {
+	_, err := NewIntervalReader(reader1, nil, Options{})
+	if err == nil {
+		t.Fatalf("expected error but got nil\n")
+	}
+}
+
+func TestNewIntervalReaderWithInvalidOption(t *testing.T) {
+	_, err := NewIntervalReader(reader1, exporter1, Options{500 * time.Millisecond})
 	if err == nil {
 		t.Fatalf("expected error but got nil\n")
 	}
@@ -130,6 +166,29 @@ func checkExportedCount(exporter *metricExporter, wantCount int, t *testing.T) {
 	gotCount := len(exporter.metrics)
 	if gotCount != wantCount {
 		t.Fatalf("exported metric count: got %d, want %d\n", gotCount, wantCount)
+	}
+}
+
+func checkExportedValues(exporter *metricExporter, wantValues []int64, t *testing.T) {
+	exporter.Lock()
+	defer exporter.Unlock()
+	gotCount := len(exporter.metrics)
+	wantCount := len(wantValues)
+	if gotCount != wantCount {
+		t.Errorf("exported metric count: got %d, want %d\n", gotCount, wantCount)
+		return
+	}
+	for i, wantValue := range wantValues {
+		var gotValue int64
+		switch v := exporter.metrics[i].TimeSeries[0].Points[0].Value.(type) {
+		case int64:
+			gotValue = v
+		default:
+			t.Errorf("expected float64 value but found other %T", exporter.metrics[i].TimeSeries[0].Points[0].Value)
+		}
+		if gotValue != wantValue {
+			t.Errorf("values idx %d, got: %v, want %v", i, gotValue, wantValue)
+		}
 	}
 }
 
@@ -152,13 +211,13 @@ func resetExporter(exporter *metricExporter) {
 }
 
 // restartReader stops the current processors and creates a new one.
-func restartReader(reader *Reader, exporter *metricExporter, options Options, t *testing.T) *Reader {
-	if reader != nil {
-		reader.Stop()
+func restartReader(ir *IntervalReader, exporter *metricExporter, options Options, t *testing.T) *IntervalReader {
+	if ir != nil {
+		ir.Stop()
 	}
-	r, err := NewReader(exporter, options)
+	ir, err := NewIntervalReader(reader1, exporter, options)
 	if err != nil {
 		t.Fatalf("error creating reader %v\n", err)
 	}
-	return r
+	return ir
 }

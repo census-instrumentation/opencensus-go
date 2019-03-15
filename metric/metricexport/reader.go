@@ -27,16 +27,30 @@ import (
 	"sync"
 )
 
-// Reader periodically reads metrics from all producers registered
+var (
+	defaultSampler = trace.ProbabilitySampler(0.0001)
+)
+
+// IntervalReader periodically reads metrics from all producers registered
 // with producer manager and exports those metrics using provided
 // exporter. Call Reader.Stop() to stop the reader.
-type Reader struct {
+type IntervalReader struct {
 	exporter   metric.Exporter
 	timer      *time.Ticker
 	quit, done chan bool
-	sampler    trace.Sampler
-	options    Options
 	mu         sync.RWMutex
+	reader     *Reader
+	options    Options
+}
+
+// Reader reads metrics from all producers registered
+// with producer manager and exports those metrics using provided
+// exporter.
+type Reader struct {
+	Sampler trace.Sampler
+
+	// SpanName is the name used for span created to export metrics.
+	SpanName string
 }
 
 // Options to configure optional parameters for Reader.
@@ -44,9 +58,6 @@ type Options struct {
 	// ReportingInterval sets the interval between reporting metrics.
 	// If it is set to zero then default value is used.
 	ReportingInterval time.Duration
-
-	// SpanName is the name used for span created to export metrics.
-	SpanName string
 }
 
 const (
@@ -61,14 +72,18 @@ const (
 	DefaultSpanName = "ExportMetrics"
 )
 
-// NewReader creates a reader and starts a go routine
+// NewIntervalReader creates a reader and starts a go routine
 // that periodically reads metrics from all producers
 // and exports them using provided exporter.
 // Use options to specify periodicity.
-func NewReader(exporter metric.Exporter, options Options) (*Reader, error) {
+func NewIntervalReader(reader *Reader, exporter metric.Exporter, options Options) (*IntervalReader, error) {
 	if exporter == nil {
 		return nil, fmt.Errorf("exporter is nil")
 	}
+	if reader == nil {
+		return nil, fmt.Errorf("reader is nil")
+	}
+
 	if options.ReportingInterval == 0 {
 		options.ReportingInterval = DefaultReportingDuration
 	} else {
@@ -77,30 +92,27 @@ func NewReader(exporter metric.Exporter, options Options) (*Reader, error) {
 				options.ReportingInterval.Seconds(), MinimumReportingDuration.Seconds())
 		}
 	}
-	if options.SpanName == "" {
-		options.SpanName = DefaultSpanName
-	}
 
-	r := &Reader{
+	r := &IntervalReader{
 		exporter: exporter,
 		timer:    time.NewTicker(options.ReportingInterval),
 		quit:     make(chan bool),
 		done:     make(chan bool),
-		sampler:  trace.ProbabilitySampler(0.0001),
 		options:  options,
+		reader:   reader,
 	}
 	go r.start()
 	return r, nil
 }
 
-func (r *Reader) start() {
+func (ir *IntervalReader) start() {
 	for {
 		select {
-		case <-r.timer.C:
-			r.readAndExport(time.Now())
-		case <-r.quit:
-			r.timer.Stop()
-			r.done <- true
+		case <-ir.timer.C:
+			ir.reader.ReadAndExport(ir.exporter)
+		case <-ir.quit:
+			ir.timer.Stop()
+			ir.done <- true
 			return
 		}
 	}
@@ -108,26 +120,37 @@ func (r *Reader) start() {
 
 // Stop stops the reader from reading and exporting metrics.
 // Additional call to Stop are no-ops.
-func (r *Reader) Stop() {
-	if r == nil {
+func (ir *IntervalReader) Stop() {
+	if ir == nil {
 		return
 	}
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	if r.quit == nil {
+	ir.mu.Lock()
+	defer ir.mu.Unlock()
+	if ir.quit == nil {
 		return
 	}
-	r.quit <- true
-	<-r.done
-	r.quit = nil
+	ir.quit <- true
+	<-ir.done
+	ir.quit = nil
 }
 
-func (r *Reader) readAndExport(now time.Time) {
+// ReadAndExport reads metrics from all producer registered with
+// producer manager and then exports them using provided exporter.
+func (r *Reader) ReadAndExport(exporter metric.Exporter) {
+	spanName := DefaultSpanName
+	sampler := defaultSampler
+	if r.SpanName == "" {
+		spanName = r.SpanName
+	}
+	if r.Sampler != nil {
+		sampler = r.Sampler
+	}
+
 	ctx := context.Background()
 	_, span := trace.StartSpan(
 		ctx,
-		r.options.SpanName,
-		trace.WithSampler(r.sampler),
+		spanName,
+		trace.WithSampler(sampler),
 	)
 	defer span.End()
 	producers := metricproducer.GlobalManager().GetAll()
@@ -135,5 +158,5 @@ func (r *Reader) readAndExport(now time.Time) {
 	for _, producer := range producers {
 		data = append(data, producer.Read()...)
 	}
-	r.exporter.ExportMetric(data)
+	exporter.ExportMetric(ctx, data)
 }
