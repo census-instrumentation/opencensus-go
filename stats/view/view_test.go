@@ -179,7 +179,7 @@ func Test_View_MeasureFloat64_AggregationDistribution(t *testing.T) {
 			}
 			e := &metricdata.Exemplar{
 				Value:       r.f,
-				Attachments: metricdata.AttachmentsFromContext(ctx),
+				Attachments: map[string]string{},
 			}
 			view.addSample(tag.FromContext(ctx), e)
 		}

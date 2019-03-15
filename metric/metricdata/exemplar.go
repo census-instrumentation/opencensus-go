@@ -15,7 +15,6 @@
 package metricdata
 
 import (
-	"context"
 	"time"
 )
 
@@ -38,40 +37,4 @@ type Exemplar struct {
 }
 
 // Attachments is a map of extra values associated with a recorded data point.
-// The map should only be mutated from AttachmentExtractor functions.
 type Attachments map[string]string
-
-// AttachmentExtractor is a function capable of extracting exemplar attachments
-// from the context used to record measurements.
-// The map passed to the function should be mutated and returned. It will
-// initially be nil: the first AttachmentExtractor that would like to add keys to the
-// map is responsible for initializing it.
-type AttachmentExtractor func(ctx context.Context, a Attachments) Attachments
-
-var extractors []AttachmentExtractor
-
-// RegisterAttachmentExtractor registers the given extractor associated with the exemplar
-// type name.
-//
-// Extractors will be used to attempt to extract exemplars from the context
-// associated with each recorded measurement.
-//
-// Packages that support exemplars should register their extractor functions on
-// initialization.
-//
-// RegisterAttachmentExtractor should not be called after any measurements have
-// been recorded.
-func RegisterAttachmentExtractor(e AttachmentExtractor) {
-	extractors = append(extractors, e)
-}
-
-// AttachmentsFromContext extracts exemplars from the given context.
-// Each registered AttachmentExtractor (see RegisterAttachmentExtractor) is called in an
-// unspecified order to add attachments to the exemplar.
-func AttachmentsFromContext(ctx context.Context) Attachments {
-	var a Attachments
-	for _, extractor := range extractors {
-		a = extractor(ctx, a)
-	}
-	return a
-}
