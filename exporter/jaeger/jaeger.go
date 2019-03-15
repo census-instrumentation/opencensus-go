@@ -25,7 +25,7 @@ import (
 	"log"
 	"net/http"
 
-	"git.apache.org/thrift.git/lib/go/thrift"
+	"github.com/apache/thrift/lib/go/thrift"
 	gen "go.opencensus.io/exporter/jaeger/internal/gen-go/jaeger"
 	"go.opencensus.io/trace"
 	"google.golang.org/api/support/bundler"

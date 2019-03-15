@@ -1,7 +1,7 @@
 module go.opencensus.io
 
 require (
-	git.apache.org/thrift.git v0.12.0
+	github.com/apache/thrift v0.12.0
 	github.com/golang/protobuf v1.2.0
 	github.com/google/go-cmp v0.2.0
 	github.com/gorilla/mux v1.7.0 // indirect
