@@ -152,6 +152,10 @@ func TestImplicitImmutableTracestate(t *testing.T) {
 
 	// Check Tracestate does not have key3.
 	checkKeyValue(t, tracestate, key3, "", testname)
+	// Check that we added the key3 in the entries
+	tracestate, err = New(nil, entries...)
+	checkError(t, tracestate, err, testname, "create failed")
+	checkKeyValue(t, tracestate, key3, value3, testname)
 }
 
 func TestKeyWithValidChar(t *testing.T) {

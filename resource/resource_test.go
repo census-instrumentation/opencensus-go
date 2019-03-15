@@ -146,7 +146,7 @@ func TestMultiDetector(t *testing.T) {
 	}
 
 	wantErr := errors.New("err1")
-	got, err = MultiDetector(
+	_, err = MultiDetector(
 		func(context.Context) (*Resource, error) {
 			return &Resource{
 				Type:   "t1",
