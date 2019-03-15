@@ -11,3 +11,5 @@ require (
 	google.golang.org/api v0.2.0
 	google.golang.org/grpc v1.19.0
 )
+
+replace go.opencensus.io => ./
