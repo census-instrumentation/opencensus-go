@@ -18,8 +18,6 @@ package view
 import (
 	"sort"
 
-	"go.opencensus.io/metric/metricdata"
-
 	"go.opencensus.io/internal/tagencoding"
 	"go.opencensus.io/tag"
 )
@@ -33,13 +31,13 @@ type collector struct {
 	a *Aggregation
 }
 
-func (c *collector) addSample(s string, e *metricdata.Exemplar) {
+func (c *collector) addSample(s string, v float64) {
 	aggregator, ok := c.signatures[s]
 	if !ok {
 		aggregator = c.a.newData()
 		c.signatures[s] = aggregator
 	}
-	aggregator.addSample(e)
+	aggregator.addSample(v)
 }
 
 // collectRows returns a snapshot of the collected Row values.

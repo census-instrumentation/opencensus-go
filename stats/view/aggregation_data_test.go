@@ -18,7 +18,6 @@ package view
 import (
 	"reflect"
 	"testing"
-	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -67,21 +66,12 @@ func TestDataClone(t *testing.T) {
 
 func TestDistributionData_addSample(t *testing.T) {
 	dd := newDistributionData([]float64{1, 2})
-	t1, _ := time.Parse("Mon Jan 2 15:04:05 -0700 MST 2006", "Mon Jan 2 15:04:05 -0700 MST 2006")
-	e1 := &metricdata.Exemplar{
-		Attachments: metricdata.Attachments{
-			"tag:X": "Y",
-			"tag:A": "B",
-		},
-		Timestamp: t1,
-		Value:     0.5,
-	}
-	dd.addSample(e1)
+	dd.addSample(0.5)
 
 	want := &DistributionData{
 		Count:              1,
 		CountPerBucket:     []int64{1, 0, 0},
-		ExemplarsPerBucket: []*metricdata.Exemplar{e1, nil, nil},
+		ExemplarsPerBucket: []*metricdata.Exemplar{nil, nil, nil},
 		Max:                0.5,
 		Min:                0.5,
 		Mean:               0.5,
@@ -91,21 +81,13 @@ func TestDistributionData_addSample(t *testing.T) {
 		t.Fatalf("Unexpected DistributionData -got +want: %s", diff)
 	}
 
-	t2 := t1.Add(time.Microsecond)
-	e2 := &metricdata.Exemplar{
-		Attachments: metricdata.Attachments{
-			"tag:X": "Y",
-		},
-		Timestamp: t2,
-		Value:     0.7,
-	}
-	dd.addSample(e2)
+	dd.addSample(0.7)
 
 	// Previous exemplar should be preserved, since it has more annotations.
 	want = &DistributionData{
 		Count:              2,
 		CountPerBucket:     []int64{2, 0, 0},
-		ExemplarsPerBucket: []*metricdata.Exemplar{e1, nil, nil},
+		ExemplarsPerBucket: []*metricdata.Exemplar{nil, nil, nil},
 		Max:                0.7,
 		Min:                0.5,
 		Mean:               0.6,
@@ -115,21 +97,13 @@ func TestDistributionData_addSample(t *testing.T) {
 		t.Fatalf("Unexpected DistributionData -got +want: %s", diff)
 	}
 
-	t3 := t2.Add(time.Microsecond)
-	e3 := &metricdata.Exemplar{
-		Attachments: metricdata.Attachments{
-			metricdata.KeyTraceID: "abcd",
-		},
-		Timestamp: t3,
-		Value:     0.2,
-	}
-	dd.addSample(e3)
+	dd.addSample(0.2)
 
 	// Exemplar should be replaced since it has a trace_id.
 	want = &DistributionData{
 		Count:              3,
 		CountPerBucket:     []int64{3, 0, 0},
-		ExemplarsPerBucket: []*metricdata.Exemplar{e3, nil, nil},
+		ExemplarsPerBucket: []*metricdata.Exemplar{nil, nil, nil},
 		Max:                0.7,
 		Min:                0.2,
 		Mean:               0.4666666666666667,

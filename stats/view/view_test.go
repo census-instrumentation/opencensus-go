@@ -177,11 +177,7 @@ func Test_View_MeasureFloat64_AggregationDistribution(t *testing.T) {
 			if err != nil {
 				t.Errorf("%v: New = %v", tc.label, err)
 			}
-			e := &metricdata.Exemplar{
-				Value:       r.f,
-				Attachments: map[string]string{},
-			}
-			view.addSample(tag.FromContext(ctx), e)
+			view.addSample(tag.FromContext(ctx), r.f)
 		}
 
 		gotRows := view.collectedRows()
@@ -297,10 +293,7 @@ func Test_View_MeasureFloat64_AggregationSum(t *testing.T) {
 			if err != nil {
 				t.Errorf("%v: New = %v", tt.label, err)
 			}
-			e := &metricdata.Exemplar{
-				Value: r.f,
-			}
-			view.addSample(tag.FromContext(ctx), e)
+			view.addSample(tag.FromContext(ctx), r.f)
 		}
 
 		gotRows := view.collectedRows()

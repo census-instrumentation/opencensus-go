@@ -26,7 +26,7 @@ import (
 // Mosts users won't directly access aggregration data.
 type AggregationData interface {
 	isAggregationData() bool
-	addSample(e *metricdata.Exemplar)
+	addSample(v float64)
 	clone() AggregationData
 	equal(other AggregationData) bool
 }
@@ -43,7 +43,7 @@ type CountData struct {
 
 func (a *CountData) isAggregationData() bool { return true }
 
-func (a *CountData) addSample(_ *metricdata.Exemplar) {
+func (a *CountData) addSample(_ float64) {
 	a.Value = a.Value + 1
 }
 
@@ -70,8 +70,8 @@ type SumData struct {
 
 func (a *SumData) isAggregationData() bool { return true }
 
-func (a *SumData) addSample(e *metricdata.Exemplar) {
-	a.Value += e.Value
+func (a *SumData) addSample(v float64) {
+	a.Value += v
 }
 
 func (a *SumData) clone() AggregationData {
@@ -129,58 +129,38 @@ func (a *DistributionData) variance() float64 {
 
 func (a *DistributionData) isAggregationData() bool { return true }
 
-func (a *DistributionData) addSample(e *metricdata.Exemplar) {
-	f := e.Value
-	if f < a.Min {
-		a.Min = f
+func (a *DistributionData) addSample(v float64) {
+	if v < a.Min {
+		a.Min = v
 	}
-	if f > a.Max {
-		a.Max = f
+	if v > a.Max {
+		a.Max = v
 	}
 	a.Count++
-	a.addToBucket(e)
+	a.addToBucket(v)
 
 	if a.Count == 1 {
-		a.Mean = f
+		a.Mean = v
 		return
 	}
 
 	oldMean := a.Mean
-	a.Mean = a.Mean + (f-a.Mean)/float64(a.Count)
-	a.SumOfSquaredDev = a.SumOfSquaredDev + (f-oldMean)*(f-a.Mean)
+	a.Mean = a.Mean + (v-a.Mean)/float64(a.Count)
+	a.SumOfSquaredDev = a.SumOfSquaredDev + (v-oldMean)*(v-a.Mean)
 }
 
-func (a *DistributionData) addToBucket(e *metricdata.Exemplar) {
+func (a *DistributionData) addToBucket(v float64) {
 	var count *int64
-	var ex **metricdata.Exemplar
 	for i, b := range a.bounds {
-		if e.Value < b {
+		if v < b {
 			count = &a.CountPerBucket[i]
-			ex = &a.ExemplarsPerBucket[i]
 			break
 		}
 	}
-	if count == nil {
+	if count == nil { // Last bucket.
 		count = &a.CountPerBucket[len(a.bounds)]
-		ex = &a.ExemplarsPerBucket[len(a.bounds)]
 	}
 	*count++
-	*ex = maybeRetainExemplar(*ex, e)
-}
-
-func maybeRetainExemplar(old, cur *metricdata.Exemplar) *metricdata.Exemplar {
-	if old == nil {
-		return cur
-	}
-
-	// Heuristic to pick the "better" metricdata: first keep the one with a
-	// sampled trace attachment, if neither have a trace attachment, pick the
-	// one with more attachments.
-	_, haveTraceID := cur.Attachments[metricdata.KeyTraceID]
-	if haveTraceID || len(cur.Attachments) >= len(old.Attachments) {
-		return cur
-	}
-	return old
 }
 
 func (a *DistributionData) clone() AggregationData {
@@ -218,8 +198,8 @@ func (l *LastValueData) isAggregationData() bool {
 	return true
 }
 
-func (l *LastValueData) addSample(e *metricdata.Exemplar) {
-	l.Value = e.Value
+func (l *LastValueData) addSample(v float64) {
+	l.Value = v
 }
 
 func (l *LastValueData) clone() AggregationData {

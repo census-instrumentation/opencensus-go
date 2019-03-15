@@ -18,13 +18,6 @@ import (
 	"time"
 )
 
-// Exemplars keys.
-const (
-	KeyTraceID   = "trace_id"
-	KeySpanID    = "span_id"
-	KeyPrefixTag = "tag:"
-)
-
 // Exemplar is an example data point associated with each bucket of a
 // distribution type aggregation.
 //
