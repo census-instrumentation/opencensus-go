@@ -129,6 +129,7 @@ func (a *DistributionData) variance() float64 {
 
 func (a *DistributionData) isAggregationData() bool { return true }
 
+// TODO(songy23): support exemplar attachments.
 func (a *DistributionData) addSample(v float64) {
 	if v < a.Min {
 		a.Min = v
