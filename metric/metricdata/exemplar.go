@@ -30,4 +30,4 @@ type Exemplar struct {
 }
 
 // Attachments is a map of extra values associated with a recorded data point.
-type Attachments map[string]string
+type Attachments map[string]interface{}

@@ -18,6 +18,7 @@ package view
 import (
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -66,12 +67,15 @@ func TestDataClone(t *testing.T) {
 
 func TestDistributionData_addSample(t *testing.T) {
 	dd := newDistributionData([]float64{1, 2})
-	dd.addSample(0.5)
+	attachments1 := map[string]interface{}{"key1": "value1"}
+	t1, _ := time.Parse("Mon Jan 2 15:04:05 -0700 MST 2006", "Mon Jan 2 15:04:05 -0700 MST 2006")
+	dd.addSample(0.5, attachments1, t1)
 
+	e1 := &metricdata.Exemplar{Value: 0.5, Timestamp: t1, Attachments: attachments1}
 	want := &DistributionData{
 		Count:              1,
 		CountPerBucket:     []int64{1, 0, 0},
-		ExemplarsPerBucket: []*metricdata.Exemplar{nil, nil, nil},
+		ExemplarsPerBucket: []*metricdata.Exemplar{e1, nil, nil},
 		Max:                0.5,
 		Min:                0.5,
 		Mean:               0.5,
@@ -81,13 +85,16 @@ func TestDistributionData_addSample(t *testing.T) {
 		t.Fatalf("Unexpected DistributionData -got +want: %s", diff)
 	}
 
-	dd.addSample(0.7)
+	attachments2 := map[string]interface{}{"key2": "value2"}
+	t2 := t1.Add(time.Microsecond)
+	dd.addSample(0.7, attachments2, t2)
 
-	// Previous exemplar should be preserved, since it has more annotations.
+	// Previous exemplar should be overwritten.
+	e2 := &metricdata.Exemplar{Value: 0.7, Timestamp: t2, Attachments: attachments2}
 	want = &DistributionData{
 		Count:              2,
 		CountPerBucket:     []int64{2, 0, 0},
-		ExemplarsPerBucket: []*metricdata.Exemplar{nil, nil, nil},
+		ExemplarsPerBucket: []*metricdata.Exemplar{e2, nil, nil},
 		Max:                0.7,
 		Min:                0.5,
 		Mean:               0.6,
@@ -97,16 +104,19 @@ func TestDistributionData_addSample(t *testing.T) {
 		t.Fatalf("Unexpected DistributionData -got +want: %s", diff)
 	}
 
-	dd.addSample(0.2)
+	attachments3 := map[string]interface{}{"key3": "value3"}
+	t3 := t2.Add(time.Microsecond)
+	dd.addSample(1.2, attachments3, t3)
 
-	// Exemplar should be replaced since it has a trace_id.
+	// e3 is at another bucket. e2 should still be there.
+	e3 := &metricdata.Exemplar{Value: 1.2, Timestamp: t3, Attachments: attachments3}
 	want = &DistributionData{
 		Count:              3,
-		CountPerBucket:     []int64{3, 0, 0},
-		ExemplarsPerBucket: []*metricdata.Exemplar{nil, nil, nil},
-		Max:                0.7,
-		Min:                0.2,
-		Mean:               0.4666666666666667,
+		CountPerBucket:     []int64{2, 1, 0},
+		ExemplarsPerBucket: []*metricdata.Exemplar{e2, e3, nil},
+		Max:                1.2,
+		Min:                0.5,
+		Mean:               0.7999999999999999,
 		SumOfSquaredDev:    0,
 	}
 	if diff := cmpDD(dd, want); diff != "" {
