@@ -12,32 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package trace
+package metricdata
 
 import (
-	"context"
-	"encoding/hex"
-
-	"go.opencensus.io/exemplar"
+	"time"
 )
 
-func init() {
-	exemplar.RegisterAttachmentExtractor(attachSpanContext)
+// Exemplar is an example data point associated with each bucket of a
+// distribution type aggregation.
+//
+// Their purpose is to provide an example of the kind of thing
+// (request, RPC, trace span, etc.) that resulted in that measurement.
+type Exemplar struct {
+	Value       float64     // the value that was recorded
+	Timestamp   time.Time   // the time the value was recorded
+	Attachments Attachments // attachments (if any)
 }
 
-func attachSpanContext(ctx context.Context, a exemplar.Attachments) exemplar.Attachments {
-	span := FromContext(ctx)
-	if span == nil {
-		return a
-	}
-	sc := span.SpanContext()
-	if !sc.IsSampled() {
-		return a
-	}
-	if a == nil {
-		a = make(exemplar.Attachments)
-	}
-	a[exemplar.KeyTraceID] = hex.EncodeToString(sc.TraceID[:])
-	a[exemplar.KeySpanID] = hex.EncodeToString(sc.SpanID[:])
-	return a
-}
+// Attachments is a map of extra values associated with a recorded data point.
+type Attachments map[string]string
