@@ -68,7 +68,7 @@ func TestDataClone(t *testing.T) {
 func TestDistributionData_addSample(t *testing.T) {
 	dd := newDistributionData([]float64{1, 2})
 	attachments1 := map[string]interface{}{"key1": "value1"}
-	t1, _ := time.Parse("Mon Jan 2 15:04:05 -0700 MST 2006", "Mon Jan 2 15:04:05 -0700 MST 2006")
+	t1 := time.Now()
 	dd.addSample(0.5, attachments1, t1)
 
 	e1 := &metricdata.Exemplar{Value: 0.5, Timestamp: t1, Attachments: attachments1}

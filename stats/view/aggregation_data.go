@@ -102,7 +102,7 @@ type DistributionData struct {
 	SumOfSquaredDev float64 // sum of the squared deviation from the mean
 	CountPerBucket  []int64 // number of occurrences per bucket
 	// ExemplarsPerBucket is slice the same length as CountPerBucket containing
-	// an emexplar for the associated bucket, or nil.
+	// an exemplar for the associated bucket, or nil.
 	ExemplarsPerBucket []*metricdata.Exemplar
 	bounds             []float64 // histogram distribution of the values
 }
