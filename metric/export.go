@@ -22,5 +22,5 @@ import (
 
 // Exporter is an interface that exporters implement to export the metric data.
 type Exporter interface {
-	ExportMetric(ctx context.Context, data []*metricdata.Metric)
+	ExportMetrics(ctx context.Context, data []*metricdata.Metric) error
 }

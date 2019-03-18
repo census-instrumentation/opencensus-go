@@ -42,11 +42,12 @@ type metricExporter struct {
 	metrics []*metricdata.Metric
 }
 
-func (e *metricExporter) ExportMetric(ctx context.Context, metrics []*metricdata.Metric) {
+func (e *metricExporter) ExportMetrics(ctx context.Context, metrics []*metricdata.Metric) error {
 	e.Lock()
 	defer e.Unlock()
 
 	e.metrics = append(e.metrics, metrics...)
+	return nil
 }
 
 func init() {

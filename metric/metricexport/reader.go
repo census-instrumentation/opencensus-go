@@ -158,5 +158,6 @@ func (r *Reader) ReadAndExport(exporter metric.Exporter) {
 	for _, producer := range producers {
 		data = append(data, producer.Read()...)
 	}
-	exporter.ExportMetric(ctx, data)
+	// TODO: [rghetia] what to do with errors? log them?
+	exporter.ExportMetrics(ctx, data)
 }
