@@ -21,8 +21,6 @@ import (
 	"strings"
 	"time"
 
-	"go.opencensus.io/exemplar"
-
 	"go.opencensus.io/stats"
 	"go.opencensus.io/stats/internal"
 	"go.opencensus.io/tag"
@@ -161,12 +159,7 @@ func (cmd *recordReq) handleCommand(w *worker) {
 		}
 		ref := w.getMeasureRef(m.Measure().Name())
 		for v := range ref.views {
-			e := &exemplar.Exemplar{
-				Value:       m.Value(),
-				Timestamp:   cmd.t,
-				Attachments: cmd.attachments,
-			}
-			v.addSample(cmd.tm, e)
+			v.addSample(cmd.tm, m.Value())
 		}
 	}
 }
