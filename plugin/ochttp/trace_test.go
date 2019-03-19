@@ -603,7 +603,11 @@ func TestAgainstSpecs(t *testing.T) {
 			}
 
 			if resp != nil {
-				// no need to read response. Just close it
+				// If it simply closes body without reading
+				// synchronization problem may happen for spans slice.
+				// Server span and client span will write themselves
+				// at the same time
+				ioutil.ReadAll(resp.Body)
 				resp.Body.Close()
 				if serverRequired {
 					<-serverDone
