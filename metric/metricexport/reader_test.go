@@ -33,8 +33,8 @@ var (
 	exporter1  = &metricExporter{}
 	exporter2  = &metricExporter{}
 	gaugeEntry *metric.Int64GaugeEntry
-	options1   = Options{1000 * time.Millisecond}
-	options2   = Options{2000 * time.Millisecond}
+	duration1  = time.Duration(1000 * time.Millisecond)
+	duration2  = time.Duration(2000 * time.Millisecond)
 )
 
 type metricExporter struct {
@@ -70,18 +70,19 @@ func TestNewReader(t *testing.T) {
 }
 
 func TestNewIntervalReader(t *testing.T) {
-	ir1 = restartReader(ir1, exporter1, options1, t)
+	ir1 = createAndStart(exporter1, duration1, t)
 
 	gaugeEntry.Add(1)
 
 	time.Sleep(1500 * time.Millisecond)
 	checkExportedCount(exporter1, 1, t)
 	checkExportedMetricDesc(exporter1, "active_request", t)
+	ir1.Stop()
 	resetExporter(exporter1)
 }
 
 func TestManualReadForIntervalReader(t *testing.T) {
-	ir1 = restartReader(ir1, exporter1, options1, t)
+	ir1 = createAndStart(exporter1, duration1, t)
 
 	gaugeEntry.Set(1)
 	reader1.ReadAndExport(exporter1)
@@ -92,11 +93,12 @@ func TestManualReadForIntervalReader(t *testing.T) {
 	checkExportedCount(exporter1, 2, t)
 	checkExportedValues(exporter1, []int64{1, 4}, t) // one for manual read other for time based.
 	checkExportedMetricDesc(exporter1, "active_request", t)
+	ir1.Stop()
 	resetExporter(exporter1)
 }
 
 func TestProducerWithIntervalReaderStop(t *testing.T) {
-	ir1 = restartReader(ir1, exporter1, options1, t)
+	ir1 = createAndStart(exporter1, duration1, t)
 	ir1.Stop()
 
 	gaugeEntry.Add(1)
@@ -109,8 +111,8 @@ func TestProducerWithIntervalReaderStop(t *testing.T) {
 }
 
 func TestProducerWithMultipleIntervalReaders(t *testing.T) {
-	ir1 = restartReader(ir1, exporter1, options1, t)
-	ir2 = restartReader(ir2, exporter2, options2, t)
+	ir1 = createAndStart(exporter1, duration1, t)
+	ir2 = createAndStart(exporter2, duration2, t)
 
 	gaugeEntry.Add(1)
 
@@ -120,12 +122,14 @@ func TestProducerWithMultipleIntervalReaders(t *testing.T) {
 	checkExportedMetricDesc(exporter1, "active_request", t)
 	checkExportedCount(exporter2, 1, t)
 	checkExportedMetricDesc(exporter2, "active_request", t)
+	ir1.Stop()
+	ir2.Stop()
 	resetExporter(exporter1)
 	resetExporter(exporter1)
 }
 
 func TestIntervalReaderMultipleStop(t *testing.T) {
-	ir1 = restartReader(ir1, exporter1, options1, t)
+	ir1 = createAndStart(exporter1, duration1, t)
 	stop := make(chan bool, 1)
 	go func() {
 		ir1.Stop()
@@ -140,22 +144,38 @@ func TestIntervalReaderMultipleStop(t *testing.T) {
 	}
 }
 
+func TestIntervalReaderMultipleStart(t *testing.T) {
+	ir1 = createAndStart(exporter1, duration1, t)
+	ir1.Start()
+
+	gaugeEntry.Add(1)
+
+	time.Sleep(1500 * time.Millisecond)
+
+	checkExportedCount(exporter1, 1, t)
+	checkExportedMetricDesc(exporter1, "active_request", t)
+	ir1.Stop()
+	resetExporter(exporter1)
+}
+
 func TestNewIntervalReaderWithNilReader(t *testing.T) {
-	_, err := NewIntervalReader(nil, exporter1, Options{})
+	_, err := NewIntervalReader(nil, exporter1)
 	if err == nil {
 		t.Fatalf("expected error but got nil\n")
 	}
 }
 
 func TestNewIntervalReaderWithNilExporter(t *testing.T) {
-	_, err := NewIntervalReader(reader1, nil, Options{})
+	_, err := NewIntervalReader(reader1, nil)
 	if err == nil {
 		t.Fatalf("expected error but got nil\n")
 	}
 }
 
-func TestNewIntervalReaderWithInvalidOption(t *testing.T) {
-	_, err := NewIntervalReader(reader1, exporter1, Options{500 * time.Millisecond})
+func TestNewIntervalReaderStartWithInvalidInterval(t *testing.T) {
+	ir, err := NewIntervalReader(reader1, exporter1)
+	ir.ReportingInterval = time.Duration(500 * time.Millisecond)
+	err = ir.Start()
 	if err == nil {
 		t.Fatalf("expected error but got nil\n")
 	}
@@ -211,12 +231,11 @@ func resetExporter(exporter *metricExporter) {
 	exporter.metrics = nil
 }
 
-// restartReader stops the current processors and creates a new one.
-func restartReader(ir *IntervalReader, exporter *metricExporter, options Options, t *testing.T) *IntervalReader {
-	if ir != nil {
-		ir.Stop()
-	}
-	ir, err := NewIntervalReader(reader1, exporter, options)
+// createAndStart stops the current processors and creates a new one.
+func createAndStart(exporter *metricExporter, d time.Duration, t *testing.T) *IntervalReader {
+	ir, _ := NewIntervalReader(reader1, exporter)
+	ir.ReportingInterval = d
+	err := ir.Start()
 	if err != nil {
 		t.Fatalf("error creating reader %v\n", err)
 	}

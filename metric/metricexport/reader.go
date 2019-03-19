@@ -28,36 +28,38 @@ import (
 )
 
 var (
-	defaultSampler = trace.ProbabilitySampler(0.0001)
+	defaultSampler             = trace.ProbabilitySampler(0.0001)
+	errReportingIntervalTooLow = fmt.Errorf("reporting interval less than %d", MinimumReportingDuration)
+	errAlreadyStarted          = fmt.Errorf("already started")
+	errIntervalReaderNil       = fmt.Errorf("interval reader is nil")
+	errExporterNil             = fmt.Errorf("exporter is nil")
+	errReaderNil               = fmt.Errorf("reader is nil")
 )
 
 // IntervalReader periodically reads metrics from all producers registered
 // with producer manager and exports those metrics using provided
 // exporter. Call Reader.Stop() to stop the reader.
 type IntervalReader struct {
+	// ReportingInterval it the time duration between two consecutive
+	// metrics reporting. DefaultReportingDuration  is used if it is not set.
+	// It cannot be set lower than MinimumReportingDuration.
+	ReportingInterval time.Duration
+
 	exporter   metric.Exporter
 	timer      *time.Ticker
 	quit, done chan bool
 	mu         sync.RWMutex
 	reader     *Reader
-	options    Options
 }
 
 // Reader reads metrics from all producers registered
 // with producer manager and exports those metrics using provided
 // exporter.
 type Reader struct {
-	Sampler trace.Sampler
+	sampler trace.Sampler
 
 	// SpanName is the name used for span created to export metrics.
 	SpanName string
-}
-
-// Options to configure optional parameters for Reader.
-type Options struct {
-	// ReportingInterval sets the interval between reporting metrics.
-	// If it is set to zero then default value is used.
-	ReportingInterval time.Duration
 }
 
 const (
@@ -72,40 +74,53 @@ const (
 	DefaultSpanName = "ExportMetrics"
 )
 
-// NewIntervalReader creates a reader and starts a go routine
-// that periodically reads metrics from all producers
-// and exports them using provided exporter.
-// Use options to specify periodicity.
-func NewIntervalReader(reader *Reader, exporter metric.Exporter, options Options) (*IntervalReader, error) {
+// NewIntervalReader creates a reader. Once started it periodically
+// reads metrics from all producers and exports them using provided exporter.
+func NewIntervalReader(reader *Reader, exporter metric.Exporter) (*IntervalReader, error) {
 	if exporter == nil {
-		return nil, fmt.Errorf("exporter is nil")
+		return nil, errExporterNil
 	}
 	if reader == nil {
-		return nil, fmt.Errorf("reader is nil")
-	}
-
-	if options.ReportingInterval == 0 {
-		options.ReportingInterval = DefaultReportingDuration
-	} else {
-		if options.ReportingInterval.Seconds() < MinimumReportingDuration.Seconds() {
-			return nil, fmt.Errorf("invalid reporting duration %f, minimum should be %f",
-				options.ReportingInterval.Seconds(), MinimumReportingDuration.Seconds())
-		}
+		return nil, errReaderNil
 	}
 
 	r := &IntervalReader{
 		exporter: exporter,
-		timer:    time.NewTicker(options.ReportingInterval),
-		quit:     make(chan bool),
-		done:     make(chan bool),
-		options:  options,
 		reader:   reader,
 	}
-	go r.start()
 	return r, nil
 }
 
-func (ir *IntervalReader) start() {
+// Start starts the IntervalReader which periodically reads metrics from all
+// producers registered with global producer manager. If the reporting interval
+// is not set prior to calling this function then default reporting interval
+// is used.
+func (ir *IntervalReader) Start() error {
+	if ir == nil {
+		return errIntervalReaderNil
+	}
+	ir.mu.Lock()
+	defer ir.mu.Unlock()
+	var reportingInterval = DefaultReportingDuration
+	if ir.ReportingInterval != 0 {
+		if ir.ReportingInterval < MinimumReportingDuration {
+			return errReportingIntervalTooLow
+		}
+		reportingInterval = ir.ReportingInterval
+	}
+
+	if ir.done != nil {
+		return errAlreadyStarted
+	}
+	ir.timer = time.NewTicker(reportingInterval)
+	ir.quit = make(chan bool)
+	ir.done = make(chan bool)
+
+	go ir.startInternal()
+	return nil
+}
+
+func (ir *IntervalReader) startInternal() {
 	for {
 		select {
 		case <-ir.timer.C:
@@ -131,6 +146,8 @@ func (ir *IntervalReader) Stop() {
 	}
 	ir.quit <- true
 	<-ir.done
+	close(ir.quit)
+	close(ir.done)
 	ir.quit = nil
 }
 
@@ -138,19 +155,15 @@ func (ir *IntervalReader) Stop() {
 // producer manager and then exports them using provided exporter.
 func (r *Reader) ReadAndExport(exporter metric.Exporter) {
 	spanName := DefaultSpanName
-	sampler := defaultSampler
 	if r.SpanName == "" {
 		spanName = r.SpanName
-	}
-	if r.Sampler != nil {
-		sampler = r.Sampler
 	}
 
 	ctx := context.Background()
 	_, span := trace.StartSpan(
 		ctx,
 		spanName,
-		trace.WithSampler(sampler),
+		trace.WithSampler(defaultSampler),
 	)
 	defer span.End()
 	producers := metricproducer.GlobalManager().GetAll()
