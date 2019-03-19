@@ -20,7 +20,6 @@ import (
 	"time"
 
 	"context"
-	"go.opencensus.io/metric"
 	"go.opencensus.io/metric/metricdata"
 	"go.opencensus.io/metric/metricproducer"
 	"go.opencensus.io/trace"
@@ -45,7 +44,7 @@ type IntervalReader struct {
 	// It cannot be set lower than MinimumReportingDuration.
 	ReportingInterval time.Duration
 
-	exporter   metric.Exporter
+	exporter   Exporter
 	timer      *time.Ticker
 	quit, done chan bool
 	mu         sync.RWMutex
@@ -76,7 +75,7 @@ const (
 
 // NewIntervalReader creates a reader. Once started it periodically
 // reads metrics from all producers and exports them using provided exporter.
-func NewIntervalReader(reader *Reader, exporter metric.Exporter) (*IntervalReader, error) {
+func NewIntervalReader(reader *Reader, exporter Exporter) (*IntervalReader, error) {
 	if exporter == nil {
 		return nil, errExporterNil
 	}
@@ -153,7 +152,7 @@ func (ir *IntervalReader) Stop() {
 
 // ReadAndExport reads metrics from all producer registered with
 // producer manager and then exports them using provided exporter.
-func (r *Reader) ReadAndExport(exporter metric.Exporter) {
+func (r *Reader) ReadAndExport(exporter Exporter) {
 	spanName := DefaultSpanName
 	if r.SpanName == "" {
 		spanName = r.SpanName
