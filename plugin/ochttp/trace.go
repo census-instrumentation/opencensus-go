@@ -93,7 +93,8 @@ func (t *traceTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	// span.End() will be invoked after
 	// a read from resp.Body returns io.EOF or when
 	// resp.Body.Close() is invoked.
-	resp.Body = &bodyTracker{rc: resp.Body, span: span}
+	bt := &bodyTracker{rc: resp.Body, span: span}
+	resp.Body = wrappedBody(bt, resp.Body)
 	return resp, err
 }
 
