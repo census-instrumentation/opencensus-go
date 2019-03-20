@@ -18,6 +18,7 @@ package view
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 
@@ -177,7 +178,7 @@ func Test_View_MeasureFloat64_AggregationDistribution(t *testing.T) {
 			if err != nil {
 				t.Errorf("%v: New = %v", tc.label, err)
 			}
-			view.addSample(tag.FromContext(ctx), r.f)
+			view.addSample(tag.FromContext(ctx), r.f, nil, time.Now())
 		}
 
 		gotRows := view.collectedRows()
@@ -293,7 +294,7 @@ func Test_View_MeasureFloat64_AggregationSum(t *testing.T) {
 			if err != nil {
 				t.Errorf("%v: New = %v", tt.label, err)
 			}
-			view.addSample(tag.FromContext(ctx), r.f)
+			view.addSample(tag.FromContext(ctx), r.f, nil, time.Now())
 		}
 
 		gotRows := view.collectedRows()
