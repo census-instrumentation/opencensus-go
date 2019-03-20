@@ -116,8 +116,8 @@ func (t *tracker) end() {
 		}
 
 		stats.RecordWithTags(t.ctx, []tag.Mutator{
-			tag.UpsertWithMetadata(StatusCode, strconv.Itoa(t.statusCode), nil),
-			tag.UpsertWithMetadata(KeyClientStatus, strconv.Itoa(t.statusCode), nil),
+			tag.Upsert(StatusCode, strconv.Itoa(t.statusCode)),
+			tag.Upsert(KeyClientStatus, strconv.Itoa(t.statusCode)),
 		}, m...)
 	})
 }

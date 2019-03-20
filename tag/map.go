@@ -30,7 +30,7 @@ type Tag struct {
 
 type tagContent struct {
 	value string
-	m     *Metadata
+	m     metadatas
 }
 
 // Map is a map of tags. Use New to create a context containing
@@ -67,20 +67,20 @@ func (m *Map) String() string {
 	return buffer.String()
 }
 
-func (m *Map) insert(k Key, v string, md *Metadata) {
+func (m *Map) insert(k Key, v string, md metadatas) {
 	if _, ok := m.m[k]; ok {
 		return
 	}
 	m.m[k] = tagContent{value: v, m: md}
 }
 
-func (m *Map) update(k Key, v string, md *Metadata) {
+func (m *Map) update(k Key, v string, md metadatas) {
 	if _, ok := m.m[k]; ok {
 		m.m[k] = tagContent{value: v, m: md}
 	}
 }
 
-func (m *Map) upsert(k Key, v string, md *Metadata) {
+func (m *Map) upsert(k Key, v string, md metadatas) {
 	m.m[k] = tagContent{value: v, m: md}
 }
 
@@ -100,34 +100,14 @@ type Mutator interface {
 // Insert returns a mutator that inserts a
 // value associated with k. If k already exists in the tag map,
 // mutator doesn't update the value.
-// Deprecated. Use InsertWithMetadata instead.
-func Insert(k Key, v string) Mutator {
+// Metadata applies metadata to the tag. It is optional.
+func Insert(k Key, v string, mds ...Metadata) Mutator {
 	return &mutator{
 		fn: func(m *Map) (*Map, error) {
 			if !checkValue(v) {
 				return nil, errInvalidValue
 			}
-			m.insert(k, v, PropagatingMetadata)
-			return m, nil
-		},
-	}
-}
-
-// InsertWithMetadata returns a mutator that inserts a
-// value associated with k along with Metadata md.
-// If k already exists in the tag map,
-// mutator doesn't update the value or the metadata.
-// If metadata md is nil then it defaults to NonPropagatingMetadata
-func InsertWithMetadata(k Key, v string, md *Metadata) Mutator {
-	return &mutator{
-		fn: func(m *Map) (*Map, error) {
-			if !checkValue(v) {
-				return nil, errInvalidValue
-			}
-			if md == nil {
-				md = NonPropagatingMetadata
-			}
-			m.insert(k, v, md)
+			m.insert(k, v, createMetadatas(mds...))
 			return m, nil
 		},
 	}
@@ -136,35 +116,14 @@ func InsertWithMetadata(k Key, v string, md *Metadata) Mutator {
 // Update returns a mutator that updates the
 // value of the tag associated with k with v. If k doesn't
 // exists in the tag map, the mutator doesn't insert the value.
-// Deprecated. Use UpdateWithMetadata instead.
-func Update(k Key, v string) Mutator {
+// Metadata applies metadata to the tag. It is optional.
+func Update(k Key, v string, mds ...Metadata) Mutator {
 	return &mutator{
 		fn: func(m *Map) (*Map, error) {
 			if !checkValue(v) {
 				return nil, errInvalidValue
 			}
-			m.update(k, v, PropagatingMetadata)
-			return m, nil
-		},
-	}
-}
-
-// UpdateWithMetadata returns a mutator that updates the
-// value of the tag associated with k with v. It also updates
-// Metadata md associated with k. If k doesn't
-// exists in the tag map, the mutator doesn't insert the value
-// and the Metadata.
-// If metadata md is nil then it defaults to NonPropagatingMetadata
-func UpdateWithMetadata(k Key, v string, md *Metadata) Mutator {
-	return &mutator{
-		fn: func(m *Map) (*Map, error) {
-			if !checkValue(v) {
-				return nil, errInvalidValue
-			}
-			if md == nil {
-				md = NonPropagatingMetadata
-			}
-			m.update(k, v, md)
+			m.update(k, v, createMetadatas(mds...))
 			return m, nil
 		},
 	}
@@ -174,38 +133,32 @@ func UpdateWithMetadata(k Key, v string, md *Metadata) Mutator {
 // value of the tag associated with k with v. It inserts the
 // value if k doesn't exist already. It mutates the value
 // if k already exists.
-// Deprecated. Use UpsertWithMetadata instead.
-func Upsert(k Key, v string) Mutator {
+// Metadata applies metadata to the tag. It is optional.
+func Upsert(k Key, v string, mds ...Metadata) Mutator {
 	return &mutator{
 		fn: func(m *Map) (*Map, error) {
 			if !checkValue(v) {
 				return nil, errInvalidValue
 			}
-			m.upsert(k, v, PropagatingMetadata)
+			m.upsert(k, v, createMetadatas(mds...))
 			return m, nil
 		},
 	}
 }
 
-// UpsertWithMetadata returns a mutator that upserts the
-// value of the tag associated with k with v. It also updates
-// Metadata md. It inserts the value and the metadata if k
-// doesn't exist already. It mutates the value and the
-// Metadata if k already exists.
-// If metadata md is nil then it defaults to NonPropagatingMetadata
-func UpsertWithMetadata(k Key, v string, md *Metadata) Mutator {
-	return &mutator{
-		fn: func(m *Map) (*Map, error) {
-			if !checkValue(v) {
-				return nil, errInvalidValue
+func createMetadatas(mds ...Metadata) metadatas {
+	var metas metadatas
+	if len(mds) > 0 {
+		for _, md := range mds {
+			if md != nil {
+				md(&metas)
 			}
-			if md == nil {
-				md = NonPropagatingMetadata
-			}
-			m.upsert(k, v, md)
-			return m, nil
-		},
+		}
+	} else {
+		TTLUnlimitedPropagation(&metas)
 	}
+	return metas
+
 }
 
 // Delete returns a mutator that deletes
