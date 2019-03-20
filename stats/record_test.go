@@ -47,12 +47,11 @@ func TestRecordWithAttachments(t *testing.T) {
 	distribution := view.Distribution(5, 10)
 	m := stats.Int64("TestRecordWithAttachments/m1", "", stats.UnitDimensionless)
 	v := &view.View{
+		Name:        "test_view",
 		TagKeys:     []tag.Key{k1, k2},
 		Measure:     m,
 		Aggregation: distribution,
 	}
-	te := new(testExporter)
-	view.RegisterExporter(te)
 	view.SetReportingPeriod(100 * time.Millisecond)
 	if err := view.Register(v); err != nil {
 		log.Fatalf("Failed to register views: %v", err)
@@ -60,11 +59,14 @@ func TestRecordWithAttachments(t *testing.T) {
 
 	attachments := map[string]interface{}{metricdata.AttachmentKeySpanContext: spanCtx}
 	stats.RecordWithAttachments(context.Background(), attachments, m.M(12))
-	time.Sleep(110 * time.Millisecond)
-	if len(te.vds) < 1 || len(te.vds[0].Rows) < 1 {
-		t.Errorf("testExporter didn't receive data for registered view.")
+	rows, err := view.RetrieveData("test_view")
+	if err != nil {
+		t.Errorf("Failed to retrieve data %v", err)
 	}
-	data := te.vds[0].Rows[0].Data
+	if len(rows) == 0 {
+		t.Errorf("No data was recorded.")
+	}
+	data := rows[0].Data
 	dis, ok := data.(*view.DistributionData)
 	if !ok {
 		t.Errorf("want DistributionData, got %+v", data)
@@ -85,14 +87,6 @@ func TestRecordWithAttachments(t *testing.T) {
 			}
 		}
 	}
-}
-
-type testExporter struct {
-	vds []*view.Data
-}
-
-func (te *testExporter) ExportView(vd *view.Data) {
-	te.vds = append(te.vds, vd)
 }
 
 // Compare exemplars while ignoring exemplar timestamp, since timestamp is non-deterministic.
