@@ -29,7 +29,7 @@ import (
 var (
 	ir1        *IntervalReader
 	ir2        *IntervalReader
-	reader1    = &Reader{SpanName: "test-export-span"}
+	reader1    = NewReader(WithSpanName("test-export-span"))
 	exporter1  = &metricExporter{}
 	exporter2  = &metricExporter{}
 	gaugeEntry *metric.Int64GaugeEntry
@@ -57,8 +57,25 @@ func init() {
 	gaugeEntry, _ = g.GetEntry(metricdata.NewLabelValue("foo"))
 }
 
+func TestNewReaderWitDefaultOptions(t *testing.T) {
+	r := NewReader()
+
+	if r.spanName != DefaultSpanName {
+		t.Errorf("span name: got %v, want %v\n", r.spanName, DefaultSpanName)
+	}
+}
+
+func TestNewReaderWitSpanName(t *testing.T) {
+	spanName := "test-span"
+	r := NewReader(WithSpanName(spanName))
+
+	if r.spanName != spanName {
+		t.Errorf("span name: got %+v, want %v\n", r.spanName, spanName)
+	}
+}
+
 func TestNewReader(t *testing.T) {
-	r := &Reader{SpanName: "test-export-span"}
+	r := NewReader()
 
 	gaugeEntry.Add(1)
 

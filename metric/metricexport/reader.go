@@ -35,6 +35,33 @@ var (
 	errReaderNil               = fmt.Errorf("reader is nil")
 )
 
+const (
+	// DefaultReportingDuration is default reporting duration.
+	DefaultReportingDuration = 60 * time.Second
+
+	// MinimumReportingDuration represents minimum value of reporting duration
+	MinimumReportingDuration = 1 * time.Second
+
+	// DefaultSpanName is the default name of the span generated
+	// for reading and exporting metrics.
+	DefaultSpanName = "ExportMetrics"
+)
+
+// ReaderOptions contains options pertaining to metrics reader.
+type ReaderOptions struct {
+	// SpanName is the name used for span created to export metrics.
+	SpanName string
+}
+
+// Reader reads metrics from all producers registered
+// with producer manager and exports those metrics using provided
+// exporter.
+type Reader struct {
+	sampler trace.Sampler
+
+	spanName string
+}
+
 // IntervalReader periodically reads metrics from all producers registered
 // with producer manager and exports those metrics using provided
 // exporter. Call Reader.Stop() to stop the reader.
@@ -51,27 +78,28 @@ type IntervalReader struct {
 	reader     *Reader
 }
 
-// Reader reads metrics from all producers registered
-// with producer manager and exports those metrics using provided
-// exporter.
-type Reader struct {
-	sampler trace.Sampler
+// ReaderOption apply changes to ReaderOptions.
+type ReaderOption func(*ReaderOptions)
 
-	// SpanName is the name used for span created to export metrics.
-	SpanName string
+// WithSpanName makes new reader to use given span name when exporting metrics.
+func WithSpanName(spanName string) ReaderOption {
+	return func(o *ReaderOptions) {
+		o.SpanName = spanName
+	}
 }
 
-const (
-	// DefaultReportingDuration is default reporting duration.
-	DefaultReportingDuration = 60 * time.Second
-
-	// MinimumReportingDuration represents minimum value of reporting duration
-	MinimumReportingDuration = 1 * time.Second
-
-	// DefaultSpanName is the default name of the span generated
-	// for reading and exporting metrics.
-	DefaultSpanName = "ExportMetrics"
-)
+// NewReader returns a reader configured with specified options.
+func NewReader(o ...ReaderOption) *Reader {
+	var opts ReaderOptions
+	for _, op := range o {
+		op(&opts)
+	}
+	reader := &Reader{defaultSampler, DefaultSpanName}
+	if opts.SpanName != "" {
+		reader.spanName = opts.SpanName
+	}
+	return reader
+}
 
 // NewIntervalReader creates a reader. Once started it periodically
 // reads metrics from all producers and exports them using provided exporter.
@@ -153,23 +181,13 @@ func (ir *IntervalReader) Stop() {
 // ReadAndExport reads metrics from all producer registered with
 // producer manager and then exports them using provided exporter.
 func (r *Reader) ReadAndExport(exporter Exporter) {
-	spanName := DefaultSpanName
-	if r.SpanName == "" {
-		spanName = r.SpanName
-	}
-
-	ctx := context.Background()
-	_, span := trace.StartSpan(
-		ctx,
-		spanName,
-		trace.WithSampler(defaultSampler),
-	)
+	ctx, span := trace.StartSpan(context.Background(), r.spanName, trace.WithSampler(r.sampler))
 	defer span.End()
 	producers := metricproducer.GlobalManager().GetAll()
 	data := []*metricdata.Metric{}
 	for _, producer := range producers {
 		data = append(data, producer.Read()...)
 	}
-	// TODO: [rghetia] what to do with errors? log them?
+	// TODO: [rghetia] add metrics for errors.
 	exporter.ExportMetrics(ctx, data)
 }
