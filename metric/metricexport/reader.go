@@ -28,7 +28,7 @@ import (
 
 var (
 	defaultSampler             = trace.ProbabilitySampler(0.0001)
-	errReportingIntervalTooLow = fmt.Errorf("reporting interval less than %d", MinimumReportingDuration)
+	errReportingIntervalTooLow = fmt.Errorf("reporting interval less than %d", minimumReportingDuration)
 	errAlreadyStarted          = fmt.Errorf("already started")
 	errIntervalReaderNil       = fmt.Errorf("interval reader is nil")
 	errExporterNil             = fmt.Errorf("exporter is nil")
@@ -36,15 +36,9 @@ var (
 )
 
 const (
-	// DefaultReportingDuration is default reporting duration.
-	DefaultReportingDuration = 60 * time.Second
-
-	// MinimumReportingDuration represents minimum value of reporting duration
-	MinimumReportingDuration = 1 * time.Second
-
-	// DefaultSpanName is the default name of the span generated
-	// for reading and exporting metrics.
-	DefaultSpanName = "ExportMetrics"
+	defaultReportingDuration = 60 * time.Second
+	minimumReportingDuration = 1 * time.Second
+	defaultSpanName          = "ExportMetrics"
 )
 
 // ReaderOptions contains options pertaining to metrics reader.
@@ -67,8 +61,8 @@ type Reader struct {
 // exporter. Call Reader.Stop() to stop the reader.
 type IntervalReader struct {
 	// ReportingInterval it the time duration between two consecutive
-	// metrics reporting. DefaultReportingDuration  is used if it is not set.
-	// It cannot be set lower than MinimumReportingDuration.
+	// metrics reporting. defaultReportingDuration  is used if it is not set.
+	// It cannot be set lower than minimumReportingDuration.
 	ReportingInterval time.Duration
 
 	exporter   Exporter
@@ -94,7 +88,7 @@ func NewReader(o ...ReaderOption) *Reader {
 	for _, op := range o {
 		op(&opts)
 	}
-	reader := &Reader{defaultSampler, DefaultSpanName}
+	reader := &Reader{defaultSampler, defaultSpanName}
 	if opts.SpanName != "" {
 		reader.spanName = opts.SpanName
 	}
@@ -128,9 +122,9 @@ func (ir *IntervalReader) Start() error {
 	}
 	ir.mu.Lock()
 	defer ir.mu.Unlock()
-	var reportingInterval = DefaultReportingDuration
+	var reportingInterval = defaultReportingDuration
 	if ir.ReportingInterval != 0 {
-		if ir.ReportingInterval < MinimumReportingDuration {
+		if ir.ReportingInterval < minimumReportingDuration {
 			return errReportingIntervalTooLow
 		}
 		reportingInterval = ir.ReportingInterval

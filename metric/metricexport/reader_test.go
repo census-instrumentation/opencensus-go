@@ -60,8 +60,8 @@ func init() {
 func TestNewReaderWitDefaultOptions(t *testing.T) {
 	r := NewReader()
 
-	if r.spanName != DefaultSpanName {
-		t.Errorf("span name: got %v, want %v\n", r.spanName, DefaultSpanName)
+	if r.spanName != defaultSpanName {
+		t.Errorf("span name: got %v, want %v\n", r.spanName, defaultSpanName)
 	}
 }
 
