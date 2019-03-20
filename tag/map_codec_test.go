@@ -106,7 +106,7 @@ func TestEncodeDecode(t *testing.T) {
 
 func TestDecode(t *testing.T) {
 	k1, _ := NewKey("k1")
-	ctx, _ := New(context.Background(), InsertWithMetadata(k1, "v1", PropagatingMetadata))
+	ctx, _ := New(context.Background(), Insert(k1, "v1"))
 
 	tests := []struct {
 		name    string
