@@ -51,7 +51,7 @@ func Record(ctx context.Context, ms ...Measurement) {
 		return
 	}
 	// TODO(songy23): fix attachments.
-	recorder(tag.FromContext(ctx), ms, map[string]string{})
+	recorder(tag.FromContext(ctx), ms, map[string]interface{}{})
 }
 
 // RecordWithTags records one or multiple measurements at once.
