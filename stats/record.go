@@ -33,6 +33,12 @@ func init() {
 // Record records one or multiple measurements with the same context at once.
 // If there are any tags in the context, measurements will be tagged with them.
 func Record(ctx context.Context, ms ...Measurement) {
+	RecordWithAttachments(ctx, map[string]interface{}{}, ms...)
+}
+
+// RecordWithAttachments records measurements and the given exemplar attachments against context.
+// If there are any tags in the context, measurements will be tagged with them.
+func RecordWithAttachments(ctx context.Context, attachments map[string]interface{}, ms ...Measurement) {
 	recorder := internal.DefaultRecorder
 	if recorder == nil {
 		return
@@ -50,8 +56,7 @@ func Record(ctx context.Context, ms ...Measurement) {
 	if !record {
 		return
 	}
-	// TODO(songy23): fix attachments.
-	recorder(tag.FromContext(ctx), ms, map[string]interface{}{})
+	recorder(tag.FromContext(ctx), ms, attachments)
 }
 
 // RecordWithTags records one or multiple measurements at once.
@@ -60,10 +65,19 @@ func Record(ctx context.Context, ms ...Measurement) {
 // RecordWithTags is useful if you want to record with tag mutations but don't want
 // to propagate the mutations in the context.
 func RecordWithTags(ctx context.Context, mutators []tag.Mutator, ms ...Measurement) error {
+	return RecordWithTagsAndAttachments(ctx, mutators, map[string]interface{}{}, ms...)
+}
+
+// RecordWithTagsAndAttachments records measurements and the given exemplar attachments at once.
+//
+// Measurements will be tagged with the tags in the context mutated by the mutators.
+// RecordWithTags is useful if you want to record with tag mutations but don't want
+// to propagate the mutations in the context.
+func RecordWithTagsAndAttachments(ctx context.Context, mutators []tag.Mutator, attachments map[string]interface{}, ms ...Measurement) error {
 	ctx, err := tag.New(ctx, mutators...)
 	if err != nil {
 		return err
 	}
-	Record(ctx, ms...)
+	RecordWithAttachments(ctx, attachments, ms...)
 	return nil
 }
