@@ -18,13 +18,16 @@ import (
 	"bytes"
 	"context"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
+	"net"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"reflect"
 	"strings"
 	"testing"
@@ -244,7 +247,7 @@ func TestEndToEnd(t *testing.T) {
 			serverDone := make(chan struct{})
 			serverReturn := make(chan time.Time)
 			tt.handler.StartOptions.Sampler = trace.AlwaysSample()
-			url := serveHTTP(tt.handler, serverDone, serverReturn)
+			url := serveHTTP(tt.handler, serverDone, serverReturn, 200)
 
 			ctx := context.Background()
 			// Make the request.
@@ -342,9 +345,9 @@ func TestEndToEnd(t *testing.T) {
 	}
 }
 
-func serveHTTP(handler *Handler, done chan struct{}, wait chan time.Time) string {
+func serveHTTP(handler *Handler, done chan struct{}, wait chan time.Time, statusCode int) string {
 	handler.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(200)
+		w.WriteHeader(statusCode)
 		w.(http.Flusher).Flush()
 
 		// Simulate a slow-responding server.
@@ -467,12 +470,14 @@ func TestRequestAttributes(t *testing.T) {
 			},
 			wantAttrs: []trace.Attribute{
 				trace.StringAttribute("http.path", "/hello"),
+				trace.StringAttribute("http.url", "http://example.com:779/hello"),
 				trace.StringAttribute("http.host", "example.com:779"),
 				trace.StringAttribute("http.method", "GET"),
 				trace.StringAttribute("http.user_agent", "ua"),
 			},
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			req := tt.makeReq()
@@ -511,6 +516,144 @@ func TestResponseAttributes(t *testing.T) {
 			attrs := responseAttrs(tt.resp)
 			if got, want := attrs, tt.wantAttrs; !reflect.DeepEqual(got, want) {
 				t.Errorf("Response attributes = %#v; want %#v", got, want)
+			}
+		})
+	}
+}
+
+type TestCase struct {
+	Name           string
+	Method         string
+	URL            string
+	Headers        map[string]string
+	ResponseCode   int
+	SpanName       string
+	SpanStatus     string
+	SpanKind       string
+	SpanAttributes map[string]string
+}
+
+func TestAgainstSpecs(t *testing.T) {
+
+	fmt.Println("start")
+
+	dat, err := ioutil.ReadFile("testdata/http-out-test-cases.json")
+	if err != nil {
+		t.Fatalf("error reading file: %v", err)
+	}
+
+	tests := make([]TestCase, 0)
+	err = json.Unmarshal(dat, &tests)
+	if err != nil {
+		t.Fatalf("error parsing json: %v", err)
+	}
+
+	trace.ApplyConfig(trace.Config{DefaultSampler: trace.AlwaysSample()})
+
+	for _, tt := range tests {
+		t.Run(tt.Name, func(t *testing.T) {
+			var spans collector
+			trace.RegisterExporter(&spans)
+			defer trace.UnregisterExporter(&spans)
+
+			handler := &Handler{}
+			transport := &Transport{}
+
+			serverDone := make(chan struct{})
+			serverReturn := make(chan time.Time)
+			host := ""
+			port := ""
+			serverRequired := strings.Contains(tt.URL, "{")
+			if serverRequired {
+				// Start the server.
+				localServerURL := serveHTTP(handler, serverDone, serverReturn, tt.ResponseCode)
+				u, _ := url.Parse(localServerURL)
+				host, port, _ = net.SplitHostPort(u.Host)
+
+				tt.URL = strings.Replace(tt.URL, "{host}", host, 1)
+				tt.URL = strings.Replace(tt.URL, "{port}", port, 1)
+			}
+
+			// Start a root Span in the client.
+			ctx, _ := trace.StartSpan(
+				context.Background(),
+				"top-level")
+			// Make the request.
+			req, err := http.NewRequest(
+				tt.Method,
+				tt.URL,
+				nil)
+			for headerName, headerValue := range tt.Headers {
+				req.Header.Add(headerName, headerValue)
+			}
+			if err != nil {
+				t.Fatal(err)
+			}
+			req = req.WithContext(ctx)
+			resp, err := transport.RoundTrip(req)
+			if err != nil {
+				// do not fail. We want to validate DNS issues
+				//t.Fatal(err)
+			}
+
+			if serverRequired {
+				// Tell the server to return from request handling.
+				serverReturn <- time.Now().Add(time.Millisecond)
+			}
+
+			if resp != nil {
+				// If it simply closes body without reading
+				// synchronization problem may happen for spans slice.
+				// Server span and client span will write themselves
+				// at the same time
+				ioutil.ReadAll(resp.Body)
+				resp.Body.Close()
+				if serverRequired {
+					<-serverDone
+				}
+			}
+			trace.UnregisterExporter(&spans)
+
+			var client *trace.SpanData
+			for _, sp := range spans {
+				if sp.SpanKind == trace.SpanKindClient {
+					client = sp
+				}
+			}
+
+			if client.Name != tt.SpanName {
+				t.Errorf("span names don't match: expected: %s, actual: %s", tt.SpanName, client.Name)
+			}
+
+			spanKindToStr := map[int]string{
+				trace.SpanKindClient: "Client",
+				trace.SpanKindServer: "Server",
+			}
+
+			if !strings.EqualFold(codeToStr[client.Status.Code], tt.SpanStatus) {
+				t.Errorf("span status don't match: expected: %s, actual: %d (%s)", tt.SpanStatus, client.Status.Code, codeToStr[client.Status.Code])
+			}
+
+			if !strings.EqualFold(spanKindToStr[client.SpanKind], tt.SpanKind) {
+				t.Errorf("span kind don't match: expected: %s, actual: %d (%s)", tt.SpanKind, client.SpanKind, spanKindToStr[client.SpanKind])
+			}
+
+			normalizedActualAttributes := map[string]string{}
+			for k, v := range client.Attributes {
+				normalizedActualAttributes[k] = fmt.Sprintf("%v", v)
+			}
+
+			normalizedExpectedAttributes := map[string]string{}
+			for k, v := range tt.SpanAttributes {
+				normalizedValue := v
+				normalizedValue = strings.Replace(normalizedValue, "{host}", host, 1)
+				normalizedValue = strings.Replace(normalizedValue, "{port}", port, 1)
+
+				normalizedExpectedAttributes[k] = normalizedValue
+			}
+
+			if got, want := normalizedActualAttributes, normalizedExpectedAttributes; !reflect.DeepEqual(got, want) {
+				t.Errorf("Request attributes = %#v; want %#v", got, want)
 			}
 		})
 	}
