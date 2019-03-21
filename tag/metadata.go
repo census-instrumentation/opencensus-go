@@ -30,19 +30,18 @@ type metadatas struct {
 // Metadata applies metadatas specified by the function.
 type Metadata func(*metadatas)
 
-// Not exported for the moment because we want only TTLNoPropagation and TTLUnlimitedPropagation
-func withTTL(ttl int) Metadata {
+// WithTTLNoPropagation applies metadata with ttl value of valueTTLNoPropagation.
+// It is predefined for convenience.
+func WithTTLNoPropagation() Metadata {
 	return func(m *metadatas) {
-		m.ttl = ttl
+		m.ttl = valueTTLNoPropagation
 	}
 }
 
-var (
-	// TTLNoPropagation applies metadata with ttl value of valueTTLNoPropagation.
-	// It is predefined for convenience.
-	TTLNoPropagation = withTTL(valueTTLNoPropagation)
-
-	// TTLUnlimitedPropagation applies metadata with ttl value of valueTTLUnlimitedPropagation.
-	// It is predefined for convenience.
-	TTLUnlimitedPropagation = withTTL(valueTTLUnlimitedPropagation)
-)
+// WithTTLUnlimitedPropagation applies metadata with ttl value of valueTTLUnlimitedPropagation.
+// It is predefined for convenience.
+func WithTTLUnlimitedPropagation() Metadata {
+	return func(m *metadatas) {
+		m.ttl = valueTTLUnlimitedPropagation
+	}
+}
