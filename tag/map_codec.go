@@ -230,7 +230,7 @@ func DecodeEach(bytes []byte, fn func(key Key, val string, md metadatas)) error 
 		if !checkValue(val) {
 			return errInvalidValue
 		}
-		fn(key, val, createMetadatas(TTLUnlimitedPropagation))
+		fn(key, val, createMetadatas(WithTTLUnlimitedPropagation()))
 		if err != nil {
 			return err
 		}
