@@ -170,7 +170,7 @@ func Encode(m *Map) []byte {
 	}
 	eg.writeByte(byte(tagsVersionID))
 	for k, v := range m.m {
-		if v.m.ttl == valueTTLUnlimitedPropagation {
+		if v.m.ttl.ttl == valueTTLUnlimitedPropagation {
 			eg.writeByte(byte(keyTypeString))
 			eg.writeStringWithVarintLen(k.name)
 			eg.writeBytesWithVarintLen([]byte(v.value))
@@ -230,7 +230,7 @@ func DecodeEach(bytes []byte, fn func(key Key, val string, md metadatas)) error 
 		if !checkValue(val) {
 			return errInvalidValue
 		}
-		fn(key, val, createMetadatas(WithTTLUnlimitedPropagation()))
+		fn(key, val, createMetadatas(WithTTL(TTLUnlimitedPropagation)))
 		if err != nil {
 			return err
 		}

@@ -24,8 +24,8 @@ import (
 )
 
 var (
-	ttlUnlimitedPropMd = createMetadatas(WithTTLUnlimitedPropagation())
-	ttlNoPropMd        = createMetadatas(WithTTLNoPropagation())
+	ttlUnlimitedPropMd = createMetadatas(WithTTL(TTLUnlimitedPropagation))
+	ttlNoPropMd        = createMetadatas(WithTTL(TTLNoPropagation))
 )
 
 func TestContext(t *testing.T) {
@@ -188,7 +188,7 @@ func TestNewMapWithMetadata(t *testing.T) {
 			name:    "from empty; insert",
 			initial: nil,
 			mods: []Mutator{
-				Insert(k5, "5", WithTTLNoPropagation()),
+				Insert(k5, "5", WithTTL(TTLNoPropagation)),
 				Insert(k4, "4"),
 			},
 			want: makeTestTagMapWithMetadata(
@@ -199,7 +199,7 @@ func TestNewMapWithMetadata(t *testing.T) {
 			name:    "from existing; insert existing",
 			initial: makeTestTagMapWithMetadata(tagContent{"5", ttlNoPropMd}),
 			mods: []Mutator{
-				Insert(k5, "5", WithTTLUnlimitedPropagation()),
+				Insert(k5, "5", WithTTL(TTLUnlimitedPropagation)),
 			},
 			want: makeTestTagMapWithMetadata(tagContent{"5", ttlNoPropMd}),
 		},
@@ -207,7 +207,7 @@ func TestNewMapWithMetadata(t *testing.T) {
 			name:    "from existing; update non-existing",
 			initial: makeTestTagMapWithMetadata(tagContent{"5", ttlNoPropMd}),
 			mods: []Mutator{
-				Update(k4, "4", WithTTLUnlimitedPropagation()),
+				Update(k4, "4", WithTTL(TTLUnlimitedPropagation)),
 			},
 			want: makeTestTagMapWithMetadata(tagContent{"5", ttlNoPropMd}),
 		},
@@ -218,7 +218,7 @@ func TestNewMapWithMetadata(t *testing.T) {
 				tagContent{"4", ttlNoPropMd}),
 			mods: []Mutator{
 				Update(k5, "5"),
-				Update(k4, "4", WithTTLUnlimitedPropagation()),
+				Update(k4, "4", WithTTL(TTLUnlimitedPropagation)),
 			},
 			want: makeTestTagMapWithMetadata(
 				tagContent{"5", ttlUnlimitedPropMd},
@@ -230,7 +230,7 @@ func TestNewMapWithMetadata(t *testing.T) {
 				tagContent{"5", ttlNoPropMd},
 				tagContent{"4", ttlNoPropMd}),
 			mods: []Mutator{
-				Upsert(k4, "4", WithTTLUnlimitedPropagation()),
+				Upsert(k4, "4", WithTTL(TTLUnlimitedPropagation)),
 			},
 			want: makeTestTagMapWithMetadata(
 				tagContent{"5", ttlNoPropMd},
@@ -241,7 +241,7 @@ func TestNewMapWithMetadata(t *testing.T) {
 			initial: makeTestTagMapWithMetadata(
 				tagContent{"5", ttlNoPropMd}),
 			mods: []Mutator{
-				Upsert(k4, "4", WithTTLUnlimitedPropagation()),
+				Upsert(k4, "4", WithTTL(TTLUnlimitedPropagation)),
 				Upsert(k3, "3"),
 			},
 			want: makeTestTagMapWithMetadata(
@@ -264,9 +264,9 @@ func TestNewMapWithMetadata(t *testing.T) {
 			name:    "from empty; update invalid",
 			initial: nil,
 			mods: []Mutator{
-				Insert(k4, "4\x19", WithTTLUnlimitedPropagation()),
-				Upsert(k4, "4\x19", WithTTLUnlimitedPropagation()),
-				Update(k4, "4\x19", WithTTLUnlimitedPropagation()),
+				Insert(k4, "4\x19", WithTTL(TTLUnlimitedPropagation)),
+				Upsert(k4, "4\x19", WithTTL(TTLUnlimitedPropagation)),
+				Update(k4, "4\x19", WithTTL(TTLUnlimitedPropagation)),
 			},
 			want: nil,
 		},
@@ -274,8 +274,8 @@ func TestNewMapWithMetadata(t *testing.T) {
 			name:    "from empty; insert partial",
 			initial: nil,
 			mods: []Mutator{
-				Upsert(k3, "3", WithTTLUnlimitedPropagation()),
-				Upsert(k4, "4\x19", WithTTLUnlimitedPropagation()),
+				Upsert(k3, "3", WithTTL(TTLUnlimitedPropagation)),
+				Upsert(k4, "4\x19", WithTTL(TTLUnlimitedPropagation)),
 			},
 			want: nil,
 		},

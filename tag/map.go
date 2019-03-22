@@ -155,7 +155,7 @@ func createMetadatas(mds ...Metadata) metadatas {
 			}
 		}
 	} else {
-		WithTTLUnlimitedPropagation()(&metas)
+		WithTTL(TTLUnlimitedPropagation)(&metas)
 	}
 	return metas
 
