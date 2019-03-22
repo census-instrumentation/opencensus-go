@@ -18,6 +18,7 @@ package stats
 import (
 	"context"
 
+	"go.opencensus.io/metric/metricdata"
 	"go.opencensus.io/stats/internal"
 	"go.opencensus.io/tag"
 )
@@ -38,7 +39,7 @@ func Record(ctx context.Context, ms ...Measurement) {
 
 // RecordWithAttachments records measurements and the given exemplar attachments against context.
 // If there are any tags in the context, measurements will be tagged with them.
-func RecordWithAttachments(ctx context.Context, attachments map[string]interface{}, ms ...Measurement) {
+func RecordWithAttachments(ctx context.Context, attachments metricdata.Attachments, ms ...Measurement) {
 	recorder := internal.DefaultRecorder
 	if recorder == nil {
 		return
@@ -73,7 +74,7 @@ func RecordWithTags(ctx context.Context, mutators []tag.Mutator, ms ...Measureme
 // Measurements will be tagged with the tags in the context mutated by the mutators.
 // RecordWithTags is useful if you want to record with tag mutations but don't want
 // to propagate the mutations in the context.
-func RecordWithTagsAndAttachments(ctx context.Context, mutators []tag.Mutator, attachments map[string]interface{}, ms ...Measurement) error {
+func RecordWithTagsAndAttachments(ctx context.Context, mutators []tag.Mutator, attachments metricdata.Attachments, ms ...Measurement) error {
 	ctx, err := tag.New(ctx, mutators...)
 	if err != nil {
 		return err
