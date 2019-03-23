@@ -99,9 +99,9 @@ func toLabelValues(row *Row) []metricdata.LabelValue {
 	return labelValues
 }
 
-func rowToTimeseries(row *Row, now time.Time, startTime time.Time) *metricdata.TimeSeries {
+func rowToTimeseries(v *viewInternal, row *Row, now time.Time, startTime time.Time) *metricdata.TimeSeries {
 	return &metricdata.TimeSeries{
-		Points:      []metricdata.Point{row.Data.toPoint(now)},
+		Points:      []metricdata.Point{row.Data.toPoint(v.metricDescriptor.Type, now)},
 		LabelValues: toLabelValues(row),
 		StartTime:   startTime,
 	}
@@ -120,7 +120,7 @@ func viewToMetric(v *viewInternal, now time.Time, startTime time.Time) *metricda
 
 	ts := []*metricdata.TimeSeries{}
 	for _, row := range rows {
-		ts = append(ts, rowToTimeseries(row, now, startTime))
+		ts = append(ts, rowToTimeseries(v, row, now, startTime))
 	}
 
 	m := &metricdata.Metric{

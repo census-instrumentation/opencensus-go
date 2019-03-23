@@ -30,7 +30,7 @@ type AggregationData interface {
 	addSample(v float64, attachments map[string]interface{}, t time.Time)
 	clone() AggregationData
 	equal(other AggregationData) bool
-	toPoint(time time.Time) metricdata.Point
+	toPoint(t metricdata.Type, time time.Time) metricdata.Point
 }
 
 const epsilon = 1e-9
@@ -62,8 +62,15 @@ func (a *CountData) equal(other AggregationData) bool {
 	return a.Value == a2.Value
 }
 
-func (a *CountData) toPoint(t time.Time) metricdata.Point {
-	return metricdata.NewInt64Point(t, a.Value)
+func (a *CountData) toPoint(metricType metricdata.Type, t time.Time) metricdata.Point {
+	switch metricType {
+	case metricdata.TypeCumulativeInt64:
+		return metricdata.NewInt64Point(t, a.Value)
+	case metricdata.TypeCumulativeFloat64:
+		return metricdata.NewFloat64Point(t, float64(a.Value))
+	default:
+		panic("unsupported metricdata.Type")
+	}
 }
 
 // SumData is the aggregated data for the Sum aggregation.
@@ -92,8 +99,15 @@ func (a *SumData) equal(other AggregationData) bool {
 	return math.Pow(a.Value-a2.Value, 2) < epsilon
 }
 
-func (a *SumData) toPoint(t time.Time) metricdata.Point {
-	return metricdata.NewFloat64Point(t, a.Value)
+func (a *SumData) toPoint(metricType metricdata.Type, t time.Time) metricdata.Point {
+	switch metricType {
+	case metricdata.TypeCumulativeInt64:
+		return metricdata.NewInt64Point(t, int64(a.Value))
+	case metricdata.TypeCumulativeFloat64:
+		return metricdata.NewFloat64Point(t, a.Value)
+	default:
+		panic("unsupported metricdata.Type")
+	}
 }
 
 // DistributionData is the aggregated data for the
@@ -217,7 +231,7 @@ func (a *DistributionData) equal(other AggregationData) bool {
 	return a.Count == a2.Count && a.Min == a2.Min && a.Max == a2.Max && math.Pow(a.Mean-a2.Mean, 2) < epsilon && math.Pow(a.variance()-a2.variance(), 2) < epsilon
 }
 
-func (a *DistributionData) toPoint(t time.Time) metricdata.Point {
+func (a *DistributionData) toPoint(metricType metricdata.Type, t time.Time) metricdata.Point {
 	buckets := []metricdata.Bucket{}
 	for i := 0; i < len(a.CountPerBucket); i++ {
 		buckets = append(buckets, metricdata.Bucket{
@@ -262,6 +276,13 @@ func (l *LastValueData) equal(other AggregationData) bool {
 	return l.Value == a2.Value
 }
 
-func (l *LastValueData) toPoint(t time.Time) metricdata.Point {
-	return metricdata.NewFloat64Point(t, l.Value)
+func (l *LastValueData) toPoint(metricType metricdata.Type, t time.Time) metricdata.Point {
+	switch metricType {
+	case metricdata.TypeGaugeInt64:
+		return metricdata.NewInt64Point(t, int64(l.Value))
+	case metricdata.TypeGaugeFloat64:
+		return metricdata.NewFloat64Point(t, l.Value)
+	default:
+		panic("unsupported metricdata.Type")
+	}
 }

@@ -17,7 +17,6 @@ package view
 
 import (
 	"context"
-	"encoding/json"
 	"reflect"
 	"testing"
 	"time"
@@ -292,7 +291,7 @@ func Test_ViewToMetric(t *testing.T) {
 				Descriptor: mdTypeInt64CumulativeCount,
 				TimeSeries: []*metricdata.TimeSeries{
 					{Points: []metricdata.Point{
-						metricdata.NewInt64Point(now, 2),
+						metricdata.NewInt64Point(now, 2.0),
 					},
 						LabelValues: labelValues,
 						StartTime:   startTime,
@@ -307,7 +306,7 @@ func Test_ViewToMetric(t *testing.T) {
 				Descriptor: mdTypeFloat64CumulativeCount,
 				TimeSeries: []*metricdata.TimeSeries{
 					{Points: []metricdata.Point{
-						metricdata.NewInt64Point(now, 2),
+						metricdata.NewFloat64Point(now, 2.0),
 					},
 						LabelValues: labelValues,
 						StartTime:   startTime,
@@ -409,16 +408,7 @@ func Test_ViewToMetric(t *testing.T) {
 
 		gotMetric := viewToMetric(tc.vi, now, startTime)
 		if !reflect.DeepEqual(gotMetric, tc.wantMetric) {
-			gj := serializeAsJSON(gotMetric)
-			wj := serializeAsJSON(tc.wantMetric)
-			if gj != wj {
-				t.Errorf("#%d: Unmatched JSON\nGot:\n\t%s\nWant:\n\t%s", i, gj, wj)
-			}
+			t.Errorf("#%d: Unmatched \nGot:\n\t%v\nWant:\n\t%v", i, gotMetric, tc.wantMetric)
 		}
 	}
-}
-
-func serializeAsJSON(v interface{}) string {
-	blob, _ := json.MarshalIndent(v, "", "  ")
-	return string(blob)
 }
