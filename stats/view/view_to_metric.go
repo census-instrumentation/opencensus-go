@@ -64,7 +64,7 @@ func getType(v *View) metricdata.Type {
 		case *stats.Int64Measure:
 			return metricdata.TypeCumulativeInt64
 		case *stats.Float64Measure:
-			return metricdata.TypeCumulativeFloat64
+			return metricdata.TypeCumulativeInt64
 		default:
 			panic("unexpected measure type")
 		}

@@ -66,8 +66,6 @@ func (a *CountData) toPoint(metricType metricdata.Type, t time.Time) metricdata.
 	switch metricType {
 	case metricdata.TypeCumulativeInt64:
 		return metricdata.NewInt64Point(t, a.Value)
-	case metricdata.TypeCumulativeFloat64:
-		return metricdata.NewFloat64Point(t, float64(a.Value))
 	default:
 		panic("unsupported metricdata.Type")
 	}

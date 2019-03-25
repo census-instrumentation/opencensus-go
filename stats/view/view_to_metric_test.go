@@ -21,6 +21,7 @@ import (
 	"testing"
 	"time"
 
+	"encoding/json"
 	"go.opencensus.io/metric/metricdata"
 	"go.opencensus.io/stats"
 	"go.opencensus.io/tag"
@@ -125,8 +126,8 @@ func initTags() {
 		{tags: tags, value: int64(4)},
 	}
 	recordsFloat64 = []recordValWithTag{
-		{tags: tags, value: float64(1.0)},
-		{tags: tags, value: float64(5.0)},
+		{tags: tags, value: float64(1.5)},
+		{tags: tags, value: float64(5.4)},
 	}
 }
 
@@ -206,7 +207,7 @@ func initMetricDescriptors() {
 	}
 	mdTypeFloat64CumulativeCount = metricdata.Descriptor{
 		Name: nameFloat64CountM1, Description: "", Unit: metricdata.UnitDimensionless,
-		Type: metricdata.TypeCumulativeFloat64, LabelKeys: labelKeys,
+		Type: metricdata.TypeCumulativeInt64, LabelKeys: labelKeys,
 	}
 	mdTypeInt64CumulativeSum = metricdata.Descriptor{
 		Name: nameInt64SumM1, Description: "", Unit: metricdata.UnitBytes,
@@ -267,8 +268,8 @@ func Test_ViewToMetric(t *testing.T) {
 							{
 								Value: &metricdata.Distribution{
 									Count:                 2,
-									Sum:                   6.0,
-									SumOfSquaredDeviation: 8,
+									Sum:                   6.9,
+									SumOfSquaredDeviation: 7.605000000000001,
 									BucketOptions:         buckOpt,
 									Buckets: []metricdata.Bucket{
 										{Count: 1, Exemplar: nil}, // TODO: [rghetia] add exemplar test.
@@ -291,7 +292,7 @@ func Test_ViewToMetric(t *testing.T) {
 				Descriptor: mdTypeInt64CumulativeCount,
 				TimeSeries: []*metricdata.TimeSeries{
 					{Points: []metricdata.Point{
-						metricdata.NewInt64Point(now, 2.0),
+						metricdata.NewInt64Point(now, 2),
 					},
 						LabelValues: labelValues,
 						StartTime:   startTime,
@@ -306,7 +307,7 @@ func Test_ViewToMetric(t *testing.T) {
 				Descriptor: mdTypeFloat64CumulativeCount,
 				TimeSeries: []*metricdata.TimeSeries{
 					{Points: []metricdata.Point{
-						metricdata.NewFloat64Point(now, 2.0),
+						metricdata.NewInt64Point(now, 2),
 					},
 						LabelValues: labelValues,
 						StartTime:   startTime,
@@ -336,7 +337,7 @@ func Test_ViewToMetric(t *testing.T) {
 				Descriptor: mdTypeFloat64CumulativeSum,
 				TimeSeries: []*metricdata.TimeSeries{
 					{Points: []metricdata.Point{
-						metricdata.NewFloat64Point(now, 6.0),
+						metricdata.NewFloat64Point(now, 6.9),
 					},
 						LabelValues: labelValues,
 						StartTime:   startTime,
@@ -366,7 +367,7 @@ func Test_ViewToMetric(t *testing.T) {
 				Descriptor: mdTypeFloat64CumulativeLastValue,
 				TimeSeries: []*metricdata.TimeSeries{
 					{Points: []metricdata.Point{
-						metricdata.NewFloat64Point(now, 5.0),
+						metricdata.NewFloat64Point(now, 5.4),
 					},
 						LabelValues: labelValues,
 						StartTime:   time.Time{},
@@ -408,7 +409,16 @@ func Test_ViewToMetric(t *testing.T) {
 
 		gotMetric := viewToMetric(tc.vi, now, startTime)
 		if !reflect.DeepEqual(gotMetric, tc.wantMetric) {
-			t.Errorf("#%d: Unmatched \nGot:\n\t%v\nWant:\n\t%v", i, gotMetric, tc.wantMetric)
+			// JSON format is strictly for checking the content when test fails. Do not use JSON
+			// format to determine if the two values are same as it doesn't differentiate between
+			// int64(2) and float64(2.0)
+			t.Errorf("#%d: Unmatched \nGot:\n\t%v\nWant:\n\t%v\nGot Serialized:%s\nWant Serialized:%s\n",
+				i, gotMetric, tc.wantMetric, serializeAsJSON(gotMetric), serializeAsJSON(tc.wantMetric))
 		}
 	}
+}
+
+func serializeAsJSON(v interface{}) string {
+	blob, _ := json.MarshalIndent(v, "", "  ")
+	return string(blob)
 }
