@@ -41,6 +41,7 @@ func TestGauge(t *testing.T) {
 			Descriptor: metricdata.Descriptor{
 				Name:      "TestGauge",
 				LabelKeys: []string{"k1", "k2"},
+				Type:      metricdata.TypeGaugeFloat64,
 			},
 			TimeSeries: []*metricdata.TimeSeries{
 				{
@@ -76,6 +77,26 @@ func TestGauge(t *testing.T) {
 	canonicalize(want)
 	if diff := cmp.Diff(m, want, cmp.Comparer(ignoreTimes)); diff != "" {
 		t.Errorf("-got +want: %s", diff)
+	}
+}
+
+func TestGaugeMetricDescriptor(t *testing.T) {
+	unit := metricdata.UnitDimensionless
+	r := NewRegistry()
+
+	gf, _ := r.AddFloat64Gauge("float64_gauge", "", unit)
+	compareType(gf.g.desc.Type, metricdata.TypeGaugeFloat64, t)
+	gi, _ := r.AddInt64Gauge("int64_gauge", "", unit)
+	compareType(gi.g.desc.Type, metricdata.TypeGaugeInt64, t)
+	dgf, _ := r.AddFloat64DerivedGauge("derived_float64_gauge", "", unit)
+	compareType(dgf.g.desc.Type, metricdata.TypeGaugeFloat64, t)
+	dgi, _ := r.AddInt64DerivedGauge("derived_int64_gauge", "", unit)
+	compareType(dgi.g.desc.Type, metricdata.TypeGaugeInt64, t)
+}
+
+func compareType(got, want metricdata.Type, t *testing.T) {
+	if got != want {
+		t.Errorf("metricdata type: got %v, want %v\n", got, want)
 	}
 }
 
