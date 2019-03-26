@@ -17,11 +17,11 @@ package view
 
 import (
 	"context"
-	"reflect"
 	"testing"
 	"time"
 
 	"encoding/json"
+	"github.com/google/go-cmp/cmp"
 	"go.opencensus.io/metric/metricdata"
 	"go.opencensus.io/stats"
 	"go.opencensus.io/tag"
@@ -408,7 +408,7 @@ func Test_ViewToMetric(t *testing.T) {
 		}
 
 		gotMetric := viewToMetric(tc.vi, now, startTime)
-		if !reflect.DeepEqual(gotMetric, tc.wantMetric) {
+		if !cmp.Equal(gotMetric, tc.wantMetric) {
 			// JSON format is strictly for checking the content when test fails. Do not use JSON
 			// format to determine if the two values are same as it doesn't differentiate between
 			// int64(2) and float64(2.0)

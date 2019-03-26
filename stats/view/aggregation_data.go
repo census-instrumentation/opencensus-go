@@ -230,23 +230,30 @@ func (a *DistributionData) equal(other AggregationData) bool {
 }
 
 func (a *DistributionData) toPoint(metricType metricdata.Type, t time.Time) metricdata.Point {
-	buckets := []metricdata.Bucket{}
-	for i := 0; i < len(a.CountPerBucket); i++ {
-		buckets = append(buckets, metricdata.Bucket{
-			Count:    a.CountPerBucket[i],
-			Exemplar: a.ExemplarsPerBucket[i],
-		})
-	}
-	bucketOptions := &metricdata.BucketOptions{Bounds: a.bounds}
+	switch metricType {
+	case metricdata.TypeCumulativeDistribution:
+		buckets := []metricdata.Bucket{}
+		for i := 0; i < len(a.CountPerBucket); i++ {
+			buckets = append(buckets, metricdata.Bucket{
+				Count:    a.CountPerBucket[i],
+				Exemplar: a.ExemplarsPerBucket[i],
+			})
+		}
+		bucketOptions := &metricdata.BucketOptions{Bounds: a.bounds}
 
-	val := &metricdata.Distribution{
-		Count:                 a.Count,
-		Sum:                   a.Sum(),
-		SumOfSquaredDeviation: a.SumOfSquaredDev,
-		BucketOptions:         bucketOptions,
-		Buckets:               buckets,
+		val := &metricdata.Distribution{
+			Count:                 a.Count,
+			Sum:                   a.Sum(),
+			SumOfSquaredDeviation: a.SumOfSquaredDev,
+			BucketOptions:         bucketOptions,
+			Buckets:               buckets,
+		}
+		return metricdata.NewDistributionPoint(t, val)
+
+	default:
+		// TODO: [rghetia] when we have a use case for TypeGaugeDistribution.
+		panic("unsupported metricdata.Type")
 	}
-	return metricdata.NewDistributionPoint(t, val)
 }
 
 // LastValueData returns the last value recorded for LastValue aggregation.
