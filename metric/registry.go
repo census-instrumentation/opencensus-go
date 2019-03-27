@@ -102,6 +102,21 @@ func (r *Registry) AddFloat64DerivedGauge(name, description string, unit metricd
 	return f, nil
 }
 
+func gTypeToMetricType(g *gauge) metricdata.Type {
+	switch g.gType {
+	case derivedGaugeFloat64:
+		return metricdata.TypeGaugeFloat64
+	case derivedGaugeInt64:
+		return metricdata.TypeGaugeInt64
+	case gaugeFloat64:
+		return metricdata.TypeGaugeFloat64
+	case gaugeInt64:
+		return metricdata.TypeGaugeInt64
+	default:
+		panic("unsupported gauge type")
+	}
+}
+
 func (r *Registry) initGauge(g *gauge, labelKeys []string, name string, description string, unit metricdata.Unit) (*gauge, error) {
 	val, ok := r.gauges.Load(name)
 	if ok {
@@ -117,6 +132,7 @@ func (r *Registry) initGauge(g *gauge, labelKeys []string, name string, descript
 		Description: description,
 		Unit:        unit,
 		LabelKeys:   labelKeys,
+		Type:        gTypeToMetricType(g),
 	}
 	r.gauges.Store(name, g)
 	return g, nil
