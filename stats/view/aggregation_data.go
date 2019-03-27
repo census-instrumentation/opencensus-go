@@ -30,6 +30,7 @@ type AggregationData interface {
 	addSample(v float64, attachments map[string]interface{}, t time.Time)
 	clone() AggregationData
 	equal(other AggregationData) bool
+	toPoint(t metricdata.Type, time time.Time) metricdata.Point
 }
 
 const epsilon = 1e-9
@@ -61,6 +62,15 @@ func (a *CountData) equal(other AggregationData) bool {
 	return a.Value == a2.Value
 }
 
+func (a *CountData) toPoint(metricType metricdata.Type, t time.Time) metricdata.Point {
+	switch metricType {
+	case metricdata.TypeCumulativeInt64:
+		return metricdata.NewInt64Point(t, a.Value)
+	default:
+		panic("unsupported metricdata.Type")
+	}
+}
+
 // SumData is the aggregated data for the Sum aggregation.
 // A sum aggregation processes data and sums up the recordings.
 //
@@ -85,6 +95,17 @@ func (a *SumData) equal(other AggregationData) bool {
 		return false
 	}
 	return math.Pow(a.Value-a2.Value, 2) < epsilon
+}
+
+func (a *SumData) toPoint(metricType metricdata.Type, t time.Time) metricdata.Point {
+	switch metricType {
+	case metricdata.TypeCumulativeInt64:
+		return metricdata.NewInt64Point(t, int64(a.Value))
+	case metricdata.TypeCumulativeFloat64:
+		return metricdata.NewFloat64Point(t, a.Value)
+	default:
+		panic("unsupported metricdata.Type")
+	}
 }
 
 // DistributionData is the aggregated data for the
@@ -208,6 +229,33 @@ func (a *DistributionData) equal(other AggregationData) bool {
 	return a.Count == a2.Count && a.Min == a2.Min && a.Max == a2.Max && math.Pow(a.Mean-a2.Mean, 2) < epsilon && math.Pow(a.variance()-a2.variance(), 2) < epsilon
 }
 
+func (a *DistributionData) toPoint(metricType metricdata.Type, t time.Time) metricdata.Point {
+	switch metricType {
+	case metricdata.TypeCumulativeDistribution:
+		buckets := []metricdata.Bucket{}
+		for i := 0; i < len(a.CountPerBucket); i++ {
+			buckets = append(buckets, metricdata.Bucket{
+				Count:    a.CountPerBucket[i],
+				Exemplar: a.ExemplarsPerBucket[i],
+			})
+		}
+		bucketOptions := &metricdata.BucketOptions{Bounds: a.bounds}
+
+		val := &metricdata.Distribution{
+			Count:                 a.Count,
+			Sum:                   a.Sum(),
+			SumOfSquaredDeviation: a.SumOfSquaredDev,
+			BucketOptions:         bucketOptions,
+			Buckets:               buckets,
+		}
+		return metricdata.NewDistributionPoint(t, val)
+
+	default:
+		// TODO: [rghetia] when we have a use case for TypeGaugeDistribution.
+		panic("unsupported metricdata.Type")
+	}
+}
+
 // LastValueData returns the last value recorded for LastValue aggregation.
 type LastValueData struct {
 	Value float64
@@ -231,4 +279,15 @@ func (l *LastValueData) equal(other AggregationData) bool {
 		return false
 	}
 	return l.Value == a2.Value
+}
+
+func (l *LastValueData) toPoint(metricType metricdata.Type, t time.Time) metricdata.Point {
+	switch metricType {
+	case metricdata.TypeGaugeInt64:
+		return metricdata.NewInt64Point(t, int64(l.Value))
+	case metricdata.TypeGaugeFloat64:
+		return metricdata.NewFloat64Point(t, l.Value)
+	default:
+		panic("unsupported metricdata.Type")
+	}
 }
