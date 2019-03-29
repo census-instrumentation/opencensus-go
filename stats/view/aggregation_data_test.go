@@ -67,11 +67,11 @@ func TestDataClone(t *testing.T) {
 
 func TestDistributionData_addSample(t *testing.T) {
 	dd := newDistributionData([]float64{1, 2})
-	attachments1 := map[string]interface{}{"key1": "value1"}
+	attachments1 := []metricdata.Attachment{metricdata.StringAttachment("k", "v")}
 	t1 := time.Now()
 	dd.addSample(0.5, attachments1, t1)
 
-	e1 := &metricdata.Exemplar{Value: 0.5, Timestamp: t1, Attachments: attachments1}
+	e1 := &metricdata.Exemplar{Value: 0.5, Timestamp: t1, Attachments: map[string]interface{}{"k": "v"}}
 	want := &DistributionData{
 		Count:              1,
 		CountPerBucket:     []int64{1, 0, 0},
@@ -85,12 +85,12 @@ func TestDistributionData_addSample(t *testing.T) {
 		t.Fatalf("Unexpected DistributionData -got +want: %s", diff)
 	}
 
-	attachments2 := map[string]interface{}{"key2": "value2"}
+	attachments2 := []metricdata.Attachment{metricdata.StringAttachment("k2", "v2")}
 	t2 := t1.Add(time.Microsecond)
 	dd.addSample(0.7, attachments2, t2)
 
 	// Previous exemplar should be overwritten.
-	e2 := &metricdata.Exemplar{Value: 0.7, Timestamp: t2, Attachments: attachments2}
+	e2 := &metricdata.Exemplar{Value: 0.7, Timestamp: t2, Attachments: map[string]interface{}{"k2": "v2"}}
 	want = &DistributionData{
 		Count:              2,
 		CountPerBucket:     []int64{2, 0, 0},
@@ -104,12 +104,12 @@ func TestDistributionData_addSample(t *testing.T) {
 		t.Fatalf("Unexpected DistributionData -got +want: %s", diff)
 	}
 
-	attachments3 := map[string]interface{}{"key3": "value3"}
+	attachments3 := []metricdata.Attachment{metricdata.StringAttachment("k3", "v3")}
 	t3 := t2.Add(time.Microsecond)
 	dd.addSample(1.2, attachments3, t3)
 
 	// e3 is at another bucket. e2 should still be there.
-	e3 := &metricdata.Exemplar{Value: 1.2, Timestamp: t3, Attachments: attachments3}
+	e3 := &metricdata.Exemplar{Value: 1.2, Timestamp: t3, Attachments: map[string]interface{}{"k3": "v3"}}
 	want = &DistributionData{
 		Count:              3,
 		CountPerBucket:     []int64{2, 1, 0},

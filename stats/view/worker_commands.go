@@ -21,6 +21,7 @@ import (
 	"strings"
 	"time"
 
+	"go.opencensus.io/metric/metricdata"
 	"go.opencensus.io/stats"
 	"go.opencensus.io/stats/internal"
 	"go.opencensus.io/tag"
@@ -148,7 +149,7 @@ func (cmd *retrieveDataReq) handleCommand(w *worker) {
 type recordReq struct {
 	tm          *tag.Map
 	ms          []stats.Measurement
-	attachments map[string]interface{}
+	attachments []metricdata.Attachment
 	t           time.Time
 }
 

@@ -153,7 +153,7 @@ func (v *viewInternal) collectedRows() []*Row {
 	return v.collector.collectedRows(v.view.TagKeys)
 }
 
-func (v *viewInternal) addSample(m *tag.Map, val float64, attachments map[string]interface{}, t time.Time) {
+func (v *viewInternal) addSample(m *tag.Map, val float64, attachments []metricdata.Attachment, t time.Time) {
 	if !v.isSubscribed() {
 		return
 	}

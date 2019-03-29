@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"go.opencensus.io/internal/tagencoding"
+	"go.opencensus.io/metric/metricdata"
 	"go.opencensus.io/tag"
 )
 
@@ -32,7 +33,7 @@ type collector struct {
 	a *Aggregation
 }
 
-func (c *collector) addSample(s string, v float64, attachments map[string]interface{}, t time.Time) {
+func (c *collector) addSample(s string, v float64, attachments []metricdata.Attachment, t time.Time) {
 	aggregator, ok := c.signatures[s]
 	if !ok {
 		aggregator = c.a.newData()

@@ -106,7 +106,7 @@ func RetrieveData(viewName string) ([]*Row, error) {
 	return resp.rows, resp.err
 }
 
-func record(tags *tag.Map, ms interface{}, attachments map[string]interface{}) {
+func record(tags *tag.Map, ms interface{}, attachments []metricdata.Attachment) {
 	req := &recordReq{
 		tm:          tags,
 		ms:          ms.([]stats.Measurement),

@@ -27,7 +27,7 @@ import (
 // Mosts users won't directly access aggregration data.
 type AggregationData interface {
 	isAggregationData() bool
-	addSample(v float64, attachments map[string]interface{}, t time.Time)
+	addSample(v float64, attachments []metricdata.Attachment, t time.Time)
 	clone() AggregationData
 	equal(other AggregationData) bool
 	toPoint(t metricdata.Type, time time.Time) metricdata.Point
@@ -45,7 +45,7 @@ type CountData struct {
 
 func (a *CountData) isAggregationData() bool { return true }
 
-func (a *CountData) addSample(_ float64, _ map[string]interface{}, _ time.Time) {
+func (a *CountData) addSample(_ float64, _ []metricdata.Attachment, _ time.Time) {
 	a.Value = a.Value + 1
 }
 
@@ -81,7 +81,7 @@ type SumData struct {
 
 func (a *SumData) isAggregationData() bool { return true }
 
-func (a *SumData) addSample(v float64, _ map[string]interface{}, _ time.Time) {
+func (a *SumData) addSample(v float64, _ []metricdata.Attachment, _ time.Time) {
 	a.Value += v
 }
 
@@ -152,7 +152,7 @@ func (a *DistributionData) variance() float64 {
 func (a *DistributionData) isAggregationData() bool { return true }
 
 // TODO(songy23): support exemplar attachments.
-func (a *DistributionData) addSample(v float64, attachments map[string]interface{}, t time.Time) {
+func (a *DistributionData) addSample(v float64, attachments []metricdata.Attachment, t time.Time) {
 	if v < a.Min {
 		a.Min = v
 	}
@@ -172,7 +172,7 @@ func (a *DistributionData) addSample(v float64, attachments map[string]interface
 	a.SumOfSquaredDev = a.SumOfSquaredDev + (v-oldMean)*(v-a.Mean)
 }
 
-func (a *DistributionData) addToBucket(v float64, attachments map[string]interface{}, t time.Time) {
+func (a *DistributionData) addToBucket(v float64, attachments []metricdata.Attachment, t time.Time) {
 	var count *int64
 	var i int
 	var b float64
@@ -192,14 +192,18 @@ func (a *DistributionData) addToBucket(v float64, attachments map[string]interfa
 	}
 }
 
-func getExemplar(v float64, attachments map[string]interface{}, t time.Time) *metricdata.Exemplar {
+func getExemplar(v float64, attachments []metricdata.Attachment, t time.Time) *metricdata.Exemplar {
 	if len(attachments) == 0 {
 		return nil
+	}
+	attachmentMap := make(map[string]interface{})
+	for _, attachment := range attachments {
+		attachmentMap[attachment.Key] = attachment.Value
 	}
 	return &metricdata.Exemplar{
 		Value:       v,
 		Timestamp:   t,
-		Attachments: attachments,
+		Attachments: attachmentMap,
 	}
 }
 
@@ -265,7 +269,7 @@ func (l *LastValueData) isAggregationData() bool {
 	return true
 }
 
-func (l *LastValueData) addSample(v float64, _ map[string]interface{}, _ time.Time) {
+func (l *LastValueData) addSample(v float64, _ []metricdata.Attachment, _ time.Time) {
 	l.Value = v
 }
 
