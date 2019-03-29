@@ -61,9 +61,6 @@ var (
 	aggL    *Aggregation
 	buckOpt *metricdata.BucketOptions
 
-	// exemplar objects.
-	attachments metricdata.Attachments
-
 	// views and descriptors
 	viewTypeFloat64Distribution         *View
 	viewTypeInt64Distribution           *View
