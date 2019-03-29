@@ -34,7 +34,7 @@ func init() {
 // Record records one or multiple measurements with the same context at once.
 // If there are any tags in the context, measurements will be tagged with them.
 func Record(ctx context.Context, ms ...Measurement) {
-	RecordWithAttachments(ctx, map[string]interface{}{}, ms...)
+	RecordWithAttachments(ctx, nil, ms...)
 }
 
 // RecordWithAttachments records measurements and the given exemplar attachments against context.
@@ -66,7 +66,7 @@ func RecordWithAttachments(ctx context.Context, attachments metricdata.Attachmen
 // RecordWithTags is useful if you want to record with tag mutations but don't want
 // to propagate the mutations in the context.
 func RecordWithTags(ctx context.Context, mutators []tag.Mutator, ms ...Measurement) error {
-	return RecordWithTagsAndAttachments(ctx, mutators, map[string]interface{}{}, ms...)
+	return RecordWithTagsAndAttachments(ctx, mutators, nil, ms...)
 }
 
 // RecordWithTagsAndAttachments records measurements and the given exemplar attachments at once.
