@@ -53,7 +53,10 @@ func (e *metricExporter) ExportMetrics(ctx context.Context, metrics []*metricdat
 func init() {
 	r := metric.NewRegistry()
 	metricproducer.GlobalManager().AddProducer(r)
-	g, _ := r.AddInt64Gauge("active_request", "Number of active requests, per method.", metricdata.UnitDimensionless, "method")
+	g, _ := r.AddInt64Gauge("active_request",
+		metric.WithDescription("Number of active requests, per method."),
+		metric.WithUnit(metricdata.UnitDimensionless),
+		metric.WithLabelKeys("method"))
 	gaugeEntry, _ = g.GetEntry(metricdata.NewLabelValue("foo"))
 }
 
