@@ -37,6 +37,7 @@ const (
 	derivedGaugeFloat64
 )
 
+//TODO: [rghetia] add constant labels.
 type metricOptions struct {
 	unit      metricdata.Unit
 	labelkeys []string
