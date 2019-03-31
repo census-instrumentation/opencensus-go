@@ -30,7 +30,7 @@ func main() {
 	// Register the Jaeger exporter to be able to retrieve
 	// the collected spans.
 	exporter, err := jaeger.NewExporter(jaeger.Options{
-		Endpoint: "http://localhost:14268",
+		CollectorEndpoint: "http://localhost:14268/api/traces",
 		Process: jaeger.Process{
 			ServiceName: "trace-demo",
 		},
