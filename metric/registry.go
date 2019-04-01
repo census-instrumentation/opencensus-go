@@ -37,19 +37,50 @@ const (
 	derivedGaugeFloat64
 )
 
+//TODO: [rghetia] add constant labels.
+type metricOptions struct {
+	unit      metricdata.Unit
+	labelkeys []string
+	desc      string
+}
+
+// Options apply changes to metricOptions.
+type Options func(*metricOptions)
+
+// WithDescription applies provided description.
+func WithDescription(desc string) Options {
+	return func(mo *metricOptions) {
+		mo.desc = desc
+	}
+}
+
+// WithUnit applies provided unit.
+func WithUnit(unit metricdata.Unit) Options {
+	return func(mo *metricOptions) {
+		mo.unit = unit
+	}
+}
+
+// WithLabelKeys applies provided label.
+func WithLabelKeys(labelKeys ...string) Options {
+	return func(mo *metricOptions) {
+		mo.labelkeys = labelKeys
+	}
+}
+
 // NewRegistry initializes a new Registry.
 func NewRegistry() *Registry {
 	return &Registry{}
 }
 
 // AddFloat64Gauge creates and adds a new float64-valued gauge to this registry.
-func (r *Registry) AddFloat64Gauge(name, description string, unit metricdata.Unit, labelKeys ...string) (*Float64Gauge, error) {
+func (r *Registry) AddFloat64Gauge(name string, mos ...Options) (*Float64Gauge, error) {
 	f := &Float64Gauge{
 		g: gauge{
 			gType: gaugeFloat64,
 		},
 	}
-	_, err := r.initGauge(&f.g, labelKeys, name, description, unit)
+	_, err := r.initGauge(&f.g, name, mos...)
 	if err != nil {
 		return nil, err
 	}
@@ -57,13 +88,13 @@ func (r *Registry) AddFloat64Gauge(name, description string, unit metricdata.Uni
 }
 
 // AddInt64Gauge creates and adds a new int64-valued gauge to this registry.
-func (r *Registry) AddInt64Gauge(name, description string, unit metricdata.Unit, labelKeys ...string) (*Int64Gauge, error) {
+func (r *Registry) AddInt64Gauge(name string, mos ...Options) (*Int64Gauge, error) {
 	i := &Int64Gauge{
 		g: gauge{
 			gType: gaugeInt64,
 		},
 	}
-	_, err := r.initGauge(&i.g, labelKeys, name, description, unit)
+	_, err := r.initGauge(&i.g, name, mos...)
 	if err != nil {
 		return nil, err
 	}
@@ -73,13 +104,13 @@ func (r *Registry) AddInt64Gauge(name, description string, unit metricdata.Unit,
 // AddInt64DerivedGauge creates and adds a new derived int64-valued gauge to this registry.
 // A derived gauge is convenient form of gauge where the object associated with the gauge
 // provides its value by implementing func() int64.
-func (r *Registry) AddInt64DerivedGauge(name, description string, unit metricdata.Unit, labelKeys ...string) (*Int64DerivedGauge, error) {
+func (r *Registry) AddInt64DerivedGauge(name string, mos ...Options) (*Int64DerivedGauge, error) {
 	i := &Int64DerivedGauge{
 		g: gauge{
 			gType: derivedGaugeInt64,
 		},
 	}
-	_, err := r.initGauge(&i.g, labelKeys, name, description, unit)
+	_, err := r.initGauge(&i.g, name, mos...)
 	if err != nil {
 		return nil, err
 	}
@@ -89,13 +120,13 @@ func (r *Registry) AddInt64DerivedGauge(name, description string, unit metricdat
 // AddFloat64DerivedGauge creates and adds a new derived float64-valued gauge to this registry.
 // A derived gauge is convenient form of gauge where the object associated with the gauge
 // provides its value by implementing func() float64.
-func (r *Registry) AddFloat64DerivedGauge(name, description string, unit metricdata.Unit, labelKeys ...string) (*Float64DerivedGauge, error) {
+func (r *Registry) AddFloat64DerivedGauge(name string, mos ...Options) (*Float64DerivedGauge, error) {
 	f := &Float64DerivedGauge{
 		g: gauge{
 			gType: derivedGaugeFloat64,
 		},
 	}
-	_, err := r.initGauge(&f.g, labelKeys, name, description, unit)
+	_, err := r.initGauge(&f.g, name, mos...)
 	if err != nil {
 		return nil, err
 	}
@@ -117,7 +148,15 @@ func gTypeToMetricType(g *gauge) metricdata.Type {
 	}
 }
 
-func (r *Registry) initGauge(g *gauge, labelKeys []string, name string, description string, unit metricdata.Unit) (*gauge, error) {
+func createMetricOption(mos ...Options) *metricOptions {
+	o := &metricOptions{}
+	for _, mo := range mos {
+		mo(o)
+	}
+	return o
+}
+
+func (r *Registry) initGauge(g *gauge, name string, mos ...Options) (*gauge, error) {
 	val, ok := r.gauges.Load(name)
 	if ok {
 		existing := val.(*gauge)
@@ -125,13 +164,14 @@ func (r *Registry) initGauge(g *gauge, labelKeys []string, name string, descript
 			return nil, errGaugeExistsWithDiffType
 		}
 	}
-	g.keys = labelKeys
 	g.start = time.Now()
+	o := createMetricOption(mos...)
+	g.keys = o.labelkeys
 	g.desc = metricdata.Descriptor{
 		Name:        name,
-		Description: description,
-		Unit:        unit,
-		LabelKeys:   labelKeys,
+		Description: o.desc,
+		Unit:        o.unit,
+		LabelKeys:   o.labelkeys,
 		Type:        gTypeToMetricType(g),
 	}
 	r.gauges.Store(name, g)
