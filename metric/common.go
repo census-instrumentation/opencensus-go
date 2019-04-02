@@ -54,9 +54,26 @@ type baseEntry interface {
 	read(t time.Time) metricdata.Point
 }
 
+func (bm *baseMetric) startTime() time.Time {
+	switch bm.bmType {
+	case cumulativeInt64:
+		return bm.start
+	case cumulativeFloat64:
+		return bm.start
+	case derivedCumulativeInt64:
+		return bm.start
+	case derivedCumulativeFloat64:
+		return bm.start
+	default:
+		// gauges don't have start time.
+		return time.Now()
+	}
+}
+
 // Read returns the current values of the baseMetric as a metric for export.
 func (bm *baseMetric) read() *metricdata.Metric {
 	now := time.Now()
+	startTime := bm.startTime()
 	m := &metricdata.Metric{
 		Descriptor: bm.desc,
 	}
@@ -65,7 +82,7 @@ func (bm *baseMetric) read() *metricdata.Metric {
 		key := k.(string)
 		labelVals := bm.decodeLabelVals(key)
 		m.TimeSeries = append(m.TimeSeries, &metricdata.TimeSeries{
-			StartTime:   now, // Gauge value is instantaneous.
+			StartTime:   startTime,
 			LabelValues: labelVals,
 			Points: []metricdata.Point{
 				entry.read(now),
