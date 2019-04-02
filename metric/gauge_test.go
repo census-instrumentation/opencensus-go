@@ -86,13 +86,13 @@ func TestGaugeMetricDescriptor(t *testing.T) {
 	r := NewRegistry()
 
 	gf, _ := r.AddFloat64Gauge("float64_gauge")
-	compareType(gf.g.desc.Type, metricdata.TypeGaugeFloat64, t)
+	compareType(gf.bm.desc.Type, metricdata.TypeGaugeFloat64, t)
 	gi, _ := r.AddInt64Gauge("int64_gauge")
-	compareType(gi.g.desc.Type, metricdata.TypeGaugeInt64, t)
+	compareType(gi.bm.desc.Type, metricdata.TypeGaugeInt64, t)
 	dgf, _ := r.AddFloat64DerivedGauge("derived_float64_gauge")
-	compareType(dgf.g.desc.Type, metricdata.TypeGaugeFloat64, t)
+	compareType(dgf.bm.desc.Type, metricdata.TypeGaugeFloat64, t)
 	dgi, _ := r.AddInt64DerivedGauge("derived_int64_gauge")
-	compareType(dgi.g.desc.Type, metricdata.TypeGaugeInt64, t)
+	compareType(dgi.bm.desc.Type, metricdata.TypeGaugeInt64, t)
 }
 
 func compareType(got, want metricdata.Type, t *testing.T) {
@@ -110,7 +110,7 @@ func TestGaugeMetricOptionDesc(t *testing.T) {
 		Description: "test",
 		Type:        metricdata.TypeGaugeFloat64,
 	}
-	got := gf.g.desc
+	got := gf.bm.desc
 	if !cmp.Equal(got, want) {
 		t.Errorf("metric option description: got %v, want %v\n", got, want)
 	}
@@ -125,7 +125,7 @@ func TestGaugeMetricOptionUnit(t *testing.T) {
 		Unit: metricdata.UnitMilliseconds,
 		Type: metricdata.TypeGaugeFloat64,
 	}
-	got := gf.g.desc
+	got := gf.bm.desc
 	if !cmp.Equal(got, want) {
 		t.Errorf("metric descriptor: got %v, want %v\n", got, want)
 	}
@@ -140,7 +140,7 @@ func TestGaugeMetricOptionLabelKeys(t *testing.T) {
 		LabelKeys: []string{"k1", "k3"},
 		Type:      metricdata.TypeGaugeFloat64,
 	}
-	got := gf.g.desc
+	got := gf.bm.desc
 	if !cmp.Equal(got, want) {
 		t.Errorf("metric descriptor: got %v, want %v\n", got, want)
 	}
@@ -154,7 +154,7 @@ func TestGaugeMetricOptionDefault(t *testing.T) {
 		Name: name,
 		Type: metricdata.TypeGaugeFloat64,
 	}
-	got := gf.g.desc
+	got := gf.bm.desc
 	if !cmp.Equal(got, want) {
 		t.Errorf("metric descriptor: got %v, want %v\n", got, want)
 	}
@@ -227,15 +227,15 @@ func TestGaugeWithSameNameDiffType(t *testing.T) {
 	r.AddInt64Gauge("g")
 	_, gotErr := r.AddFloat64Gauge("g")
 	if gotErr == nil {
-		t.Errorf("got: nil, want error: %v", errGaugeExistsWithDiffType)
+		t.Errorf("got: nil, want error: %v", errMetricExistsWithDiffType)
 	}
 	_, gotErr = r.AddInt64DerivedGauge("g")
 	if gotErr == nil {
-		t.Errorf("got: nil, want error: %v", errGaugeExistsWithDiffType)
+		t.Errorf("got: nil, want error: %v", errMetricExistsWithDiffType)
 	}
 	_, gotErr = r.AddFloat64DerivedGauge("g")
 	if gotErr == nil {
-		t.Errorf("got: nil, want error: %v", errGaugeExistsWithDiffType)
+		t.Errorf("got: nil, want error: %v", errMetricExistsWithDiffType)
 	}
 }
 
@@ -262,7 +262,7 @@ func TestMapKey(t *testing.T) {
 	}
 	for i, tc := range cases {
 		t.Run(fmt.Sprintf("case %d", i), func(t *testing.T) {
-			g := &gauge{
+			g := &baseMetric{
 				keys: make([]string, len(tc)),
 			}
 			mk := g.mapKey(tc)
