@@ -265,8 +265,8 @@ func TestMapKey(t *testing.T) {
 			g := &baseMetric{
 				keys: make([]string, len(tc)),
 			}
-			mk := g.mapKey(tc)
-			vals := g.labelValues(mk)
+			mk := g.encodeLabelVals(tc)
+			vals := g.decodeLabelVals(mk)
 			if diff := cmp.Diff(vals, tc); diff != "" {
 				t.Errorf("values differ after serialization -got +want: %s", diff)
 			}

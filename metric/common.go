@@ -1,4 +1,4 @@
-// Copyright 2018, OpenCensus Authors
+// Copyright 2019, OpenCensus Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -63,7 +63,7 @@ func (bm *baseMetric) read() *metricdata.Metric {
 	bm.vals.Range(func(k, v interface{}) bool {
 		entry := v.(baseEntry)
 		key := k.(string)
-		labelVals := bm.labelValues(key)
+		labelVals := bm.decodeLabelVals(key)
 		m.TimeSeries = append(m.TimeSeries, &metricdata.TimeSeries{
 			StartTime:   now, // Gauge value is instantaneous.
 			LabelValues: labelVals,
@@ -76,7 +76,7 @@ func (bm *baseMetric) read() *metricdata.Metric {
 	return m
 }
 
-func (bm *baseMetric) mapKey(labelVals []metricdata.LabelValue) string {
+func (bm *baseMetric) encodeLabelVals(labelVals []metricdata.LabelValue) string {
 	vb := &tagencoding.Values{}
 	for _, v := range labelVals {
 		b := make([]byte, 1, len(v.Value)+1)
@@ -89,7 +89,7 @@ func (bm *baseMetric) mapKey(labelVals []metricdata.LabelValue) string {
 	return string(vb.Bytes())
 }
 
-func (bm *baseMetric) labelValues(s string) []metricdata.LabelValue {
+func (bm *baseMetric) decodeLabelVals(s string) []metricdata.LabelValue {
 	vals := make([]metricdata.LabelValue, 0, len(bm.keys))
 	vb := &tagencoding.Values{Buffer: []byte(s)}
 	for range bm.keys {
@@ -107,7 +107,7 @@ func (bm *baseMetric) entryForValues(labelVals []metricdata.LabelValue, newEntry
 	if len(labelVals) != len(bm.keys) {
 		return nil, errKeyValueMismatch
 	}
-	mapKey := bm.mapKey(labelVals)
+	mapKey := bm.encodeLabelVals(labelVals)
 	if entry, ok := bm.vals.Load(mapKey); ok {
 		return entry, nil
 	}
@@ -119,7 +119,7 @@ func (bm *baseMetric) upsertEntry(labelVals []metricdata.LabelValue, newEntry fu
 	if len(labelVals) != len(bm.keys) {
 		return errKeyValueMismatch
 	}
-	mapKey := bm.mapKey(labelVals)
+	mapKey := bm.encodeLabelVals(labelVals)
 	bm.vals.Delete(mapKey)
 	bm.vals.Store(mapKey, newEntry())
 	return nil
