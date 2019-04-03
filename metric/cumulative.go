@@ -24,7 +24,7 @@ import (
 
 // Float64Cumulative represents a float64 value that can only go up.
 //
-// Float64Cumulative maintains a float64 value for each combination of of label values
+// Float64Cumulative maintains a float64 value for each combination of label values
 // passed to the Set or Inc methods.
 type Float64Cumulative struct {
 	bm baseMetric
@@ -63,7 +63,7 @@ func (c *Float64Cumulative) GetEntry(labelVals ...metricdata.LabelValue) (*Float
 // negative or lower than previously stored value.
 func (e *Float64CumulativeEntry) Set(val float64) {
 	var swapped, equalOrLess bool
-	if val < 0.0 {
+	if val <= 0.0 {
 		return
 	}
 	for !swapped && !equalOrLess {
@@ -82,7 +82,7 @@ func (e *Float64CumulativeEntry) Set(val float64) {
 // is negative.
 func (e *Float64CumulativeEntry) Inc(val float64) {
 	var swapped bool
-	if val < 0.0 {
+	if val <= 0.0 {
 		return
 	}
 	for !swapped {
@@ -95,7 +95,7 @@ func (e *Float64CumulativeEntry) Inc(val float64) {
 // Int64Cumulative represents a int64 cumulative value that can only go up.
 //
 // Int64Cumulative maintains an int64 value for each combination of label values passed to the
-// Set or Add methods.
+// Set or Inc methods.
 type Int64Cumulative struct {
 	bm baseMetric
 }
@@ -133,7 +133,7 @@ func (c *Int64Cumulative) GetEntry(labelVals ...metricdata.LabelValue) (*Int64Cu
 // if the val is negative or if the val is lower than previously stored value.
 func (e *Int64CumulativeEntry) Set(val int64) {
 	var swapped, equalOrLess bool
-	if val < 0 {
+	if val <= 0 {
 		return
 	}
 	for !swapped && !equalOrLess {
@@ -149,7 +149,7 @@ func (e *Int64CumulativeEntry) Set(val int64) {
 // Inc increments the current cumulative entry value by val. It returns without incrementing if
 // the val is negative.
 func (e *Int64CumulativeEntry) Inc(val int64) {
-	if val < 0 {
+	if val <= 0 {
 		return
 	}
 	atomic.AddInt64(&e.val, int64(val))
@@ -161,7 +161,7 @@ func (e *Int64CumulativeEntry) Inc(val int64) {
 // These objects implement Int64DerivedCumulativeInterface to read instantaneous value
 // representing the object.
 type Int64DerivedCumulative struct {
-	g baseMetric
+	bm baseMetric
 }
 
 type int64DerivedCumulativeEntry struct {
@@ -185,7 +185,7 @@ func (c *Int64DerivedCumulative) UpsertEntry(fn func() int64, labelVals ...metri
 	if fn == nil {
 		return errInvalidParam
 	}
-	return c.g.upsertEntry(labelVals, func() baseEntry {
+	return c.bm.upsertEntry(labelVals, func() baseEntry {
 		return &int64DerivedCumulativeEntry{fn}
 	})
 }

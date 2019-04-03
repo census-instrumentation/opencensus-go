@@ -180,11 +180,11 @@ func (r *Registry) AddInt64Cumulative(name string, mos ...Options) (*Int64Cumula
 // provides its value by implementing func() int64.
 func (r *Registry) AddInt64DerivedCumulative(name string, mos ...Options) (*Int64DerivedCumulative, error) {
 	i := &Int64DerivedCumulative{
-		g: baseMetric{
+		bm: baseMetric{
 			bmType: derivedCumulativeInt64,
 		},
 	}
-	_, err := r.initBaseMetric(&i.g, name, mos...)
+	_, err := r.initBaseMetric(&i.bm, name, mos...)
 	if err != nil {
 		return nil, err
 	}
@@ -192,7 +192,7 @@ func (r *Registry) AddInt64DerivedCumulative(name string, mos ...Options) (*Int6
 }
 
 // AddFloat64DerivedCumulative creates and adds a new derived float64-valued gauge to this registry.
-// A derived gauge is convenient form of gauge where the object associated with the gauge
+// A derived cumulative is convenient form of cumulative where the object associated with the cumulative
 // provides its value by implementing func() float64.
 func (r *Registry) AddFloat64DerivedCumulative(name string, mos ...Options) (*Float64DerivedCumulative, error) {
 	f := &Float64DerivedCumulative{
@@ -237,7 +237,7 @@ func (r *Registry) initBaseMetric(bm *baseMetric, name string, mos ...Options) (
 	return bm, nil
 }
 
-// Read reads all gauges in this registry and returns their values as metrics.
+// Read reads all gauges and cumulatives in this registry and returns their values as metrics.
 func (r *Registry) Read() []*metricdata.Metric {
 	ms := []*metricdata.Metric{}
 	r.baseMetrics.Range(func(k, v interface{}) bool {

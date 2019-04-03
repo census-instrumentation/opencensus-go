@@ -90,7 +90,7 @@ func TestCumulativeMetricDescriptor(t *testing.T) {
 	dgf, _ := r.AddFloat64DerivedCumulative("derived_float64_gauge")
 	compareType(dgf.bm.desc.Type, metricdata.TypeCumulativeFloat64, t)
 	dgi, _ := r.AddInt64DerivedCumulative("derived_int64_gauge")
-	compareType(dgi.g.desc.Type, metricdata.TypeCumulativeInt64, t)
+	compareType(dgi.bm.desc.Type, metricdata.TypeCumulativeInt64, t)
 }
 
 func readAndCompareInt64Val(testname string, r *Registry, want int64, t *testing.T) {
