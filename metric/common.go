@@ -24,7 +24,7 @@ import (
 
 // baseMetric is common representation for gauge and cumulative metrics.
 //
-// baseMetric maintains a value for each combination of of label values passed to
+// baseMetric maintains a value for each combination of label values passed to
 // Set, Add, or Inc method.
 //
 // baseMetric should not be used directly, use metric specific type such as
@@ -54,9 +54,23 @@ type baseEntry interface {
 	read(t time.Time) metricdata.Point
 }
 
+func (bm *baseMetric) startTime() *time.Time {
+	switch bm.bmType {
+	case cumulativeInt64, cumulativeFloat64, derivedCumulativeInt64, derivedCumulativeFloat64:
+		return &bm.start
+	default:
+		// gauges don't have start time.
+		return nil
+	}
+}
+
 // Read returns the current values of the baseMetric as a metric for export.
 func (bm *baseMetric) read() *metricdata.Metric {
 	now := time.Now()
+	startTime := bm.startTime()
+	if startTime == nil {
+		startTime = &now
+	}
 	m := &metricdata.Metric{
 		Descriptor: bm.desc,
 	}
@@ -65,7 +79,7 @@ func (bm *baseMetric) read() *metricdata.Metric {
 		key := k.(string)
 		labelVals := bm.decodeLabelVals(key)
 		m.TimeSeries = append(m.TimeSeries, &metricdata.TimeSeries{
-			StartTime:   now, // Gauge value is instantaneous.
+			StartTime:   *startTime,
 			LabelValues: labelVals,
 			Points: []metricdata.Point{
 				entry.read(now),
