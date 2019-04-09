@@ -29,6 +29,9 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"go.opencensus.io/metric/metricexport"
+	"go.opencensus.io/metric/metricdata"
+	"context"
 )
 
 // Exporter exports stats to Prometheus, users need
@@ -61,6 +64,8 @@ func NewExporter(o Options) (*Exporter, error) {
 		c:       collector,
 		handler: promhttp.HandlerFor(o.Registry, promhttp.HandlerOpts{}),
 	}
+	collector.ensureRegisteredOnce()
+
 	return e, nil
 }
 
@@ -154,6 +159,9 @@ type collector struct {
 	registeredViewsMu sync.Mutex
 	// registeredViews maps a view to a prometheus desc.
 	registeredViews map[string]*prometheus.Desc
+
+	// reader reads metrics from all registered producers.
+	reader  *metricexport.Reader
 }
 
 func (c *collector) addViewData(vd *view.Data) {
@@ -166,16 +174,7 @@ func (c *collector) addViewData(vd *view.Data) {
 }
 
 func (c *collector) Describe(ch chan<- *prometheus.Desc) {
-	c.registeredViewsMu.Lock()
-	registered := make(map[string]*prometheus.Desc)
-	for k, desc := range c.registeredViews {
-		registered[k] = desc
-	}
-	c.registeredViewsMu.Unlock()
-
-	for _, desc := range registered {
-		ch <- desc
-	}
+	c.readDesc(ch)
 }
 
 // Collect fetches the statistics from OpenCensus
@@ -183,25 +182,7 @@ func (c *collector) Describe(ch chan<- *prometheus.Desc) {
 // Collect is invoked everytime a prometheus.Gatherer is run
 // for example when the HTTP endpoint is invoked by Prometheus.
 func (c *collector) Collect(ch chan<- prometheus.Metric) {
-	// We need a copy of all the view data up until this point.
-	viewData := c.cloneViewData()
-
-	for _, vd := range viewData {
-		sig := viewSignature(c.opts.Namespace, vd.View)
-		c.registeredViewsMu.Lock()
-		desc := c.registeredViews[sig]
-		c.registeredViewsMu.Unlock()
-
-		for _, row := range vd.Rows {
-			metric, err := c.toMetric(desc, vd.View, row)
-			if err != nil {
-				c.opts.onError(err)
-			} else {
-				ch <- metric
-			}
-		}
-	}
-
+	c.readMetrics(ch)
 }
 
 func (c *collector) toMetric(desc *prometheus.Desc, v *view.View, row *view.Row) (prometheus.Metric, error) {
@@ -244,7 +225,7 @@ func newCollector(opts Options, registrar *prometheus.Registry) *collector {
 		opts:            opts,
 		registeredViews: make(map[string]*prometheus.Desc),
 		viewData:        make(map[string]*view.Data),
-	}
+		reader: metricexport.NewReader()}
 }
 
 func tagValues(t []tag.Tag, expectedKeys []tag.Key) []string {
@@ -292,4 +273,176 @@ func (c *collector) cloneViewData() map[string]*view.Data {
 		viewDataCopy[sig] = viewData
 	}
 	return viewDataCopy
+}
+
+func metricLabelsToPromLabels(ls []string) (labels []string) {
+	for _, l := range ls {
+		labels = append(labels, internal.Sanitize(l))
+	}
+	return labels
+}
+
+
+func (c *collector) metricToDesc(metric *metricdata.Metric) *prometheus.Desc {
+	return prometheus.NewDesc(
+		metricName(c.opts.Namespace, metric),
+		metric.Descriptor.Description,
+		metricLabelsToPromLabels(metric.Descriptor.LabelKeys),
+		c.opts.ConstLabels)
+}
+
+func (c *collector)readMetrics(ch chan<- prometheus.Metric) {
+	me := &metricExporter{c: c, metricCh: ch }
+	c.reader.ReadAndExport(me)
+}
+
+func (c *collector)readDesc(ch chan<- *prometheus.Desc) {
+	de := &descExporter{c: c, descCh: ch }
+	c.reader.ReadAndExport(de)
+}
+
+//func (c *collector) registerMetricDesc(metric *metricdata.Metric) *prometheus.Desc {
+//	sig := metricSignature(c.opts.Namespace, metric)
+//	c.registeredViewsMu.Lock()
+//	desc, ok := c.registeredViews[sig]
+//	c.registeredViewsMu.Unlock()
+//
+//	if !ok {
+//		desc = c.metricToDesc(metric)
+//		c.registeredViewsMu.Lock()
+//		c.registeredViews[sig] = desc
+//		c.registeredViewsMu.Unlock()
+//	}
+//	return desc
+//}
+//
+
+type metricExporter struct {
+	c *collector
+	metricCh chan<- prometheus.Metric
+}
+
+// ExportMetrics exports to the Prometheus.
+// Each OpenCensus Metric will be converted to
+// corresponding Prometheus Metric:
+// SumData will be converted to Untyped Metric,
+// CountData will be a Counter Metric,
+// DistributionData will be a Histogram Metric.
+func (me *metricExporter) ExportMetrics(ctx context.Context, metrics []*metricdata.Metric) error {
+	for _, metric := range metrics {
+		desc := me.c.metricToDesc(metric)
+		for _, ts := range metric.TimeSeries {
+			tvs := metricTagValues(ts.LabelValues)
+			for _, point := range ts.Points {
+				metric, err := me.fromOcMetricToPromMetric(desc, metric, point, tvs)
+				if err != nil {
+					me.c.opts.onError(err)
+				} else {
+					me.metricCh <- metric
+				}
+			}
+		}
+	}
+	return nil
+}
+
+//func metricSignature(namespace string, m *metricdata.Metric) string {
+//	var buf bytes.Buffer
+//	buf.WriteString(metricName(namespace, m))
+//	for _, k := range m.Descriptor.LabelKeys {
+//		buf.WriteString("-" + k)
+//	}
+//	return buf.String()
+//}
+//
+func metricName(namespace string, m *metricdata.Metric) string {
+	var name string
+	if namespace != "" {
+		name = namespace + "_"
+	}
+	return name + internal.Sanitize(m.Descriptor.Name)
+}
+
+func (me *metricExporter) fromOcMetricToPromMetric(
+	desc *prometheus.Desc,
+	metric *metricdata.Metric,
+	point metricdata.Point,
+	tvs []string) (prometheus.Metric, error) {
+	switch (metric.Descriptor.Type) {
+	case metricdata.TypeCumulativeFloat64, metricdata.TypeCumulativeInt64:
+		pv, err := pointToPromValue(point)
+		if err != nil {
+			return nil, err
+		}
+		return prometheus.NewConstMetric(desc, prometheus.CounterValue, pv, tvs...)
+
+	case metricdata.TypeGaugeFloat64, metricdata.TypeGaugeInt64:
+		pv, err := pointToPromValue(point)
+		if err != nil {
+			return nil, err
+		}
+		return prometheus.NewConstMetric(desc, prometheus.GaugeValue, pv, tvs...)
+
+	case metricdata.TypeCumulativeDistribution:
+		switch v := point.Value.(type) {
+		case *metricdata.Distribution:
+			points := make(map[float64]uint64)
+			// Histograms are cumulative in Prometheus.
+			// Get cumulative bucket counts.
+			cumCount := uint64(0)
+			for i, b := range v.BucketOptions.Bounds {
+				cumCount += uint64(v.Buckets[i].Count)
+				points[b] = cumCount
+			}
+			return prometheus.NewConstHistogram(desc, uint64(v.Count), v.Sum, points, tvs...)
+		default:
+			return nil, pointTypeError(point)
+		}
+
+	default:
+		return nil, fmt.Errorf("aggregation %T is not yet supported", metric.Descriptor.Type)
+	}
+}
+
+func metricTagValues(lvs []metricdata.LabelValue) []string {
+	var values []string
+	for _, lv := range lvs {
+		if lv.Present {
+			values = append(values, lv.Value)
+		} else {
+			values = append(values, "")
+		}
+	}
+	return values
+}
+
+func pointTypeError(point metricdata.Point) error {
+	return fmt.Errorf("point type %T is not yet supported", point)
+
+}
+
+func pointToPromValue(point metricdata.Point) (float64, error) {
+	switch v := point.Value.(type) {
+	case float64:
+		return v, nil
+	case int64:
+		return float64(v), nil
+	default:
+		return 0.0, pointTypeError(point)
+	}
+}
+
+type descExporter struct {
+	c *collector
+	descCh chan<- *prometheus.Desc
+}
+
+// ExportMetrics exports descriptor to the Prometheus.
+// It is invoked when request to scrape descriptors is received.
+func (me *descExporter) ExportMetrics(ctx context.Context, metrics []*metricdata.Metric) error {
+	for _, metric := range metrics {
+		desc := me.c.metricToDesc(metric)
+		me.descCh <- desc
+	}
+	return nil
 }

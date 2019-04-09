@@ -42,55 +42,6 @@ func newView(measureName string, agg *view.Aggregation) *view.View {
 	}
 }
 
-func TestOnlyCumulativeWindowSupported(t *testing.T) {
-	// See Issue https://github.com/census-instrumentation/opencensus-go/issues/214.
-	count1 := &view.CountData{Value: 1}
-	lastValue1 := &view.LastValueData{Value: 56.7}
-	tests := []struct {
-		vds  *view.Data
-		want int
-	}{
-		0: {
-			vds: &view.Data{
-				View: newView("TestOnlyCumulativeWindowSupported/m1", view.Count()),
-			},
-			want: 0, // no rows present
-		},
-		1: {
-			vds: &view.Data{
-				View: newView("TestOnlyCumulativeWindowSupported/m2", view.Count()),
-				Rows: []*view.Row{
-					{Data: count1},
-				},
-			},
-			want: 1,
-		},
-		2: {
-			vds: &view.Data{
-				View: newView("TestOnlyCumulativeWindowSupported/m3", view.LastValue()),
-				Rows: []*view.Row{
-					{Data: lastValue1},
-				},
-			},
-			want: 1,
-		},
-	}
-
-	for i, tt := range tests {
-		reg := prometheus.NewRegistry()
-		collector := newCollector(Options{}, reg)
-		collector.addViewData(tt.vds)
-		mm, err := reg.Gather()
-		if err != nil {
-			t.Errorf("#%d: Gather err: %v", i, err)
-		}
-		reg.Unregister(collector)
-		if got, want := len(mm), tt.want; got != want {
-			t.Errorf("#%d: got nil %v want nil %v", i, got, want)
-		}
-	}
-}
-
 func TestCollectNonRacy(t *testing.T) {
 	// Despite enforcing the singleton, for this case we
 	// need an exporter hence won't be using NewExporter.
@@ -526,8 +477,6 @@ func TestViewMeasureWithoutTag(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create prometheus exporter: %v", err)
 	}
-	view.RegisterExporter(exporter)
-	defer view.UnregisterExporter(exporter)
 	m := stats.Int64("tests/foo", "foo", stats.UnitDimensionless)
 	k1, _ := tag.NewKey("key/1")
 	k2, _ := tag.NewKey("key/2")
