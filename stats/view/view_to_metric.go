@@ -93,15 +93,17 @@ func viewToMetricDescriptor(v *View) *metricdata.Descriptor {
 
 func toLabelValues(row *Row, expectedKeys []string) []metricdata.LabelValue {
 	labelValues := []metricdata.LabelValue{}
-outer:
+	tagMap := make(map[string]string)
+	for _, tag := range row.Tags {
+		tagMap[tag.Key.Name()] = tag.Value
+	}
+
 	for _, key := range expectedKeys {
-		for _, tag := range row.Tags {
-			if tag.Key.Name() == key {
-				labelValues = append(labelValues, metricdata.NewLabelValue(tag.Value))
-				continue outer
-			}
+		if val, ok := tagMap[key]; ok {
+			labelValues = append(labelValues, metricdata.NewLabelValue(val))
+		} else {
+			labelValues = append(labelValues, metricdata.LabelValue{})
 		}
-		labelValues = append(labelValues, metricdata.LabelValue{})
 	}
 	return labelValues
 }
