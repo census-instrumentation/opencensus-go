@@ -16,12 +16,10 @@ package prometheus
 
 import (
 	"context"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"strings"
-	"sync"
 	"testing"
 	"time"
 
@@ -31,87 +29,6 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 )
-
-func newView(measureName string, agg *view.Aggregation) *view.View {
-	m := stats.Int64(measureName, "bytes", stats.UnitBytes)
-	return &view.View{
-		Name:        "foo",
-		Description: "bar",
-		Measure:     m,
-		Aggregation: agg,
-	}
-}
-
-func TestCollectNonRacy(t *testing.T) {
-	// Despite enforcing the singleton, for this case we
-	// need an exporter hence won't be using NewExporter.
-	exp, err := NewExporter(Options{})
-	if err != nil {
-		t.Fatalf("NewExporter: %v", err)
-	}
-	collector := exp.c
-
-	// Synchronize and make sure every goroutine has terminated before we exit
-	var waiter sync.WaitGroup
-	waiter.Add(3)
-	defer waiter.Wait()
-
-	doneCh := make(chan bool)
-	// 1. Viewdata write routine at 700ns
-	go func() {
-		defer waiter.Done()
-		tick := time.NewTicker(700 * time.Nanosecond)
-		defer tick.Stop()
-
-		defer func() {
-			close(doneCh)
-		}()
-
-		for i := 0; i < 1e3; i++ {
-			count1 := &view.CountData{Value: 1}
-			vds := []*view.Data{
-				{View: newView(fmt.Sprintf("TestCollectNonRacy/m2-%d", i), view.Count()), Rows: []*view.Row{{Data: count1}}},
-			}
-			for _, v := range vds {
-				exp.ExportView(v)
-			}
-			<-tick.C
-		}
-	}()
-
-	inMetricsChan := make(chan prometheus.Metric, 1000)
-	// 2. Simulating the Prometheus metrics consumption routine running at 900ns
-	go func() {
-		defer waiter.Done()
-		tick := time.NewTicker(900 * time.Nanosecond)
-		defer tick.Stop()
-
-		for {
-			select {
-			case <-doneCh:
-				return
-			case <-inMetricsChan:
-			}
-		}
-	}()
-
-	// 3. Collect/Read routine at 800ns
-	go func() {
-		defer waiter.Done()
-		tick := time.NewTicker(800 * time.Nanosecond)
-		defer tick.Stop()
-
-		for {
-			select {
-			case <-doneCh:
-				return
-			case <-tick.C:
-				// Perform some collection here
-				collector.Collect(inMetricsChan)
-			}
-		}
-	}()
-}
 
 type mSlice []*stats.Int64Measure
 
@@ -138,7 +55,7 @@ func TestMetricsEndpointOutput(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create prometheus exporter: %v", err)
 	}
-	view.RegisterExporter(exporter)
+	//view.RegisterExporter(exporter)
 
 	names := []string{"foo", "bar", "baz"}
 
@@ -212,9 +129,9 @@ func TestCumulativenessFromHistograms(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create prometheus exporter: %v", err)
 	}
-	view.RegisterExporter(exporter)
-	reportPeriod := time.Millisecond
-	view.SetReportingPeriod(reportPeriod)
+	//view.RegisterExporter(exporter)
+	//reportPeriod := time.Millisecond
+	//view.SetReportingPeriod(reportPeriod)
 
 	m := stats.Float64("tests/bills", "payments by denomination", stats.UnitDimensionless)
 	v := &view.View{
@@ -233,7 +150,7 @@ func TestCumulativenessFromHistograms(t *testing.T) {
 	defer view.Unregister(v)
 
 	// Give the reporter ample time to process registration
-	<-time.After(10 * reportPeriod)
+	//<-time.After(10 * reportPeriod)
 
 	values := []float64{0.25, 245.67, 12, 1.45, 199.9, 7.69, 187.12}
 	// We want the results that look like this:
@@ -266,7 +183,7 @@ func TestCumulativenessFromHistograms(t *testing.T) {
 	stats.Record(ctx, ms...)
 
 	// Give the recorder ample time to process recording
-	<-time.After(10 * reportPeriod)
+	//<-time.After(10 * reportPeriod)
 
 	cst := httptest.NewServer(exporter)
 	defer cst.Close()
@@ -299,9 +216,9 @@ func TestHistogramUnorderedBucketBounds(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create prometheus exporter: %v", err)
 	}
-	view.RegisterExporter(exporter)
-	reportPeriod := time.Millisecond
-	view.SetReportingPeriod(reportPeriod)
+	//view.RegisterExporter(exporter)
+	//reportPeriod := time.Millisecond
+	//view.SetReportingPeriod(reportPeriod)
 
 	m := stats.Float64("tests/bills", "payments by denomination", stats.UnitDimensionless)
 	v := &view.View{
@@ -320,7 +237,7 @@ func TestHistogramUnorderedBucketBounds(t *testing.T) {
 	defer view.Unregister(v)
 
 	// Give the reporter ample time to process registration
-	<-time.After(10 * reportPeriod)
+	//<-time.After(10 * reportPeriod)
 
 	values := []float64{0.25, 245.67, 12, 1.45, 199.9, 7.69, 187.12}
 	// We want the results that look like this:
@@ -353,7 +270,7 @@ func TestHistogramUnorderedBucketBounds(t *testing.T) {
 	stats.Record(ctx, ms...)
 
 	// Give the recorder ample time to process recording
-	<-time.After(10 * reportPeriod)
+	//<-time.After(10 * reportPeriod)
 
 	cst := httptest.NewServer(exporter)
 	defer cst.Close()
@@ -393,8 +310,8 @@ func TestConstLabelsIncluded(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create prometheus exporter: %v", err)
 	}
-	view.RegisterExporter(exporter)
-	defer view.UnregisterExporter(exporter)
+	//view.RegisterExporter(exporter)
+	//defer view.UnregisterExporter(exporter)
 
 	names := []string{"foo", "bar", "baz"}
 
