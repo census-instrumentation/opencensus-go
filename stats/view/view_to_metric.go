@@ -91,10 +91,17 @@ func viewToMetricDescriptor(v *View) *metricdata.Descriptor {
 	}
 }
 
-func toLabelValues(row *Row) []metricdata.LabelValue {
+func toLabelValues(row *Row, expectedKeys []string) []metricdata.LabelValue {
 	labelValues := []metricdata.LabelValue{}
-	for _, tag := range row.Tags {
-		labelValues = append(labelValues, metricdata.NewLabelValue(tag.Value))
+outer:
+	for _, key := range expectedKeys {
+		for _, tag := range row.Tags {
+			if tag.Key.Name() == key {
+				labelValues = append(labelValues, metricdata.NewLabelValue(tag.Value))
+				continue outer
+			}
+		}
+		labelValues = append(labelValues, metricdata.LabelValue{})
 	}
 	return labelValues
 }
@@ -102,7 +109,7 @@ func toLabelValues(row *Row) []metricdata.LabelValue {
 func rowToTimeseries(v *viewInternal, row *Row, now time.Time, startTime time.Time) *metricdata.TimeSeries {
 	return &metricdata.TimeSeries{
 		Points:      []metricdata.Point{row.Data.toPoint(v.metricDescriptor.Type, now)},
-		LabelValues: toLabelValues(row),
+		LabelValues: toLabelValues(row, v.metricDescriptor.LabelKeys),
 		StartTime:   startTime,
 	}
 }
