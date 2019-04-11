@@ -40,19 +40,21 @@ type testToMetrics struct {
 
 var (
 	// tag objects.
-	tk1         tag.Key
-	tk2         tag.Key
-	tk3         tag.Key
-	tk1v1       tag.Tag
-	tk1v2       tag.Tag
-	tk2v2       tag.Tag
-	tk3v3       tag.Tag
-	tags        []tag.Tag
-	labelValues []metricdata.LabelValue
-	labelKeys   []string
+	tk1   tag.Key
+	tk2   tag.Key
+	tk3   tag.Key
+	tk1v1 tag.Tag
+	tk2v2 tag.Tag
+	tags  []tag.Tag
 
-	recordsInt64   []recordValWithTag
-	recordsFloat64 []recordValWithTag
+	labelValues      []metricdata.LabelValue
+	emptyLabelValues []metricdata.LabelValue
+
+	labelKeys []string
+
+	recordsInt64        []recordValWithTag
+	recordsFloat64      []recordValWithTag
+	recordsFloat64WoTag []recordValWithTag
 
 	// distribution objects.
 	aggDist *Aggregation
@@ -73,6 +75,7 @@ var (
 	viewTypeInt64Sum                    *View
 	viewTypeFloat64LastValue            *View
 	viewTypeInt64LastValue              *View
+	viewRecordWithoutLabel              *View
 	mdTypeFloat64CumulativeDistribution metricdata.Descriptor
 	mdTypeInt64CumulativeDistribution   metricdata.Descriptor
 	mdTypeInt64CumulativeCount          metricdata.Descriptor
@@ -81,6 +84,7 @@ var (
 	mdTypeFloat64CumulativeSum          metricdata.Descriptor
 	mdTypeInt64CumulativeLastValue      metricdata.Descriptor
 	mdTypeFloat64CumulativeLastValue    metricdata.Descriptor
+	mdTypeRecordWithoutLabel            metricdata.Descriptor
 )
 
 const (
@@ -92,9 +96,9 @@ const (
 	nameFloat64SumM1       = "viewToMetricTest_Float64_Sum/m1"
 	nameInt64LastValueM1   = "viewToMetricTest_Int64_LastValue/m1"
 	nameFloat64LastValueM1 = "viewToMetricTest_Float64_LastValue/m1"
+	nameRecordWithoutLabel = "viewToMetricTest_RecordWithoutLabel/m1"
 	v1                     = "v1"
 	v2                     = "v2"
-	v3                     = "v3"
 )
 
 func init() {
@@ -110,14 +114,16 @@ func initTags() {
 	tk2, _ = tag.NewKey("k2")
 	tk3, _ = tag.NewKey("k3")
 	tk1v1 = tag.Tag{Key: tk1, Value: v1}
-	tk1v2 = tag.Tag{Key: tk1, Value: v2}
 	tk2v2 = tag.Tag{Key: tk2, Value: v2}
-	tk3v3 = tag.Tag{Key: tk3, Value: v3}
 
 	tags = []tag.Tag{tk1v1, tk2v2}
 	labelValues = []metricdata.LabelValue{
 		{Value: v1, Present: true},
 		{Value: v2, Present: true},
+	}
+	emptyLabelValues = []metricdata.LabelValue{
+		{Value: "", Present: false},
+		{Value: "", Present: false},
 	}
 	labelKeys = []string{tk1.Name(), tk2.Name()}
 
@@ -128,6 +134,10 @@ func initTags() {
 	recordsFloat64 = []recordValWithTag{
 		{tags: tags, value: float64(1.5)},
 		{tags: tags, value: float64(5.4)},
+	}
+	recordsFloat64WoTag = []recordValWithTag{
+		{value: float64(1.5)},
+		{value: float64(5.4)},
 	}
 }
 
@@ -189,6 +199,12 @@ func initViews() {
 		Measure:     stats.Float64(nameFloat64LastValueM1, "", stats.UnitDimensionless),
 		Aggregation: aggL,
 	}
+	viewRecordWithoutLabel = &View{
+		Name:        nameRecordWithoutLabel,
+		TagKeys:     []tag.Key{tk1, tk2},
+		Measure:     stats.Float64(nameRecordWithoutLabel, "", stats.UnitDimensionless),
+		Aggregation: aggL,
+	}
 }
 
 func initMetricDescriptors() {
@@ -223,6 +239,10 @@ func initMetricDescriptors() {
 	}
 	mdTypeFloat64CumulativeLastValue = metricdata.Descriptor{
 		Name: nameFloat64LastValueM1, Description: "", Unit: metricdata.UnitDimensionless,
+		Type: metricdata.TypeGaugeFloat64, LabelKeys: labelKeys,
+	}
+	mdTypeRecordWithoutLabel = metricdata.Descriptor{
+		Name: nameRecordWithoutLabel, Description: "", Unit: metricdata.UnitDimensionless,
 		Type: metricdata.TypeGaugeFloat64, LabelKeys: labelKeys,
 	}
 }
@@ -370,6 +390,21 @@ func Test_ViewToMetric(t *testing.T) {
 						metricdata.NewFloat64Point(now, 5.4),
 					},
 						LabelValues: labelValues,
+						StartTime:   time.Time{},
+					},
+				},
+			},
+		},
+		{
+			view:        viewRecordWithoutLabel,
+			recordValue: recordsFloat64WoTag,
+			wantMetric: &metricdata.Metric{
+				Descriptor: mdTypeRecordWithoutLabel,
+				TimeSeries: []*metricdata.TimeSeries{
+					{Points: []metricdata.Point{
+						metricdata.NewFloat64Point(now, 5.4),
+					},
+						LabelValues: emptyLabelValues,
 						StartTime:   time.Time{},
 					},
 				},
