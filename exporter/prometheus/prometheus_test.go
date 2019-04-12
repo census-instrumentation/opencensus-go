@@ -55,7 +55,6 @@ func TestMetricsEndpointOutput(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create prometheus exporter: %v", err)
 	}
-	//view.RegisterExporter(exporter)
 
 	names := []string{"foo", "bar", "baz"}
 
