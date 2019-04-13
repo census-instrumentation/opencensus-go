@@ -156,10 +156,9 @@ type metricExporter struct {
 // ExportMetrics exports to the Prometheus.
 // Each OpenCensus Metric will be converted to
 // corresponding Prometheus Metric:
-// SumData will be converted to Untyped Metric,
-// CountData will be a Counter Metric,
-// DistributionData will be a Histogram Metric.
-// LastValue will be a Gauge Metric
+// TypeCumulativeInt64 and TypeCumulativeFloat64 will be a Counter Metric,
+// TypeCumulativeDistribution will be a Histogram Metric.
+// TypeGaugeFloat64 and TypeGaugeInt64 will be a Gauge Metric
 func (me *metricExporter) ExportMetrics(ctx context.Context, metrics []*metricdata.Metric) error {
 	for _, metric := range metrics {
 		desc := me.c.toDesc(metric)
@@ -169,7 +168,7 @@ func (me *metricExporter) ExportMetrics(ctx context.Context, metrics []*metricda
 				metric, err := toPromMetric(desc, metric, point, tvs)
 				if err != nil {
 					me.c.opts.onError(err)
-				} else {
+				} else if metric != nil {
 					me.metricCh <- metric
 				}
 			}
@@ -243,7 +242,9 @@ func toPromMetric(
 		default:
 			return nil, pointTypeError(point)
 		}
-
+	case metricdata.TypeSummary:
+		// TODO: [rghetia] add support for TypeSummary.
+		return nil, nil
 	default:
 		return nil, fmt.Errorf("aggregation %T is not yet supported", metric.Descriptor.Type)
 	}

@@ -128,9 +128,6 @@ func TestCumulativenessFromHistograms(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create prometheus exporter: %v", err)
 	}
-	//view.RegisterExporter(exporter)
-	//reportPeriod := time.Millisecond
-	//view.SetReportingPeriod(reportPeriod)
 
 	m := stats.Float64("tests/bills", "payments by denomination", stats.UnitDimensionless)
 	v := &view.View{
@@ -215,9 +212,6 @@ func TestHistogramUnorderedBucketBounds(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create prometheus exporter: %v", err)
 	}
-	//view.RegisterExporter(exporter)
-	//reportPeriod := time.Millisecond
-	//view.SetReportingPeriod(reportPeriod)
 
 	m := stats.Float64("tests/bills", "payments by denomination", stats.UnitDimensionless)
 	v := &view.View{
@@ -309,8 +303,6 @@ func TestConstLabelsIncluded(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create prometheus exporter: %v", err)
 	}
-	//view.RegisterExporter(exporter)
-	//defer view.UnregisterExporter(exporter)
 
 	names := []string{"foo", "bar", "baz"}
 
