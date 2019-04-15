@@ -152,7 +152,7 @@ func main() {
 	// Create Int64Gauge to report memory usage of a process.
 	// START alloc
 	allocGauge, err := r.AddInt64Gauge(
-		"process/heap/alloc",
+		"process_heap_alloc",
 		metric.WithDescription("Process heap allocation"),
 		metric.WithUnit(metricdata.UnitBytes))
 	if err != nil {
@@ -170,7 +170,7 @@ func main() {
 	// Create Float64Gauge to report fractional cpu consumed by Garbage Collection.
 	// START idle
 	ratioGauge, err := r.AddFloat64Gauge(
-		"process/heap/idle_to_alloc_ratio",
+		"process_heap_idle_to_alloc_ratio",
 		metric.WithDescription("process heap idle to allocate ratio"),
 		metric.WithUnit(metricdata.UnitDimensionless))
 	if err != nil {
