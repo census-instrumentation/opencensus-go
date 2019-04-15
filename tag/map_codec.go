@@ -229,9 +229,6 @@ func DecodeEach(bytes []byte, fn func(key Key, val string)) error {
 			return errInvalidValue
 		}
 		fn(key, val)
-		if err != nil {
-			return err
-		}
 	}
 	return nil
 }
