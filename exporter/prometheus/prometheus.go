@@ -240,7 +240,7 @@ func toPromMetric(
 			}
 			return prometheus.NewConstHistogram(desc, uint64(v.Count), v.Sum, points, labelValues...)
 		default:
-			return nil, pointTypeError(point)
+			return nil, typeMismatchError(point)
 		}
 	case metricdata.TypeSummary:
 		// TODO: [rghetia] add support for TypeSummary.
@@ -261,8 +261,8 @@ func toLabelValues(labelValues []metricdata.LabelValue) (values []string) {
 	return values
 }
 
-func pointTypeError(point metricdata.Point) error {
-	return fmt.Errorf("point type %T is not yet supported", point)
+func typeMismatchError(point metricdata.Point) error {
+	return fmt.Errorf("point type %T does not match metric type", point)
 
 }
 
@@ -273,6 +273,6 @@ func toPromValue(point metricdata.Point) (float64, error) {
 	case int64:
 		return float64(v), nil
 	default:
-		return 0.0, pointTypeError(point)
+		return 0.0, typeMismatchError(point)
 	}
 }
