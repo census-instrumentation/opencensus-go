@@ -19,7 +19,6 @@ import (
 	"net/http"
 
 	"go.opencensus.io/exporter/prometheus"
-	"go.opencensus.io/stats/view"
 )
 
 func Example() {
@@ -27,7 +26,6 @@ func Example() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	view.RegisterExporter(exporter)
 
 	// Serve the scrape endpoint on port 9999.
 	http.Handle("/metrics", exporter)
