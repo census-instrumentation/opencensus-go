@@ -191,14 +191,14 @@ func main() {
 		metric.WithDescription("Instantaneous queue size"),
 		metric.WithUnit(metricdata.UnitDimensionless))
 	if err != nil {
-		log.Fatalf("error creating queue size derived gauge, error%v\n", err)
+		log.Fatalf("error creating queue size derived gauge, error %v\n", err)
 	}
 	// END size
 
 	// START entrySize
 	err = queueSizeGauge.UpsertEntry(q.Size)
 	if err != nil {
-		log.Fatalf("error getting queue size derived gauge entry, error%v\n", err)
+		log.Fatalf("error getting queue size derived gauge entry, error %v\n", err)
 	}
 	// END entrySize
 
@@ -209,14 +209,14 @@ func main() {
 		metric.WithDescription("time elapsed since last time the queue was processed"),
 		metric.WithUnit(metricdata.UnitDimensionless))
 	if err != nil {
-		log.Fatalf("error creating queue_seconds_since_processed_last derived gauge, error%v\n", err)
+		log.Fatalf("error creating queue_seconds_since_processed_last derived gauge, error %v\n", err)
 	}
 	// END elapsed
 
 	// START entryElapsed
 	err = elapsedSeconds.UpsertEntry(q.Elapsed)
 	if err != nil {
-		log.Fatalf("error getting queue_seconds_since_processed_last derived gauge entry, error%v\n", err)
+		log.Fatalf("error getting queue_seconds_since_processed_last derived gauge entry, error %v\n", err)
 	}
 	// END entryElapsed
 

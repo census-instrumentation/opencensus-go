@@ -3,7 +3,7 @@
 Table of Contents
 =================
 - [Summary](#summary)
-- [Run the example.](#run-the-example)
+- [Run the example](#run-the-example)
 - [How to use derived gauges?](#how-to-use-derived-gauges-)
   * [Initialize Metric Registry](#initialize-metric-registry)
   * [Create derived gauge metric](#create-derived-gauge-metric)
@@ -27,12 +27,12 @@ There are two metrics collected to monitor the queue.
    when the queue was consumed. It is represented using derived gauge float64.
 This example shows how to use gauge metrics. The program records two gauges.
 
-These metrics are read when exporter scrapes them. In these example prometheus exporter is used to
-scrape the data. Metrics can be viewed at [http://localhost:9090/metrcs](http://localhost:9090/metrcs) once the program is running.
+These metrics are read when exporter scrapes them. In this example prometheus exporter is used to
+scrape the data. Metrics can be viewed at [http://localhost:9090/metrics](http://localhost:9090/metrics) once the program is running.
 
 Enter different value for number of items to queue and fetch the metrics using above url to see the variation in the metrics.
 
-## Run the example.
+## Run the example
 
 ```
 $ go get go.opencensus.io/examples/derived_gauges/...
@@ -70,7 +70,7 @@ queueSizeGauge, err := r.AddInt64DerivedGauge(
 	metric.WithDescription("Instantaneous queue size"),
 	metric.WithUnit(metricdata.UnitDimensionless))
 if err != nil {
-	log.Fatalf("error creating queue size derived gauge, error%v\n", err)
+	log.Fatalf("error creating queue size derived gauge, error %v\n", err)
 }
 ```
 
@@ -83,7 +83,7 @@ elapsedSeconds, err := r.AddFloat64DerivedGauge(
 	metric.WithDescription("time elapsed since last time the queue was processed"),
 	metric.WithUnit(metricdata.UnitDimensionless))
 if err != nil {
-	log.Fatalf("error creating queue_seconds_since_processed_last derived gauge, error%v\n", err)
+	log.Fatalf("error creating queue_seconds_since_processed_last derived gauge, error %v\n", err)
 }
 ```
 
@@ -96,7 +96,7 @@ Now, create or insert a unique entry an interface `ToInt64` for a given set of t
 ```go
 err = queueSizeGauge.UpsertEntry(q.Size)
 if err != nil {
-	log.Fatalf("error getting queue size derived gauge entry, error%v\n", err)
+	log.Fatalf("error getting queue size derived gauge entry, error %v\n", err)
 }
 ```
 
@@ -106,7 +106,7 @@ if err != nil {
 ```go
 err = elapsedSeconds.UpsertEntry(q.Elapsed)
 if err != nil {
-	log.Fatalf("error getting queue_seconds_since_processed_last derived gauge entry, error%v\n", err)
+	log.Fatalf("error getting queue_seconds_since_processed_last derived gauge entry, error %v\n", err)
 }
 ```
 
@@ -309,12 +309,12 @@ func main() {
 		metric.WithDescription("Instantaneous queue size"),
 		metric.WithUnit(metricdata.UnitDimensionless))
 	if err != nil {
-		log.Fatalf("error creating queue size derived gauge, error%v\n", err)
+		log.Fatalf("error creating queue size derived gauge, error %v\n", err)
 	}
 
 	err = queueSizeGauge.UpsertEntry(q.Size)
 	if err != nil {
-		log.Fatalf("error getting queue size derived gauge entry, error%v\n", err)
+		log.Fatalf("error getting queue size derived gauge entry, error %v\n", err)
 	}
 
 	// Create Float64DerviedGauge
@@ -323,12 +323,12 @@ func main() {
 		metric.WithDescription("time elapsed since last time the queue was processed"),
 		metric.WithUnit(metricdata.UnitDimensionless))
 	if err != nil {
-		log.Fatalf("error creating queue_seconds_since_processed_last derived gauge, error%v\n", err)
+		log.Fatalf("error creating queue_seconds_since_processed_last derived gauge, error %v\n", err)
 	}
 
 	err = elapsedSeconds.UpsertEntry(q.Elapsed)
 	if err != nil {
-		log.Fatalf("error getting queue_seconds_since_processed_last derived gauge entry, error%v\n", err)
+		log.Fatalf("error getting queue_seconds_since_processed_last derived gauge entry, error %v\n", err)
 	}
 
 	cQuit := make(chan bool)
