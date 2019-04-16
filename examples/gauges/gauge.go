@@ -113,11 +113,11 @@ func getInput() int {
 }
 
 func work() {
-	fmt.Printf("Program periodically records following gauge metrics\n")
+	fmt.Printf("Program periodically records following gauge metrics.\n")
 	fmt.Printf("   1. process_heap_alloc = the heap allocation (used + freed but not garbage collected)\n")
 	fmt.Printf("   2. process_idle_to_alloc_ratio = heap idle (unused) /allocation ratio\n")
 	fmt.Printf("\nGo to http://localhost:9090/metrics to see the metrics.\n\n\n")
-	fmt.Printf("Enter memory you would like to allocate in MB to change the value of above metris.\n")
+	fmt.Printf("Enter memory you would like to allocate in MB to change the value of above metrics.\n")
 
 	// Do some work and record gauge metrics.
 	for {
