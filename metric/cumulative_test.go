@@ -39,9 +39,12 @@ func TestCumulative(t *testing.T) {
 	want := []*metricdata.Metric{
 		{
 			Descriptor: metricdata.Descriptor{
-				Name:      "TestCumulative",
-				LabelKeys: []string{"k1", "k2"},
-				Type:      metricdata.TypeCumulativeFloat64,
+				Name: "TestCumulative",
+				LabelKeys: []metricdata.LabelKey{
+					{Key: "k1", Description: "k1"},
+					{Key: "k2", Description: "k2"},
+				},
+				Type: metricdata.TypeCumulativeFloat64,
 			},
 			TimeSeries: []*metricdata.TimeSeries{
 				{

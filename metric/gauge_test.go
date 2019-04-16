@@ -41,9 +41,12 @@ func TestGauge(t *testing.T) {
 	want := []*metricdata.Metric{
 		{
 			Descriptor: metricdata.Descriptor{
-				Name:      "TestGauge",
-				LabelKeys: []string{"k1", "k2"},
-				Type:      metricdata.TypeGaugeFloat64,
+				Name: "TestGauge",
+				LabelKeys: []metricdata.LabelKey{
+					{Key: "k1", Description: "k1"},
+					{Key: "k2", Description: "k2"},
+				},
+				Type: metricdata.TypeGaugeFloat64,
 			},
 			TimeSeries: []*metricdata.TimeSeries{
 				{
@@ -136,9 +139,33 @@ func TestGaugeMetricOptionLabelKeys(t *testing.T) {
 	name := "testOptUnit"
 	gf, _ := r.AddFloat64Gauge(name, WithLabelKeys("k1", "k3"))
 	want := metricdata.Descriptor{
-		Name:      name,
-		LabelKeys: []string{"k1", "k3"},
-		Type:      metricdata.TypeGaugeFloat64,
+		Name: name,
+		LabelKeys: []metricdata.LabelKey{
+			{Key: "k1", Description: "k1"},
+			{Key: "k3", Description: "k3"},
+		},
+		Type: metricdata.TypeGaugeFloat64,
+	}
+	got := gf.bm.desc
+	if !cmp.Equal(got, want) {
+		t.Errorf("metric descriptor: got %v, want %v\n", got, want)
+	}
+}
+
+func TestGaugeMetricOptionLabelKeysAndDesc(t *testing.T) {
+	r := NewRegistry()
+	name := "testOptUnit"
+	lks := []metricdata.LabelKey{}
+	lks = append(lks, metricdata.LabelKey{Key: "k1", Description: "desc k1"},
+		metricdata.LabelKey{Key: "k3", Description: "desc k3"})
+	gf, _ := r.AddFloat64Gauge(name, WithLabelKeysAndDescription(lks...))
+	want := metricdata.Descriptor{
+		Name: name,
+		LabelKeys: []metricdata.LabelKey{
+			{Key: "k1", Description: "desc k1"},
+			{Key: "k3", Description: "desc k3"},
+		},
+		Type: metricdata.TypeGaugeFloat64,
 	}
 	got := gf.bm.desc
 	if !cmp.Equal(got, want) {
@@ -263,7 +290,7 @@ func TestMapKey(t *testing.T) {
 	for i, tc := range cases {
 		t.Run(fmt.Sprintf("case %d", i), func(t *testing.T) {
 			g := &baseMetric{
-				keys: make([]string, len(tc)),
+				keys: make([]metricdata.LabelKey, len(tc)),
 			}
 			mk := g.encodeLabelVals(tc)
 			vals := g.decodeLabelVals(mk)

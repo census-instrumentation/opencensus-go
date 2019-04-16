@@ -31,7 +31,7 @@ type Registry struct {
 //TODO: [rghetia] add constant labels.
 type metricOptions struct {
 	unit      metricdata.Unit
-	labelkeys []string
+	labelkeys []metricdata.LabelKey
 	desc      string
 }
 
@@ -53,7 +53,18 @@ func WithUnit(unit metricdata.Unit) Options {
 }
 
 // WithLabelKeys applies provided label.
-func WithLabelKeys(labelKeys ...string) Options {
+func WithLabelKeys(keys ...string) Options {
+	return func(mo *metricOptions) {
+		labelKeys := make([]metricdata.LabelKey, 0)
+		for _, key := range keys {
+			labelKeys = append(labelKeys, metricdata.LabelKey{Key: key, Description: key})
+		}
+		mo.labelkeys = labelKeys
+	}
+}
+
+// WithLabelKeysAndDescription applies provided label.
+func WithLabelKeysAndDescription(labelKeys ...metricdata.LabelKey) Options {
 	return func(mo *metricOptions) {
 		mo.labelkeys = labelKeys
 	}
