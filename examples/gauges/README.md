@@ -4,16 +4,16 @@
 Table of Contents
 =================
 
-* [Gauges](#gauges)
-    * [Run the example](#run-the-example)
-    * [How to use gauges?](#how-to-use-gauge?)
-        * [Initialize metric registry](#initialize-metric-registry)
-        * [Create gauge metric](#create-gauge-metric)
-        * [Create gauge entry](#create-gauge-entry)
-        * [Set gauge value](#set-gauge-values)
-        * [Complete example](#complete-example)
+- [Summary](#summary)
+- [Run the example](#run-the-example)
+- [How to use gauges?](#how-to-use-gauges-)
+  * [Initialize Metric Registry](#initialize-metric-registry)
+  * [Create gauge metric](#create-gauge-metric)
+  * [Create gauge entry](#create-gauge-entry)
+  * [Set gauge values](#set-gauge-values)
+  * [Complete Example](#complete-example)
 
-# Summary 
+## Summary 
 [top](#Table-of-Contents)
 
 This example shows how to use gauge metrics. The program records two gauges.
@@ -25,7 +25,7 @@ It periodically runs a function that retrieves the memory stats and updates the 
 Metrics can be viewed at [http://localhost:9090/metrcs](http://localhost:9090/metrcs) once the program is running.
 The program lets you choose the amount of memory (in MB) to consume. Choose different values and query the metrics to see the change in metrics.
 
-## Run the example.
+## Run the example
 
 ```
 $ go get go.opencensus.io/examples/gauges/...
@@ -37,7 +37,7 @@ then:
 $ go run $(go env GOPATH)/src/go.opencensus.io/examples/gauges/gauge.go
 ```
 
-## How to use gauge?
+## How to use gauges?
 
 ### Initialize Metric Registry
 Create a new metric registry for all your metrics.
@@ -213,11 +213,11 @@ func getInput() int {
 }
 
 func work() {
-	fmt.Printf("Program periodically records following gauge metrics\n")
+	fmt.Printf("Program periodically records following gauge metrics.\n")
 	fmt.Printf("   1. process_heap_alloc = the heap allocation (used + freed but not garbage collected)\n")
 	fmt.Printf("   2. process_idle_to_alloc_ratio = heap idle (unused) /allocation ratio\n")
 	fmt.Printf("\nGo to http://localhost:9090/metrics to see the metrics.\n\n\n")
-	fmt.Printf("Enter memory you would like to allocate in MB to change the value of above metris.\n")
+	fmt.Printf("Enter memory you would like to allocate in MB to change the value of above metrics.\n")
 
 	// Do some work and record gauge metrics.
 	for {
