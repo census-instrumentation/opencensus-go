@@ -132,6 +132,7 @@ func (q *queue) Elapsed() float64 {
 	defer q.mu.Unlock()
 	return time.Now().Sub(q.lastConsumed).Seconds()
 }
+
 ```
 
 
@@ -248,6 +249,7 @@ func (q *queue) Elapsed() float64 {
 	return time.Now().Sub(q.lastConsumed).Seconds()
 }
 
+
 func getInput() int {
 	reader := bufio.NewReader(os.Stdin)
 	limit := 100
@@ -330,6 +332,10 @@ func main() {
 	}
 
 	cQuit := make(chan bool)
+	defer func() {
+		cQuit <- true
+		close(cQuit)
+	}()
 
 	// Run consumer and producer
 	go q.runConsumer(5, cQuit)
@@ -337,8 +343,6 @@ func main() {
 	for {
 		doWork()
 	}
-	cQuit <- true
-	close(cQuit)
 }
 
 ```

@@ -126,6 +126,7 @@ func (q *queue) Elapsed() float64 {
 	defer q.mu.Unlock()
 	return time.Now().Sub(q.lastConsumed).Seconds()
 }
+
 // END tofloat64
 
 func getInput() int {
@@ -220,6 +221,10 @@ func main() {
 	// END entryElapsed
 
 	cQuit := make(chan bool)
+	defer func() {
+		cQuit <- true
+		close(cQuit)
+	}()
 
 	// Run consumer and producer
 	go q.runConsumer(5, cQuit)
@@ -227,8 +232,6 @@ func main() {
 	for {
 		doWork()
 	}
-	cQuit <- true
-	close(cQuit)
 }
 
 // END entire
