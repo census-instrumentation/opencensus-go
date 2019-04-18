@@ -170,14 +170,14 @@ func main() {
 		metric.WithDescription("Process heap allocation"),
 		metric.WithUnit(metricdata.UnitBytes))
 	if err != nil {
-		log.Fatalf("error creating heap allocation gauge, error%v\n", err)
+		log.Fatalf("error creating heap allocation gauge, error %v\n", err)
 	}
 	// END alloc
 
 	// START entryAlloc
 	allocEntry, err = allocGauge.GetEntry()
 	if err != nil {
-		log.Fatalf("error getting heap allocation gauge entry, error%v\n", err)
+		log.Fatalf("error getting heap allocation gauge entry, error %v\n", err)
 	}
 	// END entryAlloc
 
@@ -188,14 +188,14 @@ func main() {
 		metric.WithDescription("process heap idle to allocate ratio"),
 		metric.WithUnit(metricdata.UnitDimensionless))
 	if err != nil {
-		log.Fatalf("error creating process heap idle to allocate ratio gauge, error%v\n", err)
+		log.Fatalf("error creating process heap idle to allocate ratio gauge, error %v\n", err)
 	}
 	// END idle
 
 	// START entryIdle
 	ratioEntry, err = ratioGauge.GetEntry()
 	if err != nil {
-		log.Fatalf("error getting process heap idle to allocate ratio gauge entry, error%v\n", err)
+		log.Fatalf("error getting process heap idle to allocate ratio gauge entry, error %v\n", err)
 	}
 	// END entryIdle
 
