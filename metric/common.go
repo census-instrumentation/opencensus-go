@@ -33,7 +33,7 @@ type baseMetric struct {
 	vals   sync.Map
 	desc   metricdata.Descriptor
 	start  time.Time
-	keys   []string
+	keys   []metricdata.LabelKey
 	bmType baseMetricType
 }
 

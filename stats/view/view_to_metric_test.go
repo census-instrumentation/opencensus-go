@@ -50,7 +50,7 @@ var (
 	labelValues      []metricdata.LabelValue
 	emptyLabelValues []metricdata.LabelValue
 
-	labelKeys []string
+	labelKeys []metricdata.LabelKey
 
 	recordsInt64        []recordValWithTag
 	recordsFloat64      []recordValWithTag
@@ -125,7 +125,10 @@ func initTags() {
 		{Value: "", Present: false},
 		{Value: "", Present: false},
 	}
-	labelKeys = []string{tk1.Name(), tk2.Name()}
+	labelKeys = []metricdata.LabelKey{
+		{Key: tk1.Name()},
+		{Key: tk2.Name()},
+	}
 
 	recordsInt64 = []recordValWithTag{
 		{tags: tags, value: int64(2)},
