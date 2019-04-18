@@ -57,7 +57,7 @@ func WithLabelKeys(keys ...string) Options {
 	return func(mo *metricOptions) {
 		labelKeys := make([]metricdata.LabelKey, 0)
 		for _, key := range keys {
-			labelKeys = append(labelKeys, metricdata.LabelKey{Key: key, Description: key})
+			labelKeys = append(labelKeys, metricdata.LabelKey{Key: key})
 		}
 		mo.labelkeys = labelKeys
 	}

@@ -76,7 +76,7 @@ func getType(v *View) metricdata.Type {
 func getLableKeys(v *View) []metricdata.LabelKey {
 	labelKeys := []metricdata.LabelKey{}
 	for _, k := range v.TagKeys {
-		labelKeys = append(labelKeys, metricdata.LabelKey{Key: k.Name(), Description: k.Name()})
+		labelKeys = append(labelKeys, metricdata.LabelKey{Key: k.Name()})
 	}
 	return labelKeys
 }

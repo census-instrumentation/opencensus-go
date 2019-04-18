@@ -43,8 +43,8 @@ func TestGauge(t *testing.T) {
 			Descriptor: metricdata.Descriptor{
 				Name: "TestGauge",
 				LabelKeys: []metricdata.LabelKey{
-					{Key: "k1", Description: "k1"},
-					{Key: "k2", Description: "k2"},
+					{Key: "k1"},
+					{Key: "k2"},
 				},
 				Type: metricdata.TypeGaugeFloat64,
 			},
@@ -141,8 +141,8 @@ func TestGaugeMetricOptionLabelKeys(t *testing.T) {
 	want := metricdata.Descriptor{
 		Name: name,
 		LabelKeys: []metricdata.LabelKey{
-			{Key: "k1", Description: "k1"},
-			{Key: "k3", Description: "k3"},
+			{Key: "k1"},
+			{Key: "k3"},
 		},
 		Type: metricdata.TypeGaugeFloat64,
 	}

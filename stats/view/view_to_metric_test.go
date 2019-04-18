@@ -126,8 +126,8 @@ func initTags() {
 		{Value: "", Present: false},
 	}
 	labelKeys = []metricdata.LabelKey{
-		{Key: tk1.Name(), Description: tk1.Name()},
-		{Key: tk2.Name(), Description: tk2.Name()},
+		{Key: tk1.Name()},
+		{Key: tk2.Name()},
 	}
 
 	recordsInt64 = []recordValWithTag{

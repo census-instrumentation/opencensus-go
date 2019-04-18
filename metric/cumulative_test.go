@@ -41,8 +41,8 @@ func TestCumulative(t *testing.T) {
 			Descriptor: metricdata.Descriptor{
 				Name: "TestCumulative",
 				LabelKeys: []metricdata.LabelKey{
-					{Key: "k1", Description: "k1"},
-					{Key: "k2", Description: "k2"},
+					{Key: "k1"},
+					{Key: "k2"},
 				},
 				Type: metricdata.TypeCumulativeFloat64,
 			},
