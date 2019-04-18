@@ -63,7 +63,7 @@ allocGauge, err := r.AddInt64Gauge(
 	metric.WithDescription("Process heap allocation"),
 	metric.WithUnit(metricdata.UnitBytes))
 if err != nil {
-	log.Fatalf("error creating heap allocation gauge, error%v\n", err)
+	log.Fatalf("error creating heap allocation gauge, error %v\n", err)
 }
 ```
 
@@ -76,7 +76,7 @@ ratioGauge, err := r.AddFloat64Gauge(
 	metric.WithDescription("process heap idle to allocate ratio"),
 	metric.WithUnit(metricdata.UnitDimensionless))
 if err != nil {
-	log.Fatalf("error creating process heap idle to allocate ratio gauge, error%v\n", err)
+	log.Fatalf("error creating process heap idle to allocate ratio gauge, error %v\n", err)
 }
 ```
 
@@ -89,7 +89,7 @@ Now, create or get a unique entry (equivalent of a row in a table) for a given s
 ```go
 allocEntry, err = allocGauge.GetEntry()
 if err != nil {
-	log.Fatalf("error getting heap allocation gauge entry, error%v\n", err)
+	log.Fatalf("error getting heap allocation gauge entry, error %v\n", err)
 }
 ```
 
@@ -99,7 +99,7 @@ if err != nil {
 ```go
 ratioEntry, err = ratioGauge.GetEntry()
 if err != nil {
-	log.Fatalf("error getting process heap idle to allocate ratio gauge entry, error%v\n", err)
+	log.Fatalf("error getting process heap idle to allocate ratio gauge entry, error %v\n", err)
 }
 ```
 
@@ -269,12 +269,12 @@ func main() {
 		metric.WithDescription("Process heap allocation"),
 		metric.WithUnit(metricdata.UnitBytes))
 	if err != nil {
-		log.Fatalf("error creating heap allocation gauge, error%v\n", err)
+		log.Fatalf("error creating heap allocation gauge, error %v\n", err)
 	}
 
 	allocEntry, err = allocGauge.GetEntry()
 	if err != nil {
-		log.Fatalf("error getting heap allocation gauge entry, error%v\n", err)
+		log.Fatalf("error getting heap allocation gauge entry, error %v\n", err)
 	}
 
 	// Create Float64Gauge to report fractional cpu consumed by Garbage Collection.
@@ -283,12 +283,12 @@ func main() {
 		metric.WithDescription("process heap idle to allocate ratio"),
 		metric.WithUnit(metricdata.UnitDimensionless))
 	if err != nil {
-		log.Fatalf("error creating process heap idle to allocate ratio gauge, error%v\n", err)
+		log.Fatalf("error creating process heap idle to allocate ratio gauge, error %v\n", err)
 	}
 
 	ratioEntry, err = ratioGauge.GetEntry()
 	if err != nil {
-		log.Fatalf("error getting process heap idle to allocate ratio gauge entry, error%v\n", err)
+		log.Fatalf("error getting process heap idle to allocate ratio gauge entry, error %v\n", err)
 	}
 
 	// record gauge metrics every 5 seconds. This example records the gauges periodically. However,
