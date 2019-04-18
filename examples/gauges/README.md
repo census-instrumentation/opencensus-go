@@ -117,12 +117,29 @@ Use `Set` or `Add` function to update the value of gauge entries. You can call t
 
 [embedmd]:# (gauge.go entire)
 ```go
+
+// This example shows how to use gauge metrics. The program records two gauges, one to demonstrate
+// a gauge with int64 value and the other to demonstrate a gauge with float64 value.
+//
+// Metrics
+//
+// 1. process_heap_alloc (int64): Total bytes used by objects allocated in the heap.
+// It includes objects currently used and objects that are freed but not garbage collected.
+//
+// 2. process_heap_idle_to_alloc_ratio (float64): It is the ratio of Idle bytes to allocated
+// bytes in the heap.
+//
+// It periodically runs a function that retrieves the memory stats and updates the above two
+// metrics. These metrics are then exported using prometheus exporter.
+// The program lets you choose the amount of memory (in MB) to consume. Choose different values
+// and query the metrics to see the change in metrics.
 package main
 
 import (
 	"bufio"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"runtime"
 	"strconv"
@@ -133,7 +150,6 @@ import (
 	"go.opencensus.io/metric"
 	"go.opencensus.io/metric/metricdata"
 	"go.opencensus.io/metric/metricproducer"
-	"net/http"
 )
 
 var (

@@ -11,44 +11,47 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+//
 
-// Command stats implements the stats Quick Start example from:
-//   https://opencensus.io/quickstart/go/metrics/
 // START entire
+
+// This example demonstrates the use of derived gauges. It is a simple interactive program of consumer
+// and producer. User can input number of items to produce. Producer produces specified number of
+// items. Consumer randomly consumes 1-5 items in each attempt. It then sleeps randomly
+// between 1-10 seconds before the next attempt. Two metrics collected to monitor the queue.
+//
+// Metrics
+//
+// * queue_size: It is an instantaneous queue size represented using derived gauge int64.
+//
+// * queue_seconds_since_processed_last: It is the time elaspsed in seconds since the last time
+// when the queue was consumed. It is represented using derived gauge float64.
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"log"
 	"math/rand"
-	"sync"
-	"time"
-
-	"bufio"
-	"go.opencensus.io/exporter/prometheus"
-	"go.opencensus.io/metric"
-	"go.opencensus.io/metric/metricdata"
-	"go.opencensus.io/metric/metricproducer"
 	"net/http"
 	"os"
 	"strconv"
 	"strings"
+	"sync"
+	"time"
+
+	"go.opencensus.io/exporter/prometheus"
+	"go.opencensus.io/metric"
+	"go.opencensus.io/metric/metricdata"
+	"go.opencensus.io/metric/metricproducer"
 )
 
-// This example demonstrates the use of derived gauges. It is a simple interactive program of consumer
-// and producer. User can input number of items to produce. Producer produces specified number of
-// items. Consumer consumes randomly consumes 1-5 items in each attempt. It then sleeps randomly
-// between 1-10 seconds before the next attempt.
-//
-// There are two metrics collected to monitor the queue.
-// 1. queue_size: It is an instantaneous queue size represented using derived gauge int64.
-// 2. queue_seconds_since_processed_last: It is the time elaspsed in seconds since the last time
-//    when the queue was consumed. It is represented using derived gauge float64.
 type queue struct {
 	size         int
-	q            []int
 	lastConsumed time.Time
-	mu           sync.Mutex
+
+	mu sync.Mutex
+	q  []int
 }
 
 var q = &queue{}
@@ -94,8 +97,8 @@ func (q *queue) produce(count int) {
 	fmt.Printf("queued %d items, queue size is %d\n", count, q.size)
 }
 
-func (q *queue) runConsumer(interval int, cQuit chan bool) {
-	t := time.NewTicker(time.Duration(interval) * time.Second)
+func (q *queue) runConsumer(interval time.Duration, cQuit chan bool) {
+	t := time.NewTicker(interval)
 	for {
 		select {
 		case <-t.C:
@@ -220,14 +223,13 @@ func main() {
 	}
 	// END entryElapsed
 
-	cQuit := make(chan bool)
+	quit := make(chan bool)
 	defer func() {
-		cQuit <- true
-		close(cQuit)
+		close(quit)
 	}()
 
 	// Run consumer and producer
-	go q.runConsumer(5, cQuit)
+	go q.runConsumer(5*time.Second, quit)
 
 	for {
 		doWork()
