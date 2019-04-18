@@ -192,9 +192,9 @@ func (me *descExporter) ExportMetrics(ctx context.Context, metrics []*metricdata
 	return nil
 }
 
-func toPromLabels(mls []string) (labels []string) {
+func toPromLabels(mls []metricdata.LabelKey) (labels []string) {
 	for _, ml := range mls {
-		labels = append(labels, internal.Sanitize(ml))
+		labels = append(labels, internal.Sanitize(ml.Key))
 	}
 	return labels
 }

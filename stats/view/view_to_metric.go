@@ -73,10 +73,10 @@ func getType(v *View) metricdata.Type {
 	}
 }
 
-func getLableKeys(v *View) []string {
-	labelKeys := []string{}
+func getLableKeys(v *View) []metricdata.LabelKey {
+	labelKeys := []metricdata.LabelKey{}
 	for _, k := range v.TagKeys {
-		labelKeys = append(labelKeys, k.Name())
+		labelKeys = append(labelKeys, metricdata.LabelKey{Key: k.Name()})
 	}
 	return labelKeys
 }
@@ -91,7 +91,7 @@ func viewToMetricDescriptor(v *View) *metricdata.Descriptor {
 	}
 }
 
-func toLabelValues(row *Row, expectedKeys []string) []metricdata.LabelValue {
+func toLabelValues(row *Row, expectedKeys []metricdata.LabelKey) []metricdata.LabelValue {
 	labelValues := []metricdata.LabelValue{}
 	tagMap := make(map[string]string)
 	for _, tag := range row.Tags {
@@ -99,7 +99,7 @@ func toLabelValues(row *Row, expectedKeys []string) []metricdata.LabelValue {
 	}
 
 	for _, key := range expectedKeys {
-		if val, ok := tagMap[key]; ok {
+		if val, ok := tagMap[key.Key]; ok {
 			labelValues = append(labelValues, metricdata.NewLabelValue(val))
 		} else {
 			labelValues = append(labelValues, metricdata.LabelValue{})
