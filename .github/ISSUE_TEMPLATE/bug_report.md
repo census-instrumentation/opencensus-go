@@ -9,7 +9,7 @@ Please answer these questions before submitting a bug report.
 ### What version of OpenCensus are you using?
 
 
-### What version of Node are you using?
+### What version of Go are you using?
 
 
 ### What did you do?
