@@ -4,7 +4,7 @@ about: Suggest an idea for this project
 labels: feature-request, triage-me
 ---
 
-**NB:** Before opening a feature request against this repo, consider whether the feature should/could be implemented in other the OpenCensus libraries in other languages. If so, please [open an issue on opencensus-specs](https://github.com/census-instrumentation/opencensus-specs/issues/new) first.
+**NB:** Before opening a feature request against this repo, consider whether the feature should/could be implemented in OpenCensus libraries in other languages. If so, please [open an issue on opencensus-specs](https://github.com/census-instrumentation/opencensus-specs/issues/new) first.
 
 
 
