@@ -1,21 +1,26 @@
 ---
 name: Bug report
 about: Create a report to help us improve
-
+labels: bug, triage-me
 ---
 
-**Describe the bug**
-A clear and concise description of what the bug is.
+Please answer these questions before submitting a bug report.
 
-**To Reproduce**
-Steps to reproduce the behavior:
-1. Go to '...'
-2. Click on '....'
-3. Scroll down to '....'
-4. See error
+### What version of OpenCensus are you using?
 
-**Expected behavior**
-A clear and concise description of what you expected to happen.
 
-**Additional context**
+### What version of Node are you using?
+
+
+### What did you do?
+If possible, provide a recipe for reproducing the error.
+
+
+### What did you expect to see?
+
+
+### What did you see instead?
+
+
+### Additional context
 Add any other context about the problem here.
