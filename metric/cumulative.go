@@ -59,25 +59,6 @@ func (c *Float64Cumulative) GetEntry(labelVals ...metricdata.LabelValue) (*Float
 	return entry.(*Float64CumulativeEntry), nil
 }
 
-// Set sets the cumulative entry value to provided val. It returns without updating if the value is
-// negative or lower than previously stored value.
-func (e *Float64CumulativeEntry) Set(val float64) {
-	var swapped, equalOrLess bool
-	if val <= 0.0 {
-		return
-	}
-	for !swapped && !equalOrLess {
-		oldBits := atomic.LoadUint64(&e.val)
-		oldVal := math.Float64frombits(oldBits)
-		if val > oldVal {
-			valBits := math.Float64bits(val)
-			swapped = atomic.CompareAndSwapUint64(&e.val, oldBits, valBits)
-		} else {
-			equalOrLess = true
-		}
-	}
-}
-
 // Inc increments the cumulative entry value by val. It returns without incrementing if the val
 // is negative.
 func (e *Float64CumulativeEntry) Inc(val float64) {
@@ -127,23 +108,6 @@ func (c *Int64Cumulative) GetEntry(labelVals ...metricdata.LabelValue) (*Int64Cu
 		return nil, err
 	}
 	return entry.(*Int64CumulativeEntry), nil
-}
-
-// Set sets the value of the cumulative entry to the provided value. It returns without updating
-// if the val is negative or if the val is lower than previously stored value.
-func (e *Int64CumulativeEntry) Set(val int64) {
-	var swapped, equalOrLess bool
-	if val <= 0 {
-		return
-	}
-	for !swapped && !equalOrLess {
-		old := atomic.LoadInt64(&e.val)
-		if val > old {
-			swapped = atomic.CompareAndSwapInt64(&e.val, old, val)
-		} else {
-			equalOrLess = true
-		}
-	}
 }
 
 // Inc increments the current cumulative entry value by val. It returns without incrementing if
