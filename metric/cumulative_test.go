@@ -28,7 +28,7 @@ func TestCumulative(t *testing.T) {
 	f, _ := r.AddFloat64Cumulative("TestCumulative",
 		WithLabelKeys("k1", "k2"))
 	e, _ := f.GetEntry(metricdata.LabelValue{}, metricdata.LabelValue{})
-	e.Set(5)
+	e.Inc(5)
 	e, _ = f.GetEntry(metricdata.NewLabelValue("k1v1"), metricdata.LabelValue{})
 	e.Inc(1)
 	e, _ = f.GetEntry(metricdata.NewLabelValue("k1v1"), metricdata.LabelValue{})
@@ -103,7 +103,7 @@ func readAndCompareInt64Val(testname string, r *Registry, want int64, t *testing
 	}
 }
 
-func TestInt64CumulativeEntry_IncAndSet(t *testing.T) {
+func TestInt64CumulativeEntry_IncNegative(t *testing.T) {
 	r := NewRegistry()
 	g, _ := r.AddInt64Cumulative("bm")
 	e, _ := g.GetEntry()
@@ -111,12 +111,6 @@ func TestInt64CumulativeEntry_IncAndSet(t *testing.T) {
 	readAndCompareInt64Val("inc", r, 5, t)
 	e.Inc(-2)
 	readAndCompareInt64Val("inc negative", r, 5, t)
-	e.Set(-2)
-	readAndCompareInt64Val("set negative", r, 5, t)
-	e.Set(4)
-	readAndCompareInt64Val("set lower", r, 5, t)
-	e.Set(9)
-	readAndCompareInt64Val("set higher", r, 9, t)
 }
 
 func readAndCompareFloat64Val(testname string, r *Registry, want float64, t *testing.T) {
@@ -126,7 +120,7 @@ func readAndCompareFloat64Val(testname string, r *Registry, want float64, t *tes
 	}
 }
 
-func TestFloat64CumulativeEntry_IncAndSet(t *testing.T) {
+func TestFloat64CumulativeEntry_IncNegative(t *testing.T) {
 	r := NewRegistry()
 	g, _ := r.AddFloat64Cumulative("bm")
 	e, _ := g.GetEntry()
@@ -134,12 +128,6 @@ func TestFloat64CumulativeEntry_IncAndSet(t *testing.T) {
 	readAndCompareFloat64Val("inc", r, 5.0, t)
 	e.Inc(-2.0)
 	readAndCompareFloat64Val("inc negative", r, 5.0, t)
-	e.Set(-2.0)
-	readAndCompareFloat64Val("set negative", r, 5.0, t)
-	e.Set(4.0)
-	readAndCompareFloat64Val("set lower", r, 5.0, t)
-	e.Set(9.9)
-	readAndCompareFloat64Val("set higher", r, 9.9, t)
 }
 
 func TestCumulativeWithSameNameDiffType(t *testing.T) {
