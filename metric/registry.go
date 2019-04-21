@@ -37,11 +37,12 @@ const (
 	derivedGaugeFloat64
 )
 
-//TODO: [rghetia] add constant labels.
 type metricOptions struct {
-	unit      metricdata.Unit
-	labelkeys []string
-	desc      string
+	unit             metricdata.Unit
+	labelkeys        []string
+	constLabelkeys   []string
+	constLabelValues []metricdata.LabelValue
+	desc             string
 }
 
 // Options apply changes to metricOptions.
@@ -61,10 +62,18 @@ func WithUnit(unit metricdata.Unit) Options {
 	}
 }
 
-// WithLabelKeys applies provided label.
+// WithLabelKeys applies provided label keys.
 func WithLabelKeys(labelKeys ...string) Options {
 	return func(mo *metricOptions) {
 		mo.labelkeys = labelKeys
+	}
+}
+
+// WithConstLabel applies provided constant label.
+func WithConstLabel(labelKey, labelValue string) Options {
+	return func(mo *metricOptions) {
+		mo.constLabelkeys = append(mo.constLabelkeys, labelKey)
+		mo.constLabelValues = append(mo.constLabelValues, metricdata.NewLabelValue(labelValue))
 	}
 }
 
@@ -166,12 +175,13 @@ func (r *Registry) initGauge(g *gauge, name string, mos ...Options) (*gauge, err
 	}
 	g.start = time.Now()
 	o := createMetricOption(mos...)
-	g.keys = o.labelkeys
+	g.keys = append(o.constLabelkeys, o.labelkeys...)
+	g.constLabelValues = o.constLabelValues
 	g.desc = metricdata.Descriptor{
 		Name:        name,
 		Description: o.desc,
 		Unit:        o.unit,
-		LabelKeys:   o.labelkeys,
+		LabelKeys:   g.keys,
 		Type:        gTypeToMetricType(g),
 	}
 	r.gauges.Store(name, g)

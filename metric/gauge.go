@@ -32,11 +32,12 @@ import (
 //
 // gauge should not be used directly, use Float64Gauge or Int64Gauge.
 type gauge struct {
-	vals  sync.Map
-	desc  metricdata.Descriptor
-	start time.Time
-	keys  []string
-	gType gaugeType
+	vals             sync.Map
+	desc             metricdata.Descriptor
+	start            time.Time
+	keys             []string
+	constLabelValues []metricdata.LabelValue
+	gType            gaugeType
 }
 
 type gaugeEntry interface {
@@ -142,6 +143,7 @@ func (e *Float64Entry) read(t time.Time) metricdata.Point {
 // The number of label values supplied must be exactly the same as the number
 // of keys supplied when this gauge was created.
 func (g *Float64Gauge) GetEntry(labelVals ...metricdata.LabelValue) (*Float64Entry, error) {
+	labelVals = append(g.g.constLabelValues, labelVals...)
 	entry, err := g.g.entryForValues(labelVals, func() gaugeEntry {
 		return &Float64Entry{}
 	})
