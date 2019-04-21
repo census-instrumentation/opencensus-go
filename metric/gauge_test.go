@@ -93,7 +93,6 @@ func TestGaugeConstLabel(t *testing.T) {
 	e.Set(5)
 	e, _ = f.GetEntry(metricdata.NewLabelValue("k1v1"))
 	e.Add(1)
-	e, _ = f.GetEntry(metricdata.NewLabelValue("k1v1"))
 	m := r.Read()
 	want := []*metricdata.Metric{
 		{
