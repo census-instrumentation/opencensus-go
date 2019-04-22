@@ -58,7 +58,7 @@ func TestRecordWithAttachments(t *testing.T) {
 	}
 
 	attachments := map[string]interface{}{metricdata.AttachmentKeySpanContext: spanCtx}
-	stats.RecordWithAttachments(context.Background(), attachments, m.M(12))
+	stats.RecordWithOptions(context.Background(), stats.WithAttachments(attachments), stats.WithMeasurements(m.M(12)))
 	rows, err := view.RetrieveData("test_view")
 	if err != nil {
 		t.Errorf("Failed to retrieve data %v", err)
