@@ -21,8 +21,11 @@ This example shows how to use gauge metrics. The program records two gauges.
 1. **process_heap_alloc (int64)**: Total bytes used by objects allocated in the heap. It includes objects currently used and objects that are freed but not garbage collected.
 1. **process_heap_idle_to_alloc_ratio (float64)**: It is the ratio of Idle bytes to allocated bytes in the heap.
 
-It periodically runs a function that retrieves the memory stats and updates the above two metrics. These metrics are then exported using prometheus exporter.
-Metrics can be viewed at [http://localhost:9090/metrcs](http://localhost:9090/metrcs) once the program is running.
+It periodically runs a function that retrieves the memory stats and updates the above two metrics.
+These metrics are then exported using log exporter. Metrics can be viewed at
+[file:///tmp/metrics.log](file:///tmp/metrics.log) 
+once the program is running. Alternatively you could do `tail -f /tmp/metrics.log` on Linux/OSx.
+
 The program lets you choose the amount of memory (in MB) to consume. Choose different values and query the metrics to see the change in metrics.
 
 ## Run the example
@@ -130,7 +133,7 @@ Use `Set` or `Add` function to update the value of gauge entries. You can call t
 // bytes in the heap.
 //
 // It periodically runs a function that retrieves the memory stats and updates the above two
-// metrics. These metrics are then exported using prometheus exporter.
+// metrics. These metrics are then exported using log exporter.
 // The program lets you choose the amount of memory (in MB) to consume. Choose different values
 // and query the metrics to see the change in metrics.
 package main
@@ -139,17 +142,20 @@ import (
 	"bufio"
 	"fmt"
 	"log"
-	"net/http"
 	"os"
 	"runtime"
 	"strconv"
 	"strings"
 	"time"
 
-	"go.opencensus.io/exporter/prometheus"
+	"go.opencensus.io/examples/exporter"
 	"go.opencensus.io/metric"
 	"go.opencensus.io/metric/metricdata"
 	"go.opencensus.io/metric/metricproducer"
+)
+
+const (
+	metricsLogFile = "/tmp/metrics.log"
 )
 
 var (
@@ -232,7 +238,8 @@ func work() {
 	fmt.Printf("Program periodically records following gauge metrics.\n")
 	fmt.Printf("   1. process_heap_alloc = the heap allocation (used + freed but not garbage collected)\n")
 	fmt.Printf("   2. process_idle_to_alloc_ratio = heap idle (unused) /allocation ratio\n")
-	fmt.Printf("\nGo to http://localhost:9090/metrics to see the metrics.\n\n\n")
+	fmt.Printf("\nGo to file://%s to see the metrics. OR do `tail -f %s` in another terminal\n\n\n",
+		metricsLogFile, metricsLogFile)
 	fmt.Printf("Enter memory you would like to allocate in MB to change the value of above metrics.\n")
 
 	// Do some work and record gauge metrics.
@@ -243,21 +250,18 @@ func work() {
 	}
 }
 
-func createAndStartExporter() {
-	// Create Prometheus metrics exporter to verify gauge metrics in this example.
-	exporter, err := prometheus.NewExporter(prometheus.Options{})
-	if err != nil {
-		log.Fatalf("Failed to create the prometheus metrics exporter: %v", err)
-	}
-	http.Handle("/metrics", exporter)
-	go func() {
-		log.Fatal(http.ListenAndServe(":9090", nil))
-
-	}()
-}
-
 func main() {
-	createAndStartExporter()
+	// Using log exporter to export metrics but you can choose any supported exporter.
+	exporter, err := exporter.NewLogExporter(exporter.Options{
+		ReportingInterval: time.Duration(10 * time.Second),
+		MetricsLogFile:    metricsLogFile,
+	})
+	if err != nil {
+		log.Fatalf("Error creating log exporter: %v", err)
+	}
+	exporter.Start()
+	defer exporter.Stop()
+	defer exporter.Close()
 
 	// Create metric registry and register it with global producer manager.
 	r := metric.NewRegistry()
