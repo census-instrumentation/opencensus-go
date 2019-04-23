@@ -101,6 +101,9 @@ type Mutator interface {
 // value associated with k. If k already exists in the tag map,
 // mutator doesn't update the value.
 // Metadata applies metadata to the tag. It is optional.
+// Metadatas are applied in the order in which it is provided.
+// If more than one metadata updates the same attribute then
+// the update from the last metadata prevails.
 func Insert(k Key, v string, mds ...Metadata) Mutator {
 	return &mutator{
 		fn: func(m *Map) (*Map, error) {
@@ -117,6 +120,9 @@ func Insert(k Key, v string, mds ...Metadata) Mutator {
 // value of the tag associated with k with v. If k doesn't
 // exists in the tag map, the mutator doesn't insert the value.
 // Metadata applies metadata to the tag. It is optional.
+// Metadatas are applied in the order in which it is provided.
+// If more than one metadata updates the same attribute then
+// the update from the last metadata prevails.
 func Update(k Key, v string, mds ...Metadata) Mutator {
 	return &mutator{
 		fn: func(m *Map) (*Map, error) {

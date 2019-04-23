@@ -261,15 +261,33 @@ func TestNewMapWithMetadata(t *testing.T) {
 				tagContent{"4", ttlNoPropMd}),
 		},
 		{
-			name: "from non-existing; upsert with multiple-metadata",
-			initial: makeTestTagMapWithMetadata(
-				tagContent{"5", ttlNoPropMd}),
+			name:    "from non-existing; upsert with multiple-metadata",
+			initial: nil,
 			mods: []Mutator{
 				Upsert(k4, "4", WithTTL(TTLUnlimitedPropagation), WithTTL(TTLNoPropagation)),
 				Upsert(k5, "5", WithTTL(TTLNoPropagation), WithTTL(TTLUnlimitedPropagation)),
 			},
 			want: makeTestTagMapWithMetadata(
 				tagContent{"4", ttlNoPropMd},
+				tagContent{"5", ttlUnlimitedPropMd}),
+		},
+		{
+			name:    "from non-existing; insert with multiple-metadata",
+			initial: nil,
+			mods: []Mutator{
+				Insert(k5, "5", WithTTL(TTLNoPropagation), WithTTL(TTLUnlimitedPropagation)),
+			},
+			want: makeTestTagMapWithMetadata(
+				tagContent{"5", ttlUnlimitedPropMd}),
+		},
+		{
+			name: "from existing; update with multiple-metadata",
+			initial: makeTestTagMapWithMetadata(
+				tagContent{"5", ttlNoPropMd}),
+			mods: []Mutator{
+				Update(k5, "5", WithTTL(TTLNoPropagation), WithTTL(TTLUnlimitedPropagation)),
+			},
+			want: makeTestTagMapWithMetadata(
 				tagContent{"5", ttlUnlimitedPropMd}),
 		},
 		{
