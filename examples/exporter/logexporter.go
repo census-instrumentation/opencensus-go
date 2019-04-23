@@ -13,7 +13,7 @@
 // limitations under the License.
 
 // Package exporter contains a log exporter that supports exporting
-// OpenCensus metrics to a logging framework.
+// OpenCensus metrics and spans to a logging framework.
 package exporter // import "go.opencensus.io/examples/exporter"
 
 import (
@@ -30,7 +30,7 @@ import (
 	"go.opencensus.io/trace"
 )
 
-// LogExporter exports stats to log file
+// LogExporter exports metrics and span to log file
 type LogExporter struct {
 	reader         *metricexport.Reader
 	ir             *metricexport.IntervalReader
@@ -52,7 +52,7 @@ type Options struct {
 	// If it is nil then the metrics are logged on console
 	MetricsLogFile string
 
-	//TracesLogFile is path where exported span data are logged.
+	// TracesLogFile is path where exported span data are logged.
 	// If it is nil then the span data are logged on console
 	TracesLogFile string
 }
@@ -103,8 +103,9 @@ func printPoint(point metricdata.Point) string {
 	}
 }
 
-// Start starts the metric exporter.
+// Start starts the metric and span data exporter.
 func (e *LogExporter) Start() error {
+	trace.RegisterExporter(e)
 	e.initReaderOnce.Do(func() {
 		e.ir, _ = metricexport.NewIntervalReader(&metricexport.Reader{}, e)
 	})
@@ -112,8 +113,9 @@ func (e *LogExporter) Start() error {
 	return e.ir.Start()
 }
 
-// Stop stops the metric exporter.
+// Stop stops the metric and span data exporter.
 func (e *LogExporter) Stop() {
+	trace.UnregisterExporter(e)
 	e.ir.Stop()
 }
 
