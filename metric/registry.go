@@ -15,6 +15,7 @@
 package metric
 
 import (
+	"sort"
 	"sync"
 	"time"
 
@@ -28,11 +29,11 @@ type Registry struct {
 	baseMetrics sync.Map
 }
 
-//TODO: [rghetia] add constant labels.
 type metricOptions struct {
-	unit      metricdata.Unit
-	labelkeys []metricdata.LabelKey
-	desc      string
+	unit        metricdata.Unit
+	labelkeys   []metricdata.LabelKey
+	constLabels map[metricdata.LabelKey]metricdata.LabelValue
+	desc        string
 }
 
 // Options apply changes to metricOptions.
@@ -67,6 +68,13 @@ func WithLabelKeys(keys ...string) Options {
 func WithLabelKeysAndDescription(labelKeys ...metricdata.LabelKey) Options {
 	return func(mo *metricOptions) {
 		mo.labelkeys = labelKeys
+	}
+}
+
+// WithConstLabel applies provided constant label.
+func WithConstLabel(constLabels map[metricdata.LabelKey]metricdata.LabelValue) Options {
+	return func(mo *metricOptions) {
+		mo.constLabels = constLabels
 	}
 }
 
@@ -236,12 +244,28 @@ func (r *Registry) initBaseMetric(bm *baseMetric, name string, mos ...Options) (
 	}
 	bm.start = time.Now()
 	o := createMetricOption(mos...)
-	bm.keys = o.labelkeys
+
+	var constLabelKeys []metricdata.LabelKey
+	for k := range o.constLabels {
+		constLabelKeys = append(constLabelKeys, k)
+	}
+	sort.Slice(constLabelKeys, func(i, j int) bool {
+		return constLabelKeys[i].Key < constLabelKeys[j].Key
+	})
+
+	var constLabelValues []metricdata.LabelValue
+	for _, k := range constLabelKeys {
+		constLabelValues = append(constLabelValues, o.constLabels[k])
+	}
+
+	bm.keys = append(constLabelKeys, o.labelkeys...)
+	bm.constLabelValues = constLabelValues
+
 	bm.desc = metricdata.Descriptor{
 		Name:        name,
 		Description: o.desc,
 		Unit:        o.unit,
-		LabelKeys:   o.labelkeys,
+		LabelKeys:   bm.keys,
 		Type:        bmTypeToMetricType(bm),
 	}
 	r.baseMetrics.Store(name, bm)
