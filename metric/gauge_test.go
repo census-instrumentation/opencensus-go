@@ -16,12 +16,13 @@ package metric
 
 import (
 	"fmt"
-	"go.opencensus.io/metric/metricdata"
 	"sort"
 	"testing"
 	"time"
 
 	"github.com/google/go-cmp/cmp"
+
+	"go.opencensus.io/metric/metricdata"
 )
 
 func TestGauge(t *testing.T) {
@@ -70,6 +71,62 @@ func TestGauge(t *testing.T) {
 					LabelValues: []metricdata.LabelValue{
 						metricdata.NewLabelValue("k1v2"),
 						metricdata.NewLabelValue("k2v2"),
+					},
+					Points: []metricdata.Point{
+						metricdata.NewFloat64Point(time.Time{}, 1),
+					},
+				},
+			},
+		},
+	}
+	canonicalize(m)
+	canonicalize(want)
+	if diff := cmp.Diff(m, want, cmp.Comparer(ignoreTimes)); diff != "" {
+		t.Errorf("-got +want: %s", diff)
+	}
+}
+
+func TestGaugeConstLabel(t *testing.T) {
+	r := NewRegistry()
+
+	f, _ := r.AddFloat64Gauge("TestGaugeWithConstLabel",
+		WithLabelKeys("k1"),
+		WithConstLabel(map[metricdata.LabelKey]metricdata.LabelValue{
+			{Key: "const"}:  metricdata.NewLabelValue("same"),
+			{Key: "const2"}: metricdata.NewLabelValue("same2"),
+		}))
+
+	e, _ := f.GetEntry(metricdata.LabelValue{})
+	e.Set(5)
+	e, _ = f.GetEntry(metricdata.NewLabelValue("k1v1"))
+	e.Add(1)
+	m := r.Read()
+	want := []*metricdata.Metric{
+		{
+			Descriptor: metricdata.Descriptor{
+				Name: "TestGaugeWithConstLabel",
+				LabelKeys: []metricdata.LabelKey{
+					{Key: "const"},
+					{Key: "const2"},
+					{Key: "k1"}},
+				Type: metricdata.TypeGaugeFloat64,
+			},
+			TimeSeries: []*metricdata.TimeSeries{
+				{
+					LabelValues: []metricdata.LabelValue{
+						metricdata.NewLabelValue("same"),
+						metricdata.NewLabelValue("same2"),
+						{},
+					},
+					Points: []metricdata.Point{
+						metricdata.NewFloat64Point(time.Time{}, 5),
+					},
+				},
+				{
+					LabelValues: []metricdata.LabelValue{
+						metricdata.NewLabelValue("same"),
+						metricdata.NewLabelValue("same2"),
+						metricdata.NewLabelValue("k1v1"),
 					},
 					Points: []metricdata.Point{
 						metricdata.NewFloat64Point(time.Time{}, 1),
@@ -330,20 +387,18 @@ func canonicalize(ms []*metricdata.Metric) {
 	for _, m := range ms {
 		sort.Slice(m.TimeSeries, func(i, j int) bool {
 			// sort time series by their label values
-			iLabels := m.TimeSeries[i].LabelValues
-			jLabels := m.TimeSeries[j].LabelValues
-			for k := 0; k < len(iLabels); k++ {
-				if !iLabels[k].Present {
-					if jLabels[k].Present {
-						return true
-					}
-				} else if !jLabels[k].Present {
-					return false
-				} else {
-					return iLabels[k].Value < jLabels[k].Value
-				}
+			iStr := ""
+
+			for _, label := range m.TimeSeries[i].LabelValues {
+				iStr += fmt.Sprintf("%+v", label)
 			}
-			panic("should have returned")
+
+			jStr := ""
+			for _, label := range m.TimeSeries[j].LabelValues {
+				jStr += fmt.Sprintf("%+v", label)
+			}
+
+			return iStr < jStr
 		})
 	}
 }
