@@ -79,7 +79,7 @@ func NewLogExporter(options Options) (*LogExporter, error) {
 
 func printMetricDescriptor(metric *metricdata.Metric) string {
 	d := metric.Descriptor
-	return fmt.Sprintf("d: name: %s, type: %s, unit: %s ",
+	return fmt.Sprintf("name: %s, type: %s, unit: %s ",
 		d.Name, d.Type, d.Unit)
 }
 
@@ -134,10 +134,13 @@ func (e *LogExporter) ExportMetrics(ctx context.Context, metrics []*metricdata.M
 	for _, metric := range metrics {
 		for _, ts := range metric.TimeSeries {
 			for _, point := range ts.Points {
-				e.mLogger.Printf("%s : %s : %s\n",
+				e.mLogger.Println("#----------------------------------------------")
+				e.mLogger.Println()
+				e.mLogger.Printf("Metric: %s\n  Labels: %s\n    Value : %s\n",
 					printMetricDescriptor(metric),
 					printLabels(metric, ts.LabelValues),
 					printPoint(point))
+				e.mLogger.Println()
 			}
 		}
 	}
