@@ -98,7 +98,6 @@ func TestCumulativeConstLabel(t *testing.T) {
 	e.Inc(5)
 	e, _ = f.GetEntry(metricdata.NewLabelValue("k1v1"))
 	e.Inc(1)
-	e, _ = f.GetEntry(metricdata.NewLabelValue("k1v1"))
 	m := r.Read()
 	want := []*metricdata.Metric{
 		{
