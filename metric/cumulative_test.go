@@ -90,8 +90,8 @@ func TestCumulativeConstLabel(t *testing.T) {
 	f, _ := r.AddFloat64Cumulative("TestCumulativeWithConstLabel",
 		WithLabelKeys("k1"),
 		WithConstLabel(map[metricdata.LabelKey]metricdata.LabelValue{
-			metricdata.LabelKey{Key: "const"}:  metricdata.NewLabelValue("same"),
-			metricdata.LabelKey{Key: "const2"}: metricdata.NewLabelValue("same2"),
+			{Key: "const"}:  metricdata.NewLabelValue("same"),
+			{Key: "const2"}: metricdata.NewLabelValue("same2"),
 		}))
 
 	e, _ := f.GetEntry(metricdata.LabelValue{})
