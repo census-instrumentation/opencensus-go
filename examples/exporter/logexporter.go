@@ -35,8 +35,9 @@ type LogExporter struct {
 	reader         *metricexport.Reader
 	ir             *metricexport.IntervalReader
 	initReaderOnce sync.Once
-	f              *os.File
 	o              Options
+	tFile          *os.File
+	mFile          *os.File
 	tLogger        *log.Logger
 	mLogger        *log.Logger
 }
@@ -56,23 +57,24 @@ type Options struct {
 	TracesLogFile string
 }
 
-func getLogger(filepath string) *log.Logger {
+func getLogger(filepath string) (*log.Logger, *os.File) {
 	if filepath == "" {
-		return log.New(os.Stdout, "", 0)
+		return log.New(os.Stdout, "", 0), nil
 	}
-	fm, err := os.OpenFile(filepath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
+	f, err := os.OpenFile(filepath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
 	if err != nil {
 		log.Fatalf("error opening file: %v", err)
 	}
-	return log.New(fm, "", 0)
+	return log.New(f, "", 0), f
 }
 
 // NewLogExporter creates new log exporter.
 func NewLogExporter(options Options) (*LogExporter, error) {
-	return &LogExporter{reader: metricexport.NewReader(),
-		tLogger: getLogger(options.TracesLogFile),
-		mLogger: getLogger(options.MetricsLogFile),
-		o:       options}, nil
+	e := &LogExporter{reader: metricexport.NewReader(),
+		o: options}
+	e.tLogger, e.tFile = getLogger(options.TracesLogFile)
+	e.mLogger, e.mFile = getLogger(options.MetricsLogFile)
+	return e, nil
 }
 
 func printMetricDescriptor(metric *metricdata.Metric) string {
@@ -113,6 +115,18 @@ func (e *LogExporter) Start() error {
 // Stop stops the metric exporter.
 func (e *LogExporter) Stop() {
 	e.ir.Stop()
+}
+
+// Close closes any files that were opened for logging.
+func (e *LogExporter) Close() {
+	if e.tFile != nil {
+		e.tFile.Close()
+		e.tFile = nil
+	}
+	if e.mFile != nil {
+		e.mFile.Close()
+		e.mFile = nil
+	}
 }
 
 // ExportMetrics exports to log.
