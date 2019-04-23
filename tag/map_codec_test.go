@@ -91,7 +91,7 @@ func TestEncodeDecode(t *testing.T) {
 
 		got := make([]keyValue, 0)
 		for k, v := range decoded.m {
-			got = append(got, keyValue{k, string(v)})
+			got = append(got, keyValue{k, string(v.value)})
 		}
 		want := tc.pairs
 
