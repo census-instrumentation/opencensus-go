@@ -134,6 +134,9 @@ func Update(k Key, v string, mds ...Metadata) Mutator {
 // value if k doesn't exist already. It mutates the value
 // if k already exists.
 // Metadata applies metadata to the tag. It is optional.
+// Metadatas are applied in the order in which it is provided.
+// If more than one metadata updates the same attribute then
+// the update from the last metadata prevails.
 func Upsert(k Key, v string, mds ...Metadata) Mutator {
 	return &mutator{
 		fn: func(m *Map) (*Map, error) {
