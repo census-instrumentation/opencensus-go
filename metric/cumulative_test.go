@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
+
 	"go.opencensus.io/metric/metricdata"
 )
 
@@ -68,6 +69,61 @@ func TestCumulative(t *testing.T) {
 					LabelValues: []metricdata.LabelValue{
 						metricdata.NewLabelValue("k1v2"),
 						metricdata.NewLabelValue("k2v2"),
+					},
+					Points: []metricdata.Point{
+						metricdata.NewFloat64Point(time.Time{}, 1),
+					},
+				},
+			},
+		},
+	}
+	canonicalize(m)
+	canonicalize(want)
+	if diff := cmp.Diff(m, want, cmp.Comparer(ignoreTimes)); diff != "" {
+		t.Errorf("-got +want: %s", diff)
+	}
+}
+
+func TestCumulativeConstLabel(t *testing.T) {
+	r := NewRegistry()
+
+	f, _ := r.AddFloat64Cumulative("TestCumulativeWithConstLabel",
+		WithLabelKeys("k1"),
+		WithConstLabel(map[metricdata.LabelKey]metricdata.LabelValue{
+			{Key: "const"}:  metricdata.NewLabelValue("same"),
+			{Key: "const2"}: metricdata.NewLabelValue("same2"),
+		}))
+
+	e, _ := f.GetEntry(metricdata.LabelValue{})
+	e.Inc(5)
+	e, _ = f.GetEntry(metricdata.NewLabelValue("k1v1"))
+	e.Inc(1)
+	m := r.Read()
+	want := []*metricdata.Metric{
+		{
+			Descriptor: metricdata.Descriptor{
+				Name: "TestCumulativeWithConstLabel",
+				LabelKeys: []metricdata.LabelKey{
+					{Key: "const"},
+					{Key: "const2"},
+					{Key: "k1"}},
+				Type: metricdata.TypeCumulativeFloat64,
+			},
+			TimeSeries: []*metricdata.TimeSeries{
+				{
+					LabelValues: []metricdata.LabelValue{
+						metricdata.NewLabelValue("same"),
+						metricdata.NewLabelValue("same2"),
+						{}},
+					Points: []metricdata.Point{
+						metricdata.NewFloat64Point(time.Time{}, 5),
+					},
+				},
+				{
+					LabelValues: []metricdata.LabelValue{
+						metricdata.NewLabelValue("same"),
+						metricdata.NewLabelValue("same2"),
+						metricdata.NewLabelValue("k1v1"),
 					},
 					Points: []metricdata.Point{
 						metricdata.NewFloat64Point(time.Time{}, 1),

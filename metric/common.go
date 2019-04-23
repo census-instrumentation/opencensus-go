@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"go.opencensus.io/internal/tagencoding"
+
 	"go.opencensus.io/metric/metricdata"
 )
 
@@ -30,11 +31,12 @@ import (
 // baseMetric should not be used directly, use metric specific type such as
 // Float64Gauge or Int64Gauge.
 type baseMetric struct {
-	vals   sync.Map
-	desc   metricdata.Descriptor
-	start  time.Time
-	keys   []metricdata.LabelKey
-	bmType baseMetricType
+	vals             sync.Map
+	desc             metricdata.Descriptor
+	start            time.Time
+	keys             []metricdata.LabelKey
+	constLabelValues []metricdata.LabelValue
+	bmType           baseMetricType
 }
 
 type baseMetricType int
@@ -118,6 +120,7 @@ func (bm *baseMetric) decodeLabelVals(s string) []metricdata.LabelValue {
 }
 
 func (bm *baseMetric) entryForValues(labelVals []metricdata.LabelValue, newEntry func() baseEntry) (interface{}, error) {
+	labelVals = append(bm.constLabelValues, labelVals...)
 	if len(labelVals) != len(bm.keys) {
 		return nil, errKeyValueMismatch
 	}
