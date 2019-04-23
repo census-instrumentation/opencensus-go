@@ -28,11 +28,15 @@ import (
 
 	"net/http"
 
-	"go.opencensus.io/exporter/prometheus"
+	"go.opencensus.io/examples/exporter"
 	"go.opencensus.io/stats"
 	"go.opencensus.io/stats/view"
 	"go.opencensus.io/tag"
 	"go.opencensus.io/zpages"
+)
+
+const (
+	metricsLogFile = "/tmp/metrics.log"
 )
 
 // Measures for the stats quickstart.
@@ -94,23 +98,22 @@ func main() {
 	zpages.Handle(nil, "/debug")
 	go http.ListenAndServe("localhost:8080", nil)
 
-	// Create that Stackdriver stats exporter
-	exporter, err := prometheus.NewExporter(prometheus.Options{})
+	// Using log exporter here to export metrics but you can choose any supported exporter.
+	exporter, err := exporter.NewLogExporter(exporter.Options{
+		ReportingInterval: time.Duration(10 * time.Second),
+		MetricsLogFile:    metricsLogFile,
+	})
 	if err != nil {
-		log.Fatalf("Failed to create the Stackdriver stats exporter: %v", err)
+		log.Fatalf("Error creating log exporter: %v", err)
 	}
-	http.Handle("/metrics", exporter)
-
-	// Register the stats exporter
-	view.RegisterExporter(exporter)
+	exporter.Start()
+	defer exporter.Stop()
+	defer exporter.Close()
 
 	// Register the views
 	if err := view.Register(latencyView, lineCountView, errorCountView, lineLengthView); err != nil {
 		log.Fatalf("Failed to register views: %v", err)
 	}
-
-	// But also we can change the metrics reporting period to 2 seconds
-	//view.SetReportingPeriod(2 * time.Second)
 
 	// In a REPL:
 	//   1. Read input

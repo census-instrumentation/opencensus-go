@@ -27,8 +27,9 @@ There are two metrics collected to monitor the queue.
    when the queue was consumed. It is represented using derived gauge float64.
 This example shows how to use gauge metrics. The program records two gauges.
 
-These metrics are read when exporter scrapes them. In this example prometheus exporter is used to
-scrape the data. Metrics can be viewed at [http://localhost:9090/metrics](http://localhost:9090/metrics) once the program is running.
+These metrics are read when exporter scrapes them. In this example log exporter is used to
+log the data into a file. Metrics can be viewed at [file:///tmp/metrics.log](file:///tmp/metrics.log) 
+once the program is running. Alternatively you could do `tail -f /tmp/metrics.log` on Linux/OSx.
 
 Enter different value for number of items to queue and fetch the metrics using above url to see the variation in the metrics.
 
@@ -159,17 +160,20 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
-	"net/http"
 	"os"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 
-	"go.opencensus.io/exporter/prometheus"
+	"go.opencensus.io/examples/exporter"
 	"go.opencensus.io/metric"
 	"go.opencensus.io/metric/metricdata"
 	"go.opencensus.io/metric/metricproducer"
+)
+
+const (
+	metricsLogFile = "/tmp/metrics.log"
 )
 
 type queue struct {
@@ -276,7 +280,8 @@ func doWork() {
 	fmt.Printf("Program monitors queue using two derived gauge metrics.\n")
 	fmt.Printf("   1. queue_size = the instantaneous size of the queue.\n")
 	fmt.Printf("   2. queue_seconds_since_processed_last = the number of seconds elapsed since last time the queue was processed.\n")
-	fmt.Printf("Go to http://localhost:9090/metrics to see the metrics.\n\n\n")
+	fmt.Printf("\nGo to file://%s to see the metrics. OR do `tail -f %s` in another terminal\n\n\n",
+		metricsLogFile, metricsLogFile)
 
 	// Take a number of items to queue as an input from the user
 	// and enqueue the same number of items on to the consumer queue.
@@ -287,21 +292,18 @@ func doWork() {
 	}
 }
 
-func createAndStartExporter() {
-	// Create Prometheus metrics exporter to verify derived gauge metrics in this example.
-	exporter, err := prometheus.NewExporter(prometheus.Options{})
-	if err != nil {
-		log.Fatalf("Failed to create the prometheus metrics exporter: %v", err)
-	}
-	http.Handle("/metrics", exporter)
-	go func() {
-		log.Fatal(http.ListenAndServe(":9090", nil))
-
-	}()
-}
-
 func main() {
-	createAndStartExporter()
+	// Using logexporter but you can choose any supported exporter.
+	exporter, err := exporter.NewLogExporter(exporter.Options{
+		ReportingInterval: time.Duration(10 * time.Second),
+		MetricsLogFile:    metricsLogFile,
+	})
+	if err != nil {
+		log.Fatalf("Error creating log exporter: %v", err)
+	}
+	exporter.Start()
+	defer exporter.Stop()
+	defer exporter.Close()
 
 	// Create metric registry and register it with global producer manager.
 	r := metric.NewRegistry()
