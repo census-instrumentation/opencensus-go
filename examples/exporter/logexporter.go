@@ -57,23 +57,30 @@ type Options struct {
 	TracesLogFile string
 }
 
-func getLogger(filepath string) (*log.Logger, *os.File) {
+func getLogger(filepath string) (*log.Logger, *os.File, error) {
 	if filepath == "" {
-		return log.New(os.Stdout, "", 0), nil
+		return log.New(os.Stdout, "", 0), nil, nil
 	}
 	f, err := os.OpenFile(filepath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
 	if err != nil {
-		log.Fatalf("error opening file: %v", err)
+		return nil, nil, err
 	}
-	return log.New(f, "", 0), f
+	return log.New(f, "", 0), f, nil
 }
 
 // NewLogExporter creates new log exporter.
 func NewLogExporter(options Options) (*LogExporter, error) {
 	e := &LogExporter{reader: metricexport.NewReader(),
 		o: options}
-	e.tLogger, e.tFile = getLogger(options.TracesLogFile)
-	e.mLogger, e.mFile = getLogger(options.MetricsLogFile)
+	var err error
+	e.tLogger, e.tFile, err = getLogger(options.TracesLogFile)
+	if err != nil {
+		return nil, err
+	}
+	e.mLogger, e.mFile, err = getLogger(options.MetricsLogFile)
+	if err != nil {
+		return nil, err
+	}
 	return e, nil
 }
 
