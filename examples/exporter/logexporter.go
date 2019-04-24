@@ -178,9 +178,9 @@ func (e *LogExporter) ExportSpan(sd *trace.SpanData) {
 	e.tLogger.Printf("Elapsed: %v\n", sd.EndTime.Sub(sd.StartTime).Round(time.Millisecond))
 
 	spanKinds := map[int]string{
-			1: "Server",
-			2: "Client",
-		}
+		1: "Server",
+		2: "Client",
+	}
 	if spanKind, ok := spanKinds[sd.SpanKind]; ok {
 		e.tLogger.Printf("SpanKind: %s\n", spanKind)
 	}

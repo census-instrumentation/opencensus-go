@@ -30,7 +30,7 @@ import (
 
 const (
 	metricsLogFile = "/tmp/metrics.log"
-	tracesLogFile = "/tmp/trace.log"
+	tracesLogFile  = "/tmp/trace.log"
 )
 
 func main() {
@@ -45,7 +45,7 @@ func main() {
 	exporter, err := exporter.NewLogExporter(exporter.Options{
 		ReportingInterval: time.Duration(10 * time.Second),
 		MetricsLogFile:    metricsLogFile,
-		TracesLogFile:	tracesLogFile,
+		TracesLogFile:     tracesLogFile,
 	})
 	if err != nil {
 		log.Fatalf("Error creating log exporter: %v", err)

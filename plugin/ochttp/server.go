@@ -127,7 +127,7 @@ func (h *Handler) startTrace(w http.ResponseWriter, r *http.Request) (*http.Requ
 	if r.Body == nil {
 		// TODO: Handle cases where ContentLength is not set.
 	} else if r.ContentLength > 0 {
-		span.AddMessageReceiveEvent(0 /* TODO: messageID */,
+		span.AddMessageReceiveEvent(0, /* TODO: messageID */
 			int64(r.ContentLength), -1)
 	}
 	return r.WithContext(ctx), span.End
