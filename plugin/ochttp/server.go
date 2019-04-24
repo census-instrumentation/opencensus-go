@@ -207,7 +207,7 @@ func (t *trackingResponseWriter) Header() http.Header {
 func (t *trackingResponseWriter) Write(data []byte) (int, error) {
 	n, err := t.writer.Write(data)
 	t.respSize += int64(n)
-	// Add message event for request bytes read.
+	// Add message event for request bytes sent.
 	span := trace.FromContext(t.ctx)
 	span.AddMessageSendEvent(0 /* TODO: messageID */, int64(n), -1)
 	return n, err
