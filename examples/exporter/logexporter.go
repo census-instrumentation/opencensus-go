@@ -177,6 +177,14 @@ func (e *LogExporter) ExportSpan(sd *trace.SpanData) {
 	e.tLogger.Printf("Status:  %v [%v]\n", sd.Status.Message, sd.Status.Code)
 	e.tLogger.Printf("Elapsed: %v\n", sd.EndTime.Sub(sd.StartTime).Round(time.Millisecond))
 
+	spanKinds := map[int]string{
+		1: "Server",
+		2: "Client",
+	}
+	if spanKind, ok := spanKinds[sd.SpanKind]; ok {
+		e.tLogger.Printf("SpanKind: %s\n", spanKind)
+	}
+
 	if len(sd.Annotations) > 0 {
 		e.tLogger.Println()
 		e.tLogger.Println("Annotations:")
@@ -194,6 +202,23 @@ func (e *LogExporter) ExportSpan(sd *trace.SpanData) {
 		e.tLogger.Println("Attributes:")
 		for k, v := range sd.Attributes {
 			e.tLogger.Printf("%v- %v=%v\n", indent, k, v)
+		}
+	}
+
+	if len(sd.MessageEvents) > 0 {
+		eventTypes := map[trace.MessageEventType]string{
+			trace.MessageEventTypeSent: "Sent",
+			trace.MessageEventTypeRecv: "Received",
+		}
+		e.tLogger.Println()
+		e.tLogger.Println("MessageEvents:")
+		for _, item := range sd.MessageEvents {
+			if eventType, ok := eventTypes[item.EventType]; ok {
+				e.tLogger.Print(eventType)
+			}
+			e.tLogger.Printf("UncompressedByteSize: %v", item.UncompressedByteSize)
+			e.tLogger.Printf("CompressedByteSize: %v", item.CompressedByteSize)
+			e.tLogger.Println()
 		}
 	}
 }

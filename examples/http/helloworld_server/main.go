@@ -28,6 +28,11 @@ import (
 	"go.opencensus.io/trace"
 )
 
+const (
+	metricsLogFile = "/tmp/metrics.log"
+	tracesLogFile  = "/tmp/trace.log"
+)
+
 func main() {
 	// Start z-Pages server.
 	go func() {
@@ -36,10 +41,18 @@ func main() {
 		log.Fatal(http.ListenAndServe("127.0.0.1:8081", mux))
 	}()
 
-	// Register stats and trace exporters to export the collected data.
-	exporter := &exporter.PrintExporter{}
-	view.RegisterExporter(exporter)
-	trace.RegisterExporter(exporter)
+	// Using log exporter to export metrics but you can choose any supported exporter.
+	exporter, err := exporter.NewLogExporter(exporter.Options{
+		ReportingInterval: time.Duration(10 * time.Second),
+		MetricsLogFile:    metricsLogFile,
+		TracesLogFile:     tracesLogFile,
+	})
+	if err != nil {
+		log.Fatalf("Error creating log exporter: %v", err)
+	}
+	exporter.Start()
+	defer exporter.Stop()
+	defer exporter.Close()
 
 	// Always trace for this demo. In a production application, you should
 	// configure this to a trace.ProbabilitySampler set at the desired
