@@ -19,8 +19,8 @@ import (
 	"reflect"
 	"testing"
 
+	"context"
 	"go.opencensus.io/trace"
-	"golang.org/x/net/context"
 
 	"go.opencensus.io/metric/metricdata"
 	"go.opencensus.io/stats/view"
