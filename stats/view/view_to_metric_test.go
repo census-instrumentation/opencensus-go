@@ -21,6 +21,7 @@ import (
 	"time"
 
 	"encoding/json"
+
 	"github.com/google/go-cmp/cmp"
 	"go.opencensus.io/metric/metricdata"
 	"go.opencensus.io/stats"
