@@ -42,11 +42,12 @@ const (
 const (
 	CloudType = "cloud"
 
-	// A uniquely identifying name for the Container.
-	CloudKeyProvider   = "cloud.provider"
-	CloudKeyAccountID  = "cloud.account.id"
-	CloudKeyRegion     = "cloud.region"
-	CloudKeyZone       = "cloud.zone"
+	CloudKeyProvider  = "cloud.provider"
+	CloudKeyAccountID = "cloud.account.id"
+	CloudKeyRegion    = "cloud.region"
+	CloudKeyZone      = "cloud.zone"
+
+	// Cloud Providers
 	CloudProviderAWS   = "aws"
 	CloudProviderGCP   = "gcp"
 	CloudProviderAZURE = "azure"
