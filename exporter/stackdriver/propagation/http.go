@@ -68,7 +68,7 @@ func (f *HTTPFormat) SpanContextFromRequest(req *http.Request) (sc trace.SpanCon
 	if semicolon != -1 {
 		spanstr, h = h[:semicolon], h[semicolon+1:]
 	}
-	sid, err := strconv.ParseUint(spanstr, 10, 64)
+	sid, err := strconv.ParseUint(spanstr, 16, 64)
 	if err != nil {
 		return trace.SpanContext{}, false
 	}
