@@ -457,6 +457,65 @@ func Test_ViewToMetric(t *testing.T) {
 	}
 }
 
+// Test to verify that a metric converted from a view with Aggregation Count should always
+// have Dimensionless unit.
+func TestUnitConversionForAggCount(t *testing.T) {
+	startTime := time.Now().Add(-time.Duration(60 * time.Second))
+	now := time.Now()
+	tests := []*struct {
+		name     string
+		vi       *viewInternal
+		v        *View
+		wantUnit metricdata.Unit
+	}{
+		{
+			name: "View with Count Aggregation on Latency measurement",
+			v: &View{
+				Name:        "request_count1",
+				Measure:     stats.Int64("request_latency", "", stats.UnitMilliseconds),
+				Aggregation: aggCnt,
+			},
+			wantUnit: metricdata.UnitDimensionless,
+		},
+		{
+			name: "View with Count Aggregation on bytes measurement",
+			v: &View{
+				Name:        "request_count2",
+				Measure:     stats.Int64("request_bytes", "", stats.UnitBytes),
+				Aggregation: aggCnt,
+			},
+			wantUnit: metricdata.UnitDimensionless,
+		},
+		{
+			name: "View with aggregation other than Count Aggregation on Latency measurement",
+			v: &View{
+				Name:        "request_latency",
+				Measure:     stats.Int64("request_latency", "", stats.UnitMilliseconds),
+				Aggregation: aggSum,
+			},
+			wantUnit: metricdata.UnitMilliseconds,
+		},
+	}
+	var err error
+	for _, tc := range tests {
+		tc.vi, err = defaultWorker.tryRegisterView(tc.v)
+		if err != nil {
+			t.Fatalf("error registering view: %v, err: %v\n", tc.v, err)
+		}
+		tc.vi.clearRows()
+		tc.vi.subscribe()
+	}
+
+	for _, tc := range tests {
+		tc.vi.addSample(tag.FromContext(context.Background()), 5.0, nil, now)
+		gotMetric := viewToMetric(tc.vi, now, startTime)
+		gotUnit := gotMetric.Descriptor.Unit
+		if !cmp.Equal(gotUnit, tc.wantUnit) {
+			t.Errorf("Verify Unit: %s: Got:%v Want:%v", tc.name, gotUnit, tc.wantUnit)
+		}
+	}
+}
+
 func serializeAsJSON(v interface{}) string {
 	blob, _ := json.MarshalIndent(v, "", "  ")
 	return string(blob)
