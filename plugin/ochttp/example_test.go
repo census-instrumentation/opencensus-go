@@ -32,9 +32,9 @@ func ExampleTransport() {
 
 	if err := view.Register(
 		// Register a few default views.
-		ochttp.ClientSentBytesDistribution,
-		ochttp.ClientReceivedBytesDistribution,
-		ochttp.ClientRoundtripLatencyDistribution,
+		ochttp.ClientSentBytesView,
+		ochttp.ClientReceivedBytesView,
+		ochttp.ClientRoundtripLatencyView,
 		// Register a custom view.
 		&view.View{
 			Name:        "httpclient_latency_by_path",

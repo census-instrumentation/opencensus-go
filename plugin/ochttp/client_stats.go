@@ -35,11 +35,11 @@ type statsTransport struct {
 func (t statsTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	ctx, _ := tag.New(req.Context(),
 		tag.Upsert(KeyClientHost, req.Host),
-		tag.Upsert(Host, req.Host),
+		tag.Upsert(KeyServerHost, req.Host),
 		tag.Upsert(KeyClientPath, req.URL.Path),
-		tag.Upsert(Path, req.URL.Path),
+		tag.Upsert(KeyServerPath, req.URL.Path),
 		tag.Upsert(KeyClientMethod, req.Method),
-		tag.Upsert(Method, req.Method))
+		tag.Upsert(KeyServerMethod, req.Method))
 	req = req.WithContext(ctx)
 	track := &tracker{
 		start: time.Now(),
@@ -51,7 +51,6 @@ func (t statsTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	} else if req.ContentLength > 0 {
 		track.reqSize = req.ContentLength
 	}
-	stats.Record(ctx, ClientRequestCount.M(1))
 
 	// Perform request.
 	resp, err := t.base.RoundTrip(req)
@@ -108,15 +107,10 @@ func (t *tracker) end() {
 			ClientSentBytes.M(t.reqSize),
 			ClientReceivedBytes.M(respSize),
 			ClientRoundtripLatency.M(latencyMs),
-			ClientLatency.M(latencyMs),
-			ClientResponseBytes.M(t.respSize),
-		}
-		if t.reqSize >= 0 {
-			m = append(m, ClientRequestBytes.M(t.reqSize))
 		}
 
 		stats.RecordWithTags(t.ctx, []tag.Mutator{
-			tag.Upsert(StatusCode, strconv.Itoa(t.statusCode)),
+			tag.Upsert(KeyServerStatus, strconv.Itoa(t.statusCode)),
 			tag.Upsert(KeyClientStatus, strconv.Itoa(t.statusCode)),
 		}, m...)
 	})

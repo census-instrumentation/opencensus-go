@@ -142,9 +142,9 @@ func (h *Handler) extractSpanContext(r *http.Request) (trace.SpanContext, bool) 
 
 func (h *Handler) startStats(w http.ResponseWriter, r *http.Request) (http.ResponseWriter, func(tags *addedTags)) {
 	ctx, _ := tag.New(r.Context(),
-		tag.Upsert(Host, r.Host),
-		tag.Upsert(Path, r.URL.Path),
-		tag.Upsert(Method, r.Method))
+		tag.Upsert(KeyServerHost, r.Host),
+		tag.Upsert(KeyServerPath, r.URL.Path),
+		tag.Upsert(KeyServerMethod, r.Method))
 	track := &trackingResponseWriter{
 		start:  time.Now(),
 		ctx:    ctx,
@@ -156,7 +156,6 @@ func (h *Handler) startStats(w http.ResponseWriter, r *http.Request) (http.Respo
 	} else if r.ContentLength > 0 {
 		track.reqSize = r.ContentLength
 	}
-	stats.Record(ctx, ServerRequestCount.M(1))
 	return track.wrappedResponseWriter(), track.end
 }
 
@@ -188,13 +187,13 @@ func (t *trackingResponseWriter) end(tags *addedTags) {
 
 		m := []stats.Measurement{
 			ServerLatency.M(float64(time.Since(t.start)) / float64(time.Millisecond)),
-			ServerResponseBytes.M(t.respSize),
+			ServerSentBytes.M(t.respSize),
 		}
 		if t.reqSize >= 0 {
-			m = append(m, ServerRequestBytes.M(t.reqSize))
+			m = append(m, ServerReceivedBytes.M(t.reqSize))
 		}
 		allTags := make([]tag.Mutator, len(tags.t)+1)
-		allTags[0] = tag.Upsert(StatusCode, strconv.Itoa(t.statusCode))
+		allTags[0] = tag.Upsert(KeyServerStatus, strconv.Itoa(t.statusCode))
 		copy(allTags[1:], tags.t)
 		stats.RecordWithTags(t.ctx, allTags, m...)
 	})

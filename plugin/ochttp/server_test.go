@@ -43,10 +43,10 @@ func TestHandlerStatsCollection(t *testing.T) {
 	}
 
 	views := []string{
-		"opencensus.io/http/server/request_count",
-		"opencensus.io/http/server/latency",
-		"opencensus.io/http/server/request_bytes",
-		"opencensus.io/http/server/response_bytes",
+		"opencensus.io/http/server/completed_count",
+		"opencensus.io/http/server/server_latency",
+		"opencensus.io/http/server/received_bytes",
+		"opencensus.io/http/server/sent_bytes",
 	}
 
 	// TODO: test latency measurements?
@@ -95,23 +95,24 @@ func TestHandlerStatsCollection(t *testing.T) {
 			t.Error(err)
 			continue
 		}
-		if got, want := len(rows), 1; got != want {
+		if got, want := len(rows), 3; got != want {
 			t.Errorf("len(%q) = %d; want %d", viewName, got, want)
 			continue
 		}
-		data := rows[0].Data
 
 		var count int
 		var sum float64
-		switch data := data.(type) {
-		case *view.CountData:
-			count = int(data.Value)
-		case *view.DistributionData:
-			count = int(data.Count)
-			sum = data.Sum()
-		default:
-			t.Errorf("Unknown data type: %v", data)
-			continue
+		for _, row := range rows {
+			switch data := row.Data.(type) {
+			case *view.CountData:
+				count += int(data.Value)
+			case *view.DistributionData:
+				count += int(data.Count)
+				sum += data.Sum()
+			default:
+				t.Errorf("Unknown data type: %v", data)
+				continue
+			}
 		}
 
 		if got, want := count, totalCount; got != want {

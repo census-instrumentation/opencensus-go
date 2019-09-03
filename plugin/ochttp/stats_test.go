@@ -26,10 +26,10 @@ import (
 
 func TestClientViews(t *testing.T) {
 	for _, v := range []*view.View{
-		ClientSentBytesDistribution,
-		ClientReceivedBytesDistribution,
-		ClientRoundtripLatencyDistribution,
-		ClientCompletedCount,
+		ClientSentBytesView,
+		ClientReceivedBytesView,
+		ClientRoundtripLatencyView,
+		ClientCompletedCountView,
 	} {
 
 		if v.Measure == nil {
