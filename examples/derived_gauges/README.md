@@ -131,7 +131,7 @@ func (q *queue) Size() int64 {
 func (q *queue) Elapsed() float64 {
 	q.mu.Lock()
 	defer q.mu.Unlock()
-	return time.Now().Sub(q.lastConsumed).Seconds()
+	return time.Since(q.lastConsumed).Seconds()
 }
 
 ```
@@ -254,7 +254,7 @@ func (q *queue) Size() int64 {
 func (q *queue) Elapsed() float64 {
 	q.mu.Lock()
 	defer q.mu.Unlock()
-	return time.Now().Sub(q.lastConsumed).Seconds()
+	return time.Since(q.lastConsumed).Seconds()
 }
 
 
