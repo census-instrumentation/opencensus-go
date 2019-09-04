@@ -33,8 +33,8 @@ var (
 	exporter1  = &metricExporter{}
 	exporter2  = &metricExporter{}
 	gaugeEntry *metric.Int64GaugeEntry
-	duration1  = time.Duration(1000 * time.Millisecond)
-	duration2  = time.Duration(2000 * time.Millisecond)
+	duration1  = 1000 * time.Millisecond
+	duration2  = 2000 * time.Millisecond
 )
 
 type metricExporter struct {
@@ -194,7 +194,7 @@ func TestNewIntervalReaderWithNilExporter(t *testing.T) {
 
 func TestNewIntervalReaderStartWithInvalidInterval(t *testing.T) {
 	ir, err := NewIntervalReader(reader1, exporter1)
-	ir.ReportingInterval = time.Duration(500 * time.Millisecond)
+	ir.ReportingInterval = 500 * time.Millisecond
 	err = ir.Start()
 	if err == nil {
 		t.Fatalf("expected error but got nil\n")

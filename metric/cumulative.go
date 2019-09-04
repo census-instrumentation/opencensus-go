@@ -116,7 +116,7 @@ func (e *Int64CumulativeEntry) Inc(val int64) {
 	if val <= 0 {
 		return
 	}
-	atomic.AddInt64(&e.val, int64(val))
+	atomic.AddInt64(&e.val, val)
 }
 
 // Int64DerivedCumulative represents int64 cumulative value that is derived from an object.
