@@ -252,7 +252,7 @@ func initMetricDescriptors() {
 }
 
 func Test_ViewToMetric(t *testing.T) {
-	startTime := time.Now().Add(-time.Duration(60 * time.Second))
+	startTime := time.Now().Add(-60 * time.Second)
 	now := time.Now()
 	tests := []*testToMetrics{
 		{
@@ -460,7 +460,7 @@ func Test_ViewToMetric(t *testing.T) {
 // Test to verify that a metric converted from a view with Aggregation Count should always
 // have Dimensionless unit.
 func TestUnitConversionForAggCount(t *testing.T) {
-	startTime := time.Now().Add(-time.Duration(60 * time.Second))
+	startTime := time.Now().Add(-60 * time.Second)
 	now := time.Now()
 	tests := []*struct {
 		name     string
