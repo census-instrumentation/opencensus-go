@@ -16,7 +16,7 @@
 //
 // To enable collecting runtime metrics, create a new Producer and register it:
 //
-//     runtimeMetrics, _ := runmetrics.NewProducer(ProducerOptions{
+//     runtimeMetrics, _ := runmetrics.NewProducer(RunMetricOptions{
 //         EnableCPU: true,
 //         EnableMemory: true,
 //     })

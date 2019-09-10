@@ -41,7 +41,7 @@ func (l *printExporter) ExportMetrics(ctx context.Context, data []*metricdata.Me
 func ExampleProducer() {
 
 	// Create a new runmetrics.Producer and supply options
-	runtimeMetrics, err := runmetrics.NewProducer(runmetrics.ProducerOptions{
+	runtimeMetrics, err := runmetrics.NewProducer(runmetrics.RunMetricOptions{
 		EnableCPU:    true,
 		EnableMemory: true,
 		Prefix:       "mayapp_",

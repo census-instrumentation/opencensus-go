@@ -15,15 +15,15 @@ type (
 	// A Producer should then be registered with the global manager:
 	// metricproducer.GlobalManager().AddProducer()
 	Producer struct {
-		options ProducerOptions
+		options RunMetricOptions
 		reg     *metric.Registry
 
 		memStats *memStats
 		cpuStats *cpuStats
 	}
 
-	// ProducerOptions allows to configure Producer.
-	ProducerOptions struct {
+	// RunMetricOptions allows to configure Producer.
+	RunMetricOptions struct {
 		EnableCPU    bool   // EnableCPU whether CPU metrics shall be recorded
 		EnableMemory bool   // EnableMemory whether memory metrics shall be recorded
 		Prefix       string // Prefix is a custom prefix for metric names
@@ -64,9 +64,9 @@ var _ metricproducer.Producer = (*Producer)(nil)
 
 // NewProducer creates a new runtime metrics producer.
 //
-// Supply ProducerOptions to configure the behavior of the Producer.
+// Supply RunMetricOptions to configure the behavior of the Producer.
 // An error might be returned, if creating metrics gauges fails.
-func NewProducer(options ProducerOptions) (*Producer, error) {
+func NewProducer(options RunMetricOptions) (*Producer, error) {
 	collector := &Producer{options: options, reg: metric.NewRegistry()}
 	var err error
 

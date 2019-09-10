@@ -22,13 +22,13 @@ func (t *testExporter) ExportMetrics(ctx context.Context, data []*metricdata.Met
 func TestNewProducer(t *testing.T) {
 	tests := []struct {
 		name                string
-		options             runmetrics.ProducerOptions
+		options             runmetrics.RunMetricOptions
 		wantMetricNames     [][]string
 		dontWantMetricNames [][]string
 	}{
 		{
 			"cpu and memory stats",
-			runmetrics.ProducerOptions{
+			runmetrics.RunMetricOptions{
 				EnableCPU:    true,
 				EnableMemory: true,
 			},
@@ -42,7 +42,7 @@ func TestNewProducer(t *testing.T) {
 		},
 		{
 			"only cpu stats",
-			runmetrics.ProducerOptions{
+			runmetrics.RunMetricOptions{
 				EnableCPU:    true,
 				EnableMemory: false,
 			},
@@ -57,7 +57,7 @@ func TestNewProducer(t *testing.T) {
 		},
 		{
 			"only memory stats",
-			runmetrics.ProducerOptions{
+			runmetrics.RunMetricOptions{
 				EnableCPU:    false,
 				EnableMemory: true,
 			},
@@ -72,7 +72,7 @@ func TestNewProducer(t *testing.T) {
 		},
 		{
 			"cpu and memory stats with custom prefix",
-			runmetrics.ProducerOptions{
+			runmetrics.RunMetricOptions{
 				EnableCPU:    true,
 				EnableMemory: true,
 				Prefix:       "test_",
