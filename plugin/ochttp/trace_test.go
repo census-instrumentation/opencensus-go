@@ -353,7 +353,7 @@ func serveHTTP(handler *Handler, done chan struct{}, wait chan time.Time, status
 		// Simulate a slow-responding server.
 		sleepUntil := <-wait
 		for time.Now().Before(sleepUntil) {
-			time.Sleep(sleepUntil.Sub(time.Now()))
+			time.Sleep(time.Until(sleepUntil))
 		}
 
 		io.WriteString(w, "expected-response")

@@ -44,7 +44,7 @@ func main() {
 
 	// Register an exporter to be able to retrieve
 	// the data from the subscribed views.
-	e, err := exporter.NewLogExporter(exporter.Options{ReportingInterval: time.Duration(time.Second)})
+	e, err := exporter.NewLogExporter(exporter.Options{ReportingInterval: time.Second})
 	if err != nil {
 		log.Fatal(err)
 	}

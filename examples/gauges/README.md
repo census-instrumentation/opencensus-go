@@ -253,7 +253,7 @@ func work() {
 func main() {
 	// Using log exporter to export metrics but you can choose any supported exporter.
 	exporter, err := exporter.NewLogExporter(exporter.Options{
-		ReportingInterval: time.Duration(10 * time.Second),
+		ReportingInterval: 10 * time.Second,
 		MetricsLogFile:    metricsLogFile,
 	})
 	if err != nil {
