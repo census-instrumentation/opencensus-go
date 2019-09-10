@@ -45,10 +45,10 @@ var (
 	mLatencyMs = stats.Float64("repl/latency", "The latency in milliseconds per REPL loop", stats.UnitMilliseconds)
 
 	// Counts the number of lines read in from standard input
-	mLinesIn = stats.Int64("repl/lines_in", "The number of lines read in", stats.UnitNone)
+	mLinesIn = stats.Int64("repl/lines_in", "The number of lines read in", stats.UnitDimensionless)
 
 	// Encounters the number of non EOF(end-of-file) errors.
-	mErrors = stats.Int64("repl/errors", "The number of errors encountered", stats.UnitNone)
+	mErrors = stats.Int64("repl/errors", "The number of errors encountered", stats.UnitDimensionless)
 
 	// Counts/groups the lengths of lines read in.
 	mLineLengths = stats.Int64("repl/line_lengths", "The distribution of line lengths", stats.UnitBytes)
