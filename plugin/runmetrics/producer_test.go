@@ -42,10 +42,10 @@ func TestEnable(t *testing.T) {
 				EnableMemory: true,
 			},
 			[][]string{
-				{"mem_alloc", "mem_total", "mem_sys", "mem_lookups", "mem_malloc", "mem_frees"},
-				{"heap_alloc", "heap_sys", "heap_idle", "heap_inuse", "heap_objects", "heap_release"},
-				{"stack_inuse", "stack_sys", "stack_mspan_inuse", "stack_mspan_sys", "stack_mcache_inuse", "stack_mspan_sys"},
-				{"cpu_goroutines", "cpu_cgo_calls"},
+				{"process/memory_alloc", "process/total_memory_alloc", "process/sys_memory_alloc", "process/memory_lookups", "process/memory_malloc", "process/memory_frees"},
+				{"process/heap_alloc", "process/sys_heap", "process/heap_idle", "process/heap_inuse", "process/heap_objects", "process/heap_release"},
+				{"process/stack_inuse", "process/sys_stack", "process/stack_mspan_inuse", "process/sys_stack_mspan", "process/stack_mcache_inuse", "process/sys_stack_mcache"},
+				{"process/cpu_goroutines", "process/cpu_cgo_calls"},
 			},
 			[][]string{},
 		},
@@ -56,12 +56,12 @@ func TestEnable(t *testing.T) {
 				EnableMemory: false,
 			},
 			[][]string{
-				{"cpu_goroutines", "cpu_cgo_calls"},
+				{"process/cpu_goroutines", "process/cpu_cgo_calls"},
 			},
 			[][]string{
-				{"mem_alloc", "mem_total", "mem_sys", "mem_lookups", "mem_malloc", "mem_frees"},
-				{"heap_alloc", "heap_sys", "heap_idle", "heap_inuse", "heap_objects", "heap_release"},
-				{"stack_inuse", "stack_sys", "stack_mspan_inuse", "stack_mspan_sys", "stack_mcache_inuse", "stack_mspan_sys"},
+				{"process/memory_alloc", "process/total_memory_alloc", "process/sys_memory_alloc", "process/memory_lookups", "process/memory_malloc", "process/memory_frees"},
+				{"process/heap_alloc", "process/sys_heap", "process/heap_idle", "process/heap_inuse", "process/heap_objects", "process/heap_release"},
+				{"process/stack_inuse", "process/sys_stack", "process/stack_mspan_inuse", "process/sys_stack_mspan", "process/stack_mcache_inuse", "process/sys_stack_mcache"},
 			},
 		},
 		{
@@ -71,12 +71,12 @@ func TestEnable(t *testing.T) {
 				EnableMemory: true,
 			},
 			[][]string{
-				{"mem_alloc", "mem_total", "mem_sys", "mem_lookups", "mem_malloc", "mem_frees"},
-				{"heap_alloc", "heap_sys", "heap_idle", "heap_inuse", "heap_objects", "heap_release"},
-				{"stack_inuse", "stack_sys", "stack_mspan_inuse", "stack_mspan_sys", "stack_mcache_inuse", "stack_mspan_sys"},
+				{"process/memory_alloc", "process/total_memory_alloc", "process/sys_memory_alloc", "process/memory_lookups", "process/memory_malloc", "process/memory_frees"},
+				{"process/heap_alloc", "process/sys_heap", "process/heap_idle", "process/heap_inuse", "process/heap_objects", "process/heap_release"},
+				{"process/stack_inuse", "process/sys_stack", "process/stack_mspan_inuse", "process/sys_stack_mspan", "process/stack_mcache_inuse", "process/sys_stack_mcache"},
 			},
 			[][]string{
-				{"cpu_goroutines", "cpu_cgo_calls"},
+				{"process/cpu_goroutines", "process/cpu_cgo_calls"},
 			},
 		},
 		{
@@ -87,10 +87,10 @@ func TestEnable(t *testing.T) {
 				Prefix:       "test_",
 			},
 			[][]string{
-				{"test_mem_alloc", "test_mem_total", "test_mem_sys", "test_mem_lookups", "test_mem_malloc", "test_mem_frees"},
-				{"test_heap_alloc", "test_heap_sys", "test_heap_idle", "test_heap_inuse", "test_heap_objects", "test_heap_release"},
-				{"test_stack_inuse", "test_stack_sys", "test_stack_mspan_inuse", "test_stack_mspan_sys", "test_stack_mcache_inuse", "test_stack_mspan_sys"},
-				{"test_cpu_goroutines", "test_cpu_cgo_calls"},
+				{"test_process/memory_alloc", "test_process/total_memory_alloc", "test_process/sys_memory_alloc", "test_process/memory_lookups", "test_process/memory_malloc", "test_process/memory_frees"},
+				{"test_process/heap_alloc", "test_process/sys_heap", "test_process/heap_idle", "test_process/heap_inuse", "test_process/heap_objects", "test_process/heap_release"},
+				{"test_process/stack_inuse", "test_process/sys_stack", "test_process/stack_mspan_inuse", "test_process/sys_stack_mspan", "test_process/stack_mcache_inuse", "test_process/sys_stack_mcache"},
+				{"test_process/cpu_goroutines", "test_process/cpu_cgo_calls"},
 			},
 			[][]string{},
 		},

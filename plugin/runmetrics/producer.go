@@ -126,94 +126,94 @@ func newMemStats(producer *producer) (*memStats, error) {
 	memStats := &memStats{}
 
 	// General
-	memStats.memAlloc, err = producer.createInt64GaugeEntry("mem_alloc", "Bytes of allocated heap objects", metricdata.UnitBytes)
+	memStats.memAlloc, err = producer.createInt64GaugeEntry("process/memory_alloc", "Number of bytes currently allocated in use", metricdata.UnitBytes)
 	if err != nil {
 		return nil, err
 	}
 
-	memStats.memTotal, err = producer.createInt64GaugeEntry("mem_total", "Cumulative bytes allocated for heap objects", metricdata.UnitBytes)
+	memStats.memTotal, err = producer.createInt64GaugeEntry("process/total_memory_alloc", "Number of allocations in total", metricdata.UnitBytes)
 	if err != nil {
 		return nil, err
 	}
 
-	memStats.memSys, err = producer.createInt64GaugeEntry("mem_sys", "Total bytes of memory obtained from the OS", metricdata.UnitBytes)
+	memStats.memSys, err = producer.createInt64GaugeEntry("process/sys_memory_alloc", "Number of bytes given to the process to use in total", metricdata.UnitBytes)
 	if err != nil {
 		return nil, err
 	}
 
-	memStats.memLookups, err = producer.createInt64GaugeEntry("mem_lookups", "Number of pointer lookups performed by the runtime", metricdata.UnitDimensionless)
+	memStats.memLookups, err = producer.createInt64GaugeEntry("process/memory_lookups", "Number of pointer lookups performed by the runtime", metricdata.UnitDimensionless)
 	if err != nil {
 		return nil, err
 	}
 
-	memStats.memMalloc, err = producer.createInt64GaugeEntry("mem_malloc", "Cumulative count of heap objects allocated", metricdata.UnitDimensionless)
+	memStats.memMalloc, err = producer.createInt64GaugeEntry("process/memory_malloc", "Cumulative count of heap objects allocated", metricdata.UnitDimensionless)
 	if err != nil {
 		return nil, err
 	}
 
-	memStats.memFrees, err = producer.createInt64GaugeEntry("mem_frees", "Cumulative count of heap objects freed", metricdata.UnitDimensionless)
+	memStats.memFrees, err = producer.createInt64GaugeEntry("process/memory_frees", "Cumulative count of heap objects freed", metricdata.UnitDimensionless)
 	if err != nil {
 		return nil, err
 	}
 
 	// Heap
-	memStats.heapAlloc, err = producer.createInt64GaugeEntry("heap_alloc", "Process heap allocation", metricdata.UnitBytes)
+	memStats.heapAlloc, err = producer.createInt64GaugeEntry("process/heap_alloc", "Process heap allocation", metricdata.UnitBytes)
 	if err != nil {
 		return nil, err
 	}
 
-	memStats.heapSys, err = producer.createInt64GaugeEntry("heap_sys", "todo", metricdata.UnitBytes)
+	memStats.heapSys, err = producer.createInt64GaugeEntry("process/sys_heap", "Bytes of heap memory obtained from the OS", metricdata.UnitBytes)
 	if err != nil {
 		return nil, err
 	}
 
-	memStats.heapIdle, err = producer.createInt64GaugeEntry("heap_idle", "todo", metricdata.UnitBytes)
+	memStats.heapIdle, err = producer.createInt64GaugeEntry("process/heap_idle", "Bytes in idle (unused) spans", metricdata.UnitBytes)
 	if err != nil {
 		return nil, err
 	}
 
-	memStats.heapInuse, err = producer.createInt64GaugeEntry("heap_inuse", "todo", metricdata.UnitBytes)
+	memStats.heapInuse, err = producer.createInt64GaugeEntry("process/heap_inuse", "Bytes in in-use spans", metricdata.UnitBytes)
 	if err != nil {
 		return nil, err
 	}
 
-	memStats.heapObjects, err = producer.createInt64GaugeEntry("heap_objects", "The number of objects allocated on the heap", metricdata.UnitDimensionless)
+	memStats.heapObjects, err = producer.createInt64GaugeEntry("process/heap_objects", "The number of objects allocated on the heap", metricdata.UnitDimensionless)
 	if err != nil {
 		return nil, err
 	}
 
-	memStats.heapReleased, err = producer.createInt64GaugeEntry("heap_release", "The number of objects released from the heap", metricdata.UnitBytes)
+	memStats.heapReleased, err = producer.createInt64GaugeEntry("process/heap_release", "The number of objects released from the heap", metricdata.UnitBytes)
 	if err != nil {
 		return nil, err
 	}
 
 	// Stack
-	memStats.stackInuse, err = producer.createInt64GaugeEntry("stack_inuse", "Bytes in stack spans", metricdata.UnitBytes)
+	memStats.stackInuse, err = producer.createInt64GaugeEntry("process/stack_inuse", "Bytes in stack spans", metricdata.UnitBytes)
 	if err != nil {
 		return nil, err
 	}
 
-	memStats.stackSys, err = producer.createInt64GaugeEntry("stack_sys", "The memory used by stack spans and OS thread stacks", metricdata.UnitBytes)
+	memStats.stackSys, err = producer.createInt64GaugeEntry("process/sys_stack", "The memory used by stack spans and OS thread stacks", metricdata.UnitBytes)
 	if err != nil {
 		return nil, err
 	}
 
-	memStats.stackMSpanInuse, err = producer.createInt64GaugeEntry("stack_mspan_inuse", "Bytes of allocated mspan structures", metricdata.UnitBytes)
+	memStats.stackMSpanInuse, err = producer.createInt64GaugeEntry("process/stack_mspan_inuse", "Bytes of allocated mspan structures", metricdata.UnitBytes)
 	if err != nil {
 		return nil, err
 	}
 
-	memStats.stackMSpanSys, err = producer.createInt64GaugeEntry("stack_mspan_sys", "Bytes of memory obtained from the OS for mspan structures", metricdata.UnitBytes)
+	memStats.stackMSpanSys, err = producer.createInt64GaugeEntry("process/sys_stack_mspan", "Bytes of memory obtained from the OS for mspan structures", metricdata.UnitBytes)
 	if err != nil {
 		return nil, err
 	}
 
-	memStats.stackMCacheInuse, err = producer.createInt64GaugeEntry("stack_mcache_inuse", "Bytes of allocated mcache structures", metricdata.UnitBytes)
+	memStats.stackMCacheInuse, err = producer.createInt64GaugeEntry("process/stack_mcache_inuse", "Bytes of allocated mcache structures", metricdata.UnitBytes)
 	if err != nil {
 		return nil, err
 	}
 
-	memStats.stackMCacheSys, err = producer.createInt64GaugeEntry("stack_mcache_sys", "Bytes of memory obtained from the OS for mcache structures", metricdata.UnitBytes)
+	memStats.stackMCacheSys, err = producer.createInt64GaugeEntry("process/sys_stack_mcache", "Bytes of memory obtained from the OS for mcache structures", metricdata.UnitBytes)
 	if err != nil {
 		return nil, err
 	}
@@ -250,12 +250,12 @@ func newCPUStats(producer *producer) (*cpuStats, error) {
 	cpuStats := &cpuStats{}
 	var err error
 
-	cpuStats.numGoroutines, err = producer.createInt64GaugeEntry("cpu_goroutines", "Number of goroutines that currently exist", metricdata.UnitDimensionless)
+	cpuStats.numGoroutines, err = producer.createInt64GaugeEntry("process/cpu_goroutines", "Number of goroutines that currently exist", metricdata.UnitDimensionless)
 	if err != nil {
 		return nil, err
 	}
 
-	cpuStats.numCgoCalls, err = producer.createInt64GaugeEntry("cpu_cgo_calls", "Number of cgo calls made by the current process", metricdata.UnitDimensionless)
+	cpuStats.numCgoCalls, err = producer.createInt64GaugeEntry("process/cpu_cgo_calls", "Number of cgo calls made by the current process", metricdata.UnitDimensionless)
 	if err != nil {
 		return nil, err
 	}
