@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"go.opencensus.io/metric/metricdata"
 	"go.opencensus.io/metric/metricexport"
-	"go.opencensus.io/metric/metricproducer"
 	"go.opencensus.io/plugin/runmetrics"
 	"log"
 	"sort"
@@ -38,10 +37,10 @@ func (l *printExporter) ExportMetrics(ctx context.Context, data []*metricdata.Me
 	return nil
 }
 
-func ExampleProducer() {
+func ExampleEnable() {
 
-	// Create a new runmetrics.Producer and supply options
-	runtimeMetrics, err := runmetrics.NewProducer(runmetrics.RunMetricOptions{
+	// Enable collection of runtime metrics and supply options
+	err := runmetrics.Enable(runmetrics.RunMetricOptions{
 		EnableCPU:    true,
 		EnableMemory: true,
 		Prefix:       "mayapp_",
@@ -49,9 +48,6 @@ func ExampleProducer() {
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	// Register the producer
-	metricproducer.GlobalManager().AddProducer(runtimeMetrics)
 
 	// Use your reader/exporter to extract values
 	// This part is not specific to runtime metrics and only here to make it a complete example.

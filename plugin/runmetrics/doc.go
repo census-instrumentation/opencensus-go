@@ -14,12 +14,10 @@
 
 // Package runmetrics contains support for runtime metrics.
 //
-// To enable collecting runtime metrics, create a new Producer and register it:
+// To enable collecting runtime metrics, just call Enable():
 //
-//     runtimeMetrics, _ := runmetrics.NewProducer(RunMetricOptions{
+//     _ := runmetrics.Enable(runmetrics.RunMetricOptions{
 //         EnableCPU: true,
 //         EnableMemory: true,
 //     })
-//     metricproducer.GlobalManager().AddProducer(runtimeMetrics)
-//
 package runmetrics // import "go.opencensus.io/plugin/runmetrics"

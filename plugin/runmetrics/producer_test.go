@@ -19,13 +19,22 @@ func (t *testExporter) ExportMetrics(ctx context.Context, data []*metricdata.Met
 	return nil
 }
 
-func TestNewProducer(t *testing.T) {
+func TestEnable(t *testing.T) {
 	tests := []struct {
 		name                string
 		options             runmetrics.RunMetricOptions
 		wantMetricNames     [][]string
 		dontWantMetricNames [][]string
 	}{
+		{
+			"no stats",
+			runmetrics.RunMetricOptions{
+				EnableCPU:    false,
+				EnableMemory: false,
+			},
+			[][]string{},
+			[][]string{},
+		},
 		{
 			"cpu and memory stats",
 			runmetrics.RunMetricOptions{
@@ -90,14 +99,13 @@ func TestNewProducer(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 
-			producer, err := runmetrics.NewProducer(test.options)
+			err := runmetrics.Enable(test.options)
 
 			if err != nil {
 				t.Errorf("want: nil, got: %v", err)
 			}
 
-			metricproducer.GlobalManager().AddProducer(producer)
-			defer metricproducer.GlobalManager().DeleteProducer(producer)
+			defer runmetrics.Disable()
 
 			exporter := &testExporter{}
 			reader := metricexport.NewReader()
@@ -115,6 +123,8 @@ func TestNewProducer(t *testing.T) {
 }
 
 func assertNames(t *testing.T, wantIncluded bool, exporter *testExporter, expectedNames []string) {
+	t.Helper()
+
 	metricNames := make([]string, 0)
 	for _, v := range exporter.data {
 		metricNames = append(metricNames, v.Descriptor.Name)
@@ -127,4 +137,41 @@ func assertNames(t *testing.T, wantIncluded bool, exporter *testExporter, expect
 			assert.NotContains(t, metricNames, want)
 		}
 	}
+}
+
+func TestEnable_RegistersWithGlobalManager(t *testing.T) {
+	err := runmetrics.Enable(runmetrics.RunMetricOptions{})
+	if err != nil {
+		t.Errorf("want: nil, got: %v", err)
+	}
+
+	registeredCount := len(metricproducer.GlobalManager().GetAll())
+	assert.Equal(t, 1, registeredCount, "expected a producer to be registered")
+}
+
+func TestEnable_RegistersNoDuplicates(t *testing.T) {
+	err := runmetrics.Enable(runmetrics.RunMetricOptions{})
+	if err != nil {
+		t.Errorf("want: nil, got: %v", err)
+	}
+
+	err = runmetrics.Enable(runmetrics.RunMetricOptions{})
+	if err != nil {
+		t.Errorf("want: nil, got: %v", err)
+	}
+
+	producerCount := len(metricproducer.GlobalManager().GetAll())
+	assert.Equal(t, 1, producerCount, "expected one registered producer")
+}
+
+func TestDisable(t *testing.T) {
+	err := runmetrics.Enable(runmetrics.RunMetricOptions{})
+	if err != nil {
+		t.Errorf("want: nil, got: %v", err)
+	}
+
+	runmetrics.Disable()
+
+	producerCount := len(metricproducer.GlobalManager().GetAll())
+	assert.Equal(t, 0, producerCount, "expected one registered producer")
 }

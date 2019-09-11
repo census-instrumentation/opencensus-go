@@ -6,15 +6,14 @@ import (
 	"go.opencensus.io/metric/metricdata"
 	"go.opencensus.io/metric/metricproducer"
 	"runtime"
+	"sync"
 )
 
 type (
-	// Producer produces runtime metrics.
+	// producer produces runtime metrics.
 	//
-	// Create a new Producer with NewProducer().
-	// A Producer should then be registered with the global manager:
-	// metricproducer.GlobalManager().AddProducer()
-	Producer struct {
+	// Enable collection of runtime metrics with Enable().
+	producer struct {
 		options RunMetricOptions
 		reg     *metric.Registry
 
@@ -22,7 +21,7 @@ type (
 		cpuStats *cpuStats
 	}
 
-	// RunMetricOptions allows to configure Producer.
+	// RunMetricOptions allows to configure runtime metrics.
 	RunMetricOptions struct {
 		EnableCPU    bool   // EnableCPU whether CPU metrics shall be recorded
 		EnableMemory bool   // EnableMemory whether memory metrics shall be recorded
@@ -60,47 +59,69 @@ type (
 	}
 )
 
-var _ metricproducer.Producer = (*Producer)(nil)
+var (
+	_               metricproducer.Producer = (*producer)(nil)
+	enableMutex     sync.Mutex
+	enabledProducer *producer
+)
 
-// NewProducer creates a new runtime metrics producer.
+// Enable enables collection of runtime metrics.
 //
-// Supply RunMetricOptions to configure the behavior of the Producer.
+// Supply RunMetricOptions to configure the behavior of metrics collection.
 // An error might be returned, if creating metrics gauges fails.
-func NewProducer(options RunMetricOptions) (*Producer, error) {
-	collector := &Producer{options: options, reg: metric.NewRegistry()}
+//
+// Previous calls will be overwritten by subsequent ones.
+func Enable(options RunMetricOptions) error {
+	producer := &producer{options: options, reg: metric.NewRegistry()}
 	var err error
 
 	if options.EnableMemory {
-		collector.memStats, err = newMemStats(collector)
+		producer.memStats, err = newMemStats(producer)
 		if err != nil {
-			return nil, err
+			return err
 		}
 	}
 
 	if options.EnableCPU {
-		collector.cpuStats, err = newCPUStats(collector)
+		producer.cpuStats, err = newCPUStats(producer)
 		if err != nil {
-			return nil, err
+			return err
 		}
 	}
 
-	return collector, err
+	enableMutex.Lock()
+	defer enableMutex.Unlock()
+
+	metricproducer.GlobalManager().DeleteProducer(enabledProducer)
+	metricproducer.GlobalManager().AddProducer(producer)
+	enabledProducer = producer
+
+	return nil
+}
+
+// Disable disables collection of runtime metrics.
+func Disable() {
+	enableMutex.Lock()
+	defer enableMutex.Unlock()
+
+	metricproducer.GlobalManager().DeleteProducer(enabledProducer)
+	enabledProducer = nil
 }
 
 // Read reads the current runtime metrics.
-func (c *Producer) Read() []*metricdata.Metric {
-	if c.memStats != nil {
-		c.memStats.read()
+func (p *producer) Read() []*metricdata.Metric {
+	if p.memStats != nil {
+		p.memStats.read()
 	}
 
-	if c.cpuStats != nil {
-		c.cpuStats.read()
+	if p.cpuStats != nil {
+		p.cpuStats.read()
 	}
 
-	return c.reg.Read()
+	return p.reg.Read()
 }
 
-func newMemStats(producer *Producer) (*memStats, error) {
+func newMemStats(producer *producer) (*memStats, error) {
 	var err error
 	memStats := &memStats{}
 
@@ -225,16 +246,16 @@ func (m *memStats) read() {
 	m.stackMCacheSys.Set(int64(m.memStats.MCacheSys))
 }
 
-func newCPUStats(collector *Producer) (*cpuStats, error) {
+func newCPUStats(producer *producer) (*cpuStats, error) {
 	cpuStats := &cpuStats{}
 	var err error
 
-	cpuStats.numGoroutines, err = collector.createInt64GaugeEntry("cpu_goroutines", "Number of goroutines that currently exist", metricdata.UnitDimensionless)
+	cpuStats.numGoroutines, err = producer.createInt64GaugeEntry("cpu_goroutines", "Number of goroutines that currently exist", metricdata.UnitDimensionless)
 	if err != nil {
 		return nil, err
 	}
 
-	cpuStats.numCgoCalls, err = collector.createInt64GaugeEntry("cpu_cgo_calls", "Number of cgo calls made by the current process", metricdata.UnitDimensionless)
+	cpuStats.numCgoCalls, err = producer.createInt64GaugeEntry("cpu_cgo_calls", "Number of cgo calls made by the current process", metricdata.UnitDimensionless)
 	if err != nil {
 		return nil, err
 	}
@@ -247,12 +268,12 @@ func (c *cpuStats) read() {
 	c.numCgoCalls.Set(runtime.NumCgoCall())
 }
 
-func (c *Producer) createInt64GaugeEntry(name string, description string, unit metricdata.Unit) (*metric.Int64GaugeEntry, error) {
-	if len(c.options.Prefix) > 0 {
-		name = c.options.Prefix + name
+func (p *producer) createInt64GaugeEntry(name string, description string, unit metricdata.Unit) (*metric.Int64GaugeEntry, error) {
+	if len(p.options.Prefix) > 0 {
+		name = p.options.Prefix + name
 	}
 
-	gauge, err := c.reg.AddInt64Gauge(
+	gauge, err := p.reg.AddInt64Gauge(
 		name,
 		metric.WithDescription(description),
 		metric.WithUnit(unit))
