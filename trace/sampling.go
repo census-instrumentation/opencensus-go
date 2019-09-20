@@ -73,3 +73,11 @@ func NeverSample() Sampler {
 		return SamplingDecision{Sample: false}
 	}
 }
+
+// AlwaysParentSampler returns a Sampler that only samples spans,
+// and only if the parent span has already decided that it should be sampled.
+func AlwaysParentSampler() Sampler {
+	return func(p SamplingParameters) SamplingDecision {
+		return SamplingDecision{Sample: p.ParentContext.IsSampled()}
+	}
+}
