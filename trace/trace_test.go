@@ -101,13 +101,22 @@ func TestSampling(t *testing.T) {
 		{true, false, 1, NeverSample(), 0},
 		{true, false, 0, AlwaysSample(), 1},
 		{true, false, 1, AlwaysSample(), 1},
+		{true, false, 0, AlwaysParentSampler(), 0},
+		{true, false, 1, AlwaysParentSampler(), 1},
+
+		{false, true, 0, nil, 0},
+		{false, true, 1, nil, 1},
 		{false, true, 0, NeverSample(), 0},
 		{false, true, 1, NeverSample(), 0},
 		{false, true, 0, AlwaysSample(), 1},
 		{false, true, 1, AlwaysSample(), 1},
+		{false, true, 0, AlwaysParentSampler(), 0},
+		{false, true, 1, AlwaysParentSampler(), 1},
+
 		{false, false, 0, nil, 0},
 		{false, false, 0, NeverSample(), 0},
 		{false, false, 0, AlwaysSample(), 1},
+		{false, false, 0, AlwaysParentSampler(), 0},
 	} {
 		var ctx context.Context
 		if test.remoteParent {
