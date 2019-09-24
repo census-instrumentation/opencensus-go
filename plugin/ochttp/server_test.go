@@ -595,3 +595,63 @@ func TestIgnoreHealthz(t *testing.T) {
 		t.Errorf("Got %v spans; want no spans", spans)
 	}
 }
+
+func testHealthEndpointSkipArray(p string) bool {
+	for _, toSkip := range []string{"/health", "/metrics"} {
+		if p == toSkip {
+			return true
+		}
+	}
+	return false
+}
+
+func TestHandlerIsHealthEndpoint(t *testing.T) {
+	var spans int
+
+	client := &http.Client{}
+	tests := []struct {
+		path               string
+		healthEndpointFunc func(string) bool
+	}{
+		{"/healthz", nil},
+		{"/_ah/health", nil},
+		{"/health", testHealthEndpointSkipArray},
+		{"/metrics", testHealthEndpointSkipArray},
+	}
+	for _, tt := range tests {
+		t.Run(tt.path, func(t *testing.T) {
+			ts := httptest.NewServer(&Handler{
+				Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					span := trace.FromContext(r.Context())
+					if span != nil {
+						spans++
+					}
+					fmt.Fprint(w, "ok")
+				}),
+				StartOptions: trace.StartOptions{
+					Sampler: trace.AlwaysSample(),
+				},
+				IsHealthEndpoint: tt.healthEndpointFunc,
+			})
+			defer ts.Close()
+
+			resp, err := client.Get(ts.URL + tt.path)
+			if err != nil {
+				t.Fatalf("Cannot GET %q: %v", tt.path, err)
+			}
+			b, err := ioutil.ReadAll(resp.Body)
+			if err != nil {
+				t.Fatalf("Cannot read body for %q: %v", tt.path, err)
+			}
+
+			if got, want := string(b), "ok"; got != want {
+				t.Fatalf("Body for %q = %q; want %q", tt.path, got, want)
+			}
+			resp.Body.Close()
+		})
+	}
+
+	if spans > 0 {
+		t.Errorf("Got %v spans; want no spans", spans)
+	}
+}
