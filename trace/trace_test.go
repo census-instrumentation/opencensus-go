@@ -230,6 +230,20 @@ func TestStartSpanWithRemoteParent(t *testing.T) {
 	}
 }
 
+func TestStartSpanWithStartTime(t *testing.T) {
+	start := time.Now().Add(-10 * time.Second)
+
+	ctx, span := StartSpan(context.Background(), "parent", WithSampler(AlwaysSample()), WithStartTime(start))
+	if !span.data.StartTime.Equal(start) {
+		t.Errorf("expected start time=%s was=%s", start, span.data.StartTime)
+	}
+
+	_, span = StartSpan(ctx, "child")
+	if !span.data.StartTime.After(start) {
+		t.Error("expected child's start time to be after parent's")
+	}
+}
+
 // startSpan returns a context with a new Span that is recording events and will be exported.
 func startSpan(o StartOptions) *Span {
 	_, span := StartSpanWithRemoteParent(context.Background(), "span0",
