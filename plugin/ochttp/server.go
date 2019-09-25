@@ -73,7 +73,8 @@ type Handler struct {
 
 	// IsHealthEndpoint holds the function to use for determining if the
 	// incoming HTTP request should be considered a health check. If set and
-	// returns true, no trace will be recorded.
+	// returns true no trace will be recorded, otherwise the handler will
+	// use the private isHealthEndpoint func in this package.
 	IsHealthEndpoint func(string) bool
 }
 
