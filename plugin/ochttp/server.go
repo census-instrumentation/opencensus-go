@@ -72,9 +72,9 @@ type Handler struct {
 	FormatSpanName func(*http.Request) string
 
 	// IsHealthEndpoint holds the function to use for determining if the
-	// incoming HTTP request should be considered a health check. If set and
-	// returns true no trace will be recorded, otherwise the handler will
-	// use the private isHealthEndpoint func in this package.
+	// incoming HTTP request should be considered a health check. This is in
+	// addition to the private isHealthEndpoint func which may also indicate
+	// tracing should be skipped.
 	IsHealthEndpoint func(string) bool
 }
 
