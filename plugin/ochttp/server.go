@@ -75,7 +75,7 @@ type Handler struct {
 	// incoming HTTP request should be considered a health check. This is in
 	// addition to the private isHealthEndpoint func which may also indicate
 	// tracing should be skipped.
-	IsHealthEndpoint func(string) bool
+	IsHealthEndpoint func(*http.Request) bool
 }
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -93,7 +93,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) startTrace(w http.ResponseWriter, r *http.Request) (*http.Request, func()) {
-	if h.IsHealthEndpoint != nil && h.IsHealthEndpoint(r.URL.Path) || isHealthEndpoint(r.URL.Path) {
+	if h.IsHealthEndpoint != nil && h.IsHealthEndpoint(r) || isHealthEndpoint(r.URL.Path) {
 		return r, func() {}
 	}
 	var name string

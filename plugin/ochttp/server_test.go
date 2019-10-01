@@ -555,9 +555,9 @@ func TestHandlerImplementsHTTPCloseNotify(t *testing.T) {
 	}
 }
 
-func testHealthEndpointSkipArray(p string) bool {
+func testHealthEndpointSkipArray(r *http.Request) bool {
 	for _, toSkip := range []string{"/health", "/metrics"} {
-		if p == toSkip {
+		if r.URL.Path == toSkip {
 			return true
 		}
 	}
@@ -570,7 +570,7 @@ func TestIgnoreHealthEndpoints(t *testing.T) {
 	client := &http.Client{}
 	tests := []struct {
 		path               string
-		healthEndpointFunc func(string) bool
+		healthEndpointFunc func(*http.Request) bool
 	}{
 		{"/healthz", nil},
 		{"/_ah/health", nil},
