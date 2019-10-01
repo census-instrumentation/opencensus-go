@@ -555,40 +555,61 @@ func TestHandlerImplementsHTTPCloseNotify(t *testing.T) {
 	}
 }
 
-func TestIgnoreHealthz(t *testing.T) {
+func testHealthEndpointSkipArray(r *http.Request) bool {
+	for _, toSkip := range []string{"/health", "/metrics"} {
+		if r.URL.Path == toSkip {
+			return true
+		}
+	}
+	return false
+}
+
+func TestIgnoreHealthEndpoints(t *testing.T) {
 	var spans int
 
-	ts := httptest.NewServer(&Handler{
-		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			span := trace.FromContext(r.Context())
-			if span != nil {
-				spans++
-			}
-			fmt.Fprint(w, "ok")
-		}),
-		StartOptions: trace.StartOptions{
-			Sampler: trace.AlwaysSample(),
-		},
-	})
-	defer ts.Close()
-
 	client := &http.Client{}
+	tests := []struct {
+		path               string
+		healthEndpointFunc func(*http.Request) bool
+	}{
+		{"/healthz", nil},
+		{"/_ah/health", nil},
+		{"/healthz", testHealthEndpointSkipArray},
+		{"/_ah/health", testHealthEndpointSkipArray},
+		{"/health", testHealthEndpointSkipArray},
+		{"/metrics", testHealthEndpointSkipArray},
+	}
+	for _, tt := range tests {
+		t.Run(tt.path, func(t *testing.T) {
+			ts := httptest.NewServer(&Handler{
+				Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					span := trace.FromContext(r.Context())
+					if span != nil {
+						spans++
+					}
+					fmt.Fprint(w, "ok")
+				}),
+				StartOptions: trace.StartOptions{
+					Sampler: trace.AlwaysSample(),
+				},
+				IsHealthEndpoint: tt.healthEndpointFunc,
+			})
+			defer ts.Close()
 
-	for _, path := range []string{"/healthz", "/_ah/health"} {
-		resp, err := client.Get(ts.URL + path)
-		if err != nil {
-			t.Fatalf("Cannot GET %q: %v", path, err)
-		}
+			resp, err := client.Get(ts.URL + tt.path)
+			if err != nil {
+				t.Fatalf("Cannot GET %q: %v", tt.path, err)
+			}
+			b, err := ioutil.ReadAll(resp.Body)
+			if err != nil {
+				t.Fatalf("Cannot read body for %q: %v", tt.path, err)
+			}
 
-		b, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			t.Fatalf("Cannot read body for %q: %v", path, err)
-		}
-
-		if got, want := string(b), "ok"; got != want {
-			t.Fatalf("Body for %q = %q; want %q", path, got, want)
-		}
-		resp.Body.Close()
+			if got, want := string(b), "ok"; got != want {
+				t.Fatalf("Body for %q = %q; want %q", tt.path, got, want)
+			}
+			resp.Body.Close()
+		})
 	}
 
 	if spans > 0 {
