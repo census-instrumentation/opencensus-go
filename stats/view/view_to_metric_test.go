@@ -554,7 +554,7 @@ func TestViewToMetric_OutOfOrderWithZeroBuckets(t *testing.T) {
 	}
 
 	if got == nil {
-		t.Fatalf("metric OutOfOrderWithZeroBuckets found\n")
+		t.Fatalf("metric OutOfOrderWithZeroBuckets not found\n")
 	}
 	now := time.Now()
 	got.TimeSeries[0].Points[0].Time = now
