@@ -530,15 +530,94 @@ var _ metricexport.Exporter = (*mockExp)(nil)
 
 func TestViewToMetric_OutOfOrderWithZeroBuckets(t *testing.T) {
 	m := stats.Int64("OutOfOrderWithZeroBuckets", "", "")
-	v := &View{
-		Measure:     m,
-		Aggregation: Distribution(10, 0, 2),
+	now := time.Now()
+	tts := []struct {
+		v *View
+		m *metricdata.Metric
+	}{
+		{
+			v: &View{
+				Name:        m.Name() + "_order1",
+				Measure:     m,
+				Aggregation: Distribution(10, 0, 2),
+			},
+			m: &metricdata.Metric{
+				Descriptor: metricdata.Descriptor{
+					Name:      "OutOfOrderWithZeroBuckets_order1",
+					Unit:      metricdata.UnitDimensionless,
+					Type:      metricdata.TypeCumulativeDistribution,
+					LabelKeys: []metricdata.LabelKey{},
+				},
+				TimeSeries: []*metricdata.TimeSeries{
+					{Points: []metricdata.Point{
+						{Value: &metricdata.Distribution{
+							Count:                 3,
+							Sum:                   9.0,
+							SumOfSquaredDeviation: 8,
+							BucketOptions: &metricdata.BucketOptions{
+								Bounds: []float64{2, 10},
+							},
+							Buckets: []metricdata.Bucket{
+								{Count: 1, Exemplar: nil},
+								{Count: 2, Exemplar: nil},
+								{Count: 0, Exemplar: nil},
+							},
+						},
+							Time: now,
+						},
+					},
+						StartTime:   now,
+						LabelValues: []metricdata.LabelValue{},
+					},
+				},
+			},
+		},
+		{
+			v: &View{
+				Name:        m.Name() + "_order2",
+				Measure:     m,
+				Aggregation: Distribution(0, 5, 10),
+			},
+			m: &metricdata.Metric{
+				Descriptor: metricdata.Descriptor{
+					Name:      "OutOfOrderWithZeroBuckets_order2",
+					Unit:      metricdata.UnitDimensionless,
+					Type:      metricdata.TypeCumulativeDistribution,
+					LabelKeys: []metricdata.LabelKey{},
+				},
+				TimeSeries: []*metricdata.TimeSeries{
+					{Points: []metricdata.Point{
+						{Value: &metricdata.Distribution{
+							Count:                 3,
+							Sum:                   9.0,
+							SumOfSquaredDeviation: 8,
+							BucketOptions: &metricdata.BucketOptions{
+								Bounds: []float64{5, 10},
+							},
+							Buckets: []metricdata.Bucket{
+								{Count: 2, Exemplar: nil},
+								{Count: 1, Exemplar: nil},
+								{Count: 0, Exemplar: nil},
+							},
+						},
+							Time: now,
+						},
+					},
+						StartTime:   now,
+						LabelValues: []metricdata.LabelValue{},
+					},
+				},
+			},
+		},
 	}
-	err := Register(v)
+	for _, tt := range tts {
+		err := Register(tt.v)
+		if err != nil {
+			t.Fatalf("error registering view %v, err: %v", tt.v, err)
+		}
 
-	if err != nil {
-		t.Fatalf("Unexpected err %s", err)
 	}
+
 	stats.Record(context.Background(), m.M(5), m.M(1), m.M(3))
 	time.Sleep(1 * time.Second)
 
@@ -547,52 +626,27 @@ func TestViewToMetric_OutOfOrderWithZeroBuckets(t *testing.T) {
 	reader.ReadAndExport(me)
 
 	var got *metricdata.Metric
-	for _, m := range me.metrics {
-		if m.Descriptor.Name == "OutOfOrderWithZeroBuckets" {
-			got = m
+	lookup := func(vname string, metrics []*metricdata.Metric) *metricdata.Metric {
+		for _, m := range metrics {
+			if m.Descriptor.Name == vname {
+				return m
+			}
 		}
+		return nil
 	}
 
-	if got == nil {
-		t.Fatalf("metric OutOfOrderWithZeroBuckets not found\n")
-	}
-	now := time.Now()
-	got.TimeSeries[0].Points[0].Time = now
-	got.TimeSeries[0].StartTime = now
+	for _, tt := range tts {
+		got = lookup(tt.v.Name, me.metrics)
+		if got == nil {
+			t.Fatalf("metric %s not found in %v\n", tt.v.Name, me.metrics)
+		}
+		got.TimeSeries[0].Points[0].Time = now
+		got.TimeSeries[0].StartTime = now
 
-	want := &metricdata.Metric{
-		Descriptor: metricdata.Descriptor{
-			Name:      "OutOfOrderWithZeroBuckets",
-			Unit:      metricdata.UnitDimensionless,
-			Type:      metricdata.TypeCumulativeDistribution,
-			LabelKeys: []metricdata.LabelKey{},
-		},
-		TimeSeries: []*metricdata.TimeSeries{
-			{Points: []metricdata.Point{
-				{Value: &metricdata.Distribution{
-					Count:                 3,
-					Sum:                   9.0,
-					SumOfSquaredDeviation: 8,
-					BucketOptions: &metricdata.BucketOptions{
-						Bounds: []float64{2, 10},
-					},
-					Buckets: []metricdata.Bucket{
-						{Count: 1, Exemplar: nil},
-						{Count: 2, Exemplar: nil},
-						{Count: 0, Exemplar: nil},
-					},
-				},
-					Time: now,
-				},
-			},
-				StartTime:   now,
-				LabelValues: []metricdata.LabelValue{},
-			},
-		},
-	}
-
-	if diff := cmp.Diff(got, want); diff != "" {
-		t.Errorf("buckets differ -got +want: %s \n Serialized got %v\n, Serialized want %v\n", diff, serializeAsJSON(got), serializeAsJSON(want))
+		want := tt.m
+		if diff := cmp.Diff(got, want); diff != "" {
+			t.Errorf("buckets differ -got +want: %s \n Serialized got %v\n, Serialized want %v\n", diff, serializeAsJSON(got), serializeAsJSON(want))
+		}
 	}
 }
 
