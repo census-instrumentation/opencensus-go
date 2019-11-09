@@ -24,6 +24,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"go.opencensus.io/metric/metricdata"
+	"go.opencensus.io/metric/metricexport"
 	"go.opencensus.io/stats"
 	"go.opencensus.io/tag"
 )
@@ -512,6 +513,139 @@ func TestUnitConversionForAggCount(t *testing.T) {
 		gotUnit := gotMetric.Descriptor.Unit
 		if !cmp.Equal(gotUnit, tc.wantUnit) {
 			t.Errorf("Verify Unit: %s: Got:%v Want:%v", tc.name, gotUnit, tc.wantUnit)
+		}
+	}
+}
+
+type mockExp struct {
+	metrics []*metricdata.Metric
+}
+
+func (me *mockExp) ExportMetrics(ctx context.Context, metrics []*metricdata.Metric) error {
+	me.metrics = append(me.metrics, metrics...)
+	return nil
+}
+
+var _ metricexport.Exporter = (*mockExp)(nil)
+
+func TestViewToMetric_OutOfOrderWithZeroBuckets(t *testing.T) {
+	m := stats.Int64("OutOfOrderWithZeroBuckets", "", "")
+	now := time.Now()
+	tts := []struct {
+		v *View
+		m *metricdata.Metric
+	}{
+		{
+			v: &View{
+				Name:        m.Name() + "_order1",
+				Measure:     m,
+				Aggregation: Distribution(10, 0, 2),
+			},
+			m: &metricdata.Metric{
+				Descriptor: metricdata.Descriptor{
+					Name:      "OutOfOrderWithZeroBuckets_order1",
+					Unit:      metricdata.UnitDimensionless,
+					Type:      metricdata.TypeCumulativeDistribution,
+					LabelKeys: []metricdata.LabelKey{},
+				},
+				TimeSeries: []*metricdata.TimeSeries{
+					{Points: []metricdata.Point{
+						{Value: &metricdata.Distribution{
+							Count:                 3,
+							Sum:                   9.0,
+							SumOfSquaredDeviation: 8,
+							BucketOptions: &metricdata.BucketOptions{
+								Bounds: []float64{2, 10},
+							},
+							Buckets: []metricdata.Bucket{
+								{Count: 1, Exemplar: nil},
+								{Count: 2, Exemplar: nil},
+								{Count: 0, Exemplar: nil},
+							},
+						},
+							Time: now,
+						},
+					},
+						StartTime:   now,
+						LabelValues: []metricdata.LabelValue{},
+					},
+				},
+			},
+		},
+		{
+			v: &View{
+				Name:        m.Name() + "_order2",
+				Measure:     m,
+				Aggregation: Distribution(0, 5, 10),
+			},
+			m: &metricdata.Metric{
+				Descriptor: metricdata.Descriptor{
+					Name:      "OutOfOrderWithZeroBuckets_order2",
+					Unit:      metricdata.UnitDimensionless,
+					Type:      metricdata.TypeCumulativeDistribution,
+					LabelKeys: []metricdata.LabelKey{},
+				},
+				TimeSeries: []*metricdata.TimeSeries{
+					{Points: []metricdata.Point{
+						{Value: &metricdata.Distribution{
+							Count:                 3,
+							Sum:                   9.0,
+							SumOfSquaredDeviation: 8,
+							BucketOptions: &metricdata.BucketOptions{
+								Bounds: []float64{5, 10},
+							},
+							Buckets: []metricdata.Bucket{
+								{Count: 2, Exemplar: nil},
+								{Count: 1, Exemplar: nil},
+								{Count: 0, Exemplar: nil},
+							},
+						},
+							Time: now,
+						},
+					},
+						StartTime:   now,
+						LabelValues: []metricdata.LabelValue{},
+					},
+				},
+			},
+		},
+	}
+	for _, tt := range tts {
+		err := Register(tt.v)
+		if err != nil {
+			t.Fatalf("error registering view %v, err: %v", tt.v, err)
+		}
+
+	}
+
+	stats.Record(context.Background(), m.M(5), m.M(1), m.M(3))
+	time.Sleep(1 * time.Second)
+
+	me := &mockExp{}
+	reader := metricexport.NewReader()
+	reader.ReadAndExport(me)
+
+	var got *metricdata.Metric
+	lookup := func(vname string, metrics []*metricdata.Metric) *metricdata.Metric {
+		for _, m := range metrics {
+			if m.Descriptor.Name == vname {
+				return m
+			}
+		}
+		return nil
+	}
+
+	for _, tt := range tts {
+		got = lookup(tt.v.Name, me.metrics)
+		if got == nil {
+			t.Fatalf("metric %s not found in %v\n", tt.v.Name, me.metrics)
+		}
+		got.TimeSeries[0].Points[0].Time = now
+		got.TimeSeries[0].StartTime = now
+
+		want := tt.m
+		if diff := cmp.Diff(got, want); diff != "" {
+			t.Errorf("buckets differ -got +want: %s \n Serialized got %v\n, Serialized want %v\n", diff, serializeAsJSON(got), serializeAsJSON(want))
 		}
 	}
 }
