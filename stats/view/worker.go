@@ -233,7 +233,7 @@ func (w *worker) reportView(v *viewInternal, now time.Time) {
 		e.ExportView(viewData)
 	}
 	exportersMu.Unlock()
-	v.clearRows()
+	v.resetValues()
 }
 
 func (w *worker) reportUsage(now time.Time) {
