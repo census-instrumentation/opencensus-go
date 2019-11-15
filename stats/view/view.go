@@ -149,12 +149,6 @@ func (v *viewInternal) clearRows() {
 	v.collector.clearRows()
 }
 
-// resetValues resets values that need to be
-// completely isolated for each bucket
-func (v *viewInternal) resetValues() {
-	v.collector.resetValues()
-}
-
 func (v *viewInternal) collectedRows() []*Row {
 	return v.collector.collectedRows(v.view.TagKeys)
 }
