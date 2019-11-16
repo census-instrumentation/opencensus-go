@@ -184,13 +184,3 @@ func (cmd *setReportingPeriodReq) handleCommand(w *worker) {
 	}
 	cmd.c <- true
 }
-
-type disableMonotonicityReq struct {
-	b bool
-	c chan bool
-}
-
-func (cmd *disableMonotonicityReq) handleCommand(w *worker) {
-	w.reset = cmd.b
-	cmd.c <- true
-}

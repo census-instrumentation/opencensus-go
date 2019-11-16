@@ -47,7 +47,6 @@ type worker struct {
 	c          chan command
 	quit, done chan bool
 	mu         sync.RWMutex
-	reset      bool
 }
 
 var defaultWorker *worker
@@ -133,17 +132,6 @@ func SetReportingPeriod(d time.Duration) {
 	}
 	defaultWorker.c <- req
 	<-req.c // don't return until the timer is set to the new duration.
-}
-
-// DisableMonotonicity will reset the data for all cumulative
-// metrics right after every reporting period.
-func DisableMonotonicity(b bool) {
-	req := &disableMonotonicityReq{
-		b: b,
-		c: make(chan bool),
-	}
-	defaultWorker.c <- req
-	<-req.c
 }
 
 func newWorker() *worker {
@@ -245,9 +233,7 @@ func (w *worker) reportView(v *viewInternal, now time.Time) {
 		e.ExportView(viewData)
 	}
 	exportersMu.Unlock()
-	if w.reset {
-		v.clearRows()
-	}
+	v.resetValues()
 }
 
 func (w *worker) reportUsage(now time.Time) {
