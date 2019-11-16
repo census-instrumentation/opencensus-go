@@ -63,8 +63,6 @@ func (c *collector) resetValues() {
 		case *DistributionData:
 			ad.Min = math.MaxFloat64
 			ad.Max = math.SmallestNonzeroFloat64
-			ad.Mean = 0
-			ad.SumOfSquaredDev = 0
 		}
 	}
 }
