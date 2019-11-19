@@ -18,6 +18,8 @@ package view
 import (
 	"context"
 	"errors"
+	"math"
+	"runtime/debug"
 	"sync"
 	"testing"
 	"time"
@@ -261,36 +263,107 @@ func TestReportUsage(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		restart()
-		SetReportingPeriod(25 * time.Millisecond)
+		t.Run(tt.name, func(t *testing.T) {
+			restart()
+			SetReportingPeriod(25 * time.Millisecond)
 
-		if err := Register(tt.view); err != nil {
-			t.Fatalf("%v: cannot register: %v", tt.name, err)
-		}
+			if err := Register(tt.view); err != nil {
+				t.Fatalf("%v: cannot register: %v", tt.name, err)
+			}
 
-		e := &countExporter{}
-		RegisterExporter(e)
+			e := &countExporter{}
+			RegisterExporter(e)
+			defer UnregisterExporter(e)
 
-		stats.Record(ctx, m.M(1))
-		stats.Record(ctx, m.M(1))
-		stats.Record(ctx, m.M(1))
-		stats.Record(ctx, m.M(1))
+			stats.Record(ctx, m.M(1))
+			stats.Record(ctx, m.M(1))
+			stats.Record(ctx, m.M(1))
+			stats.Record(ctx, m.M(1))
 
-		time.Sleep(50 * time.Millisecond)
+			time.Sleep(50 * time.Millisecond)
 
-		stats.Record(ctx, m.M(1))
-		stats.Record(ctx, m.M(1))
-		stats.Record(ctx, m.M(1))
-		stats.Record(ctx, m.M(1))
+			stats.Record(ctx, m.M(1))
+			stats.Record(ctx, m.M(1))
+			stats.Record(ctx, m.M(1))
+			stats.Record(ctx, m.M(1))
 
-		time.Sleep(50 * time.Millisecond)
+			time.Sleep(50 * time.Millisecond)
 
-		e.Lock()
-		count := e.count
-		e.Unlock()
-		if got, want := count, tt.wantMaxCount; got > want {
-			t.Errorf("%v: got count data = %v; want at most %v", tt.name, got, want)
-		}
+			e.Lock()
+			count := e.count
+			e.Unlock()
+			if got, want := count, tt.wantMaxCount; got > want {
+				t.Errorf("%v: got count data = %v; want at most %v", tt.name, got, want)
+			}
+		})
+	}
+}
+
+func TestReportUsageMinMax(t *testing.T) {
+	ctx := context.Background()
+
+	m := stats.Float64("measure", "desc", "unit")
+
+	tests := []struct {
+		name    string
+		view    *View
+		data    [][]float64
+		wantMin float64
+		wantMax float64
+	}{
+		{
+			name:    "reset_data",
+			view:    &View{Name: "const", Measure: m, Aggregation: Distribution(1, 4, 10, 12)},
+			data:    [][]float64{{2, 2, 2, 2}, {4, 4, 4, 1}},
+			wantMin: 1,
+			wantMax: 4,
+		},
+		{
+			name:    "no_data",
+			view:    &View{Name: "const", Measure: m, Aggregation: Distribution(1, 4, 10, 12)},
+			wantMin: 0,
+			wantMax: 0,
+		},
+		{
+			name:    "constant_data",
+			view:    &View{Name: "const", Measure: m, Aggregation: Distribution(1, 4, 10, 12)},
+			data:    [][]float64{{1, 1, 1, 1}, {1, 1, 1, 1}},
+			wantMin: 1,
+			wantMax: 1,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			restart()
+			SetReportingPeriod(25 * time.Millisecond)
+
+			if err := Register(tt.view); err != nil {
+				t.Fatalf("%v: cannot register: %v", tt.name, err)
+			}
+
+			e := &distributionExporter{}
+			RegisterExporter(e)
+			defer UnregisterExporter(e)
+
+			for _, batch := range tt.data {
+				for _, val := range batch {
+					stats.Record(ctx, m.M(val))
+				}
+				time.Sleep(50 * time.Millisecond)
+			}
+
+			e.Lock()
+			min := e.min
+			max := e.max
+			e.Unlock()
+			if got, want := min, tt.wantMin; got != want {
+				t.Errorf("%v: got min = %v; want %v", tt.name, got, want)
+			}
+			if got, want := max, tt.wantMax; got != want {
+				t.Errorf("%v: got max = %v; want %v", tt.name, got, want)
+			}
+		})
 	}
 
 }
@@ -494,7 +567,11 @@ func (e *countExporter) ExportView(vd *Data) {
 	if len(vd.Rows) == 0 {
 		return
 	}
-	d := vd.Rows[0].Data.(*CountData)
+	d, ok := vd.Rows[0].Data.(*CountData)
+	if !ok {
+		debug.PrintStack()
+		panic("BYE")
+	}
 
 	e.Lock()
 	defer e.Unlock()
@@ -512,6 +589,28 @@ func (e *vdExporter) ExportView(vd *Data) {
 	defer e.Unlock()
 
 	e.vds = append(e.vds, vd)
+}
+
+type distributionExporter struct {
+	sync.Mutex
+	min float64
+	max float64
+}
+
+func (e *distributionExporter) ExportView(vd *Data) {
+	if len(vd.Rows) == 0 {
+		return
+	}
+	d := vd.Rows[0].Data.(*DistributionData)
+
+	e.Lock()
+	defer e.Unlock()
+	if d.Min != math.MaxFloat64 {
+		e.min = d.Min
+	}
+	if d.Max != math.SmallestNonzeroFloat64 {
+		e.max = d.Max
+	}
 }
 
 // restart stops the current processors and creates a new one.

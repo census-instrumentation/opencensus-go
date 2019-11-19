@@ -276,6 +276,7 @@ func (w *worker) Read() []*metricdata.Metric {
 		metric := w.toMetric(v, now)
 		if metric != nil {
 			metrics = append(metrics, metric)
+			v.resetValues()
 		}
 	}
 	return metrics
