@@ -22,6 +22,8 @@ type Exporter struct {
 	metricReader *metricexport.Reader
 }
 
+var _ metricexport.Exporter = &Exporter{}
+
 // NewExporter returns a new exporter.
 func NewExporter(metricReader *metricexport.Reader) *Exporter {
 	return &Exporter{points: make(map[string]metricdata.Point), metricReader: metricReader}
