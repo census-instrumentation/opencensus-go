@@ -57,7 +57,7 @@ func newMetricKey(v string) map[string]string {
 func getCounter(metrics *Exporter, metricName string, metricKey map[string]string) int64 {
 	p, ok := metrics.GetPoint(metricName, metricKey)
 	if !ok {
-		// This is OK before the metric is recorded the first time.
+		// This is expected before the metric is recorded the first time.
 		return 0
 	}
 	return p.Value.(int64)
