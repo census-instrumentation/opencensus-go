@@ -63,12 +63,13 @@ func (m *derivedMetric) ToInt64() int64 {
 func ExampleExporter_metric() {
 	metricReader := metricexport.NewReader()
 	metrics := NewExporter(metricReader)
+	m := derivedMetric{}
 	r := metric.NewRegistry()
 	g, _ := r.AddInt64DerivedCumulative("derived", metric.WithLabelKeys(myTag.Name()))
+	g.UpsertEntry(m.ToInt64, metricdata.NewLabelValue("l1"))
 	for i := 1; i <= 3; i++ {
 		// The code under test begins here.
-		m := derivedMetric{int64(i)}
-		g.UpsertEntry(m.ToInt64, metricdata.NewLabelValue("l1"))
+		m.i = int64(i)
 		// The code under test ends here.
 
 		metrics.ExportMetrics(context.Background(), r.Read())
