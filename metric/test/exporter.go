@@ -56,6 +56,7 @@ func (e *Exporter) ReadAndExport() {
 	e.metricReader.ReadAndExport(e)
 }
 
+// String defines the ``native'' format for the exporter.
 func (e *Exporter) String() string {
 	return fmt.Sprintf("points{%v}", e.points)
 }
@@ -79,6 +80,9 @@ func labelMapToKeyValue(labels map[string]string) []keyValue {
 }
 
 func labelObjectsToKeyValue(keys []metricdata.LabelKey, values []metricdata.LabelValue) []keyValue {
+	if len(keys) != len(values) {
+		panic("keys and values must have the same length")
+	}
 	kv := make([]keyValue, 0, len(values))
 	for i := range keys {
 		if values[i].Present {
