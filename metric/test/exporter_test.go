@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"go.opencensus.io/metric"
+	"go.opencensus.io/metric/metricdata"
 	"go.opencensus.io/metric/metricexport"
 	"go.opencensus.io/stats"
 	"go.opencensus.io/stats/view"
@@ -27,7 +29,7 @@ func init() {
 	}
 }
 
-func ExampleExporter() {
+func ExampleExporter_stats() {
 	metricReader := metricexport.NewReader()
 	metrics := NewExporter(metricReader)
 	metrics.ReadAndExport()
@@ -48,6 +50,35 @@ func ExampleExporter() {
 	// increased by 1
 	// increased by 3
 	// increased by 6
+}
+
+type derivedMetric struct {
+	i int64
+}
+
+func (m *derivedMetric) ToInt64() int64 {
+	return m.i
+}
+
+func ExampleExporter_metric() {
+	metricReader := metricexport.NewReader()
+	metrics := NewExporter(metricReader)
+	r := metric.NewRegistry()
+	g, _ := r.AddInt64DerivedCumulative("derived", metric.WithLabelKeys(myTag.Name()))
+	for i := 1; i <= 3; i++ {
+		// The code under test begins here.
+		m := derivedMetric{int64(i)}
+		g.UpsertEntry(m.ToInt64, metricdata.NewLabelValue("l1"))
+		// The code under test ends here.
+
+		metrics.ExportMetrics(context.Background(), r.Read())
+		metricValue := getCounter(metrics, "derived", newMetricKey("l1"))
+		fmt.Println(metricValue)
+	}
+	// Output:
+	// 1
+	// 2
+	// 3
 }
 
 func newMetricKey(v string) map[string]string {
