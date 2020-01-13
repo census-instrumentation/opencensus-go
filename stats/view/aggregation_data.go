@@ -242,8 +242,8 @@ func (a *DistributionData) toPoint(metricType metricdata.Type, t time.Time) metr
 		bucketOptions := &metricdata.BucketOptions{Bounds: a.bounds}
 
 		val := &metricdata.Distribution{
-			Count: a.Count,
-			Sum:   a.Sum(),
+			Count:                 a.Count,
+			Sum:                   a.Sum(),
 			SumOfSquaredDeviation: a.SumOfSquaredDev,
 			BucketOptions:         bucketOptions,
 			Buckets:               buckets,
