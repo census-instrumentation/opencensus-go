@@ -264,8 +264,8 @@ func Test_ViewToMetric(t *testing.T) {
 				TimeSeries: []*metricdata.TimeSeries{
 					{Points: []metricdata.Point{
 						{Value: &metricdata.Distribution{
-							Count:                 2,
-							Sum:                   6.0,
+							Count: 2,
+							Sum:   6.0,
 							SumOfSquaredDeviation: 2,
 							BucketOptions:         buckOpt,
 							Buckets: []metricdata.Bucket{
@@ -292,8 +292,8 @@ func Test_ViewToMetric(t *testing.T) {
 						Points: []metricdata.Point{
 							{
 								Value: &metricdata.Distribution{
-									Count:                 2,
-									Sum:                   6.9,
+									Count: 2,
+									Sum:   6.9,
 									SumOfSquaredDeviation: 7.605000000000001,
 									BucketOptions:         buckOpt,
 									Buckets: []metricdata.Bucket{
@@ -551,8 +551,8 @@ func TestViewToMetric_OutOfOrderWithZeroBuckets(t *testing.T) {
 				TimeSeries: []*metricdata.TimeSeries{
 					{Points: []metricdata.Point{
 						{Value: &metricdata.Distribution{
-							Count:                 3,
-							Sum:                   9.0,
+							Count: 3,
+							Sum:   9.0,
 							SumOfSquaredDeviation: 8,
 							BucketOptions: &metricdata.BucketOptions{
 								Bounds: []float64{2, 10},
@@ -588,8 +588,8 @@ func TestViewToMetric_OutOfOrderWithZeroBuckets(t *testing.T) {
 				TimeSeries: []*metricdata.TimeSeries{
 					{Points: []metricdata.Point{
 						{Value: &metricdata.Distribution{
-							Count:                 3,
-							Sum:                   9.0,
+							Count: 3,
+							Sum:   9.0,
 							SumOfSquaredDeviation: 8,
 							BucketOptions: &metricdata.BucketOptions{
 								Bounds: []float64{5, 10},
