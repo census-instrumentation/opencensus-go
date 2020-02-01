@@ -20,69 +20,89 @@ import (
 )
 
 func TestApplyConfig(t *testing.T) {
-	testCfgs := []Config{
-		{},
-		{
-			MaxAttributesPerSpan:       1,
-			MaxAnnotationEventsPerSpan: 2,
-			MaxMessageEventsPerSpan:    3,
-			MaxLinksPerSpan:            4,
-		},
-		{
-			MaxAttributesPerSpan:       -1,
-			MaxAnnotationEventsPerSpan: 3,
-			MaxMessageEventsPerSpan:    -3,
-			MaxLinksPerSpan:            5,
-		}}
 	cfg := config.Load().(*Config)
-	wantCfgs := []Config{
+	defaultCfg := Config{
+		DefaultSampler:             cfg.DefaultSampler,
+		IDGenerator:                cfg.IDGenerator,
+		MaxAttributesPerSpan:       DefaultMaxAttributesPerSpan,
+		MaxAnnotationEventsPerSpan: DefaultMaxAnnotationEventsPerSpan,
+		MaxMessageEventsPerSpan:    DefaultMaxMessageEventsPerSpan,
+		MaxLinksPerSpan:            DefaultMaxLinksPerSpan,
+	}
+	testCases := []struct {
+		name    string
+		newCfg  Config
+		wantCfg Config
+	}{
 		{
-			DefaultSampler:             cfg.DefaultSampler,
-			IDGenerator:                cfg.IDGenerator,
-			MaxAttributesPerSpan:       DefaultMaxAttributesPerSpan,
-			MaxAnnotationEventsPerSpan: DefaultMaxAnnotationEventsPerSpan,
-			MaxMessageEventsPerSpan:    DefaultMaxMessageEventsPerSpan,
-			MaxLinksPerSpan:            DefaultMaxLinksPerSpan,
+			name:    "Initialize to default config",
+			newCfg:  defaultCfg,
+			wantCfg: defaultCfg,
 		},
 		{
-			DefaultSampler:             cfg.DefaultSampler,
-			IDGenerator:                cfg.IDGenerator,
-			MaxAttributesPerSpan:       1,
-			MaxAnnotationEventsPerSpan: 2,
-			MaxMessageEventsPerSpan:    3,
-			MaxLinksPerSpan:            4,
+			name:    "Empty Config",
+			newCfg:  Config{},
+			wantCfg: defaultCfg,
 		},
 		{
-			DefaultSampler:             cfg.DefaultSampler,
-			IDGenerator:                cfg.IDGenerator,
-			MaxAttributesPerSpan:       1,
-			MaxAnnotationEventsPerSpan: 3,
-			MaxMessageEventsPerSpan:    3,
-			MaxLinksPerSpan:            5,
-		}}
+			name: "Valid non-default config",
+			newCfg: Config{
+				MaxAttributesPerSpan:       1,
+				MaxAnnotationEventsPerSpan: 2,
+				MaxMessageEventsPerSpan:    3,
+				MaxLinksPerSpan:            4,
+			},
+			wantCfg: Config{
+				DefaultSampler:             cfg.DefaultSampler,
+				IDGenerator:                cfg.IDGenerator,
+				MaxAttributesPerSpan:       1,
+				MaxAnnotationEventsPerSpan: 2,
+				MaxMessageEventsPerSpan:    3,
+				MaxLinksPerSpan:            4,
+			},
+		},
+		{
+			name: "Partially invalid config",
+			newCfg: Config{
+				MaxAttributesPerSpan:       -1,
+				MaxAnnotationEventsPerSpan: 3,
+				MaxMessageEventsPerSpan:    -3,
+				MaxLinksPerSpan:            5,
+			},
+			wantCfg: Config{
+				DefaultSampler:             cfg.DefaultSampler,
+				IDGenerator:                cfg.IDGenerator,
+				MaxAttributesPerSpan:       1,
+				MaxAnnotationEventsPerSpan: 3,
+				MaxMessageEventsPerSpan:    3,
+				MaxLinksPerSpan:            5,
+			},
+		},
+	}
 
-	for i, newCfg := range testCfgs {
+	for i, tt := range testCases {
+		newCfg := tt.newCfg
 		ApplyConfig(newCfg)
 		gotCfg := config.Load().(*Config)
-		wantCfg := wantCfgs[i]
+		wantCfg := tt.wantCfg
 
 		if got, want := reflect.ValueOf(gotCfg.DefaultSampler).Pointer(), reflect.ValueOf(wantCfg.DefaultSampler).Pointer(); got != want {
-			t.Fatalf("testId = %d config.DefaultSampler = %#v; want %#v", i, got, want)
+			t.Fatalf("testId = %d, testName = %s: config.DefaultSampler = %#v; want %#v", i, tt.name, got, want)
 		}
 		if got, want := gotCfg.IDGenerator, wantCfg.IDGenerator; got != want {
-			t.Fatalf("testId = %d config.IDGenerator = %#v; want %#v", i, got, want)
+			t.Fatalf("testId = %d, testName = %s: config.IDGenerator = %#v; want %#v", i, tt.name, got, want)
 		}
 		if got, want := gotCfg.MaxAttributesPerSpan, wantCfg.MaxAttributesPerSpan; got != want {
-			t.Fatalf("testId = %d config.MaxAttributesPerSpan = %#v; want %#v", i, got, want)
+			t.Fatalf("testId = %d, testName = %s: config.MaxAttributesPerSpan = %#v; want %#v", i, tt.name, got, want)
 		}
 		if got, want := gotCfg.MaxLinksPerSpan, wantCfg.MaxLinksPerSpan; got != want {
-			t.Fatalf("testId = %d config.MaxLinksPerSpan = %#v; want %#v", i, got, want)
+			t.Fatalf("testId = %d, testName = %s: config.MaxLinksPerSpan = %#v; want %#v", i, tt.name, got, want)
 		}
 		if got, want := gotCfg.MaxAnnotationEventsPerSpan, wantCfg.MaxAnnotationEventsPerSpan; got != want {
-			t.Fatalf("testId = %d config.MaxAnnotationEventsPerSpan = %#v; want %#v", i, got, want)
+			t.Fatalf("testId = %d, testName = %s: config.MaxAnnotationEventsPerSpan = %#v; want %#v", i, tt.name, got, want)
 		}
 		if got, want := gotCfg.MaxMessageEventsPerSpan, wantCfg.MaxMessageEventsPerSpan; got != want {
-			t.Fatalf("testId = %d config.MaxMessageEventsPerSpan = %#v; want %#v", i, got, want)
+			t.Fatalf("testId = %d, testName = %s: config.MaxMessageEventsPerSpan = %#v; want %#v", i, tt.name, got, want)
 		}
 
 	}
