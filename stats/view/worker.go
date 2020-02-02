@@ -28,7 +28,7 @@ import (
 )
 
 func init() {
-	defaultWorker = newWorker()
+	defaultWorker = NewWorker().(*worker)
 	go defaultWorker.start()
 	internal.DefaultRecorder = record
 }
@@ -47,7 +47,34 @@ type worker struct {
 	c          chan command
 	quit, done chan bool
 	mu         sync.RWMutex
+
+	exportersMu sync.RWMutex
+	exporters   map[Exporter]struct{}
 }
+
+// Worker defines an interface which allows a single process to maintain
+// multiple sets of metrics exports (intended for the advanced case where a
+// single process wants to report metrics about multiple objects, such as
+// multiple databases or HTTP services).
+//
+// Note that this is an advanced use case, and the static functions in this
+// module should cover the common use cases.
+type Worker interface {
+	Record(tags *tag.Map, ms []stats.Measurement, attachments map[string]interface{})
+	Find(name string) *View
+	RetrieveData(viewName string) ([]*Row, error)
+	Register(views ...*View) error
+	Unregister(views ...*View)
+	SetReportingPeriod(time.Duration)
+
+	RegisterExporter(Exporter)
+	UnregisterExporter(Exporter)
+
+	Start()
+	Stop()
+}
+
+var _ Worker = (*worker)(nil)
 
 var defaultWorker *worker
 
@@ -56,11 +83,17 @@ var defaultReportingDuration = 10 * time.Second
 // Find returns a registered view associated with this name.
 // If no registered view is found, nil is returned.
 func Find(name string) (v *View) {
+	return defaultWorker.Find(name)
+}
+
+// Find returns a registered view associated with this name.
+// If no registered view is found, nil is returned.
+func (w *worker) Find(name string) (v *View) {
 	req := &getViewByNameReq{
 		name: name,
 		c:    make(chan *getViewByNameResp),
 	}
-	defaultWorker.c <- req
+	w.c <- req
 	resp := <-req.c
 	return resp.v
 }
@@ -68,11 +101,17 @@ func Find(name string) (v *View) {
 // Register begins collecting data for the given views.
 // Once a view is registered, it reports data to the registered exporters.
 func Register(views ...*View) error {
+	return defaultWorker.Register(views...)
+}
+
+// Register begins collecting data for the given views.
+// Once a view is registered, it reports data to the registered exporters.
+func (w *worker) Register(views ...*View) error {
 	req := &registerViewReq{
 		views: views,
 		err:   make(chan error),
 	}
-	defaultWorker.c <- req
+	w.c <- req
 	return <-req.err
 }
 
@@ -81,6 +120,14 @@ func Register(views ...*View) error {
 // It is not necessary to unregister from views you expect to collect for the
 // duration of your program execution.
 func Unregister(views ...*View) {
+	defaultWorker.Unregister(views...)
+}
+
+// Unregister the given views. Data will not longer be exported for these views
+// after Unregister returns.
+// It is not necessary to unregister from views you expect to collect for the
+// duration of your program execution.
+func (w *worker) Unregister(views ...*View) {
 	names := make([]string, len(views))
 	for i := range views {
 		names[i] = views[i].Name
@@ -89,31 +136,42 @@ func Unregister(views ...*View) {
 		views: names,
 		done:  make(chan struct{}),
 	}
-	defaultWorker.c <- req
+	w.c <- req
 	<-req.done
 }
 
 // RetrieveData gets a snapshot of the data collected for the the view registered
 // with the given name. It is intended for testing only.
 func RetrieveData(viewName string) ([]*Row, error) {
+	return defaultWorker.RetrieveData(viewName)
+}
+
+// RetrieveData gets a snapshot of the data collected for the the view registered
+// with the given name. It is intended for testing only.
+func (w *worker) RetrieveData(viewName string) ([]*Row, error) {
 	req := &retrieveDataReq{
 		now: time.Now(),
 		v:   viewName,
 		c:   make(chan *retrieveDataResp),
 	}
-	defaultWorker.c <- req
+	w.c <- req
 	resp := <-req.c
 	return resp.rows, resp.err
 }
 
 func record(tags *tag.Map, ms interface{}, attachments map[string]interface{}) {
+	defaultWorker.Record(tags, ms.([]stats.Measurement), attachments)
+}
+
+// Record records a set of measurements ms associated with the given tags and attachments.
+func (w *worker) Record(tags *tag.Map, ms []stats.Measurement, attachments map[string]interface{}) {
 	req := &recordReq{
 		tm:          tags,
-		ms:          ms.([]stats.Measurement),
+		ms:          ms,
 		attachments: attachments,
 		t:           time.Now(),
 	}
-	defaultWorker.c <- req
+	w.c <- req
 }
 
 // SetReportingPeriod sets the interval between reporting aggregated views in
@@ -124,17 +182,29 @@ func record(tags *tag.Map, ms interface{}, attachments map[string]interface{}) {
 // duration is. For example, the Stackdriver exporter recommends a value no
 // lower than 1 minute. Consult each exporter per your needs.
 func SetReportingPeriod(d time.Duration) {
+	defaultWorker.SetReportingPeriod(d)
+}
+
+// SetReportingPeriod sets the interval between reporting aggregated views in
+// the program. If duration is less than or equal to zero, it enables the
+// default behavior.
+//
+// Note: each exporter makes different promises about what the lowest supported
+// duration is. For example, the Stackdriver exporter recommends a value no
+// lower than 1 minute. Consult each exporter per your needs.
+func (w *worker) SetReportingPeriod(d time.Duration) {
 	// TODO(acetechnologist): ensure that the duration d is more than a certain
 	// value. e.g. 1s
 	req := &setReportingPeriodReq{
 		d: d,
 		c: make(chan bool),
 	}
-	defaultWorker.c <- req
+	w.c <- req
 	<-req.c // don't return until the timer is set to the new duration.
 }
 
-func newWorker() *worker {
+// NewWorker constructs a
+func NewWorker() Worker {
 	return &worker{
 		measures:   make(map[string]*measureRef),
 		views:      make(map[string]*viewInternal),
@@ -143,7 +213,13 @@ func newWorker() *worker {
 		c:          make(chan command, 1024),
 		quit:       make(chan bool),
 		done:       make(chan bool),
+
+		exporters: make(map[Exporter]struct{}),
 	}
+}
+
+func (w *worker) Start() {
+	go w.start()
 }
 
 func (w *worker) start() {
@@ -165,7 +241,7 @@ func (w *worker) start() {
 	}
 }
 
-func (w *worker) stop() {
+func (w *worker) Stop() {
 	prodMgr := metricproducer.GlobalManager()
 	prodMgr.DeleteProducer(w)
 
@@ -228,11 +304,11 @@ func (w *worker) reportView(v *viewInternal, now time.Time) {
 		End:   time.Now(),
 		Rows:  rows,
 	}
-	exportersMu.Lock()
-	for e := range exporters {
+	w.exportersMu.Lock()
+	defer w.exportersMu.Unlock()
+	for e := range w.exporters {
 		e.ExportView(viewData)
 	}
-	exportersMu.Unlock()
 }
 
 func (w *worker) reportUsage(now time.Time) {
@@ -278,4 +354,18 @@ func (w *worker) Read() []*metricdata.Metric {
 		}
 	}
 	return metrics
+}
+
+func (w *worker) RegisterExporter(e Exporter) {
+	w.exportersMu.Lock()
+	defer w.exportersMu.Unlock()
+
+	w.exporters[e] = struct{}{}
+}
+
+func (w *worker) UnregisterExporter(e Exporter) {
+	w.exportersMu.Lock()
+	defer w.exportersMu.Unlock()
+
+	delete(w.exporters, e)
 }

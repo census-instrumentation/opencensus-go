@@ -118,6 +118,105 @@ func Test_Worker_ViewRegistration(t *testing.T) {
 	}
 }
 
+func Test_Worker_MultiExport(t *testing.T) {
+	restart()
+
+	// This test reports the same data for the default worker and a secondary
+	// worker, and ensures that the stats are kept independently.
+	worker2 := NewWorker()
+	worker2.Start()
+
+	m := stats.Float64("Test_Worker_MultiExport/MF1", "desc MF1", "unit")
+	key := tag.MustNewKey(("key"))
+	count := &View{"VF1", "description", []tag.Key{key}, m, Count()}
+	sum := &View{"VF2", "description", []tag.Key{}, m, Sum()}
+
+	Register(count, sum)
+	worker2.Register(count) // Don't compute the sum for worker2, to verify independence of computation.
+	data := []struct {
+		w     Worker
+		tags  string // Tag values
+		value float64
+	}{{
+		tags:  "a",
+		value: 2.0,
+	}, {
+		tags:  "b",
+		value: 3.0,
+	}, {
+		tags: "a", value: 2.5,
+	}, {
+		w: worker2, tags: "b", value: 1.0,
+	},
+	}
+
+	for _, d := range data {
+		ctx, err := tag.New(context.Background(), tag.Upsert(key, d.tags))
+		if err != nil {
+			t.Fatalf("%s: failed to add tag %q: %v", d.w, key.Name(), err)
+		}
+		if d.w != nil {
+			d.w.Record(tag.FromContext(ctx), []stats.Measurement{m.M(d.value)}, nil)
+		} else {
+			stats.Record(ctx, m.M(d.value))
+		}
+	}
+
+	wantRows := []struct {
+		w    Worker
+		view string
+		rows []*Row
+	}{{
+		view: count.Name,
+		rows: []*Row{
+			{[]tag.Tag{{Key: key, Value: "a"}}, &CountData{Value: 2}},
+			{[]tag.Tag{{Key: key, Value: "b"}}, &CountData{Value: 1}},
+		},
+	}, {
+		view: sum.Name,
+		rows: []*Row{
+			{nil, &SumData{Value: 7.5}}},
+	}, {
+		w:    worker2,
+		view: count.Name,
+		rows: []*Row{
+			{[]tag.Tag{{Key: key, Value: "b"}}, &CountData{Value: 1}},
+		},
+	}}
+
+	for _, wantRow := range wantRows {
+		retrieve := RetrieveData
+		if wantRow.w != nil {
+			retrieve = wantRow.w.RetrieveData
+		}
+		gotRows, err := retrieve(wantRow.view)
+		if err != nil {
+			t.Fatalf("RetrieveData(%v), got error %v", wantRow.view, err)
+		}
+		for _, got := range gotRows {
+			if !containsRow(wantRow.rows, got) {
+				t.Errorf("%s: got row %#v; want none", wantRow.view, got)
+				break
+			}
+		}
+		for _, want := range wantRow.rows {
+			if !containsRow(gotRows, want) {
+				t.Errorf("%s: got none, want %#v", wantRow.view, want)
+				break
+			}
+		}
+	}
+	// Verify that worker has not been computing sum:
+	got, err := worker2.RetrieveData(sum.Name)
+	if err == nil {
+		t.Errorf("%s: expected no data because it was not registered, got %#v", sum.Name, got)
+	}
+
+	Unregister(count, sum)
+	worker2.Unregister(count)
+	worker2.Stop()
+}
+
 func Test_Worker_RecordFloat64(t *testing.T) {
 	restart()
 
@@ -298,7 +397,7 @@ func TestReportUsage(t *testing.T) {
 func Test_SetReportingPeriodReqNeverBlocks(t *testing.T) {
 	t.Parallel()
 
-	worker := newWorker()
+	worker := NewWorker().(*worker)
 	durations := []time.Duration{-1, 0, 10, 100 * time.Millisecond}
 	for i, duration := range durations {
 		ackChan := make(chan bool, 1)
@@ -516,7 +615,7 @@ func (e *vdExporter) ExportView(vd *Data) {
 
 // restart stops the current processors and creates a new one.
 func restart() {
-	defaultWorker.stop()
-	defaultWorker = newWorker()
+	defaultWorker.Stop()
+	defaultWorker = NewWorker().(*worker)
 	go defaultWorker.start()
 }

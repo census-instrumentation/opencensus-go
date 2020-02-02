@@ -46,7 +46,7 @@ var (
 // BenchmarkRecordReqCommand benchmarks calling the internal recording machinery
 // directly.
 func BenchmarkRecordReqCommand(b *testing.B) {
-	w := newWorker()
+	w := NewWorker().(*worker)
 
 	register := &registerViewReq{views: []*View{view}, err: make(chan error, 1)}
 	register.handleCommand(w)
