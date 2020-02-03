@@ -15,11 +15,11 @@
 package ocgrpc_test
 
 import (
+	"context"
 	"io"
 	"testing"
 	"time"
 
-	"context"
 	"go.opencensus.io/internal/testpb"
 	"go.opencensus.io/trace"
 )

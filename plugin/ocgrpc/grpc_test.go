@@ -15,17 +15,16 @@
 package ocgrpc
 
 import (
+	"context"
 	"sync"
 	"testing"
 	"time"
 
-	"context"
-	"go.opencensus.io/stats/view"
 	"google.golang.org/grpc/metadata"
-
-	"go.opencensus.io/trace"
-
 	"google.golang.org/grpc/stats"
+
+	"go.opencensus.io/stats/view"
+	"go.opencensus.io/trace"
 )
 
 func TestClientHandler(t *testing.T) {

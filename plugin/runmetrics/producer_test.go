@@ -2,12 +2,14 @@ package runmetrics_test
 
 import (
 	"context"
+	"testing"
+
 	"github.com/stretchr/testify/assert"
+
 	"go.opencensus.io/metric/metricdata"
 	"go.opencensus.io/metric/metricexport"
 	"go.opencensus.io/metric/metricproducer"
 	"go.opencensus.io/plugin/runmetrics"
-	"testing"
 )
 
 type testExporter struct {

@@ -3,11 +3,12 @@ package runmetrics_test
 import (
 	"context"
 	"fmt"
+	"log"
+	"sort"
+
 	"go.opencensus.io/metric/metricdata"
 	"go.opencensus.io/metric/metricexport"
 	"go.opencensus.io/plugin/runmetrics"
-	"log"
-	"sort"
 )
 
 type printExporter struct {

@@ -15,9 +15,9 @@
 package trace_test
 
 import (
+	"context"
 	"fmt"
 
-	"context"
 	"go.opencensus.io/trace"
 )
 

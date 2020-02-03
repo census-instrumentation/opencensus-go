@@ -16,19 +16,18 @@
 package ocgrpc
 
 import (
+	"context"
 	"reflect"
 	"testing"
-
-	"context"
-	"go.opencensus.io/trace"
-
-	"go.opencensus.io/metric/metricdata"
-	"go.opencensus.io/stats/view"
-	"go.opencensus.io/tag"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/stats"
 	"google.golang.org/grpc/status"
+
+	"go.opencensus.io/metric/metricdata"
+	"go.opencensus.io/stats/view"
+	"go.opencensus.io/tag"
+	"go.opencensus.io/trace"
 )
 
 func TestServerDefaultCollections(t *testing.T) {
