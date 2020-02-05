@@ -56,6 +56,7 @@ func TestRecordWithAttachments(t *testing.T) {
 	if err := view.Register(v); err != nil {
 		log.Fatalf("Failed to register views: %v", err)
 	}
+	defer view.Unregister(v)
 
 	attachments := map[string]interface{}{metricdata.AttachmentKeySpanContext: spanCtx}
 	stats.RecordWithOptions(context.Background(), stats.WithAttachments(attachments), stats.WithMeasurements(m.M(12)))
@@ -92,4 +93,66 @@ func TestRecordWithAttachments(t *testing.T) {
 // Compare exemplars while ignoring exemplar timestamp, since timestamp is non-deterministic.
 func cmpExemplar(got, want *metricdata.Exemplar) string {
 	return cmp.Diff(got, want, cmpopts.IgnoreFields(metricdata.Exemplar{}, "Timestamp"), cmpopts.IgnoreUnexported(metricdata.Exemplar{}))
+}
+
+func TestResolveOptions(t *testing.T) {
+	k1 := tag.MustNewKey("k1")
+	k2 := tag.MustNewKey("k2")
+	m1 := stats.Int64("TestResolveOptions/m1", "", stats.UnitDimensionless)
+	m2 := stats.Int64("TestResolveOptions/m2", "", stats.UnitDimensionless)
+	v := []*view.View{{
+		Name:        "test_view",
+		TagKeys:     []tag.Key{k1, k2},
+		Measure:     m1,
+		Aggregation: view.Distribution(5, 10),
+	}, {
+		Name:        "second_view",
+		TagKeys:     []tag.Key{k1},
+		Measure:     m2,
+		Aggregation: view.Count(),
+	}}
+	view.SetReportingPeriod(100 * time.Millisecond)
+	if err := view.Register(v...); err != nil {
+		t.Fatalf("Failed to register view: %v", err)
+	}
+	defer view.Unregister(v...)
+
+	attachments := map[string]interface{}{metricdata.AttachmentKeySpanContext: spanCtx}
+	ctx, err := tag.New(context.Background(), tag.Insert(k1, "foo"), tag.Insert(k2, "foo"))
+	if err != nil {
+		t.Fatalf("Failed to set context: %v", err)
+	}
+	ro, err := stats.ResolveOptions(ctx,
+		stats.WithTags(tag.Upsert(k1, "bar"), tag.Insert(k2, "bar")),
+		stats.WithAttachments(attachments),
+		stats.WithMeasurements(m1.M(12), m2.M(5)))
+	if err != nil {
+		t.Fatalf("Failed to resolve data point: %v", err)
+	}
+
+	s, ok := ro.Attachments[metricdata.AttachmentKeySpanContext]
+	if !ok || s != spanCtx {
+		t.Errorf("Unexpected SpanContext: want %v, got %v", spanCtx, s)
+	}
+	if len(ro.Attachments) != 1 {
+		t.Errorf("Expected only one attachment (SpanContext), got %v", ro.Attachments)
+	}
+
+	if len(ro.Measures) != 2 {
+		t.Errorf("Expected two measurements, got %v", ro.Measures)
+	}
+	mWant := []stats.Measurement{m1.M(12), m2.M(5)}
+	if ro.Measures[0] != mWant[0] || ro.Measures[1] != mWant[1] {
+		t.Errorf("Unexpected measurements: want %v, got %v", mWant, ro.Measures)
+	}
+
+	// k2 was Insert() ed, and shouldn't update the value that was in the supplied context.
+	tCtx, err := tag.New(context.Background(), tag.Insert(k1, "bar"), tag.Insert(k2, "foo"))
+	if err != nil {
+		t.Fatalf("Failed to construct tWant: %v", err)
+	}
+	tWant := tag.FromContext(tCtx)
+	if ro.Tags.String() != tWant.String() {
+		t.Errorf("Unexpected tags: want %v, got %v", tWant, ro.Tags)
+	}
 }

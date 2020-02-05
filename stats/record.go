@@ -31,6 +31,15 @@ func init() {
 	}
 }
 
+// ResolvedOptions can be used to extract the current tags and measurements
+// from context and stats arguments when using custom workers to export stats
+// to a separate exporter.
+type ResolvedOptions struct {
+	Attachments metricdata.Attachments
+	Tags        *tag.Map
+	Measures    []Measurement
+}
+
 type recordOptions struct {
 	attachments  metricdata.Attachments
 	mutators     []tag.Mutator
@@ -84,6 +93,23 @@ func RecordWithTags(ctx context.Context, mutators []tag.Mutator, ms ...Measureme
 	return RecordWithOptions(ctx, WithTags(mutators...), WithMeasurements(ms...))
 }
 
+// ResolveOptions determines the full set of Tags, Measurements, etc from the
+// provided Options and context.Context. This is mostly useful when using
+// multiple exporters.
+func ResolveOptions(ctx context.Context, ros ...Options) (*ResolvedOptions, error) {
+	o := createRecordOption(ros...)
+
+	if len(o.mutators) > 0 {
+		var err error
+		if ctx, err = tag.New(ctx, o.mutators...); err != nil {
+			return nil, err
+		}
+	}
+	return &ResolvedOptions{Tags: tag.FromContext(ctx),
+		Measures:    o.measurements,
+		Attachments: o.attachments}, nil
+}
+
 // RecordWithOptions records measurements from the given options (if any) against context
 // and tags and attachments in the options (if any).
 // If there are any tags in the context, measurements will be tagged with them.
@@ -92,6 +118,8 @@ func RecordWithOptions(ctx context.Context, ros ...Options) error {
 	if len(o.measurements) == 0 {
 		return nil
 	}
+	// This could use ResolveOptions, but it does additional work to
+	// short-circuit if there are no metrics that need to be exported.
 	recorder := internal.DefaultRecorder
 	if recorder == nil {
 		return nil
