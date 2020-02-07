@@ -52,29 +52,55 @@ type worker struct {
 	exporters   map[Exporter]struct{}
 }
 
-// Worker defines an interface which allows a single process to maintain
+// Meter defines an interface which allows a single process to maintain
 // multiple sets of metrics exports (intended for the advanced case where a
 // single process wants to report metrics about multiple objects, such as
 // multiple databases or HTTP services).
 //
 // Note that this is an advanced use case, and the static functions in this
 // module should cover the common use cases.
-type Worker interface {
+type Meter interface {
+	// Record records a set of measurements ms associated with the given tags and attachments.
 	Record(tags *tag.Map, ms []stats.Measurement, attachments map[string]interface{})
+	// Find returns a registered view associated with this name.
+	// If no registered view is found, nil is returned.
 	Find(name string) *View
-	RetrieveData(viewName string) ([]*Row, error)
+	// Register begins collecting data for the given views.
+	// Once a view is registered, it reports data to the registered exporters.
 	Register(views ...*View) error
+	// Unregister the given views. Data will not longer be exported for these views
+	// after Unregister returns.
+	// It is not necessary to unregister from views you expect to collect for the
+	// duration of your program execution.
 	Unregister(views ...*View)
+	// SetReportingPeriod sets the interval between reporting aggregated views in
+	// the program. If duration is less than or equal to zero, it enables the
+	// default behavior.
+	//
+	// Note: each exporter makes different promises about what the lowest supported
+	// duration is. For example, the Stackdriver exporter recommends a value no
+	// lower than 1 minute. Consult each exporter per your needs.
 	SetReportingPeriod(time.Duration)
 
+	// RegisterExporter registers an exporter.
+	// Collected data will be reported via all the
+	// registered exporters. Once you no longer
+	// want data to be exported, invoke UnregisterExporter
+	// with the previously registered exporter.
+	//
+	// Binaries can register exporters, libraries shouldn't register exporters.
 	RegisterExporter(Exporter)
+	// UnregisterExporter unregisters an exporter.
 	UnregisterExporter(Exporter)
 
+	// Start causes the Meter to start processing Record calls and aggregating
+	// statistics as well as exporting data.
 	Start()
+	// Stop causes the Meter to stop processing calls and terminate data export.
 	Stop()
 }
 
-var _ Worker = (*worker)(nil)
+var _ Meter = (*worker)(nil)
 
 var defaultWorker *worker
 
@@ -143,12 +169,10 @@ func (w *worker) Unregister(views ...*View) {
 // RetrieveData gets a snapshot of the data collected for the the view registered
 // with the given name. It is intended for testing only.
 func RetrieveData(viewName string) ([]*Row, error) {
-	return defaultWorker.RetrieveData(viewName)
+	return defaultWorker.retrieveData(viewName)
 }
 
-// RetrieveData gets a snapshot of the data collected for the the view registered
-// with the given name. It is intended for testing only.
-func (w *worker) RetrieveData(viewName string) ([]*Row, error) {
+func (w *worker) retrieveData(viewName string) ([]*Row, error) {
 	req := &retrieveDataReq{
 		now: time.Now(),
 		v:   viewName,
@@ -204,7 +228,7 @@ func (w *worker) SetReportingPeriod(d time.Duration) {
 }
 
 // NewWorker constructs a
-func NewWorker() Worker {
+func NewWorker() Meter {
 	return &worker{
 		measures:   make(map[string]*measureRef),
 		views:      make(map[string]*viewInternal),

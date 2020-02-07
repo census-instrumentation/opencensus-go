@@ -123,7 +123,7 @@ func Test_Worker_MultiExport(t *testing.T) {
 
 	// This test reports the same data for the default worker and a secondary
 	// worker, and ensures that the stats are kept independently.
-	worker2 := NewWorker()
+	worker2 := NewWorker().(*worker)
 	worker2.Start()
 
 	m := stats.Float64("Test_Worker_MultiExport/MF1", "desc MF1", "unit")
@@ -134,7 +134,7 @@ func Test_Worker_MultiExport(t *testing.T) {
 	Register(count, sum)
 	worker2.Register(count) // Don't compute the sum for worker2, to verify independence of computation.
 	data := []struct {
-		w     Worker
+		w     Meter
 		tags  string // Tag values
 		value float64
 	}{{
@@ -163,7 +163,7 @@ func Test_Worker_MultiExport(t *testing.T) {
 	}
 
 	wantRows := []struct {
-		w    Worker
+		w    Meter
 		view string
 		rows []*Row
 	}{{
@@ -187,7 +187,7 @@ func Test_Worker_MultiExport(t *testing.T) {
 	for _, wantRow := range wantRows {
 		retrieve := RetrieveData
 		if wantRow.w != nil {
-			retrieve = wantRow.w.RetrieveData
+			retrieve = wantRow.w.(*worker).retrieveData
 		}
 		gotRows, err := retrieve(wantRow.view)
 		if err != nil {
@@ -207,7 +207,7 @@ func Test_Worker_MultiExport(t *testing.T) {
 		}
 	}
 	// Verify that worker has not been computing sum:
-	got, err := worker2.RetrieveData(sum.Name)
+	got, err := worker2.retrieveData(sum.Name)
 	if err == nil {
 		t.Errorf("%s: expected no data because it was not registered, got %#v", sum.Name, got)
 	}
