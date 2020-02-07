@@ -13,11 +13,11 @@ It has these top-level messages:
 */
 package testpb // import "go.opencensus.io/internal/testpb"
 
-import proto "github.com/golang/protobuf/proto"
-import fmt "fmt"
-import math "math"
-
 import (
+	fmt "fmt"
+	math "math"
+
+	proto "github.com/golang/protobuf/proto"
 	context "golang.org/x/net/context"
 	grpc "google.golang.org/grpc"
 )

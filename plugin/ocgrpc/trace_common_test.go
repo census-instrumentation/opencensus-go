@@ -15,12 +15,13 @@
 package ocgrpc
 
 import (
+	"context"
 	"testing"
 
-	"context"
-	"go.opencensus.io/trace"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/stats"
+
+	"go.opencensus.io/trace"
 )
 
 func TestClientHandler_traceTagRPC(t *testing.T) {

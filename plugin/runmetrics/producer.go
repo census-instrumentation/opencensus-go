@@ -2,11 +2,12 @@ package runmetrics
 
 import (
 	"errors"
+	"runtime"
+	"sync"
+
 	"go.opencensus.io/metric"
 	"go.opencensus.io/metric/metricdata"
 	"go.opencensus.io/metric/metricproducer"
-	"runtime"
-	"sync"
 )
 
 type (

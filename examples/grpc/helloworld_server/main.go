@@ -17,13 +17,13 @@
 package main
 
 import (
+	"context"
 	"log"
 	"math/rand"
 	"net"
 	"net/http"
 	"time"
 
-	"context"
 	"go.opencensus.io/examples/exporter"
 	pb "go.opencensus.io/examples/grpc/proto"
 	"go.opencensus.io/plugin/ocgrpc"
