@@ -150,7 +150,8 @@ func (h *Handler) startStats(w http.ResponseWriter, r *http.Request) (http.Respo
 	ctx, _ := tag.New(r.Context(),
 		tag.Upsert(Host, r.Host),
 		tag.Upsert(Path, r.URL.Path),
-		tag.Upsert(Method, r.Method))
+		tag.Upsert(Method, r.Method),
+		tag.Upsert(UserAgent, r.UserAgent()))
 	track := &trackingResponseWriter{
 		start:  time.Now(),
 		ctx:    ctx,

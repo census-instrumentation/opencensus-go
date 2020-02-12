@@ -112,6 +112,13 @@ var (
 	// handler of the request. This is usually the pattern registered on the a
 	// ServeMux (or similar string).
 	KeyServerRoute = tag.MustNewKey("http_server_route")
+
+	// UserAgent is the value of the HTTP User-Agent header.
+	//
+	// The value of this tag can be controlled by the HTTP client, so you need
+	// to watch out for potentially generating high-cardinality labels in your
+	// metrics backend if you use this tag in views.
+	UserAgent = tag.MustNewKey("http.user_agent")
 )
 
 // Client tag keys.
