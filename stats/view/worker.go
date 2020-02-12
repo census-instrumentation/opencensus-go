@@ -61,7 +61,7 @@ type worker struct {
 // module should cover the common use cases.
 type Meter interface {
 	// Record records a set of measurements ms associated with the given tags and attachments.
-	Record(tags *tag.Map, ms []stats.Measurement, attachments map[string]interface{})
+	Record(tags *tag.Map, ms interface{}, attachments map[string]interface{})
 	// Find returns a registered view associated with this name.
 	// If no registered view is found, nil is returned.
 	Find(name string) *View
@@ -98,6 +98,10 @@ type Meter interface {
 	Start()
 	// Stop causes the Meter to stop processing calls and terminate data export.
 	Stop()
+
+	// RetrieveData gets a snapshot of the data collected for the the view registered
+	// with the given name. It is intended for testing only.
+	RetrieveData(viewName string) ([]*Row, error)
 }
 
 var _ Meter = (*worker)(nil)
@@ -169,10 +173,12 @@ func (w *worker) Unregister(views ...*View) {
 // RetrieveData gets a snapshot of the data collected for the the view registered
 // with the given name. It is intended for testing only.
 func RetrieveData(viewName string) ([]*Row, error) {
-	return defaultWorker.retrieveData(viewName)
+	return defaultWorker.RetrieveData(viewName)
 }
 
-func (w *worker) retrieveData(viewName string) ([]*Row, error) {
+// RetrieveData gets a snapshot of the data collected for the the view registered
+// with the given name. It is intended for testing only.
+func (w *worker) RetrieveData(viewName string) ([]*Row, error) {
 	req := &retrieveDataReq{
 		now: time.Now(),
 		v:   viewName,
@@ -184,14 +190,14 @@ func (w *worker) retrieveData(viewName string) ([]*Row, error) {
 }
 
 func record(tags *tag.Map, ms interface{}, attachments map[string]interface{}) {
-	defaultWorker.Record(tags, ms.([]stats.Measurement), attachments)
+	defaultWorker.Record(tags, ms, attachments)
 }
 
 // Record records a set of measurements ms associated with the given tags and attachments.
-func (w *worker) Record(tags *tag.Map, ms []stats.Measurement, attachments map[string]interface{}) {
+func (w *worker) Record(tags *tag.Map, ms interface{}, attachments map[string]interface{}) {
 	req := &recordReq{
 		tm:          tags,
-		ms:          ms,
+		ms:          ms.([]stats.Measurement),
 		attachments: attachments,
 		t:           time.Now(),
 	}

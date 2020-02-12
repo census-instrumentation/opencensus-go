@@ -187,7 +187,7 @@ func Test_Worker_MultiExport(t *testing.T) {
 	for _, wantRow := range wantRows {
 		retrieve := RetrieveData
 		if wantRow.w != nil {
-			retrieve = wantRow.w.(*worker).retrieveData
+			retrieve = wantRow.w.(*worker).RetrieveData
 		}
 		gotRows, err := retrieve(wantRow.view)
 		if err != nil {
@@ -207,7 +207,7 @@ func Test_Worker_MultiExport(t *testing.T) {
 		}
 	}
 	// Verify that worker has not been computing sum:
-	got, err := worker2.retrieveData(sum.Name)
+	got, err := worker2.RetrieveData(sum.Name)
 	if err == nil {
 		t.Errorf("%s: expected no data because it was not registered, got %#v", sum.Name, got)
 	}

@@ -96,6 +96,8 @@ func cmpExemplar(got, want *metricdata.Exemplar) string {
 }
 
 func TestResolveOptions(t *testing.T) {
+	meter := view.NewWorker()
+	meter.Start()
 	k1 := tag.MustNewKey("k1")
 	k2 := tag.MustNewKey("k2")
 	m1 := stats.Int64("TestResolveOptions/m1", "", stats.UnitDimensionless)
@@ -111,48 +113,88 @@ func TestResolveOptions(t *testing.T) {
 		Measure:     m2,
 		Aggregation: view.Count(),
 	}}
-	view.SetReportingPeriod(100 * time.Millisecond)
-	if err := view.Register(v...); err != nil {
+	meter.SetReportingPeriod(100 * time.Millisecond)
+	if err := meter.Register(v...); err != nil {
 		t.Fatalf("Failed to register view: %v", err)
 	}
-	defer view.Unregister(v...)
+	defer meter.Unregister(v...)
 
 	attachments := map[string]interface{}{metricdata.AttachmentKeySpanContext: spanCtx}
 	ctx, err := tag.New(context.Background(), tag.Insert(k1, "foo"), tag.Insert(k2, "foo"))
 	if err != nil {
 		t.Fatalf("Failed to set context: %v", err)
 	}
-	ro, err := stats.ResolveOptions(ctx,
+	err = stats.RecordWithOptions(ctx,
 		stats.WithTags(tag.Upsert(k1, "bar"), tag.Insert(k2, "bar")),
 		stats.WithAttachments(attachments),
-		stats.WithMeasurements(m1.M(12), m2.M(5)))
+		stats.WithMeasurements(m1.M(12), m1.M(6), m2.M(5)),
+		stats.WithMeter(meter))
 	if err != nil {
 		t.Fatalf("Failed to resolve data point: %v", err)
 	}
 
-	s, ok := ro.Attachments[metricdata.AttachmentKeySpanContext]
-	if !ok || s != spanCtx {
-		t.Errorf("Unexpected SpanContext: want %v, got %v", spanCtx, s)
-	}
-	if len(ro.Attachments) != 1 {
-		t.Errorf("Expected only one attachment (SpanContext), got %v", ro.Attachments)
-	}
-
-	if len(ro.Measures) != 2 {
-		t.Errorf("Expected two measurements, got %v", ro.Measures)
-	}
-	mWant := []stats.Measurement{m1.M(12), m2.M(5)}
-	if ro.Measures[0] != mWant[0] || ro.Measures[1] != mWant[1] {
-		t.Errorf("Unexpected measurements: want %v, got %v", mWant, ro.Measures)
-	}
-
-	// k2 was Insert() ed, and shouldn't update the value that was in the supplied context.
-	tCtx, err := tag.New(context.Background(), tag.Insert(k1, "bar"), tag.Insert(k2, "foo"))
+	rows, err := meter.RetrieveData("test_view")
 	if err != nil {
-		t.Fatalf("Failed to construct tWant: %v", err)
+		t.Fatalf("Unable to retrieve data for test_view: %v", err)
 	}
-	tWant := tag.FromContext(tCtx)
-	if ro.Tags.String() != tWant.String() {
-		t.Errorf("Unexpected tags: want %v, got %v", tWant, ro.Tags)
+	if len(rows) != 1 {
+		t.Fatalf("Expected one row, got %d rows: %+v", len(rows), rows)
+	}
+	if len(rows[0].Tags) != 2 {
+		t.Errorf("Wrong number of tags %d: %v", len(rows[0].Tags), rows[0].Tags)
+	}
+	// k2 was Insert() ed, and shouldn't update the value that was in the supplied context.
+	wantTags := []tag.Tag{{Key: k1, Value: "bar"}, {Key: k2, Value: "foo"}}
+	for i, tag := range rows[0].Tags {
+		if tag.Key != wantTags[i].Key {
+			t.Errorf("Incorrect tag %d, want: %q, got: %q", i, wantTags[i].Key, tag.Key)
+		}
+		if tag.Value != wantTags[i].Value {
+			t.Errorf("Incorrect tag for %s, want: %q, got: %v", tag.Key, wantTags[i].Value, tag.Value)
+		}
+
+	}
+	wantBuckets := []int64{0, 1, 1}
+	gotBuckets := rows[0].Data.(*view.DistributionData)
+	if !reflect.DeepEqual(gotBuckets.CountPerBucket, wantBuckets) {
+		t.Fatalf("want buckets %v, got %v", wantBuckets, gotBuckets)
+	}
+	for i, e := range gotBuckets.ExemplarsPerBucket {
+		if gotBuckets.CountPerBucket[i] == 0 {
+			if e != nil {
+				t.Errorf("Unexpected exemplar for bucket")
+			}
+			continue
+		}
+		// values from the metrics above
+		exemplarValues := []float64{0, 6, 12}
+		wantExemplar := &metricdata.Exemplar{Value: exemplarValues[i], Attachments: attachments}
+		if diff := cmpExemplar(e, wantExemplar); diff != "" {
+			t.Errorf("Bad exemplar for %d: %+v", i, diff)
+		}
+	}
+
+	rows2, err := meter.RetrieveData("second_view")
+	if err != nil {
+		t.Fatalf("Failed to read second_view: %v", err)
+	}
+	if len(rows2) != 1 {
+		t.Fatalf("Expected one row, got %d rows: %v", len(rows2), rows2)
+	}
+	if len(rows2[0].Tags) != 1 {
+		t.Errorf("Expected one tag, got %d tags: %v", len(rows2[0].Tags), rows2[0].Tags)
+	}
+	wantTags = []tag.Tag{{Key: k1, Value: "bar"}}
+	for i, tag := range rows2[0].Tags {
+		if wantTags[i].Key != tag.Key {
+			t.Errorf("Wrong key for %d, want %q, got %q", i, wantTags[i].Key, tag.Key)
+		}
+		if wantTags[i].Value != tag.Value {
+			t.Errorf("Wrong value for tag %s, want %q got %q", tag.Key, wantTags[i].Value, tag.Value)
+		}
+	}
+	gotCount := rows2[0].Data.(*view.CountData)
+	if gotCount.Value != 1 {
+		t.Errorf("Wrong count for second_view, want %d, got %d", 1, gotCount.Value)
 	}
 }
