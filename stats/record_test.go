@@ -98,6 +98,7 @@ func cmpExemplar(got, want *metricdata.Exemplar) string {
 func TestRecordWithMeter(t *testing.T) {
 	meter := view.NewMeter()
 	meter.Start()
+	defer meter.Stop()
 	k1 := tag.MustNewKey("k1")
 	k2 := tag.MustNewKey("k2")
 	m1 := stats.Int64("TestResolveOptions/m1", "", stats.UnitDimensionless)
