@@ -19,6 +19,7 @@ import (
 	"testing"
 
 	"go.opencensus.io/stats"
+	"go.opencensus.io/stats/view"
 	_ "go.opencensus.io/stats/view" // enable collection
 	"go.opencensus.io/tag"
 )
@@ -50,6 +51,22 @@ func BenchmarkRecord8(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		stats.Record(ctx, m.M(1), m.M(1), m.M(1), m.M(1), m.M(1), m.M(1), m.M(1), m.M(1))
 	}
+}
+
+func BenchmarkRecord8_WithRecorder(b *testing.B) {
+	ctx := context.Background()
+	meter := view.NewMeter()
+	meter.Start()
+	defer meter.Stop()
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		// Note that this benchmark has one extra allocation for stats.WithRecorder.
+		// If you cache the recorder option, this benchmark should be equally fast as BenchmarkRecord8
+		stats.RecordWithOptions(ctx, stats.WithRecorder(meter), stats.WithMeasurements(m.M(1), m.M(1), m.M(1), m.M(1), m.M(1), m.M(1), m.M(1), m.M(1)))
+	}
+
+	b.StopTimer()
 }
 
 func BenchmarkRecord8_Parallel(b *testing.B) {
