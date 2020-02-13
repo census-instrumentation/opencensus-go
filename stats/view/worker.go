@@ -28,7 +28,7 @@ import (
 )
 
 func init() {
-	defaultWorker = NewWorker().(*worker)
+	defaultWorker = NewMeter().(*worker)
 	go defaultWorker.start()
 	internal.DefaultRecorder = record
 }
@@ -60,8 +60,7 @@ type worker struct {
 // Note that this is an advanced use case, and the static functions in this
 // module should cover the common use cases.
 type Meter interface {
-	// Record records a set of measurements ms associated with the given tags and attachments.
-	Record(tags *tag.Map, ms interface{}, attachments map[string]interface{})
+	stats.Recorder
 	// Find returns a registered view associated with this name.
 	// If no registered view is found, nil is returned.
 	Find(name string) *View
@@ -233,8 +232,10 @@ func (w *worker) SetReportingPeriod(d time.Duration) {
 	<-req.c // don't return until the timer is set to the new duration.
 }
 
-// NewWorker constructs a
-func NewWorker() Meter {
+// NewMeter constructs a Meter instance. You should only need to use this if
+// you need to separate out Measurement recordings and View aggregations within
+// a single process.
+func NewMeter() Meter {
 	return &worker{
 		measures:   make(map[string]*measureRef),
 		views:      make(map[string]*viewInternal),

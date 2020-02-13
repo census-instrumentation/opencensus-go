@@ -123,7 +123,7 @@ func Test_Worker_MultiExport(t *testing.T) {
 
 	// This test reports the same data for the default worker and a secondary
 	// worker, and ensures that the stats are kept independently.
-	worker2 := NewWorker().(*worker)
+	worker2 := NewMeter().(*worker)
 	worker2.Start()
 
 	m := stats.Float64("Test_Worker_MultiExport/MF1", "desc MF1", "unit")
@@ -397,7 +397,7 @@ func TestReportUsage(t *testing.T) {
 func Test_SetReportingPeriodReqNeverBlocks(t *testing.T) {
 	t.Parallel()
 
-	worker := NewWorker().(*worker)
+	worker := NewMeter().(*worker)
 	durations := []time.Duration{-1, 0, 10, 100 * time.Millisecond}
 	for i, duration := range durations {
 		ackChan := make(chan bool, 1)
@@ -616,6 +616,6 @@ func (e *vdExporter) ExportView(vd *Data) {
 // restart stops the current processors and creates a new one.
 func restart() {
 	defaultWorker.Stop()
-	defaultWorker = NewWorker().(*worker)
+	defaultWorker = NewMeter().(*worker)
 	go defaultWorker.start()
 }

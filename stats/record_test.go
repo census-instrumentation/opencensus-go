@@ -95,8 +95,8 @@ func cmpExemplar(got, want *metricdata.Exemplar) string {
 	return cmp.Diff(got, want, cmpopts.IgnoreFields(metricdata.Exemplar{}, "Timestamp"), cmpopts.IgnoreUnexported(metricdata.Exemplar{}))
 }
 
-func TestResolveOptions(t *testing.T) {
-	meter := view.NewWorker()
+func TestRecordWithMeter(t *testing.T) {
+	meter := view.NewMeter()
 	meter.Start()
 	k1 := tag.MustNewKey("k1")
 	k2 := tag.MustNewKey("k2")
@@ -128,7 +128,7 @@ func TestResolveOptions(t *testing.T) {
 		stats.WithTags(tag.Upsert(k1, "bar"), tag.Insert(k2, "bar")),
 		stats.WithAttachments(attachments),
 		stats.WithMeasurements(m1.M(12), m1.M(6), m2.M(5)),
-		stats.WithMeter(meter))
+		stats.WithRecorder(meter))
 	if err != nil {
 		t.Fatalf("Failed to resolve data point: %v", err)
 	}

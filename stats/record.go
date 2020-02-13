@@ -31,9 +31,11 @@ func init() {
 	}
 }
 
-// Recorder is a subset of the view.Meter interface which only includes
-// the Record method, to avoid circular imports between stats and view.
+// Recorder provides an interface for exporting measurement information from
+// the static Record method by using the WithRecorder option.
 type Recorder interface {
+	// Record records a set of measurements associated with the given tags and attachments.
+	// The second argument is a `[]Measurement`.
 	Record(*tag.Map, interface{}, map[string]interface{})
 }
 
@@ -65,9 +67,9 @@ func WithMeasurements(measurements ...Measurement) Options {
 	}
 }
 
-// WithMeter records the measurements to the specified `view.Meter`, rather
+// WithRecorder records the measurements to the specified `Recorder`, rather
 // than to the global metrics recorder.
-func WithMeter(meter Recorder) Options {
+func WithRecorder(meter Recorder) Options {
 	return func(ro *recordOptions) {
 		ro.recorder = meter
 	}
