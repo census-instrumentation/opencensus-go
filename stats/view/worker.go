@@ -233,6 +233,7 @@ func (w *worker) reportView(v *viewInternal, now time.Time) {
 		e.ExportView(viewData)
 	}
 	exportersMu.Unlock()
+	v.resetValues()
 }
 
 func (w *worker) reportUsage(now time.Time) {
@@ -275,6 +276,7 @@ func (w *worker) Read() []*metricdata.Metric {
 		metric := w.toMetric(v, now)
 		if metric != nil {
 			metrics = append(metrics, metric)
+			v.resetValues()
 		}
 	}
 	return metrics

@@ -117,10 +117,10 @@ func (a *SumData) toPoint(metricType metricdata.Type, t time.Time) metricdata.Po
 // N+1 buckets.
 type DistributionData struct {
 	Count           int64   // number of data points aggregated
-	Min             float64 // minimum value in the distribution
-	Max             float64 // max value in the distribution
+	Min             float64 // minimum value in the distribution, value is non-monotonic
+	Max             float64 // max value in the distribution, value is non-monotonic
 	Mean            float64 // mean of the distribution
-	SumOfSquaredDev float64 // sum of the squared deviation from the mean
+	SumOfSquaredDev float64 // sum of the squared deviation from the mean, non-monotnic exporters shouldn't use this
 	CountPerBucket  []int64 // number of occurrences per bucket
 	// ExemplarsPerBucket is slice the same length as CountPerBucket containing
 	// an exemplar for the associated bucket, or nil.

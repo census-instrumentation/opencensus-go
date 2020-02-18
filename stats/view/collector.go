@@ -16,6 +16,7 @@
 package view
 
 import (
+	"math"
 	"sort"
 	"time"
 
@@ -54,6 +55,16 @@ func (c *collector) collectedRows(keys []tag.Key) []*Row {
 
 func (c *collector) clearRows() {
 	c.signatures = make(map[string]AggregationData)
+}
+
+func (c *collector) resetValues() {
+	for _, ad := range c.signatures {
+		switch ad := ad.(type) {
+		case *DistributionData:
+			ad.Min = math.MaxFloat64
+			ad.Max = math.SmallestNonzeroFloat64
+		}
+	}
 }
 
 // encodeWithKeys encodes the map by using values
