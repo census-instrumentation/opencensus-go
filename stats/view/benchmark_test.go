@@ -46,7 +46,7 @@ var (
 // BenchmarkRecordReqCommand benchmarks calling the internal recording machinery
 // directly.
 func BenchmarkRecordReqCommand(b *testing.B) {
-	w := newWorker()
+	w := NewMeter().(*worker)
 
 	register := &registerViewReq{views: []*View{view}, err: make(chan error, 1)}
 	register.handleCommand(w)
@@ -54,21 +54,7 @@ func BenchmarkRecordReqCommand(b *testing.B) {
 		b.Fatal(err)
 	}
 
-	const tagCount = 10
-	ctxs := make([]context.Context, 0, tagCount)
-	for i := 0; i < tagCount; i++ {
-		ctx, _ := tag.New(context.Background(),
-			tag.Upsert(k1, fmt.Sprintf("v%d", i)),
-			tag.Upsert(k2, fmt.Sprintf("v%d", i)),
-			tag.Upsert(k3, fmt.Sprintf("v%d", i)),
-			tag.Upsert(k4, fmt.Sprintf("v%d", i)),
-			tag.Upsert(k5, fmt.Sprintf("v%d", i)),
-			tag.Upsert(k6, fmt.Sprintf("v%d", i)),
-			tag.Upsert(k7, fmt.Sprintf("v%d", i)),
-			tag.Upsert(k8, fmt.Sprintf("v%d", i)),
-		)
-		ctxs = append(ctxs, ctx)
-	}
+	ctxs := prepareContexts(10)
 
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -90,4 +76,42 @@ func BenchmarkRecordReqCommand(b *testing.B) {
 		}
 		record.handleCommand(w)
 	}
+}
+
+func BenchmarkRecordViaStats(b *testing.B) {
+
+	meter := NewMeter()
+	meter.Start()
+	defer meter.Stop()
+	meter.Register(view)
+	defer meter.Unregister(view)
+
+	ctxs := prepareContexts(10)
+	rec := stats.WithRecorder(meter)
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		stats.RecordWithOptions(ctxs[i%len(ctxs)], rec, stats.WithMeasurements(m.M(1), m.M(1), m.M(1), m.M(1), m.M(1), m.M(1), m.M(1), m.M(1)))
+	}
+
+}
+
+func prepareContexts(tagCount int) []context.Context {
+	ctxs := make([]context.Context, 0, tagCount)
+	for i := 0; i < tagCount; i++ {
+		ctx, _ := tag.New(context.Background(),
+			tag.Upsert(k1, fmt.Sprintf("v%d", i)),
+			tag.Upsert(k2, fmt.Sprintf("v%d", i)),
+			tag.Upsert(k3, fmt.Sprintf("v%d", i)),
+			tag.Upsert(k4, fmt.Sprintf("v%d", i)),
+			tag.Upsert(k5, fmt.Sprintf("v%d", i)),
+			tag.Upsert(k6, fmt.Sprintf("v%d", i)),
+			tag.Upsert(k7, fmt.Sprintf("v%d", i)),
+			tag.Upsert(k8, fmt.Sprintf("v%d", i)),
+		)
+		ctxs = append(ctxs, ctx)
+	}
+
+	return ctxs
 }
