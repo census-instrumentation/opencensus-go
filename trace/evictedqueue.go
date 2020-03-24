@@ -31,7 +31,9 @@ func newEvictedQueue(capacity int) *evictedQueue {
 
 func (eq *evictedQueue) add(value interface{}) {
 	if len(eq.queue) == eq.capacity {
-		eq.queue = eq.queue[1:]
+		newQueue := make([]interface{}, eq.capacity-1, eq.capacity)
+		copy(newQueue, eq.queue[1:])
+		eq.queue = newQueue
 		eq.droppedCount++
 	}
 	eq.queue = append(eq.queue, value)
