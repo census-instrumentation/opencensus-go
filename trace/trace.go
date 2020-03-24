@@ -300,15 +300,15 @@ func (s *Span) makeSpanData() *SpanData {
 		sd.Attributes = s.lruAttributesToAttributeMap()
 		sd.DroppedAttributeCount = s.lruAttributes.droppedCount
 	}
-	if len(s.annotations.queue) > 0 {
+	if len(s.annotations.ringQueue) > 0 {
 		sd.Annotations = s.interfaceArrayToAnnotationArray()
 		sd.DroppedAnnotationCount = s.annotations.droppedCount
 	}
-	if len(s.messageEvents.queue) > 0 {
+	if len(s.messageEvents.ringQueue) > 0 {
 		sd.MessageEvents = s.interfaceArrayToMessageEventArray()
 		sd.DroppedMessageEventCount = s.messageEvents.droppedCount
 	}
-	if len(s.links.queue) > 0 {
+	if len(s.links.ringQueue) > 0 {
 		sd.Links = s.interfaceArrayToLinksArray()
 		sd.DroppedLinkCount = s.links.droppedCount
 	}
@@ -345,25 +345,25 @@ func (s *Span) SetStatus(status Status) {
 }
 
 func (s *Span) interfaceArrayToLinksArray() []Link {
-	linksArr := make([]Link, 0, len(s.links.queue))
-	for _, value := range s.links.queue {
-		linksArr = append(linksArr, value.(Link))
+	linksArr := make([]Link, len(s.links.ringQueue))
+	for i := 0; i < len(linksArr); i++ {
+		linksArr[i] = s.links.readNext().(Link)
 	}
 	return linksArr
 }
 
 func (s *Span) interfaceArrayToMessageEventArray() []MessageEvent {
-	messageEventArr := make([]MessageEvent, 0, len(s.messageEvents.queue))
-	for _, value := range s.messageEvents.queue {
-		messageEventArr = append(messageEventArr, value.(MessageEvent))
+	messageEventArr := make([]MessageEvent, len(s.messageEvents.ringQueue))
+	for i := 0; i < len(messageEventArr); i++ {
+		messageEventArr[i] = s.messageEvents.readNext().(MessageEvent)
 	}
 	return messageEventArr
 }
 
 func (s *Span) interfaceArrayToAnnotationArray() []Annotation {
-	annotationArr := make([]Annotation, 0, len(s.annotations.queue))
-	for _, value := range s.annotations.queue {
-		annotationArr = append(annotationArr, value.(Annotation))
+	annotationArr := make([]Annotation, len(s.annotations.ringQueue))
+	for i := 0; i < len(annotationArr); i++ {
+		annotationArr[i] = s.annotations.readNext().(Annotation)
 	}
 	return annotationArr
 }
