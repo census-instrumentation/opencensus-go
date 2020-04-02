@@ -104,11 +104,33 @@ func TestHTTPFormat_FromRequest(t *testing.T) {
 			wantOk: false,
 		},
 		{
+			name: "invalid >128-bit trace ID + 64-bit span ID; no sampling header",
+			makeReq: func() *http.Request {
+				req, _ := http.NewRequest("GET", "http://example.com", nil)
+				req.Header.Set(TraceIDHeader, "0020000000000001002000000000000111")
+				req.Header.Set(SpanIDHeader, "0020000000000001")
+				return req
+			},
+			wantSc: trace.SpanContext{},
+			wantOk: false,
+		},
+		{
 			name: "128-bit trace ID; invalid span ID; no sampling header",
 			makeReq: func() *http.Request {
 				req, _ := http.NewRequest("GET", "http://example.com", nil)
 				req.Header.Set(TraceIDHeader, "463ac35c9f6413ad48485a3953bb6124")
 				req.Header.Set(SpanIDHeader, "")
+				return req
+			},
+			wantSc: trace.SpanContext{},
+			wantOk: false,
+		},
+		{
+			name: "128-bit trace ID; invalid >64 bit span ID; no sampling header",
+			makeReq: func() *http.Request {
+				req, _ := http.NewRequest("GET", "http://example.com", nil)
+				req.Header.Set(TraceIDHeader, "463ac35c9f6413ad48485a3953bb6124")
+				req.Header.Set(SpanIDHeader, "002000000000000111")
 				return req
 			},
 			wantSc: trace.SpanContext{},
