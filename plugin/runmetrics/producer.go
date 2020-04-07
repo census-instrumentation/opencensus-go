@@ -4,6 +4,7 @@ import (
 	"errors"
 	"runtime"
 	"sync"
+	"time"
 
 	"go.opencensus.io/metric"
 	"go.opencensus.io/metric/metricdata"
@@ -52,6 +53,15 @@ type (
 		stackMSpanSys    *metric.Int64GaugeEntry
 		stackMCacheInuse *metric.Int64GaugeEntry
 		stackMCacheSys   *metric.Int64GaugeEntry
+
+		otherSys      *metric.Int64GaugeEntry
+		gcSys         *metric.Int64GaugeEntry
+		numGC         *metric.Int64GaugeEntry
+		numForcedGC   *metric.Int64GaugeEntry
+		nextGC        *metric.Int64GaugeEntry
+		lastGC        *metric.Int64GaugeEntry
+		pauseTotalNs  *metric.Int64GaugeEntry
+		gcCPUFraction *metric.Float64Entry
 	}
 
 	cpuStats struct {
@@ -219,6 +229,47 @@ func newMemStats(producer *producer) (*memStats, error) {
 		return nil, err
 	}
 
+	// GC
+	memStats.gcSys, err = producer.createInt64GaugeEntry("process/gc_sys", "Bytes of memory in garbage collection metadatas", metricdata.UnitBytes)
+	if err != nil {
+		return nil, err
+	}
+
+	memStats.otherSys, err = producer.createInt64GaugeEntry("process/other_sys", "Bytes of memory in miscellaneous off-heap runtime allocations", metricdata.UnitBytes)
+	if err != nil {
+		return nil, err
+	}
+
+	memStats.numGC, err = producer.createInt64GaugeEntry("process/num_gc", "Cumulative count of completed GC cycles", metricdata.UnitDimensionless)
+	if err != nil {
+		return nil, err
+	}
+
+	memStats.numForcedGC, err = producer.createInt64GaugeEntry("process/num_forced_gc", "Cumulative count of GC cycles forced by the application", metricdata.UnitDimensionless)
+	if err != nil {
+		return nil, err
+	}
+
+	memStats.nextGC, err = producer.createInt64GaugeEntry("process/next_gc_heap_size", "Target heap size of the next GC cycle in bytes", metricdata.UnitBytes)
+	if err != nil {
+		return nil, err
+	}
+
+	memStats.lastGC, err = producer.createInt64GaugeEntry("process/last_gc_finished_timestamp", "Time the last garbage collection finished, as milliseconds since 1970 (the UNIX epoch)", metricdata.UnitMilliseconds)
+	if err != nil {
+		return nil, err
+	}
+
+	memStats.pauseTotalNs, err = producer.createInt64GaugeEntry("process/pause_total", "Cumulative milliseconds spent in GC stop-the-world pauses", metricdata.UnitMilliseconds)
+	if err != nil {
+		return nil, err
+	}
+
+	memStats.gcCPUFraction, err = producer.createFloat64GaugeEntry("process/gc_cpu_fraction", "Fraction of this program's available CPU time used by the GC since the program started", metricdata.UnitDimensionless)
+	if err != nil {
+		return nil, err
+	}
+
 	return memStats, nil
 }
 
@@ -245,6 +296,15 @@ func (m *memStats) read() {
 	m.stackMSpanSys.Set(int64(m.memStats.MSpanSys))
 	m.stackMCacheInuse.Set(int64(m.memStats.MCacheInuse))
 	m.stackMCacheSys.Set(int64(m.memStats.MCacheSys))
+
+	m.gcSys.Set(int64(m.memStats.GCSys))
+	m.otherSys.Set(int64(m.memStats.OtherSys))
+	m.numGC.Set(int64(m.memStats.NumGC))
+	m.numForcedGC.Set(int64(m.memStats.NumForcedGC))
+	m.nextGC.Set(int64(m.memStats.NextGC))
+	m.lastGC.Set(int64(m.memStats.LastGC) / int64(time.Millisecond))
+	m.pauseTotalNs.Set(int64(m.memStats.PauseTotalNs) / int64(time.Millisecond))
+	m.gcCPUFraction.Set(m.memStats.GCCPUFraction)
 }
 
 func newCPUStats(producer *producer) (*cpuStats, error) {
@@ -267,6 +327,27 @@ func newCPUStats(producer *producer) (*cpuStats, error) {
 func (c *cpuStats) read() {
 	c.numGoroutines.Set(int64(runtime.NumGoroutine()))
 	c.numCgoCalls.Set(runtime.NumCgoCall())
+}
+
+func (p *producer) createFloat64GaugeEntry(name string, description string, unit metricdata.Unit) (*metric.Float64Entry, error) {
+	if len(p.options.Prefix) > 0 {
+		name = p.options.Prefix + name
+	}
+
+	gauge, err := p.reg.AddFloat64Gauge(
+		name,
+		metric.WithDescription(description),
+		metric.WithUnit(unit))
+	if err != nil {
+		return nil, errors.New("error creating gauge for " + name + ": " + err.Error())
+	}
+
+	entry, err := gauge.GetEntry()
+	if err != nil {
+		return nil, errors.New("error getting gauge entry for " + name + ": " + err.Error())
+	}
+
+	return entry, nil
 }
 
 func (p *producer) createInt64GaugeEntry(name string, description string, unit metricdata.Unit) (*metric.Int64GaugeEntry, error) {
