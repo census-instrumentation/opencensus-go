@@ -34,18 +34,18 @@ type (
 		memStats runtime.MemStats
 
 		memAlloc   *metric.Int64GaugeEntry
-		memTotal   *metric.Int64GaugeEntry
+		memTotal   *metric.Int64DerivedCumulative
 		memSys     *metric.Int64GaugeEntry
-		memLookups *metric.Int64GaugeEntry
-		memMalloc  *metric.Int64GaugeEntry
-		memFrees   *metric.Int64GaugeEntry
+		memLookups *metric.Int64DerivedCumulative
+		memMalloc  *metric.Int64DerivedCumulative
+		memFrees   *metric.Int64DerivedCumulative
 
 		heapAlloc    *metric.Int64GaugeEntry
 		heapSys      *metric.Int64GaugeEntry
 		heapIdle     *metric.Int64GaugeEntry
 		heapInuse    *metric.Int64GaugeEntry
 		heapObjects  *metric.Int64GaugeEntry
-		heapReleased *metric.Int64GaugeEntry
+		heapReleased *metric.Int64DerivedCumulative
 
 		stackInuse       *metric.Int64GaugeEntry
 		stackSys         *metric.Int64GaugeEntry
@@ -56,11 +56,11 @@ type (
 
 		otherSys      *metric.Int64GaugeEntry
 		gcSys         *metric.Int64GaugeEntry
-		numGC         *metric.Int64GaugeEntry
-		numForcedGC   *metric.Int64GaugeEntry
+		numGC         *metric.Int64DerivedCumulative
+		numForcedGC   *metric.Int64DerivedCumulative
 		nextGC        *metric.Int64GaugeEntry
 		lastGC        *metric.Int64GaugeEntry
-		pauseTotalNs  *metric.Int64GaugeEntry
+		pauseTotalNs  *metric.Int64DerivedCumulative
 		gcCPUFraction *metric.Float64Entry
 	}
 
@@ -142,7 +142,7 @@ func newMemStats(producer *producer) (*memStats, error) {
 		return nil, err
 	}
 
-	memStats.memTotal, err = producer.createInt64GaugeEntry("process/total_memory_alloc", "Number of allocations in total", metricdata.UnitBytes)
+	memStats.memTotal, err = producer.createInt64DerivedCumulative("process/total_memory_alloc", "Cumulative number of allocations in total", metricdata.UnitBytes)
 	if err != nil {
 		return nil, err
 	}
@@ -152,17 +152,17 @@ func newMemStats(producer *producer) (*memStats, error) {
 		return nil, err
 	}
 
-	memStats.memLookups, err = producer.createInt64GaugeEntry("process/memory_lookups", "Number of pointer lookups performed by the runtime", metricdata.UnitDimensionless)
+	memStats.memLookups, err = producer.createInt64DerivedCumulative("process/memory_lookups", "Cumulative number of pointer lookups performed by the runtime", metricdata.UnitDimensionless)
 	if err != nil {
 		return nil, err
 	}
 
-	memStats.memMalloc, err = producer.createInt64GaugeEntry("process/memory_malloc", "Cumulative count of heap objects allocated", metricdata.UnitDimensionless)
+	memStats.memMalloc, err = producer.createInt64DerivedCumulative("process/memory_malloc", "Cumulative count of heap objects allocated", metricdata.UnitDimensionless)
 	if err != nil {
 		return nil, err
 	}
 
-	memStats.memFrees, err = producer.createInt64GaugeEntry("process/memory_frees", "Cumulative count of heap objects freed", metricdata.UnitDimensionless)
+	memStats.memFrees, err = producer.createInt64DerivedCumulative("process/memory_frees", "Cumulative count of heap objects freed", metricdata.UnitDimensionless)
 	if err != nil {
 		return nil, err
 	}
@@ -193,7 +193,7 @@ func newMemStats(producer *producer) (*memStats, error) {
 		return nil, err
 	}
 
-	memStats.heapReleased, err = producer.createInt64GaugeEntry("process/heap_release", "The number of objects released from the heap", metricdata.UnitBytes)
+	memStats.heapReleased, err = producer.createInt64DerivedCumulative("process/heap_release", "The cumulative number of objects released from the heap", metricdata.UnitBytes)
 	if err != nil {
 		return nil, err
 	}
@@ -240,12 +240,12 @@ func newMemStats(producer *producer) (*memStats, error) {
 		return nil, err
 	}
 
-	memStats.numGC, err = producer.createInt64GaugeEntry("process/num_gc", "Cumulative count of completed GC cycles", metricdata.UnitDimensionless)
+	memStats.numGC, err = producer.createInt64DerivedCumulative("process/num_gc", "Cumulative count of completed GC cycles", metricdata.UnitDimensionless)
 	if err != nil {
 		return nil, err
 	}
 
-	memStats.numForcedGC, err = producer.createInt64GaugeEntry("process/num_forced_gc", "Cumulative count of GC cycles forced by the application", metricdata.UnitDimensionless)
+	memStats.numForcedGC, err = producer.createInt64DerivedCumulative("process/num_forced_gc", "Cumulative count of GC cycles forced by the application", metricdata.UnitDimensionless)
 	if err != nil {
 		return nil, err
 	}
@@ -260,7 +260,7 @@ func newMemStats(producer *producer) (*memStats, error) {
 		return nil, err
 	}
 
-	memStats.pauseTotalNs, err = producer.createInt64GaugeEntry("process/pause_total", "Cumulative milliseconds spent in GC stop-the-world pauses", metricdata.UnitMilliseconds)
+	memStats.pauseTotalNs, err = producer.createInt64DerivedCumulative("process/pause_total", "Cumulative milliseconds spent in GC stop-the-world pauses", metricdata.UnitMilliseconds)
 	if err != nil {
 		return nil, err
 	}
@@ -277,17 +277,34 @@ func (m *memStats) read() {
 	runtime.ReadMemStats(&m.memStats)
 
 	m.memAlloc.Set(int64(m.memStats.Alloc))
-	m.memTotal.Set(int64(m.memStats.TotalAlloc))
+
+	_ = m.memTotal.UpsertEntry(func() int64 {
+		return int64(m.memStats.TotalAlloc)
+	})
+
 	m.memSys.Set(int64(m.memStats.Sys))
-	m.memLookups.Set(int64(m.memStats.Lookups))
-	m.memMalloc.Set(int64(m.memStats.Mallocs))
-	m.memFrees.Set(int64(m.memStats.Frees))
+
+	_ = m.memLookups.UpsertEntry(func() int64 {
+		return int64(m.memStats.Lookups)
+	})
+
+	_ = m.memMalloc.UpsertEntry(func() int64 {
+		return int64(m.memStats.Mallocs)
+	})
+
+	_ = m.memFrees.UpsertEntry(func() int64 {
+		return int64(m.memStats.Frees)
+	})
 
 	m.heapAlloc.Set(int64(m.memStats.HeapAlloc))
 	m.heapSys.Set(int64(m.memStats.HeapSys))
 	m.heapIdle.Set(int64(m.memStats.HeapIdle))
 	m.heapInuse.Set(int64(m.memStats.HeapInuse))
-	m.heapReleased.Set(int64(m.memStats.HeapReleased))
+
+	_ = m.heapReleased.UpsertEntry(func() int64 {
+		return int64(m.memStats.HeapReleased)
+	})
+
 	m.heapObjects.Set(int64(m.memStats.HeapObjects))
 
 	m.stackInuse.Set(int64(m.memStats.StackInuse))
@@ -299,11 +316,22 @@ func (m *memStats) read() {
 
 	m.gcSys.Set(int64(m.memStats.GCSys))
 	m.otherSys.Set(int64(m.memStats.OtherSys))
-	m.numGC.Set(int64(m.memStats.NumGC))
-	m.numForcedGC.Set(int64(m.memStats.NumForcedGC))
+
+	_ = m.numGC.UpsertEntry(func() int64 {
+		return int64(m.memStats.NumGC)
+	})
+
+	_ = m.numForcedGC.UpsertEntry(func() int64 {
+		return int64(m.memStats.NumForcedGC)
+	})
+
 	m.nextGC.Set(int64(m.memStats.NextGC))
 	m.lastGC.Set(int64(m.memStats.LastGC) / int64(time.Millisecond))
-	m.pauseTotalNs.Set(int64(m.memStats.PauseTotalNs) / int64(time.Millisecond))
+
+	_ = m.pauseTotalNs.UpsertEntry(func() int64 {
+		return int64(m.memStats.PauseTotalNs) / int64(time.Millisecond)
+	})
+
 	m.gcCPUFraction.Set(m.memStats.GCCPUFraction)
 }
 
@@ -369,4 +397,20 @@ func (p *producer) createInt64GaugeEntry(name string, description string, unit m
 	}
 
 	return entry, nil
+}
+
+func (p *producer) createInt64DerivedCumulative(name string, description string, unit metricdata.Unit) (*metric.Int64DerivedCumulative, error) {
+	if len(p.options.Prefix) > 0 {
+		name = p.options.Prefix + name
+	}
+
+	cumulative, err := p.reg.AddInt64DerivedCumulative(
+		name,
+		metric.WithDescription(description),
+		metric.WithUnit(unit))
+	if err != nil {
+		return nil, errors.New("error creating gauge for " + name + ": " + err.Error())
+	}
+
+	return cumulative, nil
 }
