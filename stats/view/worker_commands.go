@@ -163,7 +163,7 @@ func (cmd *recordReq) handleCommand(w *worker) {
 		}
 		ref := w.getMeasureRef(m.Measure().Name())
 		for v := range ref.views {
-			v.addSample(cmd.tm, m.Value(), cmd.attachments, time.Now())
+			v.addSample(cmd.tm, m.Value(), cmd.attachments, cmd.t)
 		}
 	}
 }
