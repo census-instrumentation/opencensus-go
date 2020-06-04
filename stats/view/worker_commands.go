@@ -103,7 +103,7 @@ func (cmd *unregisterFromViewReq) handleCommand(w *worker) {
 			// The collected data can be cleared.
 			vi.clearRows()
 		}
-		w.unregisterView(name)
+		w.unregisterView(vi)
 	}
 	cmd.done <- struct{}{}
 }

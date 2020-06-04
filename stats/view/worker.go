@@ -314,10 +314,13 @@ func (w *worker) tryRegisterView(v *View) (*viewInternal, error) {
 	return vi, nil
 }
 
-func (w *worker) unregisterView(viewName string) {
+func (w *worker) unregisterView(v *viewInternal) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
-	delete(w.views, viewName)
+	delete(w.views, v.view.Name)
+	if measure := w.measures[v.view.Measure.Name()]; measure != nil {
+		delete(measure.views, v)
+	}
 }
 
 func (w *worker) reportView(v *viewInternal, now time.Time) {
