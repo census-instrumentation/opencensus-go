@@ -256,6 +256,10 @@ func NewMeter() Meter {
 	}
 }
 
+// SetResource associates all data collected by this Meter with the specified
+// resource. This resource is reported when using metricexport.ReadAndExport;
+// it is not provided when used with ExportView/RegisterExporter, because that
+// interface does not provide a means for reporting the Resource.
 func (w *worker) SetResource(r *resource.Resource) {
 	w.r = r
 }
@@ -396,11 +400,6 @@ func (w *worker) Read() []*metricdata.Metric {
 		}
 	}
 	return metrics
-}
-
-// Resource implements metricproducer.ResourceProducer.
-func (w *worker) Resource() *resource.Resource {
-	return w.r
 }
 
 func (w *worker) RegisterExporter(e Exporter) {
