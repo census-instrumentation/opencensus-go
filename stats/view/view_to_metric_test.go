@@ -447,7 +447,7 @@ func Test_ViewToMetric(t *testing.T) {
 			tc.vi.addSample(tag.FromContext(ctx), v, nil, now)
 		}
 
-		gotMetric := viewToMetric(tc.vi, now, startTime)
+		gotMetric := viewToMetric(tc.vi, nil, now, startTime)
 		if !cmp.Equal(gotMetric, tc.wantMetric) {
 			// JSON format is strictly for checking the content when test fails. Do not use JSON
 			// format to determine if the two values are same as it doesn't differentiate between
@@ -509,7 +509,7 @@ func TestUnitConversionForAggCount(t *testing.T) {
 
 	for _, tc := range tests {
 		tc.vi.addSample(tag.FromContext(context.Background()), 5.0, nil, now)
-		gotMetric := viewToMetric(tc.vi, now, startTime)
+		gotMetric := viewToMetric(tc.vi, nil, now, startTime)
 		gotUnit := gotMetric.Descriptor.Unit
 		if !cmp.Equal(gotUnit, tc.wantUnit) {
 			t.Errorf("Verify Unit: %s: Got:%v Want:%v", tc.name, gotUnit, tc.wantUnit)

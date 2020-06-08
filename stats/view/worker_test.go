@@ -18,9 +18,12 @@ package view
 import (
 	"context"
 	"errors"
+	"sort"
 	"sync"
 	"testing"
 	"time"
+
+	"go.opencensus.io/resource"
 
 	"go.opencensus.io/metric/metricdata"
 	"go.opencensus.io/metric/metricexport"
@@ -123,8 +126,13 @@ func Test_Worker_MultiExport(t *testing.T) {
 
 	// This test reports the same data for the default worker and a secondary
 	// worker, and ensures that the stats are kept independently.
+	extraResource := resource.Resource{
+		Type:   "additional",
+		Labels: map[string]string{"key1": "value1", "key2": "value2"},
+	}
 	worker2 := NewMeter().(*worker)
 	worker2.Start()
+	worker2.SetResource(&extraResource)
 
 	m := stats.Float64("Test_Worker_MultiExport/MF1", "desc MF1", "unit")
 	key := tag.MustNewKey(("key"))
@@ -162,50 +170,62 @@ func Test_Worker_MultiExport(t *testing.T) {
 		}
 	}
 
-	wantRows := []struct {
-		w    Meter
-		view string
-		rows []*Row
-	}{{
-		view: count.Name,
-		rows: []*Row{
+	makeKey := func(r *resource.Resource, view string) string {
+		if r == nil {
+			r = &resource.Resource{}
+		}
+		return resource.EncodeLabels(r.Labels) + "/" + view
+	}
+
+	// Format is Resource.Labels encoded as string, then
+	wantPartialData := map[string][]*Row{
+		makeKey(nil, count.Name): []*Row{
 			{[]tag.Tag{{Key: key, Value: "a"}}, &CountData{Value: 2}},
 			{[]tag.Tag{{Key: key, Value: "b"}}, &CountData{Value: 1}},
 		},
-	}, {
-		view: sum.Name,
-		rows: []*Row{
-			{nil, &SumData{Value: 7.5}}},
-	}, {
-		w:    worker2,
-		view: count.Name,
-		rows: []*Row{
+		makeKey(nil, sum.Name): []*Row{
+			{nil, &SumData{Value: 7.5}},
+		},
+		makeKey(&extraResource, count.Name): []*Row{
 			{[]tag.Tag{{Key: key, Value: "b"}}, &CountData{Value: 1}},
 		},
-	}}
+	}
 
-	for _, wantRow := range wantRows {
-		retrieve := RetrieveData
-		if wantRow.w != nil {
-			retrieve = wantRow.w.(*worker).RetrieveData
+	te := &testExporter{}
+	metricexport.NewReader().ReadAndExport(te)
+	for _, m := range te.metrics {
+		key := makeKey(m.Resource, m.Descriptor.Name)
+		want, ok := wantPartialData[key]
+		if !ok {
+			t.Errorf("Unexpected data for %q: %v", key, m)
+			continue
 		}
-		gotRows, err := retrieve(wantRow.view)
-		if err != nil {
-			t.Fatalf("RetrieveData(%v), got error %v", wantRow.view, err)
-		}
-		for _, got := range gotRows {
-			if !containsRow(wantRow.rows, got) {
-				t.Errorf("%s: got row %#v; want none", wantRow.view, got)
-				break
+		gotTs := m.TimeSeries
+		sort.Sort(byLabel(gotTs))
+
+		for i, ts := range gotTs {
+			for j, label := range ts.LabelValues {
+				if want[i].Tags[j].Value != label.Value {
+					t.Errorf("Mismatched tag values (want %q, got %q) for %v in %q", want[i].Tags[j].Value, label.Value, ts, key)
+				}
 			}
-		}
-		for _, want := range wantRow.rows {
-			if !containsRow(gotRows, want) {
-				t.Errorf("%s: got none, want %#v", wantRow.view, want)
-				break
+			switch wantValue := want[i].Data.(type) {
+			case *CountData:
+				got := ts.Points[0].Value.(int64)
+				if wantValue.Value != got {
+					t.Errorf("Mismatched value (want %d, got %d) for %v in %q", wantValue, got, ts, key)
+				}
+			case *SumData:
+				got := ts.Points[0].Value.(float64)
+				if wantValue.Value != got {
+					t.Errorf("Mismatched value (want %f, got %f) for %v in %q", wantValue, got, ts, key)
+				}
+			default:
+				t.Errorf("Unexpected type of data: %T for %v in %q", wantValue, want[i], key)
 			}
 		}
 	}
+
 	// Verify that worker has not been computing sum:
 	got, err := worker2.RetrieveData(sum.Name)
 	if err == nil {
@@ -577,9 +597,11 @@ func TestWorkerRace(t *testing.T) {
 }
 
 type testExporter struct {
+	metrics []*metricdata.Metric
 }
 
 func (te *testExporter) ExportMetrics(ctx context.Context, metrics []*metricdata.Metric) error {
+	te.metrics = metrics
 	return nil
 }
 
@@ -618,4 +640,21 @@ func restart() {
 	defaultWorker.Stop()
 	defaultWorker = NewMeter().(*worker)
 	go defaultWorker.start()
+}
+
+// byTag implements sort.Interface for *metricdata.TimeSeries by Labels.
+type byLabel []*metricdata.TimeSeries
+
+func (ts byLabel) Len() int      { return len(ts) }
+func (ts byLabel) Swap(i, j int) { ts[i], ts[j] = ts[j], ts[i] }
+func (ts byLabel) Less(i, j int) bool {
+	if len(ts[i].LabelValues) != len(ts[j].LabelValues) {
+		return len(ts[i].LabelValues) < len(ts[j].LabelValues)
+	}
+	for k := range ts[i].LabelValues {
+		if ts[i].LabelValues[k].Value != ts[j].LabelValues[k].Value {
+			return ts[i].LabelValues[k].Value < ts[j].LabelValues[k].Value
+		}
+	}
+	return false
 }
