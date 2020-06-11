@@ -20,16 +20,16 @@ type (
 		reg     *metric.Registry
 
 		deprecatedMemStats *deprecatedMemStats
-		memStats *memStats
-		cpuStats *cpuStats
+		memStats           *memStats
+		cpuStats           *cpuStats
 	}
 
 	// RunMetricOptions allows to configure runtime metrics.
 	RunMetricOptions struct {
-		EnableCPU    bool   // EnableCPU whether CPU metrics shall be recorded
-		EnableMemory bool   // EnableMemory whether memory metrics shall be recorded
-		Prefix       string // Prefix is a custom prefix for metric names
-		UseDerivedCumulative bool // UseDerivedCumulative whether DerivedCumulative metrics should be used
+		EnableCPU            bool   // EnableCPU whether CPU metrics shall be recorded
+		EnableMemory         bool   // EnableMemory whether memory metrics shall be recorded
+		Prefix               string // Prefix is a custom prefix for metric names
+		UseDerivedCumulative bool   // UseDerivedCumulative whether DerivedCumulative metrics should be used
 	}
 
 	deprecatedMemStats struct {

@@ -102,8 +102,8 @@ func TestEnable(t *testing.T) {
 		{
 			"only deprecated memory stats",
 			runmetrics.RunMetricOptions{
-				EnableCPU:    false,
-				EnableMemory: true,
+				EnableCPU:            false,
+				EnableMemory:         true,
 				UseDerivedCumulative: true,
 			},
 			[][]string{
@@ -119,10 +119,10 @@ func TestEnable(t *testing.T) {
 		{
 			"cpu and deprecated memory stats with custom prefix",
 			runmetrics.RunMetricOptions{
-				EnableCPU:    true,
-				EnableMemory: true,
+				EnableCPU:            true,
+				EnableMemory:         true,
 				UseDerivedCumulative: true,
-				Prefix:       "test_",
+				Prefix:               "test_",
 			},
 			[][]string{
 				{"test_process/memory_alloc", "test_process/total_memory_alloc", "test_process/sys_memory_alloc", "test_process/memory_lookups", "test_process/memory_malloc", "test_process/memory_frees"},
