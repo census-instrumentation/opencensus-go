@@ -53,6 +53,21 @@ func TestEnable(t *testing.T) {
 			[][]string{},
 		},
 		{
+			"cpu and deprecated memory stats",
+			runmetrics.RunMetricOptions{
+				EnableCPU:    true,
+				EnableMemory: true,
+			},
+			[][]string{
+				{"process/memory_alloc", "process/total_memory_alloc", "process/sys_memory_alloc", "process/memory_lookups", "process/memory_malloc", "process/memory_frees"},
+				{"process/heap_alloc", "process/sys_heap", "process/heap_idle", "process/heap_inuse", "process/heap_objects", "process/heap_release"},
+				{"process/stack_inuse", "process/sys_stack", "process/stack_mspan_inuse", "process/sys_stack_mspan", "process/stack_mcache_inuse", "process/sys_stack_mcache"},
+				{"process/gc_sys", "process/other_sys", "process/num_gc", "process/num_forced_gc", "process/next_gc_heap_size", "process/last_gc_finished_timestamp", "process/pause_total", "process/gc_cpu_fraction"},
+				{"process/cpu_goroutines", "process/cpu_cgo_calls"},
+			},
+			[][]string{},
+		},
+		{
 			"only cpu stats",
 			runmetrics.RunMetricOptions{
 				EnableCPU:    true,
@@ -83,6 +98,40 @@ func TestEnable(t *testing.T) {
 			[][]string{
 				{"process/cpu_goroutines", "process/cpu_cgo_calls"},
 			},
+		},
+		{
+			"only deprecated memory stats",
+			runmetrics.RunMetricOptions{
+				EnableCPU:    false,
+				EnableMemory: true,
+				UseDerivedCumulative: true,
+			},
+			[][]string{
+				{"process/memory_alloc", "process/total_memory_alloc", "process/sys_memory_alloc", "process/memory_lookups", "process/memory_malloc", "process/memory_frees"},
+				{"process/heap_alloc", "process/sys_heap", "process/heap_idle", "process/heap_inuse", "process/heap_objects", "process/heap_release"},
+				{"process/stack_inuse", "process/sys_stack", "process/stack_mspan_inuse", "process/sys_stack_mspan", "process/stack_mcache_inuse", "process/sys_stack_mcache"},
+				{"process/gc_sys", "process/other_sys", "process/num_gc", "process/num_forced_gc", "process/next_gc_heap_size", "process/last_gc_finished_timestamp", "process/pause_total", "process/gc_cpu_fraction"},
+			},
+			[][]string{
+				{"process/cpu_goroutines", "process/cpu_cgo_calls"},
+			},
+		},
+		{
+			"cpu and deprecated memory stats with custom prefix",
+			runmetrics.RunMetricOptions{
+				EnableCPU:    true,
+				EnableMemory: true,
+				UseDerivedCumulative: true,
+				Prefix:       "test_",
+			},
+			[][]string{
+				{"test_process/memory_alloc", "test_process/total_memory_alloc", "test_process/sys_memory_alloc", "test_process/memory_lookups", "test_process/memory_malloc", "test_process/memory_frees"},
+				{"test_process/heap_alloc", "test_process/sys_heap", "test_process/heap_idle", "test_process/heap_inuse", "test_process/heap_objects", "test_process/heap_release"},
+				{"test_process/stack_inuse", "test_process/sys_stack", "test_process/stack_mspan_inuse", "test_process/sys_stack_mspan", "test_process/stack_mcache_inuse", "test_process/sys_stack_mcache"},
+				{"test_process/gc_sys", "test_process/other_sys", "test_process/num_gc", "test_process/num_forced_gc", "test_process/next_gc_heap_size", "test_process/last_gc_finished_timestamp", "test_process/pause_total", "test_process/gc_cpu_fraction"},
+				{"test_process/cpu_goroutines", "test_process/cpu_cgo_calls"},
+			},
+			[][]string{},
 		},
 		{
 			"cpu and memory stats with custom prefix",
