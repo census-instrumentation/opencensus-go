@@ -277,7 +277,7 @@ func (w *worker) start() {
 		case cmd := <-w.c:
 			cmd.handleCommand(w)
 		case <-w.timer.C:
-			w.reportUsage(time.Now())
+			w.reportUsage()
 		case <-w.quit:
 			w.timer.Stop()
 			close(w.c)
@@ -340,15 +340,11 @@ func (w *worker) unregisterView(v *viewInternal) {
 	}
 }
 
-func (w *worker) reportView(v *viewInternal, now time.Time) {
+func (w *worker) reportView(v *viewInternal) {
 	if !v.isSubscribed() {
 		return
 	}
 	rows := v.collectedRows()
-	_, ok := w.startTimes[v]
-	if !ok {
-		w.startTimes[v] = now
-	}
 	viewData := &Data{
 		View:  v.view,
 		Start: w.startTimes[v],
@@ -362,11 +358,11 @@ func (w *worker) reportView(v *viewInternal, now time.Time) {
 	}
 }
 
-func (w *worker) reportUsage(now time.Time) {
+func (w *worker) reportUsage() {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 	for _, v := range w.views {
-		w.reportView(v, now)
+		w.reportView(v)
 	}
 }
 
