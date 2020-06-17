@@ -324,6 +324,7 @@ func (w *worker) tryRegisterView(v *View) (*viewInternal, error) {
 		return x, nil
 	}
 	w.views[vi.view.Name] = vi
+	w.startTimes[vi] = time.Now()
 	ref := w.getMeasureRef(vi.view.Measure.Name())
 	ref.views[vi] = struct{}{}
 	return vi, nil
@@ -333,6 +334,7 @@ func (w *worker) unregisterView(v *viewInternal) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 	delete(w.views, v.view.Name)
+	delete(w.startTimes, v)
 	if measure := w.measures[v.view.Measure.Name()]; measure != nil {
 		delete(measure.views, v)
 	}
