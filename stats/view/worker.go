@@ -371,11 +371,6 @@ func (w *worker) toMetric(v *viewInternal, now time.Time) *metricdata.Metric {
 		return nil
 	}
 
-	_, ok := w.startTimes[v]
-	if !ok {
-		w.startTimes[v] = now
-	}
-
 	var startTime time.Time
 	if v.metricDescriptor.Type == metricdata.TypeGaugeInt64 ||
 		v.metricDescriptor.Type == metricdata.TypeGaugeFloat64 {
