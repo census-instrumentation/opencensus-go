@@ -154,6 +154,7 @@ func handleRPCEnd(ctx context.Context, s *stats.End) {
 				ClientSentBytesPerRPC.M(atomic.LoadInt64(&d.sentBytes)),
 				ClientSentMessagesPerRPC.M(atomic.LoadInt64(&d.sentCount)),
 				ClientReceivedMessagesPerRPC.M(atomic.LoadInt64(&d.recvCount)),
+				ClientCompletedRPCs.M(1),
 				ClientReceivedBytesPerRPC.M(atomic.LoadInt64(&d.recvBytes)),
 				ClientRoundtripLatency.M(latencyMillis)))
 	} else {
@@ -167,6 +168,7 @@ func handleRPCEnd(ctx context.Context, s *stats.End) {
 				ServerSentMessagesPerRPC.M(atomic.LoadInt64(&d.sentCount)),
 				ServerReceivedMessagesPerRPC.M(atomic.LoadInt64(&d.recvCount)),
 				ServerReceivedBytesPerRPC.M(atomic.LoadInt64(&d.recvBytes)),
+				ServerCompletedRPCs.M(1),
 				ServerLatency.M(latencyMillis)))
 	}
 }

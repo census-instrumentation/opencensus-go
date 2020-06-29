@@ -81,7 +81,7 @@ func TestSpecServerViews(t *testing.T) {
 | grpc.io/server/received_bytes_per_rpc | received_bytes_per_rpc | distribution | server_method                |
 | grpc.io/server/sent_bytes_per_rpc     | sent_bytes_per_rpc     | distribution | server_method                |
 | grpc.io/server/server_latency         | server_latency         | distribution | server_method                |
-| grpc.io/server/completed_rpcs         | server_latency         | count        | server_method, server_status |`
+| grpc.io/server/completed_rpcs         | completed_rpcs         | count        | server_method, server_status |`
 
 	extraViewsSpec := `
 | View name                                | Measure suffix            | Aggregation  | Tags suffix   |

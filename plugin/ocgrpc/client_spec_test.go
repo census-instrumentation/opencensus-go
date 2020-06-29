@@ -86,7 +86,7 @@ func TestSpecClientViews(t *testing.T) {
 | grpc.io/client/sent_bytes_per_rpc     | sent_bytes_per_rpc     | distribution | client_method                |
 | grpc.io/client/received_bytes_per_rpc | received_bytes_per_rpc | distribution | client_method                |
 | grpc.io/client/roundtrip_latency      | roundtrip_latency      | distribution | client_method                |
-| grpc.io/client/completed_rpcs         | roundtrip_latency      | count        | client_method, client_status |`
+| grpc.io/client/completed_rpcs         | completed_rpcs         | count        | client_method, client_status |`
 
 	extraViewsSpec := `
 | View name                                | Measure suffix            | Aggregation  | Tags suffix   |
