@@ -181,7 +181,7 @@ func tracestateToRequest(sc trace.SpanContext) string {
 	return ""
 }
 
-// SpanContextToHeader serialize the SpanContext to traceparent and tracestate headers.
+// SpanContextToHeaders serialize the SpanContext to traceparent and tracestate headers.
 func (f *HTTPFormat) SpanContextToHeaders(sc trace.SpanContext) (tp string, ts string) {
 	tp = fmt.Sprintf("%x-%x-%x-%x",
 		[]byte{supportedVersion},
