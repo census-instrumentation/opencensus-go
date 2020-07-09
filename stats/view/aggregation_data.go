@@ -40,7 +40,8 @@ const epsilon = 1e-9
 //
 // Most users won't directly access count data.
 type CountData struct {
-	Value int64
+	StartTime time.Time
+	Value     int64
 }
 
 func (a *CountData) isAggregationData() bool { return true }
@@ -76,7 +77,8 @@ func (a *CountData) toPoint(metricType metricdata.Type, t time.Time) metricdata.
 //
 // Most users won't directly access sum data.
 type SumData struct {
-	Value float64
+	StartTime time.Time
+	Value     float64
 }
 
 func (a *SumData) isAggregationData() bool { return true }
@@ -126,9 +128,10 @@ type DistributionData struct {
 	// an exemplar for the associated bucket, or nil.
 	ExemplarsPerBucket []*metricdata.Exemplar
 	bounds             []float64 // histogram distribution of the values
+	StartTime          time.Time
 }
 
-func newDistributionData(agg *Aggregation) *DistributionData {
+func newDistributionData(agg *Aggregation, t time.Time) *DistributionData {
 	bucketCount := len(agg.Buckets) + 1
 	return &DistributionData{
 		CountPerBucket:     make([]int64, bucketCount),
@@ -136,6 +139,7 @@ func newDistributionData(agg *Aggregation) *DistributionData {
 		bounds:             agg.Buckets,
 		Min:                math.MaxFloat64,
 		Max:                math.SmallestNonzeroFloat64,
+		StartTime:          t,
 	}
 }
 

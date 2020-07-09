@@ -213,12 +213,12 @@ func Test_Worker_MultiExport(t *testing.T) {
 			case *CountData:
 				got := ts.Points[0].Value.(int64)
 				if wantValue.Value != got {
-					t.Errorf("Mismatched value (want %d, got %d) for %v in %q", wantValue, got, ts, key)
+					t.Errorf("Mismatched value (want %d, got %d) for %v in %q", wantValue.Value, got, ts, key)
 				}
 			case *SumData:
 				got := ts.Points[0].Value.(float64)
 				if wantValue.Value != got {
-					t.Errorf("Mismatched value (want %f, got %f) for %v in %q", wantValue, got, ts, key)
+					t.Errorf("Mismatched value (want %f, got %f) for %v in %q", wantValue.Value, got, ts, key)
 				}
 			default:
 				t.Errorf("Unexpected type of data: %T for %v in %q", wantValue, want[i], key)
