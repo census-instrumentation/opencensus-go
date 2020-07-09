@@ -31,6 +31,7 @@ type AggregationData interface {
 	clone() AggregationData
 	equal(other AggregationData) bool
 	toPoint(t metricdata.Type, time time.Time) metricdata.Point
+	startTime() time.Time
 }
 
 const epsilon = 1e-9
@@ -72,6 +73,10 @@ func (a *CountData) toPoint(metricType metricdata.Type, t time.Time) metricdata.
 	}
 }
 
+func (a *CountData) startTime() time.Time {
+	return a.StartTime
+}
+
 // SumData is the aggregated data for the Sum aggregation.
 // A sum aggregation processes data and sums up the recordings.
 //
@@ -108,6 +113,10 @@ func (a *SumData) toPoint(metricType metricdata.Type, t time.Time) metricdata.Po
 	default:
 		panic("unsupported metricdata.Type")
 	}
+}
+
+func (a *SumData) startTime() time.Time {
+	return a.StartTime
 }
 
 // DistributionData is the aggregated data for the
@@ -260,6 +269,10 @@ func (a *DistributionData) toPoint(metricType metricdata.Type, t time.Time) metr
 	}
 }
 
+func (a *DistributionData) startTime() time.Time {
+	return a.StartTime
+}
+
 // LastValueData returns the last value recorded for LastValue aggregation.
 type LastValueData struct {
 	Value float64
@@ -294,4 +307,8 @@ func (l *LastValueData) toPoint(metricType metricdata.Type, t time.Time) metricd
 	default:
 		panic("unsupported metricdata.Type")
 	}
+}
+
+func (d *LastValueData) startTime() time.Time {
+	return time.Time{}
 }
