@@ -31,7 +31,7 @@ type AggregationData interface {
 	clone() AggregationData
 	equal(other AggregationData) bool
 	toPoint(t metricdata.Type, time time.Time) metricdata.Point
-	startTime() time.Time
+	StartTime() time.Time
 }
 
 const epsilon = 1e-9
@@ -41,8 +41,8 @@ const epsilon = 1e-9
 //
 // Most users won't directly access count data.
 type CountData struct {
-	StartTime time.Time
-	Value     int64
+	Start time.Time
+	Value int64
 }
 
 func (a *CountData) isAggregationData() bool { return true }
@@ -52,7 +52,7 @@ func (a *CountData) addSample(_ float64, _ map[string]interface{}, _ time.Time) 
 }
 
 func (a *CountData) clone() AggregationData {
-	return &CountData{Value: a.Value}
+	return &CountData{Value: a.Value, Start: a.Start}
 }
 
 func (a *CountData) equal(other AggregationData) bool {
@@ -61,7 +61,7 @@ func (a *CountData) equal(other AggregationData) bool {
 		return false
 	}
 
-	return a.Value == a2.Value
+	return a.Value == a2.Value && a.Start.Equal(a2.Start)
 }
 
 func (a *CountData) toPoint(metricType metricdata.Type, t time.Time) metricdata.Point {
@@ -73,8 +73,8 @@ func (a *CountData) toPoint(metricType metricdata.Type, t time.Time) metricdata.
 	}
 }
 
-func (a *CountData) startTime() time.Time {
-	return a.StartTime
+func (a *CountData) StartTime() time.Time {
+	return a.Start
 }
 
 // SumData is the aggregated data for the Sum aggregation.
@@ -82,8 +82,8 @@ func (a *CountData) startTime() time.Time {
 //
 // Most users won't directly access sum data.
 type SumData struct {
-	StartTime time.Time
-	Value     float64
+	Start time.Time
+	Value float64
 }
 
 func (a *SumData) isAggregationData() bool { return true }
@@ -93,7 +93,7 @@ func (a *SumData) addSample(v float64, _ map[string]interface{}, _ time.Time) {
 }
 
 func (a *SumData) clone() AggregationData {
-	return &SumData{Value: a.Value}
+	return &SumData{Value: a.Value, Start: a.Start}
 }
 
 func (a *SumData) equal(other AggregationData) bool {
@@ -101,7 +101,7 @@ func (a *SumData) equal(other AggregationData) bool {
 	if !ok {
 		return false
 	}
-	return math.Pow(a.Value-a2.Value, 2) < epsilon
+	return math.Pow(a.Value-a2.Value, 2) < epsilon && a.Start.Equal(a2.Start)
 }
 
 func (a *SumData) toPoint(metricType metricdata.Type, t time.Time) metricdata.Point {
@@ -115,8 +115,8 @@ func (a *SumData) toPoint(metricType metricdata.Type, t time.Time) metricdata.Po
 	}
 }
 
-func (a *SumData) startTime() time.Time {
-	return a.StartTime
+func (a *SumData) StartTime() time.Time {
+	return a.Start
 }
 
 // DistributionData is the aggregated data for the
@@ -137,7 +137,7 @@ type DistributionData struct {
 	// an exemplar for the associated bucket, or nil.
 	ExemplarsPerBucket []*metricdata.Exemplar
 	bounds             []float64 // histogram distribution of the values
-	StartTime          time.Time
+	Start              time.Time
 }
 
 func newDistributionData(agg *Aggregation, t time.Time) *DistributionData {
@@ -148,7 +148,7 @@ func newDistributionData(agg *Aggregation, t time.Time) *DistributionData {
 		bounds:             agg.Buckets,
 		Min:                math.MaxFloat64,
 		Max:                math.SmallestNonzeroFloat64,
-		StartTime:          t,
+		Start:              t,
 	}
 }
 
@@ -239,7 +239,7 @@ func (a *DistributionData) equal(other AggregationData) bool {
 			return false
 		}
 	}
-	return a.Count == a2.Count && a.Min == a2.Min && a.Max == a2.Max && math.Pow(a.Mean-a2.Mean, 2) < epsilon && math.Pow(a.variance()-a2.variance(), 2) < epsilon
+	return a.Count == a2.Count && a.Min == a2.Min && a.Max == a2.Max && math.Pow(a.Mean-a2.Mean, 2) < epsilon && math.Pow(a.variance()-a2.variance(), 2) < epsilon && a.Start.Equal(a2.Start)
 }
 
 func (a *DistributionData) toPoint(metricType metricdata.Type, t time.Time) metricdata.Point {
@@ -269,8 +269,8 @@ func (a *DistributionData) toPoint(metricType metricdata.Type, t time.Time) metr
 	}
 }
 
-func (a *DistributionData) startTime() time.Time {
-	return a.StartTime
+func (a *DistributionData) StartTime() time.Time {
+	return a.Start
 }
 
 // LastValueData returns the last value recorded for LastValue aggregation.
@@ -309,6 +309,6 @@ func (l *LastValueData) toPoint(metricType metricdata.Type, t time.Time) metricd
 	}
 }
 
-func (d *LastValueData) startTime() time.Time {
+func (d *LastValueData) StartTime() time.Time {
 	return time.Time{}
 }

@@ -123,7 +123,7 @@ func rowToTimeseries(v *viewInternal, row *Row, now time.Time) *metricdata.TimeS
 	return &metricdata.TimeSeries{
 		Points:      []metricdata.Point{row.Data.toPoint(v.metricDescriptor.Type, now)},
 		LabelValues: toLabelValues(row, v.metricDescriptor.LabelKeys),
-		StartTime:   row.Data.startTime(),
+		StartTime:   row.Data.StartTime(),
 	}
 }
 

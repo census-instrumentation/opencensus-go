@@ -54,13 +54,13 @@ var (
 	aggCount = &Aggregation{
 		Type: AggTypeCount,
 		newData: func(t time.Time) AggregationData {
-			return &CountData{StartTime: t}
+			return &CountData{Start: t}
 		},
 	}
 	aggSum = &Aggregation{
 		Type: AggTypeSum,
 		newData: func(t time.Time) AggregationData {
-			return &SumData{StartTime: t}
+			return &SumData{Start: t}
 		},
 	}
 )
