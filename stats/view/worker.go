@@ -371,15 +371,7 @@ func (w *worker) toMetric(v *viewInternal, now time.Time) *metricdata.Metric {
 		return nil
 	}
 
-	var startTime time.Time
-	if v.metricDescriptor.Type == metricdata.TypeGaugeInt64 ||
-		v.metricDescriptor.Type == metricdata.TypeGaugeFloat64 {
-		startTime = time.Time{}
-	} else {
-		startTime = w.startTimes[v]
-	}
-
-	return viewToMetric(v, w.r, now, startTime)
+	return viewToMetric(v, w.r, now)
 }
 
 // Read reads all view data and returns them as metrics.
