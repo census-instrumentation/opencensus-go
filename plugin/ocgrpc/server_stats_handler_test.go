@@ -19,6 +19,7 @@ import (
 	"context"
 	"reflect"
 	"testing"
+	"time"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/stats"
@@ -303,6 +304,17 @@ func TestServerDefaultCollections(t *testing.T) {
 			if err != nil {
 				t.Errorf("%q: RetrieveData (%q) = %v", tc.label, wantData.v().Name, err)
 				continue
+			}
+
+			for i := range gotRows {
+				switch data := gotRows[i].Data.(type) {
+				case *view.CountData:
+					data.Start = time.Time{}
+				case *view.SumData:
+					data.Start = time.Time{}
+				case *view.DistributionData:
+					data.Start = time.Time{}
+				}
 			}
 
 			for _, gotRow := range gotRows {

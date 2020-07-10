@@ -18,6 +18,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"go.opencensus.io/plugin/ochttp"
@@ -53,6 +54,16 @@ func TestWithRouteTag(t *testing.T) {
 	view.Unregister(v) // trigger exporting
 
 	got := e.rowsForView("request_total")
+	for i := range got {
+		switch data := got[i].Data.(type) {
+		case *view.CountData:
+			data.Start = time.Time{}
+		case *view.SumData:
+			data.Start = time.Time{}
+		case *view.DistributionData:
+			data.Start = time.Time{}
+		}
+	}
 	want := []*view.Row{
 		{Data: &view.CountData{Value: 1}, Tags: []tag.Tag{{Key: ochttp.KeyServerRoute, Value: "/a/"}}},
 	}
@@ -90,6 +101,16 @@ func TestSetRoute(t *testing.T) {
 	view.Unregister(v) // trigger exporting
 
 	got := e.rowsForView("request_total")
+	for i := range got {
+		switch data := got[i].Data.(type) {
+		case *view.CountData:
+			data.Start = time.Time{}
+		case *view.SumData:
+			data.Start = time.Time{}
+		case *view.DistributionData:
+			data.Start = time.Time{}
+		}
+	}
 	want := []*view.Row{
 		{Data: &view.CountData{Value: 1}, Tags: []tag.Tag{{Key: ochttp.KeyServerRoute, Value: "/a/"}}},
 	}

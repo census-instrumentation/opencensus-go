@@ -21,6 +21,7 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 
 	"go.opencensus.io/metric/metricdata"
 
@@ -51,6 +52,7 @@ func Test_View_MeasureFloat64_AggregationDistribution(t *testing.T) {
 	type record struct {
 		f    float64
 		tags []tagString
+		t    time.Time
 	}
 
 	type testCase struct {
@@ -59,18 +61,23 @@ func Test_View_MeasureFloat64_AggregationDistribution(t *testing.T) {
 		wantRows []*Row
 	}
 
+	now := time.Now()
+	ts := make([]time.Time, 7)
+	for i := range ts {
+		ts[i] = now.Add(time.Duration(i) * time.Second)
+	}
 	tcs := []testCase{
 		{
 			"1",
 			[]record{
-				{1, []tagString{{k1, "v1"}}},
-				{5, []tagString{{k1, "v1"}}},
+				{1, []tagString{{k1, "v1"}}, ts[0]},
+				{5, []tagString{{k1, "v1"}}, ts[1]},
 			},
 			[]*Row{
 				{
 					[]tag.Tag{{Key: k1, Value: "v1"}},
 					&DistributionData{
-						Count: 2, Min: 1, Max: 5, Mean: 3, SumOfSquaredDev: 8, CountPerBucket: []int64{1, 1}, bounds: []float64{2}, ExemplarsPerBucket: []*metricdata.Exemplar{nil, nil},
+						Count: 2, Min: 1, Max: 5, Mean: 3, SumOfSquaredDev: 8, CountPerBucket: []int64{1, 1}, bounds: []float64{2}, ExemplarsPerBucket: []*metricdata.Exemplar{nil, nil}, Start: ts[0],
 					},
 				},
 			},
@@ -78,20 +85,20 @@ func Test_View_MeasureFloat64_AggregationDistribution(t *testing.T) {
 		{
 			"2",
 			[]record{
-				{1, []tagString{{k1, "v1"}}},
-				{5, []tagString{{k2, "v2"}}},
+				{1, []tagString{{k1, "v1"}}, ts[0]},
+				{5, []tagString{{k2, "v2"}}, ts[1]},
 			},
 			[]*Row{
 				{
 					[]tag.Tag{{Key: k1, Value: "v1"}},
 					&DistributionData{
-						Count: 1, Min: 1, Max: 1, Mean: 1, CountPerBucket: []int64{1, 0}, bounds: []float64{2}, ExemplarsPerBucket: []*metricdata.Exemplar{nil, nil},
+						Count: 1, Min: 1, Max: 1, Mean: 1, CountPerBucket: []int64{1, 0}, bounds: []float64{2}, ExemplarsPerBucket: []*metricdata.Exemplar{nil, nil}, Start: ts[0],
 					},
 				},
 				{
 					[]tag.Tag{{Key: k2, Value: "v2"}},
 					&DistributionData{
-						Count: 1, Min: 5, Max: 5, Mean: 5, CountPerBucket: []int64{0, 1}, bounds: []float64{2}, ExemplarsPerBucket: []*metricdata.Exemplar{nil, nil},
+						Count: 1, Min: 5, Max: 5, Mean: 5, CountPerBucket: []int64{0, 1}, bounds: []float64{2}, ExemplarsPerBucket: []*metricdata.Exemplar{nil, nil}, Start: ts[1],
 					},
 				},
 			},
@@ -99,35 +106,35 @@ func Test_View_MeasureFloat64_AggregationDistribution(t *testing.T) {
 		{
 			"3",
 			[]record{
-				{1, []tagString{{k1, "v1"}}},
-				{5, []tagString{{k1, "v1"}, {k3, "v3"}}},
-				{1, []tagString{{k1, "v1 other"}}},
-				{5, []tagString{{k2, "v2"}}},
-				{5, []tagString{{k1, "v1"}, {k2, "v2"}}},
+				{1, []tagString{{k1, "v1"}}, ts[0]},
+				{5, []tagString{{k1, "v1"}, {k3, "v3"}}, ts[1]},
+				{1, []tagString{{k1, "v1 other"}}, ts[2]},
+				{5, []tagString{{k2, "v2"}}, ts[3]},
+				{5, []tagString{{k1, "v1"}, {k2, "v2"}}, ts[4]},
 			},
 			[]*Row{
 				{
 					[]tag.Tag{{Key: k1, Value: "v1"}},
 					&DistributionData{
-						Count: 2, Min: 1, Max: 5, Mean: 3, SumOfSquaredDev: 8, CountPerBucket: []int64{1, 1}, bounds: []float64{2}, ExemplarsPerBucket: []*metricdata.Exemplar{nil, nil},
+						Count: 2, Min: 1, Max: 5, Mean: 3, SumOfSquaredDev: 8, CountPerBucket: []int64{1, 1}, bounds: []float64{2}, ExemplarsPerBucket: []*metricdata.Exemplar{nil, nil}, Start: ts[0],
 					},
 				},
 				{
 					[]tag.Tag{{Key: k1, Value: "v1 other"}},
 					&DistributionData{
-						Count: 1, Min: 1, Max: 1, Mean: 1, CountPerBucket: []int64{1, 0}, bounds: []float64{2}, ExemplarsPerBucket: []*metricdata.Exemplar{nil, nil},
+						Count: 1, Min: 1, Max: 1, Mean: 1, CountPerBucket: []int64{1, 0}, bounds: []float64{2}, ExemplarsPerBucket: []*metricdata.Exemplar{nil, nil}, Start: ts[2],
 					},
 				},
 				{
 					[]tag.Tag{{Key: k2, Value: "v2"}},
 					&DistributionData{
-						Count: 1, Min: 5, Max: 5, Mean: 5, CountPerBucket: []int64{0, 1}, bounds: []float64{2}, ExemplarsPerBucket: []*metricdata.Exemplar{nil, nil},
+						Count: 1, Min: 5, Max: 5, Mean: 5, CountPerBucket: []int64{0, 1}, bounds: []float64{2}, ExemplarsPerBucket: []*metricdata.Exemplar{nil, nil}, Start: ts[3],
 					},
 				},
 				{
 					[]tag.Tag{{Key: k1, Value: "v1"}, {Key: k2, Value: "v2"}},
 					&DistributionData{
-						Count: 1, Min: 5, Max: 5, Mean: 5, CountPerBucket: []int64{0, 1}, bounds: []float64{2}, ExemplarsPerBucket: []*metricdata.Exemplar{nil, nil},
+						Count: 1, Min: 5, Max: 5, Mean: 5, CountPerBucket: []int64{0, 1}, bounds: []float64{2}, ExemplarsPerBucket: []*metricdata.Exemplar{nil, nil}, Start: ts[4],
 					},
 				},
 			},
@@ -135,31 +142,31 @@ func Test_View_MeasureFloat64_AggregationDistribution(t *testing.T) {
 		{
 			"4",
 			[]record{
-				{1, []tagString{{k1, "v1 is a very long value key"}}},
-				{5, []tagString{{k1, "v1 is a very long value key"}, {k3, "v3"}}},
-				{1, []tagString{{k1, "v1 is another very long value key"}}},
-				{1, []tagString{{k1, "v1 is a very long value key"}, {k2, "v2 is a very long value key"}}},
-				{5, []tagString{{k1, "v1 is a very long value key"}, {k2, "v2 is a very long value key"}}},
-				{3, []tagString{{k1, "v1 is a very long value key"}, {k2, "v2 is a very long value key"}}},
-				{3, []tagString{{k1, "v1 is a very long value key"}, {k2, "v2 is a very long value key"}}},
+				{1, []tagString{{k1, "v1 is a very long value key"}}, ts[0]},
+				{5, []tagString{{k1, "v1 is a very long value key"}, {k3, "v3"}}, ts[1]},
+				{1, []tagString{{k1, "v1 is another very long value key"}}, ts[2]},
+				{1, []tagString{{k1, "v1 is a very long value key"}, {k2, "v2 is a very long value key"}}, ts[3]},
+				{5, []tagString{{k1, "v1 is a very long value key"}, {k2, "v2 is a very long value key"}}, ts[4]},
+				{3, []tagString{{k1, "v1 is a very long value key"}, {k2, "v2 is a very long value key"}}, ts[5]},
+				{3, []tagString{{k1, "v1 is a very long value key"}, {k2, "v2 is a very long value key"}}, ts[6]},
 			},
 			[]*Row{
 				{
 					[]tag.Tag{{Key: k1, Value: "v1 is a very long value key"}},
 					&DistributionData{
-						Count: 2, Min: 1, Max: 5, Mean: 3, SumOfSquaredDev: 8, CountPerBucket: []int64{1, 1}, bounds: []float64{2}, ExemplarsPerBucket: []*metricdata.Exemplar{nil, nil},
+						Count: 2, Min: 1, Max: 5, Mean: 3, SumOfSquaredDev: 8, CountPerBucket: []int64{1, 1}, bounds: []float64{2}, ExemplarsPerBucket: []*metricdata.Exemplar{nil, nil}, Start: ts[0],
 					},
 				},
 				{
 					[]tag.Tag{{Key: k1, Value: "v1 is another very long value key"}},
 					&DistributionData{
-						Count: 1, Min: 1, Max: 1, Mean: 1, CountPerBucket: []int64{1, 0}, bounds: []float64{2}, ExemplarsPerBucket: []*metricdata.Exemplar{nil, nil},
+						Count: 1, Min: 1, Max: 1, Mean: 1, CountPerBucket: []int64{1, 0}, bounds: []float64{2}, ExemplarsPerBucket: []*metricdata.Exemplar{nil, nil}, Start: ts[2],
 					},
 				},
 				{
 					[]tag.Tag{{Key: k1, Value: "v1 is a very long value key"}, {Key: k2, Value: "v2 is a very long value key"}},
 					&DistributionData{
-						Count: 4, Min: 1, Max: 5, Mean: 3, SumOfSquaredDev: 2.66666666666667 * 3, CountPerBucket: []int64{1, 3}, bounds: []float64{2}, ExemplarsPerBucket: []*metricdata.Exemplar{nil, nil},
+						Count: 4, Min: 1, Max: 5, Mean: 3, SumOfSquaredDev: 2.66666666666667 * 3, CountPerBucket: []int64{1, 3}, bounds: []float64{2}, ExemplarsPerBucket: []*metricdata.Exemplar{nil, nil}, Start: ts[3],
 					},
 				},
 			},
@@ -178,22 +185,13 @@ func Test_View_MeasureFloat64_AggregationDistribution(t *testing.T) {
 			if err != nil {
 				t.Errorf("%v: New = %v", tc.label, err)
 			}
-			view.addSample(tag.FromContext(ctx), r.f, nil, time.Now())
+			view.addSample(tag.FromContext(ctx), r.f, nil, r.t)
 		}
 
 		gotRows := view.collectedRows()
-		for i, got := range gotRows {
-			if !containsRow(tc.wantRows, got) {
-				t.Errorf("%v-%d: got row %v; want none", tc.label, i, got)
-				break
-			}
-		}
-
-		for i, want := range tc.wantRows {
-			if !containsRow(gotRows, want) {
-				t.Errorf("%v-%d: got none; want row %v", tc.label, i, want)
-				break
-			}
+		if diff := cmp.Diff(gotRows, tc.wantRows, cmpopts.SortSlices(cmpRow)); diff != "" {
+			t.Errorf("%v: unexpected row (got-, want+): %s", tc.label, diff)
+			break
 		}
 	}
 }
@@ -215,8 +213,14 @@ func Test_View_MeasureFloat64_AggregationSum(t *testing.T) {
 	type record struct {
 		f    float64
 		tags []tagString
+		t    time.Time
 	}
 
+	now := time.Now()
+	ts := make([]time.Time, 5)
+	for i := range ts {
+		ts[i] = now.Add(time.Duration(i) * time.Second)
+	}
 	tcs := []struct {
 		label    string
 		records  []record
@@ -225,58 +229,58 @@ func Test_View_MeasureFloat64_AggregationSum(t *testing.T) {
 		{
 			"1",
 			[]record{
-				{1, []tagString{{k1, "v1"}}},
-				{5, []tagString{{k1, "v1"}}},
+				{1, []tagString{{k1, "v1"}}, ts[0]},
+				{5, []tagString{{k1, "v1"}}, ts[1]},
 			},
 			[]*Row{
 				{
 					[]tag.Tag{{Key: k1, Value: "v1"}},
-					&SumData{Value: 6},
+					&SumData{Value: 6, Start: ts[0]},
 				},
 			},
 		},
 		{
 			"2",
 			[]record{
-				{1, []tagString{{k1, "v1"}}},
-				{5, []tagString{{k2, "v2"}}},
+				{1, []tagString{{k1, "v1"}}, ts[0]},
+				{5, []tagString{{k2, "v2"}}, ts[1]},
 			},
 			[]*Row{
 				{
 					[]tag.Tag{{Key: k1, Value: "v1"}},
-					&SumData{Value: 1},
+					&SumData{Value: 1, Start: ts[0]},
 				},
 				{
 					[]tag.Tag{{Key: k2, Value: "v2"}},
-					&SumData{Value: 5},
+					&SumData{Value: 5, Start: ts[1]},
 				},
 			},
 		},
 		{
 			"3",
 			[]record{
-				{1, []tagString{{k1, "v1"}}},
-				{5, []tagString{{k1, "v1"}, {k3, "v3"}}},
-				{1, []tagString{{k1, "v1 other"}}},
-				{5, []tagString{{k2, "v2"}}},
-				{5, []tagString{{k1, "v1"}, {k2, "v2"}}},
+				{1, []tagString{{k1, "v1"}}, ts[0]},
+				{5, []tagString{{k1, "v1"}, {k3, "v3"}}, ts[1]},
+				{1, []tagString{{k1, "v1 other"}}, ts[2]},
+				{5, []tagString{{k2, "v2"}}, ts[3]},
+				{5, []tagString{{k1, "v1"}, {k2, "v2"}}, ts[4]},
 			},
 			[]*Row{
 				{
 					[]tag.Tag{{Key: k1, Value: "v1"}},
-					&SumData{Value: 6},
+					&SumData{Value: 6, Start: ts[0]},
 				},
 				{
 					[]tag.Tag{{Key: k1, Value: "v1 other"}},
-					&SumData{Value: 1},
+					&SumData{Value: 1, Start: ts[2]},
 				},
 				{
 					[]tag.Tag{{Key: k2, Value: "v2"}},
-					&SumData{Value: 5},
+					&SumData{Value: 5, Start: ts[3]},
 				},
 				{
 					[]tag.Tag{{Key: k1, Value: "v1"}, {Key: k2, Value: "v2"}},
-					&SumData{Value: 5},
+					&SumData{Value: 5, Start: ts[4]},
 				},
 			},
 		},
@@ -294,22 +298,13 @@ func Test_View_MeasureFloat64_AggregationSum(t *testing.T) {
 			if err != nil {
 				t.Errorf("%v: New = %v", tt.label, err)
 			}
-			view.addSample(tag.FromContext(ctx), r.f, nil, time.Now())
+			view.addSample(tag.FromContext(ctx), r.f, nil, r.t)
 		}
 
 		gotRows := view.collectedRows()
-		for i, got := range gotRows {
-			if !containsRow(tt.wantRows, got) {
-				t.Errorf("%v-%d: got row %v; want none", tt.label, i, got)
-				break
-			}
-		}
-
-		for i, want := range tt.wantRows {
-			if !containsRow(gotRows, want) {
-				t.Errorf("%v-%d: got none; want row %v", tt.label, i, want)
-				break
-			}
+		if diff := cmp.Diff(gotRows, tt.wantRows, cmpopts.SortSlices(cmpRow)); diff != "" {
+			t.Errorf("%v: unexpected row (got-, want+): %s", tt.label, diff)
+			break
 		}
 	}
 }
@@ -367,14 +362,8 @@ func TestViewSortedKeys(t *testing.T) {
 	}
 }
 
-// containsRow returns true if rows contain r.
-func containsRow(rows []*Row, r *Row) bool {
-	for _, x := range rows {
-		if r.Equal(x) {
-			return true
-		}
-	}
-	return false
+func cmpRow(r1 *Row, r2 *Row) bool {
+	return r1.Data.StartTime().Before(r2.Data.StartTime())
 }
 
 func TestRegisterUnregisterParity(t *testing.T) {

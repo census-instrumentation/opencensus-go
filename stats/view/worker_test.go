@@ -23,6 +23,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/go-cmp/cmp"
 	"go.opencensus.io/resource"
 
 	"go.opencensus.io/metric/metricdata"
@@ -335,20 +336,22 @@ func Test_Worker_RecordFloat64(t *testing.T) {
 
 		for _, w := range tc.wants {
 			gotRows, err := RetrieveData(w.v.Name)
+			for i := range gotRows {
+				switch data := gotRows[i].Data.(type) {
+				case *CountData:
+					data.Start = time.Time{}
+				case *SumData:
+					data.Start = time.Time{}
+				case *DistributionData:
+					data.Start = time.Time{}
+				}
+			}
 			if (err != nil) != (w.err != nil) {
 				t.Fatalf("%s: RetrieveData(%v) = %v; want error = %v", tc.label, w.v.Name, err, w.err)
 			}
-			for _, got := range gotRows {
-				if !containsRow(w.rows, got) {
-					t.Errorf("%s: got row %#v; want none", tc.label, got)
-					break
-				}
-			}
-			for _, want := range w.rows {
-				if !containsRow(gotRows, want) {
-					t.Errorf("%s: got none; want %#v'", tc.label, want)
-					break
-				}
+			if diff := cmp.Diff(gotRows, w.rows); diff != "" {
+				t.Errorf("%v: unexpected row (got-, want+): %s", tc.label, diff)
+				break
 			}
 		}
 
