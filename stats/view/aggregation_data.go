@@ -73,6 +73,7 @@ func (a *CountData) toPoint(metricType metricdata.Type, t time.Time) metricdata.
 	}
 }
 
+// StartTime returns the start time of the data being aggregated by CountData.
 func (a *CountData) StartTime() time.Time {
 	return a.Start
 }
@@ -115,6 +116,7 @@ func (a *SumData) toPoint(metricType metricdata.Type, t time.Time) metricdata.Po
 	}
 }
 
+// StartTime returns the start time of the data being aggregated by SumData.
 func (a *SumData) StartTime() time.Time {
 	return a.Start
 }
@@ -269,6 +271,7 @@ func (a *DistributionData) toPoint(metricType metricdata.Type, t time.Time) metr
 	}
 }
 
+// StartTime returns the start time of the data being aggregated by DistributionData.
 func (a *DistributionData) StartTime() time.Time {
 	return a.Start
 }
@@ -309,6 +312,8 @@ func (l *LastValueData) toPoint(metricType metricdata.Type, t time.Time) metricd
 	}
 }
 
-func (d *LastValueData) StartTime() time.Time {
+// StartTime returns an empty time value as start time is not recorded when using last value
+// aggregation.
+func (l *LastValueData) StartTime() time.Time {
 	return time.Time{}
 }
