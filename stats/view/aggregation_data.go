@@ -61,7 +61,7 @@ func (a *CountData) equal(other AggregationData) bool {
 		return false
 	}
 
-	return a.Value == a2.Value && a.Start.Equal(a2.Start)
+	return a.Start.Equal(a2.Start) && a.Value == a2.Value
 }
 
 func (a *CountData) toPoint(metricType metricdata.Type, t time.Time) metricdata.Point {
@@ -102,7 +102,7 @@ func (a *SumData) equal(other AggregationData) bool {
 	if !ok {
 		return false
 	}
-	return math.Pow(a.Value-a2.Value, 2) < epsilon && a.Start.Equal(a2.Start)
+	return a.Start.Equal(a2.Start) && math.Pow(a.Value-a2.Value, 2) < epsilon
 }
 
 func (a *SumData) toPoint(metricType metricdata.Type, t time.Time) metricdata.Point {
@@ -241,7 +241,11 @@ func (a *DistributionData) equal(other AggregationData) bool {
 			return false
 		}
 	}
-	return a.Count == a2.Count && a.Min == a2.Min && a.Max == a2.Max && math.Pow(a.Mean-a2.Mean, 2) < epsilon && math.Pow(a.variance()-a2.variance(), 2) < epsilon && a.Start.Equal(a2.Start)
+	return a.Start.Equal(a2.Start) &&
+		a.Count == a2.Count &&
+		a.Min == a2.Min &&
+		a.Max == a2.Max &&
+		math.Pow(a.Mean-a2.Mean, 2) < epsilon && math.Pow(a.variance()-a2.variance(), 2) < epsilon
 }
 
 func (a *DistributionData) toPoint(metricType metricdata.Type, t time.Time) metricdata.Point {
