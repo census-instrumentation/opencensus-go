@@ -18,7 +18,6 @@ package ocgrpc
 import (
 	"reflect"
 	"testing"
-	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -320,7 +319,7 @@ func TestClientDefaultCollections(t *testing.T) {
 				continue
 			}
 			for i := range gotRows {
-				clearStart(gotRows[i].Data)
+				view.ClearStart(gotRows[i].Data)
 			}
 
 			for _, gotRow := range gotRows {
@@ -422,17 +421,4 @@ func containsRow(rows []*view.Row, r *view.Row) bool {
 // Compare exemplars while ignoring exemplar timestamp, since timestamp is non-deterministic.
 func cmpExemplar(got, want *metricdata.Exemplar) string {
 	return cmp.Diff(got, want, cmpopts.IgnoreFields(metricdata.Exemplar{}, "Timestamp"), cmpopts.IgnoreUnexported(metricdata.Exemplar{}))
-}
-
-// clearStart clears the Start field from data if present. Useful for testing in cases where the
-// start time will be nondeterministic.
-func clearStart(data view.AggregationData) {
-	switch data := data.(type) {
-	case *view.CountData:
-		data.Start = time.Time{}
-	case *view.SumData:
-		data.Start = time.Time{}
-	case *view.DistributionData:
-		data.Start = time.Time{}
-	}
 }

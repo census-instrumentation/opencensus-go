@@ -321,3 +321,16 @@ func (l *LastValueData) toPoint(metricType metricdata.Type, t time.Time) metricd
 func (l *LastValueData) StartTime() time.Time {
 	return time.Time{}
 }
+
+// ClearStart clears the Start field from data if present. Useful for testing in cases where the
+// start time will be nondeterministic.
+func ClearStart(data AggregationData) {
+	switch data := data.(type) {
+	case *CountData:
+		data.Start = time.Time{}
+	case *SumData:
+		data.Start = time.Time{}
+	case *DistributionData:
+		data.Start = time.Time{}
+	}
+}

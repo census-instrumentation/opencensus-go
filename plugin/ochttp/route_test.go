@@ -18,7 +18,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"go.opencensus.io/plugin/ochttp"
@@ -55,7 +54,7 @@ func TestWithRouteTag(t *testing.T) {
 
 	got := e.rowsForView("request_total")
 	for i := range got {
-		clearStart(got[i].Data)
+		view.ClearStart(got[i].Data)
 	}
 	want := []*view.Row{
 		{Data: &view.CountData{Value: 1}, Tags: []tag.Tag{{Key: ochttp.KeyServerRoute, Value: "/a/"}}},
@@ -95,7 +94,7 @@ func TestSetRoute(t *testing.T) {
 
 	got := e.rowsForView("request_total")
 	for i := range got {
-		clearStart(got[i].Data)
+		view.ClearStart(got[i].Data)
 	}
 	want := []*view.Row{
 		{Data: &view.CountData{Value: 1}, Tags: []tag.Tag{{Key: ochttp.KeyServerRoute, Value: "/a/"}}},
@@ -121,17 +120,4 @@ func (t *testStatsExporter) rowsForView(name string) []*view.Row {
 		}
 	}
 	return rows
-}
-
-// clearStart clears the Start field from data if present. Useful for testing in cases where the
-// start time will be nondeterministic.
-func clearStart(data view.AggregationData) {
-	switch data := data.(type) {
-	case *view.CountData:
-		data.Start = time.Time{}
-	case *view.SumData:
-		data.Start = time.Time{}
-	case *view.DistributionData:
-		data.Start = time.Time{}
-	}
 }

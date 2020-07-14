@@ -306,7 +306,7 @@ func TestServerDefaultCollections(t *testing.T) {
 			}
 
 			for i := range gotRows {
-				clearStart(gotRows[i].Data)
+				view.ClearStart(gotRows[i].Data)
 			}
 
 			for _, gotRow := range gotRows {
