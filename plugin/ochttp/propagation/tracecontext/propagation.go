@@ -107,7 +107,7 @@ func (f *HTTPFormat) SpanContextFromHeaders(tp string, ts string) (sc trace.Span
 		return trace.SpanContext{}, false
 	}
 
-	sc.Tracestate = tracestateFromRequest(ts)
+	sc.Tracestate = tracestateFromHeader(ts)
 	return sc, true
 }
 
@@ -134,7 +134,7 @@ func getRequestHeader(req *http.Request, name string, commaSeparated bool) (hdr 
 // are resolved.
 // https://github.com/w3c/distributed-tracing/issues/172
 // https://github.com/w3c/distributed-tracing/issues/175
-func tracestateFromRequest(ts string) *tracestate.Tracestate {
+func tracestateFromHeader(ts string) *tracestate.Tracestate {
 	if ts == "" {
 		return nil
 	}
@@ -166,7 +166,7 @@ func tracestateFromRequest(ts string) *tracestate.Tracestate {
 	return tsParsed
 }
 
-func tracestateToRequest(sc trace.SpanContext) string {
+func tracestateToHeader(sc trace.SpanContext) string {
 	var pairs = make([]string, 0, len(sc.Tracestate.Entries()))
 	if sc.Tracestate != nil {
 		for _, entry := range sc.Tracestate.Entries() {
@@ -188,7 +188,7 @@ func (f *HTTPFormat) SpanContextToHeaders(sc trace.SpanContext) (tp string, ts s
 		sc.TraceID[:],
 		sc.SpanID[:],
 		[]byte{byte(sc.TraceOptions)})
-	ts = tracestateToRequest(sc)
+	ts = tracestateToHeader(sc)
 	return
 }
 
