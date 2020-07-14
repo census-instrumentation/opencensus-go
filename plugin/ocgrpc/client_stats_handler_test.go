@@ -318,6 +318,9 @@ func TestClientDefaultCollections(t *testing.T) {
 				t.Errorf("%q: RetrieveData(%q) = %v", tc.label, wantData.v().Name, err)
 				continue
 			}
+			for i := range gotRows {
+				view.ClearStart(gotRows[i].Data)
+			}
 
 			for _, gotRow := range gotRows {
 				if !containsRow(wantData.rows, gotRow) {

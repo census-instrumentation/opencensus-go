@@ -53,6 +53,9 @@ func TestWithRouteTag(t *testing.T) {
 	view.Unregister(v) // trigger exporting
 
 	got := e.rowsForView("request_total")
+	for i := range got {
+		view.ClearStart(got[i].Data)
+	}
 	want := []*view.Row{
 		{Data: &view.CountData{Value: 1}, Tags: []tag.Tag{{Key: ochttp.KeyServerRoute, Value: "/a/"}}},
 	}
@@ -90,6 +93,9 @@ func TestSetRoute(t *testing.T) {
 	view.Unregister(v) // trigger exporting
 
 	got := e.rowsForView("request_total")
+	for i := range got {
+		view.ClearStart(got[i].Data)
+	}
 	want := []*view.Row{
 		{Data: &view.CountData{Value: 1}, Tags: []tag.Tag{{Key: ochttp.KeyServerRoute, Value: "/a/"}}},
 	}

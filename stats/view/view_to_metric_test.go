@@ -253,7 +253,6 @@ func initMetricDescriptors() {
 }
 
 func Test_ViewToMetric(t *testing.T) {
-	startTime := time.Now().Add(-60 * time.Second)
 	now := time.Now()
 	tests := []*testToMetrics{
 		{
@@ -277,7 +276,7 @@ func Test_ViewToMetric(t *testing.T) {
 						},
 					},
 						LabelValues: labelValues,
-						StartTime:   startTime,
+						StartTime:   now,
 					},
 				},
 			},
@@ -305,7 +304,7 @@ func Test_ViewToMetric(t *testing.T) {
 							},
 						},
 						LabelValues: labelValues,
-						StartTime:   startTime,
+						StartTime:   now,
 					},
 				},
 			},
@@ -320,7 +319,7 @@ func Test_ViewToMetric(t *testing.T) {
 						metricdata.NewInt64Point(now, 2),
 					},
 						LabelValues: labelValues,
-						StartTime:   startTime,
+						StartTime:   now,
 					},
 				},
 			},
@@ -335,7 +334,7 @@ func Test_ViewToMetric(t *testing.T) {
 						metricdata.NewInt64Point(now, 2),
 					},
 						LabelValues: labelValues,
-						StartTime:   startTime,
+						StartTime:   now,
 					},
 				},
 			},
@@ -350,7 +349,7 @@ func Test_ViewToMetric(t *testing.T) {
 						metricdata.NewInt64Point(now, 6),
 					},
 						LabelValues: labelValues,
-						StartTime:   startTime,
+						StartTime:   now,
 					},
 				},
 			},
@@ -365,7 +364,7 @@ func Test_ViewToMetric(t *testing.T) {
 						metricdata.NewFloat64Point(now, 6.9),
 					},
 						LabelValues: labelValues,
-						StartTime:   startTime,
+						StartTime:   now,
 					},
 				},
 			},
@@ -417,12 +416,10 @@ func Test_ViewToMetric(t *testing.T) {
 		},
 	}
 
-	wantMetrics := []*metricdata.Metric{}
 	for _, tc := range tests {
 		tc.vi, _ = defaultWorker.tryRegisterView(tc.view)
 		tc.vi.clearRows()
 		tc.vi.subscribe()
-		wantMetrics = append(wantMetrics, tc.wantMetric)
 	}
 
 	for i, tc := range tests {
@@ -447,7 +444,7 @@ func Test_ViewToMetric(t *testing.T) {
 			tc.vi.addSample(tag.FromContext(ctx), v, nil, now)
 		}
 
-		gotMetric := viewToMetric(tc.vi, nil, now, startTime)
+		gotMetric := viewToMetric(tc.vi, nil, now)
 		if !cmp.Equal(gotMetric, tc.wantMetric) {
 			// JSON format is strictly for checking the content when test fails. Do not use JSON
 			// format to determine if the two values are same as it doesn't differentiate between
@@ -461,7 +458,6 @@ func Test_ViewToMetric(t *testing.T) {
 // Test to verify that a metric converted from a view with Aggregation Count should always
 // have Dimensionless unit.
 func TestUnitConversionForAggCount(t *testing.T) {
-	startTime := time.Now().Add(-60 * time.Second)
 	now := time.Now()
 	tests := []*struct {
 		name     string
@@ -509,7 +505,7 @@ func TestUnitConversionForAggCount(t *testing.T) {
 
 	for _, tc := range tests {
 		tc.vi.addSample(tag.FromContext(context.Background()), 5.0, nil, now)
-		gotMetric := viewToMetric(tc.vi, nil, now, startTime)
+		gotMetric := viewToMetric(tc.vi, nil, now)
 		gotUnit := gotMetric.Descriptor.Unit
 		if !cmp.Equal(gotUnit, tc.wantUnit) {
 			t.Errorf("Verify Unit: %s: Got:%v Want:%v", tc.name, gotUnit, tc.wantUnit)
