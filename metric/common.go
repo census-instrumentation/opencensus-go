@@ -133,6 +133,7 @@ func (bm *baseMetric) entryForValues(labelVals []metricdata.LabelValue, newEntry
 }
 
 func (bm *baseMetric) upsertEntry(labelVals []metricdata.LabelValue, newEntry func() baseEntry) error {
+	labelVals = append(bm.constLabelValues, labelVals...)
 	if len(labelVals) != len(bm.keys) {
 		return errKeyValueMismatch
 	}

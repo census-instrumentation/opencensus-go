@@ -465,6 +465,29 @@ func TestInt64DerivedGaugeEntry_Update(t *testing.T) {
 	}
 }
 
+func TestInt64DerivedGaugeEntry_UpsertConstLabels(t *testing.T) {
+	r := NewRegistry()
+	q := &queueInt64{3}
+	g, _ := r.AddInt64DerivedGauge("g",
+		WithConstLabel(map[metricdata.LabelKey]metricdata.LabelValue{
+			{Key: "const"}: metricdata.NewLabelValue("same"),
+		}))
+	err := g.UpsertEntry(q.ToInt64)
+	if err != nil {
+		t.Errorf("want: nil, got: %v", err)
+	}
+	ms := r.Read()
+	if got, want := ms[0].TimeSeries[0].Points[0].Value.(int64), int64(3); got != want {
+		t.Errorf("value = %v, want %v", got, want)
+	}
+	if got, want := ms[0].Descriptor.LabelKeys[0].Key, "const"; got != want {
+		t.Errorf("label key = %v, want %v", got, want)
+	}
+	if got, want := ms[0].TimeSeries[0].LabelValues[0].Value, "same"; got != want {
+		t.Errorf("label value = %v, want %v", got, want)
+	}
+}
+
 type queueFloat64 struct {
 	size float64
 }
