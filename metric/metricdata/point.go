@@ -183,7 +183,7 @@ type Type int
 
 // Metric types.
 const (
-	TypeGaugeInt64 Type = iota
+	TypeGaugeInt64 Type = iota + 1
 	TypeGaugeFloat64
 	TypeGaugeDistribution
 	TypeCumulativeInt64
