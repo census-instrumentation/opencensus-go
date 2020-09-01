@@ -305,6 +305,10 @@ func TestServerDefaultCollections(t *testing.T) {
 				continue
 			}
 
+			for i := range gotRows {
+				view.ClearStart(gotRows[i].Data)
+			}
+
 			for _, gotRow := range gotRows {
 				if !containsRow(wantData.rows, gotRow) {
 					t.Errorf("%q: unwanted row for view %q: %v", tc.label, wantData.v().Name, gotRow)

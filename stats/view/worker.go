@@ -41,9 +41,9 @@ type measureRef struct {
 }
 
 type worker struct {
-	measures   map[string]*measureRef
-	views      map[string]*viewInternal
-	startTimes map[*viewInternal]time.Time
+	measures       map[string]*measureRef
+	views          map[string]*viewInternal
+	viewStartTimes map[*viewInternal]time.Time
 
 	timer      *time.Ticker
 	c          chan command
@@ -244,13 +244,13 @@ func (w *worker) SetReportingPeriod(d time.Duration) {
 // a single process.
 func NewMeter() Meter {
 	return &worker{
-		measures:   make(map[string]*measureRef),
-		views:      make(map[string]*viewInternal),
-		startTimes: make(map[*viewInternal]time.Time),
-		timer:      time.NewTicker(defaultReportingDuration),
-		c:          make(chan command, 1024),
-		quit:       make(chan bool),
-		done:       make(chan bool),
+		measures:       make(map[string]*measureRef),
+		views:          make(map[string]*viewInternal),
+		viewStartTimes: make(map[*viewInternal]time.Time),
+		timer:          time.NewTicker(defaultReportingDuration),
+		c:              make(chan command, 1024),
+		quit:           make(chan bool),
+		done:           make(chan bool),
 
 		exporters: make(map[Exporter]struct{}),
 	}
@@ -277,7 +277,7 @@ func (w *worker) start() {
 		case cmd := <-w.c:
 			cmd.handleCommand(w)
 		case <-w.timer.C:
-			w.reportUsage(time.Now())
+			w.reportUsage()
 		case <-w.quit:
 			w.timer.Stop()
 			close(w.c)
@@ -324,6 +324,7 @@ func (w *worker) tryRegisterView(v *View) (*viewInternal, error) {
 		return x, nil
 	}
 	w.views[vi.view.Name] = vi
+	w.viewStartTimes[vi] = time.Now()
 	ref := w.getMeasureRef(vi.view.Measure.Name())
 	ref.views[vi] = struct{}{}
 	return vi, nil
@@ -333,23 +334,20 @@ func (w *worker) unregisterView(v *viewInternal) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 	delete(w.views, v.view.Name)
+	delete(w.viewStartTimes, v)
 	if measure := w.measures[v.view.Measure.Name()]; measure != nil {
 		delete(measure.views, v)
 	}
 }
 
-func (w *worker) reportView(v *viewInternal, now time.Time) {
+func (w *worker) reportView(v *viewInternal) {
 	if !v.isSubscribed() {
 		return
 	}
 	rows := v.collectedRows()
-	_, ok := w.startTimes[v]
-	if !ok {
-		w.startTimes[v] = now
-	}
 	viewData := &Data{
 		View:  v.view,
-		Start: w.startTimes[v],
+		Start: w.viewStartTimes[v],
 		End:   time.Now(),
 		Rows:  rows,
 	}
@@ -360,11 +358,11 @@ func (w *worker) reportView(v *viewInternal, now time.Time) {
 	}
 }
 
-func (w *worker) reportUsage(now time.Time) {
+func (w *worker) reportUsage() {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 	for _, v := range w.views {
-		w.reportView(v, now)
+		w.reportView(v)
 	}
 }
 
@@ -373,20 +371,7 @@ func (w *worker) toMetric(v *viewInternal, now time.Time) *metricdata.Metric {
 		return nil
 	}
 
-	_, ok := w.startTimes[v]
-	if !ok {
-		w.startTimes[v] = now
-	}
-
-	var startTime time.Time
-	if v.metricDescriptor.Type == metricdata.TypeGaugeInt64 ||
-		v.metricDescriptor.Type == metricdata.TypeGaugeFloat64 {
-		startTime = time.Time{}
-	} else {
-		startTime = w.startTimes[v]
-	}
-
-	return viewToMetric(v, w.r, now, startTime)
+	return viewToMetric(v, w.r, now)
 }
 
 // Read reads all view data and returns them as metrics.

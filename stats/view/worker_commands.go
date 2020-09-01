@@ -95,7 +95,7 @@ func (cmd *unregisterFromViewReq) handleCommand(w *worker) {
 		}
 
 		// Report pending data for this view before removing it.
-		w.reportView(vi, time.Now())
+		w.reportView(vi)
 
 		vi.unsubscribe()
 		if !vi.isSubscribed() {
