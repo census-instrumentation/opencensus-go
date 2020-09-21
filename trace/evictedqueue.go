@@ -15,24 +15,45 @@
 package trace
 
 type evictedQueue struct {
-	queue        []interface{}
+	ringQueue    []interface{}
 	capacity     int
 	droppedCount int
+	writeIdx     int
+	readIdx      int
+	startRead    bool
 }
 
 func newEvictedQueue(capacity int) *evictedQueue {
 	eq := &evictedQueue{
-		capacity: capacity,
-		queue:    make([]interface{}, 0),
+		capacity:  capacity,
+		ringQueue: make([]interface{}, 0),
 	}
 
 	return eq
 }
 
 func (eq *evictedQueue) add(value interface{}) {
-	if len(eq.queue) == eq.capacity {
-		eq.queue = eq.queue[1:]
-		eq.droppedCount++
+	if len(eq.ringQueue) < eq.capacity {
+		eq.ringQueue = append(eq.ringQueue, value)
+		return
 	}
-	eq.queue = append(eq.queue, value)
+
+	eq.ringQueue[eq.writeIdx] = value
+	eq.droppedCount++
+	eq.writeIdx++
+	eq.writeIdx %= eq.capacity
+	eq.readIdx = eq.writeIdx
+}
+
+// Do not add more item after use readNext
+func (eq *evictedQueue) readNext() interface{} {
+	if eq.startRead && eq.readIdx == eq.writeIdx {
+		return nil
+	}
+
+	eq.startRead = true
+	res := eq.ringQueue[eq.readIdx]
+	eq.readIdx++
+	eq.readIdx %= eq.capacity
+	return res
 }

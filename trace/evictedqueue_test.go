@@ -22,44 +22,48 @@ import (
 func init() {
 }
 
-func TestAdd(t *testing.T) {
-	q := newEvictedQueue(3)
-	q.add("value1")
-	q.add("value2")
-	if wantLen, gotLen := 2, len(q.queue); wantLen != gotLen {
-		t.Errorf("got queue length %d want %d", gotLen, wantLen)
-	}
-}
+func TestAddAndReadNext(t *testing.T) {
+	t.Run("len(ringQueue) < capacity", func(t *testing.T) {
+		values := []string{"value1", "value2"}
+		capacity := 3
+		q := newEvictedQueue(capacity)
 
-func (eq *evictedQueue) queueToArray() []string {
-	arr := make([]string, 0)
-	for _, value := range eq.queue {
-		arr = append(arr, value.(string))
-	}
-	return arr
-}
+		for _, value := range values {
+			q.add(value)
+		}
 
-func TestDropCount(t *testing.T) {
-	q := newEvictedQueue(3)
-	q.add("value1")
-	q.add("value2")
-	q.add("value3")
-	q.add("value1")
-	q.add("value4")
-	if wantLen, gotLen := 3, len(q.queue); wantLen != gotLen {
-		t.Errorf("got queue length %d want %d", gotLen, wantLen)
-	}
-	if wantDropCount, gotDropCount := 2, q.droppedCount; wantDropCount != gotDropCount {
-		t.Errorf("got drop count %d want %d", gotDropCount, wantDropCount)
-	}
-	wantArr := []string{"value3", "value1", "value4"}
-	gotArr := q.queueToArray()
+		gotValues := make([]string, len(q.ringQueue))
+		for i := 0; i < len(gotValues); i++ {
+			gotValues[i] = q.readNext().(string)
+		}
 
-	if wantLen, gotLen := len(wantArr), len(gotArr); gotLen != wantLen {
-		t.Errorf("got array len %d want %d", gotLen, wantLen)
-	}
+		if !reflect.DeepEqual(values, gotValues) {
+			t.Errorf("got array = %#v; want %#v", gotValues, values)
+		}
+	})
+	t.Run("dropped count", func(t *testing.T) {
+		values := []string{"value1", "value2", "value3", "value1", "value4", "value1", "value3", "value1", "value4"}
+		wantValues := []string{"value3", "value1", "value4"}
+		capacity := 3
+		wantDroppedCount := len(values) - capacity
 
-	if !reflect.DeepEqual(gotArr, wantArr) {
-		t.Errorf("got array = %#v; want %#v", gotArr, wantArr)
-	}
+		q := newEvictedQueue(capacity)
+
+		for _, value := range values {
+			q.add(value)
+		}
+
+		gotValues := make([]string, len(wantValues))
+		for i := 0; i < len(gotValues); i++ {
+			gotValues[i] = q.readNext().(string)
+		}
+
+		if !reflect.DeepEqual(wantValues, gotValues) {
+			t.Errorf("got array = %#v; want %#v", gotValues, wantValues)
+		}
+
+		if wantDroppedCount != q.droppedCount {
+			t.Errorf("got dropped count %d want %d", q.droppedCount, wantDroppedCount)
+		}
+	})
 }
