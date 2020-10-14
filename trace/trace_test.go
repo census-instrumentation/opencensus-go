@@ -46,7 +46,7 @@ func TestStrings(t *testing.T) {
 }
 
 func TestFromContext(t *testing.T) {
-	want := &Span{}
+	want := &span{}
 	ctx := NewContext(context.Background(), want)
 	got := FromContext(ctx)
 	if got != want {
@@ -61,20 +61,20 @@ func (f foo) String() string {
 }
 
 // checkChild tests that c has fields set appropriately, given that it is a child span of p.
-func checkChild(p SpanContext, c *Span) error {
+func checkChild(p SpanContext, c Span) error {
 	if c == nil {
 		return fmt.Errorf("got nil child span, want non-nil")
 	}
-	if got, want := c.spanContext.TraceID, p.TraceID; got != want {
+	if got, want := c.SpanContext().TraceID, p.TraceID; got != want {
 		return fmt.Errorf("got child trace ID %s, want %s", got, want)
 	}
-	if childID, parentID := c.spanContext.SpanID, p.SpanID; childID == parentID {
+	if childID, parentID := c.SpanContext().SpanID, p.SpanID; childID == parentID {
 		return fmt.Errorf("got child span ID %s, parent span ID %s; want unequal IDs", childID, parentID)
 	}
-	if got, want := c.spanContext.TraceOptions, p.TraceOptions; got != want {
+	if got, want := c.SpanContext().TraceOptions, p.TraceOptions; got != want {
 		return fmt.Errorf("got child trace options %d, want %d", got, want)
 	}
-	if got, want := c.spanContext.Tracestate, p.Tracestate; got != want {
+	if got, want := c.SpanContext().Tracestate, p.Tracestate; got != want {
 		return fmt.Errorf("got child tracestate %v, want %v", got, want)
 	}
 	return nil
@@ -82,7 +82,7 @@ func checkChild(p SpanContext, c *Span) error {
 
 func TestStartSpan(t *testing.T) {
 	ctx, _ := StartSpan(context.Background(), "StartSpan")
-	if FromContext(ctx).data != nil {
+	if FromContext(ctx).(*span).data != nil {
 		t.Error("StartSpan: new span is recording events")
 	}
 }
@@ -231,7 +231,7 @@ func TestStartSpanWithRemoteParent(t *testing.T) {
 }
 
 // startSpan returns a context with a new Span that is recording events and will be exported.
-func startSpan(o StartOptions) *Span {
+func startSpan(o StartOptions) Span {
 	_, span := StartSpanWithRemoteParent(context.Background(), "span0",
 		SpanContext{
 			TraceID:      tid,
@@ -255,7 +255,7 @@ func (t *testExporter) ExportSpan(s *SpanData) {
 // endSpan ends the Span in the context and returns the exported SpanData.
 //
 // It also does some tests on the Span, and tests and clears some fields in the SpanData.
-func endSpan(span *Span) (*SpanData, error) {
+func endSpan(span Span) (*SpanData, error) {
 
 	if !span.IsRecordingEvents() {
 		return nil, fmt.Errorf("IsRecordingEvents: got false, want true")
@@ -579,10 +579,10 @@ func TestSetSpanName(t *testing.T) {
 
 func TestSetSpanNameUnsampledSpan(t *testing.T) {
 	var nilSpanData *SpanData
-	span := startSpan(StartOptions{Sampler: NeverSample()})
-	span.SetName("NoopName")
+	sp := startSpan(StartOptions{Sampler: NeverSample()})
+	sp.SetName("NoopName")
 
-	if want, got := nilSpanData, span.data; want != got {
+	if want, got := nilSpanData, sp.(*span).data; want != got {
 		t.Errorf("span.data=%+v; want %+v", got, want)
 	}
 }
@@ -861,7 +861,7 @@ func TestChildSpanCount(t *testing.T) {
 }
 
 func TestNilSpanEnd(t *testing.T) {
-	var span *Span
+	var span *span
 	span.End()
 }
 
@@ -871,25 +871,28 @@ func TestExecutionTracerTaskEnd(t *testing.T) {
 		atomic.AddUint64(&n, 1)
 	}
 
-	var spans []*Span
-	_, span := StartSpan(context.Background(), "foo", WithSampler(NeverSample()))
-	span.executionTracerTaskEnd = executionTracerTaskEnd
-	spans = append(spans, span) // never sample
+	var spans []Span
+	_, s := StartSpan(context.Background(), "foo", WithSampler(NeverSample()))
+	sp := s.(*span)
+	sp.executionTracerTaskEnd = executionTracerTaskEnd
+	spans = append(spans, sp) // never sample
 
-	_, span = StartSpanWithRemoteParent(context.Background(), "foo", SpanContext{
+	_, s = StartSpanWithRemoteParent(context.Background(), "foo", SpanContext{
 		TraceID:      TraceID{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
 		SpanID:       SpanID{0, 1, 2, 3, 4, 5, 6, 7},
 		TraceOptions: 0,
 	})
-	span.executionTracerTaskEnd = executionTracerTaskEnd
-	spans = append(spans, span) // parent not sampled
+	sp = s.(*span)
+	sp.executionTracerTaskEnd = executionTracerTaskEnd
+	spans = append(spans, sp) // parent not sampled
 
-	_, span = StartSpan(context.Background(), "foo", WithSampler(AlwaysSample()))
-	span.executionTracerTaskEnd = executionTracerTaskEnd
-	spans = append(spans, span) // always sample
+	_, s = StartSpan(context.Background(), "foo", WithSampler(AlwaysSample()))
+	sp = s.(*span)
+	sp.executionTracerTaskEnd = executionTracerTaskEnd
+	spans = append(spans, sp) // always sample
 
-	for _, span := range spans {
-		span.End()
+	for _, sp := range spans {
+		sp.End()
 	}
 	if got, want := n, uint64(len(spans)); got != want {
 		t.Fatalf("Execution tracer task ended for %v spans; want %v", got, want)

@@ -21,7 +21,7 @@ import (
 	"go.opencensus.io/trace"
 )
 
-// This example shows how to use StartSpan and (*Span).End to capture
+// This example shows how to use StartSpan and (Span).End to capture
 // a function execution in a Span. It assumes that the function
 // has a context.Context argument.
 func ExampleStartSpan() {
