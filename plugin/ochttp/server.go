@@ -109,7 +109,7 @@ func (h *Handler) startTrace(w http.ResponseWriter, r *http.Request) (*http.Requ
 		startOpts = h.GetStartOptions(r)
 	}
 
-	var span *trace.Span
+	var span trace.Span
 	sc, ok := h.extractSpanContext(r)
 	if ok && !h.IsPublicEndpoint {
 		ctx, span = trace.StartSpanWithRemoteParent(ctx, name, sc,
