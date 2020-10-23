@@ -44,7 +44,7 @@ type traceTransport struct {
 	startOptions   trace.StartOptions
 	format         propagation.HTTPFormat
 	formatSpanName func(*http.Request) string
-	newClientTrace func(*http.Request, trace.Span) *httptrace.ClientTrace
+	newClientTrace func(*http.Request, *trace.Span) *httptrace.ClientTrace
 }
 
 // TODO(jbd): Add message events for request and response size.
@@ -104,7 +104,7 @@ func (t *traceTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 // the body of the original response.
 type bodyTracker struct {
 	rc   io.ReadCloser
-	span trace.Span
+	span *trace.Span
 }
 
 var _ io.ReadCloser = (*bodyTracker)(nil)
