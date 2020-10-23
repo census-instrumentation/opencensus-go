@@ -1,0 +1,21 @@
+name: Build
+
+on: 
+  pull_request:
+      branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest 
+    env:
+      GO11MODULE: 'on'
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+      - uses: actions/setup-go@v2
+        with:
+          go-version: '^1.11.0'
+      - name: Build and test
+        run: make install-tools && make travis-ci && go run internal/check/version.go
