@@ -106,7 +106,7 @@ func TestTransport_RoundTrip(t *testing.T) {
 	_, parent := trace.StartSpan(context.Background(), "parent")
 	tests := []struct {
 		name   string
-		parent trace.Span
+		parent *trace.Span
 	}{
 		{
 			name:   "no parent",

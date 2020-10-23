@@ -584,7 +584,7 @@ func TestIgnoreHealthEndpoints(t *testing.T) {
 			ts := httptest.NewServer(&Handler{
 				Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					span := trace.FromContext(r.Context())
-					if span.IsRecordingEvents() {
+					if span != nil {
 						spans++
 					}
 					fmt.Fprint(w, "ok")
