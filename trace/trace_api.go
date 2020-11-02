@@ -148,6 +148,11 @@ type Span struct {
 	internal SpanInterface
 }
 
+// Internal returns the underlying implementation of the Span
+func (s *Span) Internal() SpanInterface {
+	return s.internal
+}
+
 // IsRecordingEvents returns true if events are being recorded for this span.
 // Use this check to avoid computing expensive annotations when they will never
 // be used.
