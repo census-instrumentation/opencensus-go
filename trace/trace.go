@@ -419,42 +419,20 @@ func (s *span) AddAttributes(attributes ...Attribute) {
 	s.mu.Unlock()
 }
 
-// copyAttributes copies a slice of Attributes into a map.
-func copyAttributes(m map[string]interface{}, attributes []Attribute) {
-	for _, a := range attributes {
-		m[a.key] = a.value
-	}
-}
-
-func (s *span) lazyPrintfInternal(attributes []Attribute, format string, a ...interface{}) {
-	now := time.Now()
-	msg := fmt.Sprintf(format, a...)
-	var m map[string]interface{}
-	s.mu.Lock()
-	if len(attributes) != 0 {
-		m = make(map[string]interface{}, len(attributes))
-		copyAttributes(m, attributes)
-	}
-	s.annotations.add(Annotation{
-		Time:       now,
-		Message:    msg,
-		Attributes: m,
-	})
-	s.mu.Unlock()
-}
-
 func (s *span) printStringInternal(attributes []Attribute, str string) {
 	now := time.Now()
-	var a map[string]interface{}
-	s.mu.Lock()
+	var am map[string]interface{}
 	if len(attributes) != 0 {
-		a = make(map[string]interface{}, len(attributes))
-		copyAttributes(a, attributes)
+		am = make(map[string]interface{}, len(attributes))
+		for _, attr := range attributes {
+			am[attr.key] = attr.value
+		}
 	}
+	s.mu.Lock()
 	s.annotations.add(Annotation{
 		Time:       now,
 		Message:    str,
-		Attributes: a,
+		Attributes: am,
 	})
 	s.mu.Unlock()
 }
@@ -473,7 +451,7 @@ func (s *span) Annotatef(attributes []Attribute, format string, a ...interface{}
 	if !s.IsRecordingEvents() {
 		return
 	}
-	s.lazyPrintfInternal(attributes, format, a...)
+	s.printStringInternal(attributes, fmt.Sprintf(format, a...))
 }
 
 // AddMessageSendEvent adds a message send event to the span.
