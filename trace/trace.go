@@ -65,6 +65,8 @@ type span struct {
 	endOnce sync.Once
 
 	executionTracerTaskEnd func() // ends the execution tracer span
+
+	activeExporter *Span // corresponding exporter in the active set of spanStore
 }
 
 // IsRecordingEvents returns true if events are being recorded for this span.
@@ -266,7 +268,9 @@ func startSpanInternal(name string, hasParent bool, parent SpanContext, remotePa
 		ss = spanStoreForNameCreateIfNew(name)
 		if ss != nil {
 			s.spanStore = ss
-			ss.add(NewSpan(s))
+			ns := NewSpan(s)
+			s.activeExporter = ns
+			ss.add(ns)
 		}
 	}
 
@@ -291,7 +295,7 @@ func (s *span) End() {
 			sd := s.makeSpanData()
 			sd.EndTime = internal.MonotonicEndTime(sd.StartTime)
 			if s.spanStore != nil {
-				s.spanStore.finished(NewSpan(s), sd)
+				s.spanStore.finished(s.activeExporter, sd)
 			}
 			if mustExport {
 				for e := range exp {
