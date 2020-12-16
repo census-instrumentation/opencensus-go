@@ -266,7 +266,7 @@ func startSpanInternal(name string, hasParent bool, parent SpanContext, remotePa
 		ss = spanStoreForNameCreateIfNew(name)
 		if ss != nil {
 			s.spanStore = ss
-			ss.add(NewSpan(s))
+			ss.add(s)
 		}
 	}
 
@@ -291,7 +291,7 @@ func (s *span) End() {
 			sd := s.makeSpanData()
 			sd.EndTime = internal.MonotonicEndTime(sd.StartTime)
 			if s.spanStore != nil {
-				s.spanStore.finished(NewSpan(s), sd)
+				s.spanStore.finished(s, sd)
 			}
 			if mustExport {
 				for e := range exp {
