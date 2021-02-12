@@ -57,15 +57,23 @@ func ExampleEnable() {
 	// output:
 	// mayapp/process/cpu_cgo_calls 42
 	// mayapp/process/cpu_goroutines 42
+	// mayapp/process/gc_cpu_fraction 42
+	// mayapp/process/gc_sys 42
 	// mayapp/process/heap_alloc 42
 	// mayapp/process/heap_idle 42
 	// mayapp/process/heap_inuse 42
 	// mayapp/process/heap_objects 42
 	// mayapp/process/heap_release 42
+	// mayapp/process/last_gc_finished_timestamp 42
 	// mayapp/process/memory_alloc 42
 	// mayapp/process/memory_frees 42
 	// mayapp/process/memory_lookups 42
 	// mayapp/process/memory_malloc 42
+	// mayapp/process/next_gc_heap_size 42
+	// mayapp/process/num_forced_gc 42
+	// mayapp/process/num_gc 42
+	// mayapp/process/other_sys 42
+	// mayapp/process/pause_total 42
 	// mayapp/process/stack_inuse 42
 	// mayapp/process/stack_mcache_inuse 42
 	// mayapp/process/stack_mspan_inuse 42
