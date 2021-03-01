@@ -145,6 +145,10 @@ type StartOptions struct {
 	// SpanKind represents the kind of a span. If none is set,
 	// SpanKindUnspecified is used.
 	SpanKind int
+
+	// CustomerID represents customer spanID. If none is set,
+	// will be auto generated
+	CustomerID SpanID
 }
 
 // StartOption apply changes to StartOptions.
@@ -157,11 +161,19 @@ func WithSpanKind(spanKind int) StartOption {
 	}
 }
 
-// WithSampler makes new spans to be be created with a custom sampler.
+// WithSampler makes new spans to  be created with a custom sampler.
 // Otherwise, the global sampler is used.
 func WithSampler(sampler Sampler) StartOption {
 	return func(o *StartOptions) {
 		o.Sampler = sampler
+	}
+}
+
+// WithCustomID make new spans to be created with a custom spanID.
+// Otherwise, trace will generate a new uuid
+func WithCustomID(spanID SpanID) StartOption {
+	return func(o *StartOptions) {
+		o.CustomerID = spanID
 	}
 }
 
@@ -222,7 +234,11 @@ func startSpanInternal(name string, hasParent bool, parent SpanContext, remotePa
 	if !hasParent {
 		s.spanContext.TraceID = cfg.IDGenerator.NewTraceID()
 	}
-	s.spanContext.SpanID = cfg.IDGenerator.NewSpanID()
+	if o.CustomerID != (SpanID{}) {
+		s.spanContext.SpanID = o.CustomerID
+	} else {
+		s.spanContext.SpanID = cfg.IDGenerator.NewSpanID()
+	}
 	sampler := cfg.DefaultSampler
 
 	if !hasParent || remoteParent || o.Sampler != nil {
