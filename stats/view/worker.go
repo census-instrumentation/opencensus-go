@@ -33,7 +33,7 @@ func init() {
 	defaultWorker = NewMeter().(*worker)
 	go defaultWorker.start()
 	internal.DefaultRecorder = record
-	stats.InternalMeasurementRecorder = recordMeasurement
+	internal.MeasurementRecorder = recordMeasurement
 }
 
 type measureRef struct {

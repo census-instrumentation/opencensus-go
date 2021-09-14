@@ -86,8 +86,7 @@ func createRecordOption(ros ...Options) *recordOptions {
 	return o
 }
 
-// InternalMeasurementRecorder is a recorder for internal usage only.
-var InternalMeasurementRecorder func(tags *tag.Map, measurement []Measurement, attachments map[string]interface{})
+type measurementRecorder = func(tags *tag.Map, measurement []Measurement, attachments map[string]interface{})
 
 // Record records one or multiple measurements with the same context at once.
 // If there are any tags in the context, measurements will be tagged with them.
@@ -97,7 +96,7 @@ func Record(ctx context.Context, ms ...Measurement) {
 	if len(ms) == 0 {
 		return
 	}
-	recorder := InternalMeasurementRecorder
+	recorder := internal.MeasurementRecorder.(measurementRecorder)
 	record := false
 	for _, m := range ms {
 		if m.desc.subscribed() {
