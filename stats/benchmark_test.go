@@ -109,5 +109,13 @@ func BenchmarkRecord8_8Tags(b *testing.B) {
 }
 
 func makeMeasure() *stats.Int64Measure {
-	return stats.Int64("m", "test measure", "")
+	m := stats.Int64("m", "test measure", "")
+	v := &view.View{
+		Measure:     m,
+		Aggregation: view.Sum(),
+	}
+	if err := view.Register(v); err != nil {
+		panic(err.Error())
+	}
+	return m
 }
