@@ -221,6 +221,11 @@ func SetReportingPeriod(d time.Duration) {
 	defaultWorker.SetReportingPeriod(d)
 }
 
+// Stop stops the default worker.
+func Stop() {
+	defaultWorker.Stop()
+}
+
 // SetReportingPeriod sets the interval between reporting aggregated views in
 // the program. If duration is less than or equal to zero, it enables the
 // default behavior.
