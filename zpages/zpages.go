@@ -57,7 +57,7 @@ func Handle(mux *http.ServeMux, pathPrefix string) {
 	}
 	mux.HandleFunc(path.Join(pathPrefix, "rpcz"), rpczHandler)
 	mux.HandleFunc(path.Join(pathPrefix, "tracez"), tracezHandler)
-	mux.Handle(path.Join(pathPrefix, "public/"), http.FileServer(fs))
+	mux.Handle(path.Join(pathPrefix, "public/") + "/", http.FileServer(fs))
 }
 
 var enableOnce sync.Once
