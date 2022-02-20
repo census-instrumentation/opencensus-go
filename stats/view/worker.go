@@ -286,7 +286,7 @@ func (w *worker) start() {
 		case <-w.quit:
 			w.timer.Stop()
 			close(w.c)
-			w.done <- true
+			close(w.done)
 			return
 		}
 	}
@@ -295,8 +295,11 @@ func (w *worker) start() {
 func (w *worker) Stop() {
 	prodMgr := metricproducer.GlobalManager()
 	prodMgr.DeleteProducer(w)
-
-	w.quit <- true
+	select {
+	case <-w.quit:
+	default:
+		close(w.quit)
+	}
 	<-w.done
 }
 
