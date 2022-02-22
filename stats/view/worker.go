@@ -232,6 +232,11 @@ func SetReportingPeriod(d time.Duration) {
 	defaultWorker.SetReportingPeriod(d)
 }
 
+// Stop stops the default worker.
+func Stop() {
+	defaultWorker.Stop()
+}
+
 // SetReportingPeriod sets the interval between reporting aggregated views in
 // the program. If duration is less than or equal to zero, it enables the
 // default behavior.
@@ -292,7 +297,7 @@ func (w *worker) start() {
 		case <-w.quit:
 			w.timer.Stop()
 			close(w.c)
-			w.done <- true
+			close(w.done)
 			return
 		}
 	}
@@ -301,8 +306,11 @@ func (w *worker) start() {
 func (w *worker) Stop() {
 	prodMgr := metricproducer.GlobalManager()
 	prodMgr.DeleteProducer(w)
-
-	w.quit <- true
+	select {
+	case <-w.quit:
+	default:
+		close(w.quit)
+	}
 	<-w.done
 }
 
