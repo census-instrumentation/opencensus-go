@@ -1,0 +1,53 @@
+name: Go
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+env:
+  GO111MODULE: on
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go: ["1.11.x", "1.12.x", "1.13.x", "1.14.x", "1.15.x", "1.16.x", "1.17.x" ]
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: ${{ matrix.go }}
+
+    - name: Install dependencies
+      run: |
+        GO_FILES=$(find . -iname '*.go' | grep -v /vendor/)  # All the .go files, excluding vendor/ if any
+        PKGS=$(go list ./... | grep -v /vendor/)             # All the import paths, excluding vendor/ if any
+        curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh # Install latest dep release
+        go get github.com/rakyll/embedmd
+
+    - name: Check Readme
+      run: embedmd -d README.md
+
+    - name: Build
+      run: go build -v ./...
+
+    - name: Run gofmt
+      run: if [ -n "$(gofmt -s -l $GO_FILES)" ]; then echo "gofmt the following files:"; gofmt -s -l $GO_FILES; exit 1; fi
+
+    - name: Run go vet
+      run: go vet ./...
+
+    - name: Test
+      run: go test -v -race $PKGS
+
+    - name: Test 386 arch
+      run: GOARCH=386 go test -v $PKGS
+
+    - name: Run version
+      run: go run internal/check/version.go
