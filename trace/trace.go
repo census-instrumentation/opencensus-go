@@ -381,7 +381,7 @@ func (s *span) interfaceArrayToAnnotationArray() []Annotation {
 }
 
 func (s *span) lruAttributesToAttributeMap() map[string]interface{} {
-	attributes := make(map[string]interface{}, 0, s.lruAttributes.len())
+	attributes := make(map[string]interface{}, s.lruAttributes.len())
 	for _, key := range s.lruAttributes.keys() {
 		value, ok := s.lruAttributes.get(key)
 		if ok {
@@ -423,7 +423,7 @@ func (s *span) printStringInternal(attributes []Attribute, str string) {
 	now := time.Now()
 	var am map[string]interface{}
 	if len(attributes) != 0 {
-		am = make(map[string]interface{}, 0, len(attributes))
+		am = make(map[string]interface{}, len(attributes))
 		for _, attr := range attributes {
 			am[attr.key] = attr.value
 		}
