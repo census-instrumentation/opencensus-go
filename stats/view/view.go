@@ -65,6 +65,7 @@ func (v *View) same(other *View) bool {
 		return false
 	}
 	return reflect.DeepEqual(v.Aggregation, other.Aggregation) &&
+		reflect.DeepEqual(v.TagKeys, other.Aggregation) &&
 		v.Measure.Name() == other.Measure.Name()
 }
 

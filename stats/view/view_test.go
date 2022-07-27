@@ -430,6 +430,17 @@ func TestRegisterAfterMeasurement(t *testing.T) {
 	}
 }
 
+func TestRegisterDifferentLabelViews(t *testing.T) {
+	restart()
+	m1 := stats.Int64("measure", "desc", "unit")
+	view1 := &View{Name: "count", Measure: m1, Aggregation: Count()}
+	view2 := &View{Name: "count", Measure: m1, TagKeys: []tag.Key{tag.MustNewKey("tag")}, Aggregation: Count()}
+
+	if err := Register(view1, view2); err == nil {
+		t.Errorf("Register(count): should have failed when registering equal views with different tags")
+	}
+}
+
 func TestViewRegister_negativeBucketBounds(t *testing.T) {
 	m := stats.Int64("TestViewRegister_negativeBucketBounds", "", "")
 	v := &View{
