@@ -16,8 +16,8 @@
 //
 // To enable collecting runtime metrics, just call Enable():
 //
-//     _ := runmetrics.Enable(runmetrics.RunMetricOptions{
-//         EnableCPU: true,
-//         EnableMemory: true,
-//     })
+//	_ := runmetrics.Enable(runmetrics.RunMetricOptions{
+//	    EnableCPU: true,
+//	    EnableMemory: true,
+//	})
 package runmetrics // import "go.opencensus.io/plugin/runmetrics"

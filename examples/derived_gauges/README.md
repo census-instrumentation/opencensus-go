@@ -147,7 +147,7 @@ func (q *queue) Elapsed() float64 {
 // items. Consumer randomly consumes 1-5 items in each attempt. It then sleeps randomly
 // between 1-10 seconds before the next attempt. Two metrics collected to monitor the queue.
 //
-// Metrics
+// # Metrics
 //
 // * queue_size: It is an instantaneous queue size represented using derived gauge int64.
 //

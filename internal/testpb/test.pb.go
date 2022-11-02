@@ -5,9 +5,11 @@
 Package testpb is a generated protocol buffer package.
 
 It is generated from these files:
+
 	test.proto
 
 It has these top-level messages:
+
 	FooRequest
 	FooResponse
 */

@@ -56,7 +56,7 @@ func (e *Exporter) ReadAndExport() {
 	e.metricReader.ReadAndExport(e)
 }
 
-// String defines the ``native'' format for the exporter.
+// String defines the “native” format for the exporter.
 func (e *Exporter) String() string {
 	return fmt.Sprintf("points{%v}", e.points)
 }

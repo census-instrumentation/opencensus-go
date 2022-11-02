@@ -13,7 +13,8 @@
 // limitations under the License.
 
 // Command stats implements the stats Quick Start example from:
-//   https://opencensus.io/quickstart/go/metrics/
+//
+//	https://opencensus.io/quickstart/go/metrics/
 package main
 
 import (
