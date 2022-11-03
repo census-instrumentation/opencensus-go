@@ -180,14 +180,14 @@ func Test_Worker_MultiExport(t *testing.T) {
 
 	// Format is Resource.Labels encoded as string, then
 	wantPartialData := map[string][]*Row{
-		makeKey(nil, count.Name): []*Row{
+		makeKey(nil, count.Name): {
 			{[]tag.Tag{{Key: key, Value: "a"}}, &CountData{Value: 2}},
 			{[]tag.Tag{{Key: key, Value: "b"}}, &CountData{Value: 1}},
 		},
-		makeKey(nil, sum.Name): []*Row{
+		makeKey(nil, sum.Name): {
 			{nil, &SumData{Value: 7.5}},
 		},
-		makeKey(&extraResource, count.Name): []*Row{
+		makeKey(&extraResource, count.Name): {
 			{[]tag.Tag{{Key: key, Value: "b"}}, &CountData{Value: 1}},
 		},
 	}

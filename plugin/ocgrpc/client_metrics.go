@@ -72,10 +72,10 @@ var (
 	}
 
 	ClientStartedRPCsView = &view.View{
-		Measure: ClientStartedRPCs,
-		Name: "grpc.io/client/started_rpcs",
+		Measure:     ClientStartedRPCs,
+		Name:        "grpc.io/client/started_rpcs",
 		Description: "Number of started client RPCs.",
-		TagKeys: []tag.Key{KeyClientMethod},
+		TagKeys:     []tag.Key{KeyClientMethod},
 		Aggregation: view.Count(),
 	}
 

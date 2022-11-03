@@ -70,7 +70,6 @@ func TestEndToEnd_Single(t *testing.T) {
 	checkCount(t, ocgrpc.ClientCompletedRPCsView, 1, clientMethodTag, clientStatusOKTag)
 	checkCount(t, ocgrpc.ServerCompletedRPCsView, 1, serverMethodTag, serverStatusOKTag)
 
-
 	_, _ = client.Single(ctx, &testpb.FooRequest{Fail: true})
 	checkCount(t, ocgrpc.ClientStartedRPCsView, 2, clientMethodTag)
 	checkCount(t, ocgrpc.ServerStartedRPCsView, 2, serverMethodTag)
