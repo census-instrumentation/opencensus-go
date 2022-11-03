@@ -124,7 +124,7 @@ Use `Set` or `Add` function to update the value of gauge entries. You can call t
 // This example shows how to use gauge metrics. The program records two gauges, one to demonstrate
 // a gauge with int64 value and the other to demonstrate a gauge with float64 value.
 //
-// Metrics
+// # Metrics
 //
 // 1. process_heap_alloc (int64): Total bytes used by objects allocated in the heap.
 // It includes objects currently used and objects that are freed but not garbage collected.
