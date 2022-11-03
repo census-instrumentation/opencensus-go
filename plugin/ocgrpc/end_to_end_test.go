@@ -40,6 +40,8 @@ func TestEndToEnd_Single(t *testing.T) {
 		ocgrpc.ClientReceivedMessagesPerRPCView,
 		ocgrpc.ServerSentMessagesPerRPCView,
 		ocgrpc.ClientSentMessagesPerRPCView,
+		ocgrpc.ServerStartedRPCsView,
+		ocgrpc.ClientStartedRPCsView,
 	}
 	view.Register(extraViews...)
 	defer view.Unregister(extraViews...)
@@ -63,10 +65,14 @@ func TestEndToEnd_Single(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	checkCount(t, ocgrpc.ClientStartedRPCsView, 1, clientMethodTag)
+	checkCount(t, ocgrpc.ServerStartedRPCsView, 1, serverMethodTag)
 	checkCount(t, ocgrpc.ClientCompletedRPCsView, 1, clientMethodTag, clientStatusOKTag)
 	checkCount(t, ocgrpc.ServerCompletedRPCsView, 1, serverMethodTag, serverStatusOKTag)
 
 	_, _ = client.Single(ctx, &testpb.FooRequest{Fail: true})
+	checkCount(t, ocgrpc.ClientStartedRPCsView, 2, clientMethodTag)
+	checkCount(t, ocgrpc.ServerStartedRPCsView, 2, serverMethodTag)
 	checkCount(t, ocgrpc.ClientCompletedRPCsView, 1, clientMethodTag, serverStatusUnknownTag)
 	checkCount(t, ocgrpc.ServerCompletedRPCsView, 1, serverMethodTag, clientStatusUnknownTag)
 
@@ -101,6 +107,7 @@ func TestEndToEnd_Single(t *testing.T) {
 func TestEndToEnd_Stream(t *testing.T) {
 	view.Register(ocgrpc.DefaultClientViews...)
 	defer view.Unregister(ocgrpc.DefaultClientViews...)
+
 	view.Register(ocgrpc.DefaultServerViews...)
 	defer view.Unregister(ocgrpc.DefaultServerViews...)
 
@@ -109,6 +116,8 @@ func TestEndToEnd_Stream(t *testing.T) {
 		ocgrpc.ClientReceivedMessagesPerRPCView,
 		ocgrpc.ServerSentMessagesPerRPCView,
 		ocgrpc.ClientSentMessagesPerRPCView,
+		ocgrpc.ClientStartedRPCsView,
+		ocgrpc.ServerStartedRPCsView,
 	}
 	view.Register(extraViews...)
 	defer view.Unregister(extraViews...)
@@ -146,6 +155,8 @@ func TestEndToEnd_Stream(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	checkCount(t, ocgrpc.ClientStartedRPCsView, 1, clientMethodTag)
+	checkCount(t, ocgrpc.ServerStartedRPCsView, 1, serverMethodTag)
 	checkCount(t, ocgrpc.ClientCompletedRPCsView, 1, clientMethodTag, clientStatusOKTag)
 	checkCount(t, ocgrpc.ServerCompletedRPCsView, 1, serverMethodTag, serverStatusOKTag)
 
@@ -183,6 +194,7 @@ func getCount(t *testing.T, v *view.View, tags ...tag.Tag) (int64, bool) {
 			return 0, false
 		}
 	}
+
 	rows, err := view.RetrieveData(v.Name)
 	if err != nil {
 		t.Fatal(err)
