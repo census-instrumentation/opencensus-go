@@ -30,6 +30,15 @@ func SetRoute(ctx context.Context, route string) {
 	}
 }
 
+// SetPath sets the http_server_path tag to the given value.
+// It's useful when need replace the default path value.
+// For example default path value is "/a/123" and you want to set the path value to "/a/:id".
+func SetPath(ctx context.Context, route string) {
+	if a, ok := ctx.Value(addedTagsKey{}).(*addedTags); ok {
+		a.t = append(a.t, tag.Upsert(Path, route))
+	}
+}
+
 // WithRouteTag returns an http.Handler that records stats with the
 // http_server_route tag set to the given value.
 func WithRouteTag(handler http.Handler, route string) http.Handler {

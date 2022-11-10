@@ -121,3 +121,43 @@ func (t *testStatsExporter) rowsForView(name string) []*view.Row {
 	}
 	return rows
 }
+
+func TestSetPath(t *testing.T) {
+	v := &view.View{
+		Name:        "request_total",
+		Measure:     ochttp.ServerLatency,
+		Aggregation: view.Count(),
+		TagKeys:     []tag.Key{ochttp.Path},
+	}
+	view.Register(v)
+	var e testStatsExporter
+	view.RegisterExporter(&e)
+	defer view.UnregisterExporter(&e)
+
+	mux := http.NewServeMux()
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ochttp.SetPath(r.Context(), "/a/:id")
+		w.WriteHeader(204)
+	})
+	mux.Handle("/a/", handler)
+	plugin := ochttp.Handler{Handler: mux}
+	req, _ := http.NewRequest("GET", "/a/b927b6f8-167d-4804-b33d-3dd756f2ea95", nil)
+	rr := httptest.NewRecorder()
+	plugin.ServeHTTP(rr, req)
+	if got, want := rr.Code, 204; got != want {
+		t.Fatalf("Unexpected response, got %d; want %d", got, want)
+	}
+
+	view.Unregister(v) // trigger exporting
+
+	got := e.rowsForView("request_total")
+	for i := range got {
+		view.ClearStart(got[i].Data)
+	}
+	want := []*view.Row{
+		{Data: &view.CountData{Value: 1}, Tags: []tag.Tag{{Key: ochttp.Path, Value: "/a/:id"}}},
+	}
+	if diff := cmp.Diff(got, want); diff != "" {
+		t.Errorf("Unexpected view data exported, -got, +want: %s", diff)
+	}
+}
