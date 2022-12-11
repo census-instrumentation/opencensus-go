@@ -29,13 +29,6 @@ import (
 	"go.opencensus.io/tag"
 )
 
-func init() {
-	defaultWorker = NewMeter().(*worker)
-	go defaultWorker.start()
-	internal.DefaultRecorder = record
-	internal.MeasurementRecorder = recordMeasurement
-}
-
 type measureRef struct {
 	measure string
 	views   map[*viewInternal]struct{}
@@ -113,13 +106,28 @@ type Meter interface {
 
 var _ Meter = (*worker)(nil)
 
-var defaultWorker *worker
+var (
+	defaultWorker     *worker
+	defaultWorkerInit sync.Once
+)
+
+// Lazily initializes and starts the package's default worker. Should be invoked
+// before any exported functions in this package that use defaultWorker.
+func maybeInitDefaultWorker() {
+	defaultWorkerInit.Do(func() {
+		defaultWorker = NewMeter().(*worker)
+		go defaultWorker.start()
+		internal.DefaultRecorder = record
+		internal.MeasurementRecorder = recordMeasurement
+	})
+}
 
 var defaultReportingDuration = 10 * time.Second
 
 // Find returns a registered view associated with this name.
 // If no registered view is found, nil is returned.
 func Find(name string) (v *View) {
+	maybeInitDefaultWorker()
 	return defaultWorker.Find(name)
 }
 
@@ -138,6 +146,7 @@ func (w *worker) Find(name string) (v *View) {
 // Register begins collecting data for the given views.
 // Once a view is registered, it reports data to the registered exporters.
 func Register(views ...*View) error {
+	maybeInitDefaultWorker()
 	return defaultWorker.Register(views...)
 }
 
@@ -157,6 +166,7 @@ func (w *worker) Register(views ...*View) error {
 // It is not necessary to unregister from views you expect to collect for the
 // duration of your program execution.
 func Unregister(views ...*View) {
+	maybeInitDefaultWorker()
 	defaultWorker.Unregister(views...)
 }
 
@@ -180,6 +190,7 @@ func (w *worker) Unregister(views ...*View) {
 // RetrieveData gets a snapshot of the data collected for the the view registered
 // with the given name. It is intended for testing only.
 func RetrieveData(viewName string) ([]*Row, error) {
+	maybeInitDefaultWorker()
 	return defaultWorker.RetrieveData(viewName)
 }
 
@@ -229,11 +240,13 @@ func (w *worker) recordMeasurement(tags *tag.Map, ms []stats.Measurement, attach
 // duration is. For example, the Stackdriver exporter recommends a value no
 // lower than 1 minute. Consult each exporter per your needs.
 func SetReportingPeriod(d time.Duration) {
+	maybeInitDefaultWorker()
 	defaultWorker.SetReportingPeriod(d)
 }
 
 // Stop stops the default worker.
 func Stop() {
+	maybeInitDefaultWorker()
 	defaultWorker.Stop()
 }
 
