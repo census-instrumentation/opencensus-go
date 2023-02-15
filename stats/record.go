@@ -96,7 +96,12 @@ func Record(ctx context.Context, ms ...Measurement) {
 	if len(ms) == 0 {
 		return
 	}
-	recorder := internal.MeasurementRecorder.(measurementRecorder)
+	recorder, initialized := internal.MeasurementRecorder.(measurementRecorder)
+	if !initialized {
+		// The init function in view/worker.go has not been run yet. It is
+		// safe to assume no view has been registered and drop the measurement.
+		return
+	}
 	record := false
 	for _, m := range ms {
 		if m.desc.subscribed() {
