@@ -20,7 +20,6 @@ import (
 
 	"go.opencensus.io/stats"
 	"go.opencensus.io/stats/view"
-	_ "go.opencensus.io/stats/view" // enable collection
 	"go.opencensus.io/tag"
 )
 
