@@ -89,7 +89,7 @@ func Test_Worker_ViewRegistration(t *testing.T) {
 
 	for _, tc := range tcs {
 		t.Run(tc.label, func(t *testing.T) {
-			restart()
+			stopAndClearDefaultWorker()
 
 			views := map[string]*View{
 				"v1ID": {
@@ -123,7 +123,7 @@ func Test_Worker_ViewRegistration(t *testing.T) {
 }
 
 func Test_Worker_MultiExport(t *testing.T) {
-	restart()
+	stopAndClearDefaultWorker()
 
 	// This test reports the same data for the default worker and a secondary
 	// worker, and ensures that the stats are kept independently.
@@ -239,7 +239,7 @@ func Test_Worker_MultiExport(t *testing.T) {
 }
 
 func Test_Worker_RecordFloat64(t *testing.T) {
-	restart()
+	stopAndClearDefaultWorker()
 
 	someError := errors.New("some error")
 	m := stats.Float64("Test_Worker_RecordFloat64/MF1", "desc MF1", "unit")
@@ -383,7 +383,7 @@ func TestReportUsage(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		restart()
+		stopAndClearDefaultWorker()
 		SetReportingPeriod(25 * time.Millisecond)
 
 		if err := Register(tt.view); err != nil {
@@ -436,7 +436,7 @@ func Test_SetReportingPeriodReqNeverBlocks(t *testing.T) {
 }
 
 func TestWorkerStarttime(t *testing.T) {
-	restart()
+	stopAndClearDefaultWorker()
 
 	ctx := context.Background()
 	m := stats.Int64("measure/TestWorkerStarttime", "desc", "unit")
@@ -487,7 +487,7 @@ func TestWorkerStarttime(t *testing.T) {
 }
 
 func TestUnregisterReportsUsage(t *testing.T) {
-	restart()
+	stopAndClearDefaultWorker()
 	ctx := context.Background()
 
 	m1 := stats.Int64("measure", "desc", "unit")
@@ -522,7 +522,7 @@ func TestUnregisterReportsUsage(t *testing.T) {
 }
 
 func TestWorkerRace(t *testing.T) {
-	restart()
+	stopAndClearDefaultWorker()
 	ctx := context.Background()
 
 	m1 := stats.Int64("measure", "desc", "unit")
@@ -638,11 +638,13 @@ func (e *vdExporter) ExportView(vd *Data) {
 	e.vds = append(e.vds, vd)
 }
 
-// restart stops the current processors and creates a new one.
-func restart() {
-	defaultWorker.Stop()
-	defaultWorker = NewMeter().(*worker)
-	go defaultWorker.start()
+// stopAndClearDefaultWorker stops defaultWorker's processors, clears it, and
+// resets its sync.Once so that it can be lazily initialized again.
+func stopAndClearDefaultWorker() {
+	if defaultWorker != nil {
+		defaultWorker.Stop()
+		defaultWorkerInit = sync.Once{}
+	}
 }
 
 // byTag implements sort.Interface for *metricdata.TimeSeries by Labels.

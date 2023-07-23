@@ -36,10 +36,12 @@ type Exporter interface {
 //
 // Binaries can register exporters, libraries shouldn't register exporters.
 func RegisterExporter(e Exporter) {
+	maybeInitDefaultWorker()
 	defaultWorker.RegisterExporter(e)
 }
 
 // UnregisterExporter unregisters an exporter.
 func UnregisterExporter(e Exporter) {
+	maybeInitDefaultWorker()
 	defaultWorker.UnregisterExporter(e)
 }
