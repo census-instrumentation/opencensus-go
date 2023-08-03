@@ -28,7 +28,8 @@ import (
 
 // statsTransport is an http.RoundTripper that collects stats for the outgoing requests.
 type statsTransport struct {
-	base http.RoundTripper
+	base          http.RoundTripper
+	pathFormatter func(*http.Request) string
 }
 
 // RoundTrip implements http.RoundTripper, delegating to Base and recording stats for the request.
@@ -36,8 +37,8 @@ func (t statsTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	ctx, _ := tag.New(req.Context(),
 		tag.Upsert(KeyClientHost, req.Host),
 		tag.Upsert(Host, req.Host),
-		tag.Upsert(KeyClientPath, req.URL.Path),
-		tag.Upsert(Path, req.URL.Path),
+		tag.Upsert(KeyClientPath, t.pathFormatter(req)),
+		tag.Upsert(Path, t.pathFormatter(req)),
 		tag.Upsert(KeyClientMethod, req.Method),
 		tag.Upsert(Method, req.Method))
 	req = req.WithContext(ctx)
@@ -140,4 +141,9 @@ func (t *tracker) Close() error {
 	// span status but didn't end the span.
 	t.end()
 	return t.body.Close()
+}
+
+// statsPath gets the path from a request url
+func statsPath(req *http.Request) string {
+	return req.URL.Path
 }

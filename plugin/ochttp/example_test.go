@@ -17,6 +17,7 @@ package ochttp_test
 import (
 	"log"
 	"net/http"
+	"regexp"
 
 	"go.opencensus.io/plugin/ochttp"
 	"go.opencensus.io/plugin/ochttp/propagation/b3"
@@ -48,6 +49,55 @@ func ExampleTransport() {
 
 	client := &http.Client{
 		Transport: &ochttp.Transport{},
+	}
+
+	// Use client to perform requests.
+	_ = client
+}
+
+// FormatStatsPath allows paths to be standardized before the tag is assigned
+//
+// For example https://jsonplaceholder.typicode.com/posts/1 and https://jsonplaceholder.typicode.com/posts/2
+// can have the path  `/posts/:id` while https://jsonplaceholder.typicode.com/posts/1/comments has the path
+// `/posts/:id/comments`
+//
+// Using FormatStatsPath can reduce cardinality when using KeyClientPath
+func ExampleTransport_statsPathFormatter() {
+	// import (
+	// 		"go.opencensus.io/plugin/ochttp"
+	//		"go.opencensus.io/stats/view"
+	// )
+
+	// Add KeyClientPath and KeyClientHost tags to a few views.
+	ochttp.ClientRoundtripLatencyDistribution.TagKeys = append(ochttp.ClientRoundtripLatencyDistribution.TagKeys, ochttp.KeyClientPath, ochttp.KeyClientHost)
+	ochttp.ClientCompletedCount.TagKeys = append(ochttp.ClientCompletedCount.TagKeys, ochttp.KeyClientPath, ochttp.KeyClientHost)
+
+	if err := view.Register(
+		// Register a few default views.
+		ochttp.ClientCompletedCount,
+		ochttp.ClientRoundtripLatencyDistribution,
+	); err != nil {
+		log.Fatal(err)
+	}
+
+	postRegexp := regexp.MustCompile(`^\/?posts\/[0-9]+\/?$`)
+	postCommentsRegexp := regexp.MustCompile(`^\/?posts\/[0-9]+\/comments\/?$`)
+
+	client := &http.Client{
+		Transport: &ochttp.Transport{
+			FormatStatsPath: func(req *http.Request) string {
+				if req.URL.Host == "jsonplaceholder.typicode.com" {
+					if postRegexp.MatchString(req.URL.Path) { // format the post endpoint
+						return "/posts/:id"
+					} else if postCommentsRegexp.MatchString(req.URL.Path) { // format the post comment endpoint
+						return "/posts/:id/comments"
+					}
+				}
+
+				// use the URL path as the default path
+				return req.URL.Path
+			},
+		},
 	}
 
 	// Use client to perform requests.

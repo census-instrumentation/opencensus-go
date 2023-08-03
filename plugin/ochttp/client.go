@@ -56,6 +56,10 @@ type Transport struct {
 	// name equals the URL Path.
 	FormatSpanName func(*http.Request) string
 
+	// FormatStatsPath holds the function to use for standardizing the path
+	// supplied to metrics. By default the path equals the URL path.
+	FormatStatsPath func(*http.Request) string
+
 	// NewClientTrace may be set to a function allowing the current *trace.Span
 	// to be annotated with HTTP request event information emitted by the
 	// httptrace package.
@@ -95,7 +99,13 @@ func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 		formatSpanName: spanNameFormatter,
 		newClientTrace: t.NewClientTrace,
 	}
-	rt = statsTransport{base: rt}
+
+	statsPathFormatter := t.FormatStatsPath
+	if statsPathFormatter == nil {
+		statsPathFormatter = statsPath
+	}
+
+	rt = statsTransport{base: rt, pathFormatter: statsPathFormatter}
 	return rt.RoundTrip(req)
 }
 
