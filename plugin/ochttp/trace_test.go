@@ -667,7 +667,7 @@ func TestStatusUnitTest(t *testing.T) {
 		{200, trace.Status{Code: trace.StatusCodeOK, Message: `OK`}},
 		{204, trace.Status{Code: trace.StatusCodeOK, Message: `OK`}},
 		{100, trace.Status{Code: trace.StatusCodeUnknown, Message: `UNKNOWN`}},
-		{500, trace.Status{Code: trace.StatusCodeUnknown, Message: `UNKNOWN`}},
+		{500, trace.Status{Code: trace.StatusCodeInternal, Message: `INTERNAL`}},
 		{400, trace.Status{Code: trace.StatusCodeInvalidArgument, Message: `INVALID_ARGUMENT`}},
 		{422, trace.Status{Code: trace.StatusCodeInvalidArgument, Message: `INVALID_ARGUMENT`}},
 		{499, trace.Status{Code: trace.StatusCodeCancelled, Message: `CANCELLED`}},

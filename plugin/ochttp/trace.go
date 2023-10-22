@@ -198,6 +198,8 @@ func TraceStatus(httpStatusCode int, statusLine string) trace.Status {
 		code = trace.StatusCodeUnauthenticated
 	case http.StatusTooManyRequests:
 		code = trace.StatusCodeResourceExhausted
+	case http.StatusInternalServerError:
+		code = trace.StatusCodeInternal
 	case http.StatusNotImplemented:
 		code = trace.StatusCodeUnimplemented
 	case http.StatusServiceUnavailable:
